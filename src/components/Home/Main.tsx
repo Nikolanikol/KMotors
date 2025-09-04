@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 const Main = () => {
   return (
     <div className="min-h-[70vh] aurora-bg">
-      <div className="wrapper text-center pt-[10%] heading-2">
+      <div className="wrapper text-center md:pt-[10%] heading-3 pt-[40%] md:heading-2">
         <h2>
           Найди автомобиль <br /> своей мечты
         </h2>

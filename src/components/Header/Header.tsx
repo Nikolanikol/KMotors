@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "../ui/button";
+
 import ContactForm from "./Form";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Header() {
   const pathname = usePathname();
@@ -16,7 +17,10 @@ export default function Header() {
   return (
     <header className="p-5  border-black container border-2 min-h-[15vh] mx-auto flex items-center ">
       <div className="flex justify-between grow ">
-        <nav className="flex gap-5 ">
+        <Link href="/">
+          <h1 className="text-2xl font-bold">KMotors</h1>
+        </Link>
+        <nav className=" gap-5  hidden md:flex">
           <Link href="/" style={linkStyle("/")}>
             Главная
           </Link>
@@ -30,7 +34,36 @@ export default function Header() {
             Контакты
           </Link>
         </nav>
-
+        <ToggleGroup
+          type="single"
+          value="0"
+          className=" bg-gray-300 rounded-2xl px-2 fixed bottom-[6%] -translate-x-1/2 left-1/2"
+        >
+          <ToggleGroupItem value="a">
+            {" "}
+            <Link href="/" style={linkStyle("/")}>
+              Главная
+            </Link>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="b">
+            {" "}
+            <Link href="/catalog" style={linkStyle("/catalog")}>
+              Каталог
+            </Link>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="c">
+            {" "}
+            <Link href="/services" style={linkStyle("/services")}>
+              Услуги
+            </Link>
+          </ToggleGroupItem>
+          <ToggleGroupItem value="c">
+            {" "}
+            <Link href="/contact" style={linkStyle("/contact")}>
+              Контакты
+            </Link>
+          </ToggleGroupItem>
+        </ToggleGroup>
         <ContactForm isVisible={false} />
       </div>
     </header>

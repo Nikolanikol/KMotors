@@ -1,12 +1,18 @@
+"use client";
 import React from "react";
 
 const pages = () => {
+  const mode = process.env.NEXT_PUBLIC_DEPLOY_MODE;
   return (
-    <div className="min-h-screen border-2 border-black">
+    <div className="min-h-screen ">
       {" "}
       <iframe
-        src="https://carnex.vercel.app/"
-        className="w-full min-h-screen border-black border-2"
+        src={
+          mode === "production"
+            ? "https://carnex.vercel.app/"
+            : "http://localhost:5173/"
+        }
+        className="w-full min-h-screen "
         loading="lazy"
         title="Каталог"
       />{" "}
