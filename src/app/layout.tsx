@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
-
+import Head from "next/head";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,13 +26,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
+      <Head>
+        <title>
+          Корейские автомобили Hyundai, Kia, Genesis — каталог моделей и цены
+        </title>
+        <meta
+          name="description"
+          content="Обзор корейских автомобилей: Hyundai, Kia, Genesis, SsangYong. Характеристики, цены, фото, отзывы. Каталог авто из Южной Кореи."
+        />
+
+        <meta
+          name="keywords"
+          content="корейские автомобили, Hyundai, Kia, Genesis, SsangYong, авто Южной Кореи, каталог машин"
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
-      </head>
+      </Head>
+
       <body className="min-h-screen flex flex-col   mx-auto ">
+        <h1 className="absolute -left-9999999">
+          Авто из кореи под заказ Автомобили из Южной Кореи: Hyundai, Kia,
+          Genesis, SsangYong, BMW, Mercedes-Benz, Audi, Volkswagen — каталог
+          моделей, цены, характеристики
+        </h1>
         <Header />
         <main className="flex-grow min-h-[70vh]">{children}</main>
         <Footer />

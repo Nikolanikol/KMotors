@@ -37,7 +37,7 @@ export default function Header() {
         <ToggleGroup
           type="single"
           value="0"
-          className=" bg-gray-300 rounded-2xl px-2 fixed bottom-[6%] -translate-x-1/2 left-1/2"
+          className=" bg-gray-300 md:hidden rounded-2xl px-2 fixed bottom-[6%] -translate-x-1/2 left-1/2"
         >
           <ToggleGroupItem value="a">
             {" "}

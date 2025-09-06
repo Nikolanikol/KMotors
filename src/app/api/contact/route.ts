@@ -7,6 +7,8 @@ export async function POST(req: Request) {
 Телефон: ${body.phone}
 Email: ${body.email}
 Комментарий: ${body.message}
+Способ связи: ${body.method}
+
   `;
 
   const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN!;
@@ -15,22 +17,20 @@ Email: ${body.email}
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
   const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: CHAT_ID,
       text: message,
     }),
   });
-//   const res_diana = await fetch(url, {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({
-//       chat_id: CHAT_ID_DIANA,
-//       text: message,
-//     }),
-//   });
-  return new Response('OK', { status: 200 });
+  // const res_diana = await fetch(url, {
+  //   method: "POST",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify({
+  //     chat_id: CHAT_ID_DIANA,
+  //     text: message,
+  //   }),
+  // });
+  return new Response("OK", { status: 200 });
 }
-
-

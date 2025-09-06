@@ -12,6 +12,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 export default function ContactForm({ isVisible }: { isVisible: boolean }) {
   const [visible, setVisible] = useState(isVisible);
 
@@ -92,6 +99,20 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 onChange={handleChange}
                 placeholder="Email"
               />
+              <Select
+                required
+                value={form.method}
+                onValueChange={(value) => setForm({ ...form, method: value })}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Способ связи" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="telegram">Telegram</SelectItem>
+                  <SelectItem value="whatsapp">Whatsapp</SelectItem>
+                  <SelectItem value="phone">Звонок</SelectItem>
+                </SelectContent>
+              </Select>
               <Textarea
                 name="message"
                 value={form.message}
