@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 
 export default function StaticCatalog() {
-  const [cars, setCars] = useState([]);
+  interface Car {
+    brand: string;
+    model: string;
+  }
+  const [cars, setCars] = useState<Car[]>([]);
 
   useEffect(() => {
     fetch("/data/cars.json")
@@ -13,8 +17,8 @@ export default function StaticCatalog() {
 
   return (
     <div className="flex gap-4">
-      {cars.map((car) => (
-        <div className="border-2 border-black" key={car.id}>
+      {cars.map((car, i) => (
+        <div className="border-2 border-black" key={i}>
           {car.brand} {car.model}
         </div>
       ))}

@@ -30,6 +30,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
     phone: "",
     email: "",
     message: "",
+    method: "",
   });
 
   const handleChange = (
@@ -52,7 +53,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
     setLoading(false);
     if (res.ok) {
       setSuccess(true);
-      setForm({ name: "", phone: "", email: "", message: "" });
+      setForm({ name: "", phone: "", email: "", message: "", method: "" });
     } else {
       alert("Ошибка при отправке");
     }
