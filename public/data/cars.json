@@ -4,6 +4,8 @@
     "brand": "Kia",
     "model": "Sorento",
     "year": 2023,
+    "badge": "Presige",
+
     "price": 43000000,
     "mileage": 35092,
     "images": [
@@ -16,8 +18,8 @@
       "/catalog/1806/6149995832313759136.jpg",
       "/catalog/1806/6149995832313759137.jpg"
     ],
-    "location": "Сеул",
-    "transmission": "Автомат",
+
+    "transmission": "Automatic",
     "fuel": "Бензин"
   },
   {
@@ -37,8 +39,8 @@
       "/catalog/6061/6181407831547299966.jpg",
       "/catalog/6061/6181407831547299967.jpg"
     ],
-    "location": "Инчхон",
-    "transmission": "Автомат",
+
+    "transmission": "Automatic",
     "fuel": "Бензин"
   }
 ]
