@@ -18,7 +18,7 @@ export default function StaticCatalog() {
     fuel: string;
   }
   const [cars, setCars] = useState<Car[]>([]);
-
+  const [isFormVisible, setIsFormVisible] = useState(false);
   useEffect(() => {
     fetch("/data/cars.json")
       .then((res) => res.json())
@@ -27,8 +27,8 @@ export default function StaticCatalog() {
   }, []);
 
   return (
-    <div className="container border-2 border-black min-h-screen mx-auto p-2">
-      <div className=" gap-4  grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="container shadow-2xl py-4 px-6 min-h-screen rounded-2xl mx-auto p-2">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(250px,1fr))] justify-center">
         {cars.map((car, i) => {
           return <CarCard item={car} key={i} />;
         })}

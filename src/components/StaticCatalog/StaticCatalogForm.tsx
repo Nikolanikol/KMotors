@@ -19,7 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-export default function ContactForm({ isVisible }: { isVisible: boolean }) {
+export default function StaticCatalogForm({
+  isVisible,
+}: {
+  isVisible: boolean;
+}) {
   const [visible, setVisible] = useState(isVisible);
 
   const [loading, setLoading] = useState(false);
@@ -61,7 +65,10 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
 
   return (
     <div className="max-w-md ">
-      <SlidingButton onClick={() => setVisible(!visible)}>
+      <SlidingButton
+        className="block w-full"
+        onClick={() => setVisible(!visible)}
+      >
         {visible ? "Скрыть форму" : "Оставить заявку"}
       </SlidingButton>
 

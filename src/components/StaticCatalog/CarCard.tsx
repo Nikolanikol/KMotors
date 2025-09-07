@@ -1,6 +1,7 @@
 import { FC } from "react";
-import { Button } from "../ui/button";
+import { Button, SlidingButton } from "../ui/button";
 import { Card } from "../ui/card";
+import StaticCatalogForm from "./StaticCatalogForm";
 interface CarCardProps {
   item: {
     id: string;
@@ -39,17 +40,8 @@ const CarCard: FC<CarCardProps> = ({ item }) => {
           price={item.price}
           fuel={item.fuel}
         />
-
-        <div>
-          <Button
-            className="cursor-pointer self-stretch w-full mt-auto"
-            variant={"outline"}
-          >
-            {" "}
-            Отправить заявку
-          </Button>
-        </div>
       </div>
+      <StaticCatalogForm isVisible={false} />
     </Card>
   );
 };

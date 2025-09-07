@@ -15,7 +15,7 @@ export default function Header() {
       : {};
 
   return (
-    <header className="p-5  border-black container border-2 min-h-[15vh] mx-auto flex items-center ">
+    <header className="p-5  border-none container border-2 min-h-[15vh] mx-auto flex items-center ">
       <div className="flex justify-between grow items-center ">
         <Link href="/">
           <h1 className="text-2xl font-bol  ">KMotors</h1>
@@ -37,7 +37,7 @@ export default function Header() {
         <ToggleGroup
           type="single"
           value="0"
-          className=" bg-gray-300 md:hidden rounded-2xl px-2 fixed bottom-[6%] -translate-x-1/2 left-1/2"
+          className=" bg-gray-300 md:hidden rounded-2xl px-2 fixed bottom-[6%] z-40 -translate-x-1/2 left-1/2"
         >
           <ToggleGroupItem value="a">
             {" "}
