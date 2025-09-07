@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button, SlidingButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogTrigger,
@@ -61,9 +61,9 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
 
   return (
     <div className="max-w-md ">
-      <Button onClick={() => setVisible(!visible)}>
+      <SlidingButton onClick={() => setVisible(!visible)}>
         {visible ? "Скрыть форму" : "Оставить заявку"}
-      </Button>
+      </SlidingButton>
 
       {visible && (
         <Dialog open={visible} onOpenChange={setVisible}>

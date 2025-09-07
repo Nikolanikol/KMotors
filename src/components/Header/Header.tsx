@@ -16,11 +16,11 @@ export default function Header() {
 
   return (
     <header className="p-5  border-black container border-2 min-h-[15vh] mx-auto flex items-center ">
-      <div className="flex justify-between grow ">
+      <div className="flex justify-between grow items-center ">
         <Link href="/">
-          <h1 className="text-2xl font-bold">KMotors</h1>
+          <h1 className="text-2xl font-bol  ">KMotors</h1>
         </Link>
-        <nav className=" gap-5  hidden md:flex">
+        <nav className=" gap-5  hidden md:flex md:items-center">
           <Link href="/" style={linkStyle("/")}>
             Главная
           </Link>

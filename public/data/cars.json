@@ -20,7 +20,7 @@
     ],
 
     "transmission": "Automatic",
-    "fuel": "Бензин"
+    "fuel": "--"
   },
   {
     "id": "6061",
@@ -41,6 +41,68 @@
     ],
 
     "transmission": "Automatic",
-    "fuel": "Бензин"
+    "fuel": "--"
+  },
+    {
+    "id": "7261",
+    "brand": "Kia",
+    "model": "Carnival",
+    "year": 2023.05,
+    "price": 29900000,
+    "mileage": 31095,
+    "images": [
+      "/catalog/7261/photo_6111632007604847664_y.jpg",
+        "/catalog/7261/photo_6111632007604847665_y.jpg",
+        "/catalog/7261/photo_6111632007604847666_y.jpg",
+        "/catalog/7261/photo_6111632007604847667_y.jpg",
+        "/catalog/7261/photo_6111632007604847668_y.jpg",
+        "/catalog/7261/photo_6111632007604847669_y.jpg",
+        "/catalog/7261/photo_6111632007604847670_y.jpg",
+        "/catalog/7261/photo_6111632007604847671_y.jpg",
+        "/catalog/7261/photo_6111632007604847672_y.jpg",
+        "/catalog/7261/photo_6111632007604847673_y.jpg",
+        "/catalog/7261/photo_6111632007604847674_y.jpg",
+        "/catalog/7261/photo_6111632007604847675_y.jpg",
+        "/catalog/7261/photo_6111632007604847676_y.jpg",
+        "/catalog/7261/photo_6111632007604847677_y.jpg",
+        "/catalog/7261/photo_6111632007604847678_y.jpg"
+  
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+   {
+    "id": "3360kias",
+    "brand": "Kia",
+    "model": "Sportage Signature",
+    "year": 2023.05,
+    "price": 36900000,
+    "mileage": 31601,
+    "images": [
+      "/catalog/3360kias/photo_6111632007604847629_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847630_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847631_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847632_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847633_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847634_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847635_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847636_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847637_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847638_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847639_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847640_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847641_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847642_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847643_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847644_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847645_y.jpg",
+        "/catalog/3360kias/photo_6111632007604847646_y.jpg"
+   
+  
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
   }
 ]

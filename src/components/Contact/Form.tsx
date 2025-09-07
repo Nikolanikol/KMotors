@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button, SlidingButton } from "@/components/ui/button";
 
 import {
   Select,
@@ -94,9 +94,9 @@ export default function ContactForm() {
           placeholder="Комментарий или модель авто"
           rows={4}
         />
-        <Button type="submit" disabled={loading} className="w-full">
+        <SlidingButton type="submit" disabled={loading} className="w-full">
           {loading ? "Отправка..." : "Отправить"}
-        </Button>
+        </SlidingButton>
         {success && (
           <p className="text-green-600 text-sm text-center">
             ✅ Заявка успешно отправлена

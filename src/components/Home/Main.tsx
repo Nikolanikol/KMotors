@@ -1,6 +1,7 @@
 import Link from "next/link";
 import React from "react";
 import { Button } from "../ui/button";
+import clsx from "clsx";
 
 const Main = () => {
   return (
@@ -10,13 +11,43 @@ const Main = () => {
           Найди автомобиль <br /> своей мечты
         </h2>
         <p className="text-lg mb-6"> Из Кореи в любую точку мира!</p>
-        <Button size="lg" className=" text-3xl">
+
+        <SlidingButton>
           {" "}
-          <Link href="/catalog">каталог</Link>
-        </Button>
+          <Link className="block" href="/catalog">
+            каталог
+          </Link>
+        </SlidingButton>
       </div>
     </div>
   );
 };
 
 export default Main;
+const SlidingButton = ({
+  children,
+  className,
+  ...props
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <button
+      className={clsx(
+        "relative cursor-pointer overflow-hidden group w-48 h-12 rounded-md text-white font-semibold",
+        className
+      )}
+      {...props} // ← здесь передаются все остальные пропсы
+    >
+      {/* Нижний слой */}
+      <div className="absolute inset-0 bg-orange-700" />
+
+      {/* Верхний слой */}
+      <div className="absolute inset-0 bg-orange-500 transition-transform duration-300 ease-in-out group-hover:translate-x-full" />
+
+      {/* Текст поверх слоёв */}
+      <span className="relative z-10">{children}</span>
+    </button>
+  );
+};
