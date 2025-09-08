@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postbuild": "next-sitemap"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -19,6 +20,7 @@
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
+    "next-sitemap": "^4.2.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-icons": "^5.5.0",

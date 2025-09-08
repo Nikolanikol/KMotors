@@ -43,6 +43,24 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
+        <meta
+          name="description"
+          content="Продажа авто с пробегом в Корее. Каталог, фильтры, заявки."
+        />
+        <meta
+          name="keywords"
+          content="авто, каталог, Корея, продажа, машины, Nikolai Motors"
+        />
+        <meta property="og:title" content="Каталог авто" />
+        <meta
+          property="og:description"
+          content="Выберите авто из каталога и оставьте заявку."
+        />
+        <meta property="og:image" content="/preview.jpg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://kmotors.vercel.app/" />
+        <meta name="twitter:card" content="summary_large_image" />
       </Head>
 
       <body className="min-h-screen flex flex-col   mx-auto ">
