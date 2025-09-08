@@ -18,6 +18,23 @@ export const metadata: Metadata = {
   title: "Корейские автомобили Hyundai, Kia, Genesis — каталог моделей и цены",
   description:
     "Обзор корейских автомобилей: Hyundai, Kia, Genesis, SsangYong. Характеристики, цены, фото, отзывы. Каталог авто из Южной Кореи",
+  openGraph: {
+    title: "Каталог корейских авто — Hyundai, Kia, Genesis",
+    description:
+      "Выбирайте лучшие автомобили из Южной Кореи. Фото, цены, характеристики, отзывы.",
+    url: "https://kmotors.vercel.app/",
+    siteName: "Kmotors",
+    images: [
+      {
+        url: "https://kmotors.vercel.app/preview/preview.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Каталог корейских авто — Hyundai, Kia, Genesis",
+      },
+    ],
+    locale: "ru_RU",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -49,7 +66,7 @@ export default function RootLayout({
           name="keywords"
           content="авто, каталог, Корея, продажа, машины, Nikolai Motors"
         />
-        <meta property="og:title" content="Каталог авто" />
+        {/* <meta property="og:title" content="Каталог авто" />
         <meta
           property="og:description"
           content="Выберите авто из каталога и оставьте заявку."
@@ -57,8 +74,8 @@ export default function RootLayout({
         <meta property="og:image" content="/preview/preview.jpg" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://kmotors.vercel.app/" />
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta property="og:url" content="https://kmotors.vercel.app/" /> */}
+        {/* <meta name="twitter:card" content="summary_large_image" /> */}
 
         <link
           rel="icon"
