@@ -18,6 +18,7 @@ type CarouselProps = {
   opts?: CarouselOptions;
   plugins?: CarouselPlugin;
   orientation?: "horizontal" | "vertical";
+  type?: "catalog";
   setApi?: (api: CarouselApi) => void;
 };
 
@@ -198,7 +199,7 @@ const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<typeof Button>
 >(({ className, variant = "outline", size = "icon", ...props }, ref) => {
-  const { orientation, scrollPrev, canScrollPrev } = useCarousel();
+  const { orientation, scrollPrev, canScrollPrev, type } = useCarousel();
 
   return (
     <Button
@@ -207,7 +208,8 @@ const CarouselPrevious = React.forwardRef<
       size={size}
       className={cn(
         "absolute  h-8 w-8 rounded-full cursor-pointer",
-        // orientation === "horizontal"
+        type === "catalog" ? "h-96" : "",
+        // orientation === 'catalog'
         //   ? "-left-12 top-1/2 -translate-y-1/2"
         "-bottom-30 left-[45%] -translate-x-1/2 ",
         className

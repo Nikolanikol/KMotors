@@ -130,11 +130,9 @@
         "/catalog/3794/photo_6156665740430788059_w.jpg",
         "/catalog/3794/photo_6156665740430788060_w.jpg",
         "/catalog/3794/photo_6156665740430788061_w.jpg",
-        "/catalog/3794/photo_6156665740430788062_w.jpg",
-        "/catalog/3794/photo_6156665740430788063_w.jpg"
+        "/catalog/3794/photo_6156665740430788062_w.jpg"
     
-   
-  
+
     ],
 
     "transmission": "Automatic",
@@ -165,32 +163,7 @@
     "transmission": "Automatic",
     "fuel": "--"
   },
-  {
-    "id": "8899",
-    "brand": "BMW",
-    "model": "M Sport Plus",
-    "year": 2018.00,
-    "price": 40000000,
-    "mileage": 99000,
-    "images": [
-      "/catalog/8899/photo_6087025530080708399_y.jpg",
-        "/catalog/8899/photo_6087025530080708400_y.jpg",
-        "/catalog/8899/photo_6087025530080708401_y.jpg",
-        "/catalog/8899/photo_6087025530080708402_y.jpg",
-        "/catalog/8899/photo_6087025530080708403_y.jpg",
-        "/catalog/8899/photo_6087025530080708404_y.jpg",
-        "/catalog/8899/photo_6087025530080708405_y.jpg",
-        "/catalog/8899/photo_6087025530080708406_y.jpg",
-        "/catalog/8899/photo_6087025530080708407_y.jpg",
-        "/catalog/8899/photo_6087025530080708408_y.jpg",
-        "/catalog/8899/photo_6087025530080708409_y.jpg",
-        "/catalog/8899/photo_6087025530080708410_y.jpg",
-        "/catalog/8899/photo_6087025530080708411_y.jpg"
-    ],
-
-    "transmission": "Automatic",
-    "fuel": "--"
-  },
+  
     {
     "id": "3571",
     "brand": "Hyundai",
