@@ -24,13 +24,13 @@ Email: ${body.email}
       text: message,
     }),
   });
-  // const res_diana = await fetch(url, {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({
-  //     chat_id: CHAT_ID_DIANA,
-  //     text: message,
-  //   }),
-  // });
+  const res_diana = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID_DIANA,
+      text: message,
+    }),
+  });
   return new Response("OK", { status: 200 });
 }

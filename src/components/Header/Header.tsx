@@ -27,7 +27,7 @@ export default function Header() {
           <Link href="/catalog" style={linkStyle("/catalog")}>
             Каталог
           </Link>
-          <Link href="/catalog2" style={linkStyle("/services")}>
+          <Link href="/catalog2" style={linkStyle("/catalog2")}>
             Наши авто
           </Link>
           <Link href="/contact" style={linkStyle("/contact")}>
@@ -53,7 +53,7 @@ export default function Header() {
           </ToggleGroupItem>
           <ToggleGroupItem value="c">
             {" "}
-            <Link href="/catalog2" style={linkStyle("/services")}>
+            <Link href="/catalog2" style={linkStyle("/catalog2")}>
               Наши авто
             </Link>
           </ToggleGroupItem>
