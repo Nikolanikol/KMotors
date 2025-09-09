@@ -2,8 +2,8 @@
   {
     "id": "1806",
     "brand": "Kia",
-    "model": "Sorento",
-    "year": 2023,
+    "model": "Sorento Presige",
+    "year": 2023.05,
     "badge": "Presige",
 
     "price": 43000000,
@@ -26,9 +26,9 @@
     "id": "6061",
     "brand": "Genesis",
     "model": "G70",
-    "year": 2021,
+    "year": 2018.05,
     "price": 19500000,
-    "mileage": 21000,
+    "mileage": 108000,
     "images": [
       "/catalog/6061/6181407831547299960.jpg",
       "/catalog/6061/6181407831547299961.jpg",
@@ -47,9 +47,9 @@
     "id": "7261",
     "brand": "Kia",
     "model": "Carnival",
-    "year": 2023.05,
+    "year": 2023.06,
     "price": 29900000,
-    "mileage": 31095,
+    "mileage": 33200,
     "images": [
       "/catalog/7261/photo_6111632007604847664_y.jpg",
         "/catalog/7261/photo_6111632007604847665_y.jpg",
@@ -100,6 +100,160 @@
         "/catalog/3360kias/photo_6111632007604847646_y.jpg"
    
   
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+   {
+    "id": "3794",
+    "brand": "Kia",
+    "model": "Stinger",
+    "year": 2020.11,
+    "price": 43000000,
+    "mileage": 25000,
+    "images": [
+      "/catalog/3794/photo_6156665740430788045_w.jpg",
+        "/catalog/3794/photo_6156665740430788046_w.jpg",
+        "/catalog/3794/photo_6156665740430788047_w.jpg",
+        "/catalog/3794/photo_6156665740430788048_w.jpg",
+        "/catalog/3794/photo_6156665740430788049_w.jpg",
+        "/catalog/3794/photo_6156665740430788050_w.jpg",
+        "/catalog/3794/photo_6156665740430788051_w.jpg",
+        "/catalog/3794/photo_6156665740430788052_w.jpg",
+        "/catalog/3794/photo_6156665740430788053_w.jpg",
+        "/catalog/3794/photo_6156665740430788054_w.jpg",
+        "/catalog/3794/photo_6156665740430788055_w.jpg",
+        "/catalog/3794/photo_6156665740430788056_w.jpg",
+        "/catalog/3794/photo_6156665740430788057_w.jpg",
+        "/catalog/3794/photo_6156665740430788058_w.jpg",
+        "/catalog/3794/photo_6156665740430788059_w.jpg",
+        "/catalog/3794/photo_6156665740430788060_w.jpg",
+        "/catalog/3794/photo_6156665740430788061_w.jpg",
+        "/catalog/3794/photo_6156665740430788062_w.jpg",
+        "/catalog/3794/photo_6156665740430788063_w.jpg"
+    
+   
+  
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },{
+    "id": "8899",
+    "brand": "BMW",
+    "model": "M Sport Plus",
+    "year": 2018.00,
+    "price": 40000000,
+    "mileage": 99000,
+    "images": [
+      "/catalog/8899/photo_6087025530080708399_y.jpg",
+        "/catalog/8899/photo_6087025530080708400_y.jpg",
+        "/catalog/8899/photo_6087025530080708401_y.jpg",
+        "/catalog/8899/photo_6087025530080708402_y.jpg",
+        "/catalog/8899/photo_6087025530080708403_y.jpg",
+        "/catalog/8899/photo_6087025530080708404_y.jpg",
+        "/catalog/8899/photo_6087025530080708405_y.jpg",
+        "/catalog/8899/photo_6087025530080708406_y.jpg",
+        "/catalog/8899/photo_6087025530080708407_y.jpg",
+        "/catalog/8899/photo_6087025530080708408_y.jpg",
+        "/catalog/8899/photo_6087025530080708409_y.jpg",
+        "/catalog/8899/photo_6087025530080708410_y.jpg",
+        "/catalog/8899/photo_6087025530080708411_y.jpg"
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+  {
+    "id": "8899",
+    "brand": "BMW",
+    "model": "M Sport Plus",
+    "year": 2018.00,
+    "price": 40000000,
+    "mileage": 99000,
+    "images": [
+      "/catalog/8899/photo_6087025530080708399_y.jpg",
+        "/catalog/8899/photo_6087025530080708400_y.jpg",
+        "/catalog/8899/photo_6087025530080708401_y.jpg",
+        "/catalog/8899/photo_6087025530080708402_y.jpg",
+        "/catalog/8899/photo_6087025530080708403_y.jpg",
+        "/catalog/8899/photo_6087025530080708404_y.jpg",
+        "/catalog/8899/photo_6087025530080708405_y.jpg",
+        "/catalog/8899/photo_6087025530080708406_y.jpg",
+        "/catalog/8899/photo_6087025530080708407_y.jpg",
+        "/catalog/8899/photo_6087025530080708408_y.jpg",
+        "/catalog/8899/photo_6087025530080708409_y.jpg",
+        "/catalog/8899/photo_6087025530080708410_y.jpg",
+        "/catalog/8899/photo_6087025530080708411_y.jpg"
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+    {
+    "id": "3571",
+    "brand": "Hyundai",
+    "model": "Palisade Calligraphy",
+    "year": 2021.07,
+    "price": 31700000,
+    "mileage": 70000,
+    "images": [
+      "/catalog/3571/photo_6073410509522191685_y.jpg",
+        "/catalog/3571/photo_6073410509522191686_y.jpg",
+        "/catalog/3571/photo_6073410509522191687_y.jpg",
+        "/catalog/3571/photo_6073410509522191688_y.jpg",
+        "/catalog/3571/photo_6073410509522191689_y.jpg",
+        "/catalog/3571/photo_6073410509522191690_y.jpg",
+        "/catalog/3571/photo_6073410509522191691_y.jpg",
+        "/catalog/3571/photo_6073410509522191692_y.jpg",
+        "/catalog/3571/photo_6073410509522191693_y.jpg",
+        "/catalog/3571/photo_6073410509522191694_y.jpg",
+        "/catalog/3571/photo_6073410509522191695_y.jpg",
+        "/catalog/3571/photo_6073410509522191696_y.jpg",
+        "/catalog/3571/photo_6073410509522191697_y.jpg",
+        "/catalog/3571/photo_6073410509522191698_y.jpg",
+        "/catalog/3571/photo_6073410509522191699_y.jpg",
+        "/catalog/3571/photo_6073410509522191700_y.jpg",
+        "/catalog/3571/photo_6073410509522191701_y.jpg",
+        "/catalog/3571/photo_6073410509522191702_y.jpg",
+        "/catalog/3571/photo_6073410509522191703_y.jpg",
+        "/catalog/3571/photo_6073410509522191704_y.jpg",
+        "/catalog/3571/photo_6073410509522191705_y.jpg",
+        "/catalog/3571/photo_6073410509522191706_y.jpg"
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+   {
+    "id": "8467",
+    "brand": "Kia",
+    "model": "Sorento Presige",
+    "year": 2020.07,
+    "price": 28000000,
+    "mileage": 83335,
+    "images": [
+      "/catalog/8467/photo_6073410509522191665_y.jpg",
+        "/catalog/8467/photo_6073410509522191666_y.jpg",
+        "/catalog/8467/photo_6073410509522191667_y.jpg",
+        "/catalog/8467/photo_6073410509522191668_y.jpg",
+        "/catalog/8467/photo_6073410509522191669_y.jpg",
+        "/catalog/8467/photo_6073410509522191670_y.jpg",
+        "/catalog/8467/photo_6073410509522191671_y.jpg",
+        "/catalog/8467/photo_6073410509522191672_y.jpg",
+        "/catalog/8467/photo_6073410509522191673_y.jpg",
+        "/catalog/8467/photo_6073410509522191674_y.jpg",
+        "/catalog/8467/photo_6073410509522191675_y.jpg",
+        "/catalog/8467/photo_6073410509522191676_y.jpg",
+        "/catalog/8467/photo_6073410509522191677_y.jpg",
+        "/catalog/8467/photo_6073410509522191678_y.jpg",
+        "/catalog/8467/photo_6073410509522191679_y.jpg",
+        "/catalog/8467/photo_6073410509522191680_y.jpg",
+        "/catalog/8467/photo_6073410509522191681_y.jpg",
+        "/catalog/8467/photo_6073410509522191682_y.jpg",
+        "/catalog/8467/photo_6073410509522191683_y.jpg"
+      
     ],
 
     "transmission": "Automatic",

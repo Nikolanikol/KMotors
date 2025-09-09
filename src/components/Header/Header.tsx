@@ -27,8 +27,8 @@ export default function Header() {
           <Link href="/catalog" style={linkStyle("/catalog")}>
             Каталог
           </Link>
-          <Link href="/services" style={linkStyle("/services")}>
-            Услуги
+          <Link href="/catalog2" style={linkStyle("/services")}>
+            Наши авто
           </Link>
           <Link href="/contact" style={linkStyle("/contact")}>
             Контакты

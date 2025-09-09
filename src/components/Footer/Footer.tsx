@@ -11,9 +11,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-100 text-sm text-gray-600 mt-12 ">
       <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          © {new Date().getFullYear()} Nikolai Auto Export. Все права защищены.
-        </div>
+        <div>© {new Date().getFullYear()} KMotors. Все права защищены.</div>
         <div className="flex gap-4 text-xl">
           <a
             href="https://instagram.com/kmotorrss"
@@ -45,7 +43,7 @@ export default function Footer() {
             rel="noopener noreferrer"
             className="hover:text-gray-800"
           >
-            <FaTiktok />
+            {/* <FaTiktok /> */}
           </a>
         </div>
       </div>
