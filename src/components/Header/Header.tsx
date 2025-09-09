@@ -53,8 +53,8 @@ export default function Header() {
           </ToggleGroupItem>
           <ToggleGroupItem value="c">
             {" "}
-            <Link href="/services" style={linkStyle("/services")}>
-              Услуги
+            <Link href="/catalog2" style={linkStyle("/services")}>
+              Наши авто
             </Link>
           </ToggleGroupItem>
           <ToggleGroupItem value="c">
