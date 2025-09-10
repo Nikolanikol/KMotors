@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
-
+import Script from "next/script";
 export const metadata: Metadata = {
   title: "Корейские автомобили Hyundai, Kia, Genesis — каталог моделей и цены",
   description:
@@ -44,6 +44,19 @@ export default function RootLayout({
           type="image/png"
           href="/favicon_io/android-chrome-192x192.png"
         />
+        {/* Google Analytics 4 */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZMRTQCD8SF"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-ZMRTQCD8SF');
+          `}
+        </Script>
       </head>
 
       <body className="min-h-screen flex flex-col   mx-auto ">
