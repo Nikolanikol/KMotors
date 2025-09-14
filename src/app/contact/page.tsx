@@ -1,6 +1,5 @@
 "use client";
 import ContactForm from "@/components/Contact/Form";
-import Image from "next/image";
 
 import React from "react";
 

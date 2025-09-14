@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  FaInstagram,
-  FaWhatsapp,
-  FaTelegramPlane,
-  FaTiktok,
-} from "react-icons/fa";
+import { FaInstagram, FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
 
 export default function Footer() {
   return (

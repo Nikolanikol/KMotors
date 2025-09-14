@@ -16,7 +16,7 @@ Email: ${body.email}
   const CHAT_ID_DIANA = process.env.TELEGRAM_CHAT_ID_DIANA!;
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
-  const res = await fetch(url, {
+  await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -24,7 +24,7 @@ Email: ${body.email}
       text: message,
     }),
   });
-  const res_diana = await fetch(url, {
+  await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
