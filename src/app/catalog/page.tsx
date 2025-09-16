@@ -11,10 +11,14 @@ function IframeContent() {
   const iframeSrc =
     mode === "production"
       ? `https://carnex.vercel.app${
-          manufacture ? `?manufacture=${manufacture}` : ""
+          manufacture
+            ? `?manufacture=${manufacture}`
+            : "?manufacture=(And.Hidden.N._.(C.CarType.Y._.Manufacturer.현대.))"
         }`
       : `http://localhost:5173${
-          manufacture ? `?manufacture=${manufacture}` : ""
+          manufacture
+            ? `?manufacture=${manufacture}`
+            : "?manufacture=(And.Hidden.N._.(C.CarType.Y._.Manufacturer.현대.))"
         }`;
 
   return (
