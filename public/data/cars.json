@@ -156,8 +156,7 @@
         "/catalog/8899/photo_6087025530080708407_y.jpg",
         "/catalog/8899/photo_6087025530080708408_y.jpg",
         "/catalog/8899/photo_6087025530080708409_y.jpg",
-        "/catalog/8899/photo_6087025530080708410_y.jpg",
-        "/catalog/8899/photo_6087025530080708411_y.jpg"
+        "/catalog/8899/photo_6087025530080708410_y.jpg"
     ],
 
     "transmission": "Automatic",
@@ -224,8 +223,7 @@
         "/catalog/8467/photo_6073410509522191679_y.jpg",
         "/catalog/8467/photo_6073410509522191680_y.jpg",
         "/catalog/8467/photo_6073410509522191681_y.jpg",
-        "/catalog/8467/photo_6073410509522191682_y.jpg",
-        "/catalog/8467/photo_6073410509522191683_y.jpg"
+        "/catalog/8467/photo_6073410509522191682_y.jpg"
       
     ],
 
@@ -240,21 +238,20 @@
     "price": 25700000,
     "mileage": 19016,
     "images": [
-      "/catalog/7404/IMG_9833.HEIC",
-          "/catalog/7404/IMG_9834.HEIC",    
-                "/catalog/7404/IMG_9835.HEIC",
-              "/catalog/7404/IMG_9836.HEIC",
-                    "/catalog/7404/IMG_9837.HEIC",
-                          "/catalog/7404/IMG_9838.HEIC",
-                          "/catalog/7404/IMG_9839.HEIC",
-                          "/catalog/7404/IMG_9840.HEIC",
-                          "/catalog/7404/IMG_9841.HEIC",
-                          "/catalog/7404/IMG_9842.HEIC",
-                          "/catalog/7404/IMG_9843.HEIC",
-                          "/catalog/7404/IMG_9844.HEIC",
-                          "/catalog/7404/IMG_9845.HEIC",
-                          "/catalog/7404/IMG_9846.HEIC",
-                          "/catalog/7404/IMG_9847.HEIC"
+      "/catalog/7404/photo_6219941569457407424_y.jpg",
+      "/catalog/7404/photo_6219941569457407425_y.jpg",
+      "/catalog/7404/photo_6219941569457407426_y.jpg",
+      "/catalog/7404/photo_6219941569457407427_y.jpg",
+      "/catalog/7404/photo_6219941569457407428_y.jpg",
+      "/catalog/7404/photo_6219941569457407429_y.jpg",
+      "/catalog/7404/photo_6219941569457407430_y.jpg",
+      "/catalog/7404/photo_6219941569457407431_y.jpg",
+      "/catalog/7404/photo_6219941569457407432_y.jpg",
+      "/catalog/7404/photo_6219941569457407433_y.jpg",
+      "/catalog/7404/photo_6219941569457407434_y.jpg",
+      "/catalog/7404/photo_6219941569457407435_y.jpg",
+      "/catalog/7404/photo_6219941569457407436_y.jpg"
+        
     ],
 
     "transmission": "Automatic",
@@ -268,23 +265,22 @@
     "price": 23500000,
     "mileage": 41080,
     "images": [
-      "/catalog/9310/IMG_9815.HEIC",
-      "/catalog/9310/IMG_9816.HEIC",
-      "/catalog/9310/IMG_9817.HEIC",
-      "/catalog/9310/IMG_9818.HEIC",
-      "/catalog/9310/IMG_9819.HEIC",
-      "/catalog/9310/IMG_9820.HEIC",
-      "/catalog/9310/IMG_9821.HEIC",
-      "/catalog/9310/IMG_9822.HEIC",
-      "/catalog/9310/IMG_9823.HEIC",
-      "/catalog/9310/IMG_9824.HEIC",
-      "/catalog/9310/IMG_9825.HEIC",
-      "/catalog/9310/IMG_9826.HEIC",
-      "/catalog/9310/IMG_9827.HEIC",
-      "/catalog/9310/IMG_9828.HEIC",
-      "/catalog/9310/IMG_9829.HEIC",
-      "/catalog/9310/IMG_9830.HEIC",
-      "/catalog/9310/IMG_9831.HEIC"
+      "/catalog/9310/photo_6219941569457407441_y.jpg",
+      "/catalog/9310/photo_6219941569457407442_y.jpg",
+      "/catalog/9310/photo_6219941569457407443_y.jpg",
+      "/catalog/9310/photo_6219941569457407444_y.jpg",
+      "/catalog/9310/photo_6219941569457407445_y.jpg",
+      "/catalog/9310/photo_6219941569457407446_y.jpg",
+      "/catalog/9310/photo_6219941569457407447_y.jpg",
+      "/catalog/9310/photo_6219941569457407448_y.jpg",
+      "/catalog/9310/photo_6219941569457407449_y.jpg",
+      "/catalog/9310/photo_6219941569457407450_y.jpg",
+      "/catalog/9310/photo_6219941569457407451_y.jpg",
+      "/catalog/9310/photo_6219941569457407452_y.jpg",
+      "/catalog/9310/photo_6219941569457407453_y.jpg",
+      "/catalog/9310/photo_6219941569457407454_y.jpg",
+      "/catalog/9310/photo_6219941569457407455_y.jpg"
+      
 
     ],
 
