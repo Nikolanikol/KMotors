@@ -231,5 +231,95 @@
 
     "transmission": "Automatic",
     "fuel": "--"
+  },
+   {
+    "id": "7404",
+    "brand": "Hyundai",
+    "model": "CN7",
+    "year": 2024.04,
+    "price": 25700000,
+    "mileage": 19016,
+    "images": [
+      "/catalog/7404/IMG_9833.HEIC",
+          "/catalog/7404/IMG_9834.HEIC",    
+                "/catalog/7404/IMG_9835.HEIC",
+              "/catalog/7404/IMG_9836.HEIC",
+                    "/catalog/7404/IMG_9837.HEIC",
+                          "/catalog/7404/IMG_9838.HEIC",
+                          "/catalog/7404/IMG_9839.HEIC",
+                          "/catalog/7404/IMG_9840.HEIC",
+                          "/catalog/7404/IMG_9841.HEIC",
+                          "/catalog/7404/IMG_9842.HEIC",
+                          "/catalog/7404/IMG_9843.HEIC",
+                          "/catalog/7404/IMG_9844.HEIC",
+                          "/catalog/7404/IMG_9845.HEIC",
+                          "/catalog/7404/IMG_9846.HEIC",
+                          "/catalog/7404/IMG_9847.HEIC"
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+     {
+    "id": "9310",
+    "brand": "Hyundai",
+    "model": "CN7",
+    "year": 2022.04,
+    "price": 23500000,
+    "mileage": 41080,
+    "images": [
+      "/catalog/9310/IMG_9815.HEIC",
+      "/catalog/9310/IMG_9816.HEIC",
+      "/catalog/9310/IMG_9817.HEIC",
+      "/catalog/9310/IMG_9818.HEIC",
+      "/catalog/9310/IMG_9819.HEIC",
+      "/catalog/9310/IMG_9820.HEIC",
+      "/catalog/9310/IMG_9821.HEIC",
+      "/catalog/9310/IMG_9822.HEIC",
+      "/catalog/9310/IMG_9823.HEIC",
+      "/catalog/9310/IMG_9824.HEIC",
+      "/catalog/9310/IMG_9825.HEIC",
+      "/catalog/9310/IMG_9826.HEIC",
+      "/catalog/9310/IMG_9827.HEIC",
+      "/catalog/9310/IMG_9828.HEIC",
+      "/catalog/9310/IMG_9829.HEIC",
+      "/catalog/9310/IMG_9830.HEIC",
+      "/catalog/9310/IMG_9831.HEIC"
+
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
+  },
+     {
+    "id": "3238",
+    "brand": "Hyundai",
+    "model": "Nexo",
+    "year": 2022.10,
+    "price": 29000000,
+    "mileage": 11541,
+    "images": [
+      "/catalog/3238/photo_6309549503673388021_y.jpg",
+      "/catalog/3238/photo_6309549503673388022_y.jpg",
+      "/catalog/3238/photo_6309549503673388023_y.jpg",
+      "/catalog/3238/photo_6309549503673388024_y.jpg",
+      "/catalog/3238/photo_6309549503673388025_y.jpg",
+      "/catalog/3238/photo_6309549503673388026_y.jpg",
+      "/catalog/3238/photo_6309549503673388027_y.jpg",
+      "/catalog/3238/photo_6309549503673388028_y.jpg",
+      "/catalog/3238/photo_6309549503673388029_y.jpg",
+      "/catalog/3238/photo_6309549503673388030_y.jpg",
+      "/catalog/3238/photo_6309549503673388031_y.jpg",
+      "/catalog/3238/photo_6309549503673388032_y.jpg",
+      "/catalog/3238/photo_6309549503673388033_y.jpg",
+      "/catalog/3238/photo_6309549503673388034_y.jpg",
+      "/catalog/3238/photo_6309549503673388035_y.jpg",
+      "/catalog/3238/photo_6309549503673388036_y.jpg"
+
+
+    ],
+
+    "transmission": "Automatic",
+    "fuel": "--"
   }
 ]
