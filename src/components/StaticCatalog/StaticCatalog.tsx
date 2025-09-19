@@ -18,7 +18,7 @@ export default function StaticCatalog() {
     fuel: string;
   }
   const [cars, setCars] = useState<Car[]>([]);
-  const [isFormVisible, setIsFormVisible] = useState(false);
+  //   const [isFormVisible, setIsFormVisible] = useState(false);
   useEffect(() => {
     fetch("/data/cars.json")
       .then((res) => res.json())

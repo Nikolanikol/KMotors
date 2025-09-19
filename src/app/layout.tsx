@@ -35,10 +35,10 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <head>
-        <link
+        {/* <link
           href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
           rel="stylesheet"
-        />
+        /> */}
 
         <link
           rel="icon"

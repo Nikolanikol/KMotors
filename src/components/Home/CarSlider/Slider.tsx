@@ -1,7 +1,7 @@
 "use client";
 
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
@@ -32,7 +32,7 @@ export default function AutoSlider({ data }: { data: ICar[] }) {
     >
       {data &&
         data.map((item, i) => (
-          <SwiperSlide className="h-[400px]">
+          <SwiperSlide key={i} className="h-[400px]">
             {" "}
             <CarCard
               id={item.Id}

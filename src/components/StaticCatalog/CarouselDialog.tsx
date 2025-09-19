@@ -21,42 +21,42 @@ export default function CarouselDialog({
 }) {
   const [visible, setVisible] = useState(isVisible);
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  //   const [loading, setLoading] = useState(false);
+  //   const [success, setSuccess] = useState(false);
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    message: "",
-    method: "",
-  });
+  //   const [form, setForm] = useState({
+  //     name: "",
+  //     phone: "",
+  //     email: "",
+  //     message: "",
+  //     method: "",
+  //   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  //   const handleChange = (
+  //     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  //   ) => {
+  //     setForm({ ...form, [e.target.name]: e.target.value });
+  //   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setSuccess(false);
+  //   const handleSubmit = async (e: React.FormEvent) => {
+  //     e.preventDefault();
+  //     setLoading(true);
+  //     setSuccess(false);
 
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+  //     const res = await fetch("/api/contact", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(form),
+  //     });
 
-    setLoading(false);
-    if (res.ok) {
-      setSuccess(true);
-      setForm({ name: "", phone: "", email: "", message: "", method: "" });
-    } else {
-      alert("Ошибка при отправке");
-    }
-  };
+  //     setLoading(false);
+  //     if (res.ok) {
+  //       setSuccess(true);
+  //       setForm({ name: "", phone: "", email: "", message: "", method: "" });
+  //     } else {
+  //       alert("Ошибка при отправке");
+  //     }
+  //   };
 
   return (
     <div className="max-w-md ">

@@ -1,8 +1,8 @@
 import { FC } from "react";
-import { Button, SlidingButton } from "../ui/button";
+
 import { Card } from "../ui/card";
 import StaticCatalogForm from "./StaticCatalogForm";
-import Image from "next/image";
+
 import CarouselDialog from "./CarouselDialog";
 
 interface CarCardProps {

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import React from "react";
-import { Button, SlidingButton } from "../ui/button";
-import clsx from "clsx";
+import { SlidingButton } from "../ui/button";
 
 const Main = () => {
   return (

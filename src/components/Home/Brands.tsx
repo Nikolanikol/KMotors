@@ -1,13 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+
 import Image, { StaticImageData } from "next/image";
 import kia from "./logo/kia.webp";
 import audi from "./logo/audi.webp";
@@ -21,7 +15,7 @@ import ssangyong from "./logo/ssangyong.webp";
 import renaultSamsung from "./logo/renault-samsung.webp";
 import Link from "next/link";
 
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 const Brands = () => {
   const logoArray: { logo: StaticImageData; name: string; action: string }[] = [
@@ -74,7 +68,6 @@ const Brands = () => {
     },
   ];
 
-  kia;
   return (
     <div className="h-[70vh] bg-gradient-orange pt-10">
       <div className="flex flex-col justify-center gap-30">
