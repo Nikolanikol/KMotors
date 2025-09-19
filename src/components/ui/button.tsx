@@ -72,7 +72,7 @@ const SlidingButton: React.FC<SlidingButtonProps> = ({
   return (
     <button
       className={clsx(
-        "relative cursor-pointer overflow-hidden group w-48 h-12 rounded-md text-white font-semibold",
+        "relative cursor-pointer overflow-hidden group w-40  h-12 rounded-md text-white font-semibold",
         className
       )}
       {...props} // ← здесь передаются все остальные пропсы
@@ -84,7 +84,7 @@ const SlidingButton: React.FC<SlidingButtonProps> = ({
       <div className="absolute inset-0 bg-orange-500 transition-transform duration-300 ease-in-out group-hover:translate-x-full" />
 
       {/* Текст поверх слоёв */}
-      <span className="relative z-10">{children}</span>
+      <div className="relative z-10">{children}</div>
     </button>
   );
 };

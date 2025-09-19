@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import Script from "next/script";
+
 export const metadata: Metadata = {
   title: "Корейские автомобили Hyundai, Kia, Genesis — каталог моделей и цены",
   description:
