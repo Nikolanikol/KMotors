@@ -40,12 +40,14 @@ const CarCard = ({
       </div>
       <div className="text-wrapper px-5">
         <div className="py-3 ">
-          <h3 className="heading-3">{translateGenerationRow(model, t)}</h3>
-          <h4 className="opacity-20-">
+          <h3 className="heading-3 line-clamp-1">
+            {translateGenerationRow(model, t)}
+          </h3>
+          <h4 className="opacity-20 ">
             {translateGenerationRow(manufacture, t)}
           </h4>
         </div>
-        <div className="icon-row py-4 flex gap-5 justify-around border-t-2 border-b-2">
+        <div className="icon-row py-4 flex gap-5 justify-around border-t-2 border-b-2 h-[105px] ">
           <div className="flex flex-col items-center">
             <Fuel className="w-5 h-5 " />
             <p>{convertNumberKm(mileage)} км</p>

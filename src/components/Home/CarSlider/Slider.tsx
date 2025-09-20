@@ -21,7 +21,7 @@ export default function AutoSlider({ data }: { data: ICar[] }) {
       pagination={{ clickable: true }}
       navigation={true}
       loop={true}
-      className="py-10 px5 h-[570px]"
+      className="py-10 px5 h-[570px] text-center"
       initialSlide={0}
       breakpoints={{
         320: { slidesPerView: 1 },
@@ -32,7 +32,7 @@ export default function AutoSlider({ data }: { data: ICar[] }) {
     >
       {data &&
         data.map((item, i) => (
-          <SwiperSlide key={i} className="h-[400px]">
+          <SwiperSlide key={i} className="h-[400px] ">
             {" "}
             <CarCard
               id={item.Id}

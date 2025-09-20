@@ -19,7 +19,7 @@ const CarSlider = async ({ reqString, title }: CarSliderProps) => {
 
   return (
     <div className="px-4 py-2  min-h-80">
-      <h2 className="text-lg ml-20 font-bold mb-2 heading-2">{title}</h2>
+      <h2 className="text-lg md:ml-20  font-bold mb-2 heading-2">{title}</h2>
       <div className="flex  overflow-x-scroll py-10 gap-5">
         <AutoSlider data={data} />
       </div>

@@ -5,9 +5,9 @@ const nextConfig: NextConfig = {
   images: {
     domains: ["ci.encar.com"],
   },
-    eslint: {
-    ignoreDuringBuilds: true,
-  },
+//     eslint: {
+//     ignoreDuringBuilds: true,
+//   },
 };
 
 export default nextConfig;
