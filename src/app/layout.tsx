@@ -39,7 +39,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
           rel="stylesheet"
         /> */}
-
+        <link rel="canonical" href="https://www.kmotors.shop/" />
         <link
           rel="icon"
           type="image/png"
