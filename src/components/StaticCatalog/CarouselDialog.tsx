@@ -11,6 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Image from "next/image";
 
 export default function CarouselDialog({
   images,
@@ -64,7 +65,7 @@ export default function CarouselDialog({
         className="w-full h-full"
         onClick={() => setVisible(!visible)}
       >
-        <img src={images[0]} alt="car image" />
+        <Image src={images[0]} alt="car image" />
         {/* {visible ? "Скрыть форму" : "показать галерею"} */}
       </SlidingButton>
 
@@ -79,7 +80,7 @@ export default function CarouselDialog({
                     key={index}
                     className="flex justify-center items-center "
                   >
-                    <img
+                    <Image
                       className="w-auto h-auto min-h-[70vh] min-w-[90vw]: max-h-[400px] object-contain"
                       src={img}
                       alt={`car image ${index + 1}`}

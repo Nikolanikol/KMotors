@@ -1,5 +1,5 @@
 module.exports = {
-  siteUrl: "https://kmotors.vercel.app/",
+  siteUrl: "https://kmotors.shop//",
   generateRobotsTxt: true,
   changefreq: "weekly",
   priority: 0.7,

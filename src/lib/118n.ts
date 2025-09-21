@@ -1,6 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-
+import enTranslation from '../locales/en/translation.json';
 i18n
   .use(initReactI18next)
   .init({
@@ -12,7 +12,7 @@ i18n
     //     translation: require('../../locales/kor/translation.json'),
     //   },
       en: {
-        translation: require('../locales/en/translation.json'),
+        translation:enTranslation ,
       },
     },
     interpolation: {
