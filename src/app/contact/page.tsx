@@ -1,4 +1,3 @@
-"use client";
 import ContactForm from "@/components/Contact/Form";
 
 import React from "react";

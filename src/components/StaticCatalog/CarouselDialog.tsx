@@ -65,7 +65,7 @@ export default function CarouselDialog({
         className="w-full h-full"
         onClick={() => setVisible(!visible)}
       >
-        <Image src={images[0]} alt="car image" />
+        <Image src={images[0]} alt="car image" width={350} height={200} />
         {/* {visible ? "Скрыть форму" : "показать галерею"} */}
       </SlidingButton>
 

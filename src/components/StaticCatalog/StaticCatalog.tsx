@@ -1,9 +1,8 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import fs from "fs/promises";
+import path from "path";
 import CarCard from "./CarCard";
 
-export default function StaticCatalog() {
+export default async function StaticCatalog() {
   interface Car {
     id: string;
     brand: string;
@@ -17,14 +16,18 @@ export default function StaticCatalog() {
     transmission: string;
     fuel: string;
   }
-  const [cars, setCars] = useState<Car[]>([]);
+  //   const [cars, setCars] = useState<Car[]>([]);
   //   const [isFormVisible, setIsFormVisible] = useState(false);
-  useEffect(() => {
-    fetch("/data/cars.json")
-      .then((res) => res.json())
-      .then((data) => setCars(data))
-      .then((res) => console.log(res));
-  }, []);
+  //   useEffect(() => {
+  //     fetch("/data/cars.json")
+  //       .then((res) => res.json())
+  //       .then((data) => setCars(data))
+  //       .then((res) => console.log(res));
+  //   }, []);
+  // Читаем JSON-файл на этапе сборки
+  const filePath = path.join(process.cwd(), "public/data/cars.json");
+  const fileContent = await fs.readFile(filePath, "utf-8");
+  const cars: Car[] = JSON.parse(fileContent);
 
   return (
     <div className="container shadow-2xl py-4 px-6 min-h-screen rounded-2xl mx-auto p-2">
@@ -36,3 +39,4 @@ export default function StaticCatalog() {
     </div>
   );
 }
+export const dynamic = "force-static";

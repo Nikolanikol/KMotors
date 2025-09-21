@@ -26,10 +26,7 @@ const CarCard: FC<CarCardProps> = ({ item }) => {
       key={item.id}
       className=" border-1 border-black overflow-hidden col-span-1  "
     >
-      <div
-        onClick={() => console.log("click")}
-        className=" overflow-hidden h-48 flex justify-center items-center hover:scale-105 transition-all duration-300 cursor-pointer"
-      >
+      <div className=" overflow-hidden h-48 flex justify-center items-center hover:scale-105 transition-all duration-300 cursor-pointer">
         <div className="">
           <CarouselDialog images={item.images} />
 
