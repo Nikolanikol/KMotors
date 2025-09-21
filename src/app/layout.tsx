@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     locale: "ru_RU",
     type: "website",
   },
+  other: {
+    "yandex-verification": "f71551035d1c4fbb", // 👈 мета-тег для Яндекса
+  },
 };
 
 export default function RootLayout({
