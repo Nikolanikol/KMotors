@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 async function getCars(query) {
+  let flag: "loading" | "loaded" | "error" = "loading";
+
   try {
     const res = await fetch(
       `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C%7C20
@@ -8,17 +10,27 @@ async function getCars(query) {
     );
     const data = await res.json();
     console.log(data);
-    return data;
+    return {
+      data,
+      flag: "loaded",
+    };
   } catch (error) {
     console.log(error);
+    return {
+      flag: "error",
+    };
   }
 }
 const CarsRow = async ({ searchParams }) => {
-  const action = searchParams.action;
-  console.log("Параметр action:", action);
+  let action = "";
+  if (searchParams.action) {
+    action = searchParams.action;
+  } else {
+    action = "(And.Hidden.N._.CarType.Y.)";
+  }
 
-  const data = await getCars(action);
-  console.log(data);
+  const { data, flag } = await getCars(action);
+
   return (
     <div>
       <h1>Каталог</h1>

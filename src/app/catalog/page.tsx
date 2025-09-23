@@ -54,6 +54,7 @@ import { Car } from "lucide-react";
 
 async function getFilter() {
   const query = "(And.Hidden.N._.CarType.Y.)";
+
   try {
     const res = await fetch(
       `https://encar-proxy-main.onrender.com/api/nav?count=true&q=(And.Hidden.N._.CarType.Y.)&inav=%7CMetadata%7CSort`,
@@ -74,11 +75,13 @@ async function getFilter() {
 }
 export default async function ({ searchParams }) {
   const filterData = await getFilter();
+
   return (
     <div>
       <div>
         <Filter filterData={filterData} />
       </div>
+
       <div>
         <CarsRow searchParams={searchParams} />
       </div>

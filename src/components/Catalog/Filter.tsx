@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { SlidingButton } from "../ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 async function getFilter() {
   const query = "(And.Hidden.N._.CarType.Y.)";
   try {
@@ -26,11 +27,15 @@ async function getFilter() {
 const Filter = ({ filterData }) => {
   const router = useRouter();
   const params = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   const handleChange = (key: string, value: string) => {
     const newParams = new URLSearchParams(params.toString());
     newParams.set(key, value);
-    router.push(`/catalog?${newParams.toString()}`);
+    startTransition(() => {
+      router.push(`/catalog?${newParams.toString()}`);
+    });
   };
+  console.log(filterData);
   return (
     <div className="flex flex-row gap-3">
       Filter
@@ -42,6 +47,9 @@ const Filter = ({ filterData }) => {
           {item.Value}
         </SlidingButton>
       ))}
+      {isPending && (
+        <div className="mt-4 animate-pulse text-gray-500">⏳ Обновляем...</div>
+      )}
     </div>
   );
 };
