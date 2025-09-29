@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
@@ -24,28 +24,28 @@ import {
 
 const Filter = ({}) => {
   const router = useRouter();
-  const params = useSearchParams();
+
   const [isPending, startTransition] = useTransition();
   ///Filters
   const [manufactureAction, setManufactureAction] = useState<string | null>(
     null
   );
   const [modelActionDrill, setModelActionDrill] = useState<string | null>(null);
-  const [action, setAction] = useState<string | null>(null);
-
+  const [action, setA] = useState<string | null>(null);
+  const setAction = (value: string) => {
+    setA(value);
+    localStorage.setItem("action", value);
+  };
   const handleAction = (value: string) => {
     // setManufactureAction(value);
-
-    const newParams = new URLSearchParams(params.toString());
-    newParams.set("action", value);
     startTransition(() => {
-      router.push(`/catalog?${newParams.toString()}`);
+      router.push(`/catalog?action=${value}&page=1`);
     });
   };
 
   return (
     <div className="flex flex-col gap-2">
-      <h2>Filter</h2>
+      <h2>Производитель</h2>
 
       <Select
         value={manufactureAction}
@@ -104,9 +104,15 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
 }) => {
   const [data, setData] = useState<ModelsResponce[]>([]);
   const [modelAction, setModelAction] = useState<string | null>(null);
+  const prevActionRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (action != null) {
       fetchModels(action).then((res) => setData(res));
+      prevActionRef.current = action;
+    }
+    if (prevActionRef.current != action) {
+      setModelAction(null);
     }
   }, [action]);
 
@@ -150,11 +156,17 @@ interface GenerationRowProps {
 const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
   const [GenerationAction, setGenerationAction] = useState<string | null>(null);
   const [data, setData] = useState<GenerationResponce[]>([]);
+  const prevActionRef = useRef<string | null>(null);
   useEffect(() => {
     if (action != null) {
       fetchGeneration(action).then((res) => setData(res));
+      prevActionRef.current = action;
+    }
+    if (prevActionRef.current != action) {
+      setGenerationAction(null);
     }
   }, [action]);
+
   return (
     <div>
       <h2>Поколение</h2>

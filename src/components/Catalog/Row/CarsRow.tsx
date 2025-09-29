@@ -1,4 +1,6 @@
+import { count } from "console";
 import Link from "next/link";
+import { Pagintaion } from "./Pagintaion";
 
 async function getCars(query: string, offset: string = "0") {
   try {
@@ -24,30 +26,33 @@ async function getCars(query: string, offset: string = "0") {
 
     const fallbackData = await fallbackRes.json();
     // console.log("no ok");
-    // console.log(fallbackData);
+    console.log(fallbackData);
 
-    return fallbackData.SearchResults;
+    return {
+      data: fallbackData.SearchResults,
+      count: fallbackData.Count,
+    };
   }
 }
 const CarsRow = async ({ searchParams }) => {
-  let action = "";
-  let offset = "0";
   const params = await searchParams;
+  let action = params.action ? params.action : "(And.Hidden.N._.CarType.Y.)";
+  let offset = params.page ? (params.page - 1) * 20 : "0";
 
-  if (params.action) {
-    action = params.action;
-  } else {
-    action = "(And.Hidden.N._.CarType.Y.)";
+  const { data, count } = await getCars(action, offset);
+  let arr = [];
+  for (let i = 0; i < count; i = i + 20) {
+    arr.push(i);
   }
-  if (params.offset) {
-    offset = params.offset;
-  }
-  //   console.log(action, "action");
-  const data = await getCars(action, offset);
 
   return (
     <div>
       <h1>Каталог</h1>
+      <div>
+        <div className="flex gap-2 mt-4">
+          <Pagintaion count={count} />
+        </div>
+      </div>
       {data.map((item) => (
         <div key={item.Id}>
           <div className=" border-1 border-black overflow-hidden col-span-1  ">
