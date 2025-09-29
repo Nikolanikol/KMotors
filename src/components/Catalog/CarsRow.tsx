@@ -1,45 +1,56 @@
 import Link from "next/link";
 
-async function getCars(query) {
-  let flag: "loading" | "loaded" | "error" = "loading";
-
+async function getCars(query: string, offset: string = "0") {
   try {
     const res = await fetch(
-      `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C%7C20
-`
+      `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20
+`,
+      {
+        headers: {
+          "user-agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        },
+      }
     );
     const data = await res.json();
-    console.log(data);
-    return {
-      data,
-      flag: "loaded",
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      flag: "error",
-    };
+    // console.log("ok");
+    // console.log(data);
+    return data.SearchResults;
+  } catch {
+    const fallbackRes = await fetch(
+      `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20
+`
+    );
+
+    const fallbackData = await fallbackRes.json();
+    // console.log("no ok");
+    // console.log(fallbackData);
+
+    return fallbackData.SearchResults;
   }
 }
 const CarsRow = async ({ searchParams }) => {
   let action = "";
-  if (searchParams.action) {
-    action = searchParams.action;
+  let offset = "0";
+  const params = await searchParams;
+
+  if (params.action) {
+    action = params.action;
   } else {
     action = "(And.Hidden.N._.CarType.Y.)";
   }
-
-  const { data, flag } = await getCars(action);
+  if (params.offset) {
+    offset = params.offset;
+  }
+  //   console.log(action, "action");
+  const data = await getCars(action, offset);
 
   return (
     <div>
       <h1>Каталог</h1>
-      {data.SearchResults.map((item, i) => (
-        <div key={i.Id}>
-          <div
-            key={item.Id}
-            className=" border-1 border-black overflow-hidden col-span-1  "
-          >
+      {data.map((item) => (
+        <div key={item.Id}>
+          <div className=" border-1 border-black overflow-hidden col-span-1  ">
             <div className="overflow-hidden h-50  flex justify-center items-center relative">
               <img
                 src={"https://ci.encar.com" + item.Photos[0]?.location}
