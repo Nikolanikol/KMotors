@@ -17,7 +17,7 @@ import {
 
 const priceOptions = generateNumbersArray(0, 200000, 10000);
 
-const MyFilterMileage = () => {
+const MyFilterMileage = ({ setMileage }) => {
   const [value, setValue] = useState([0, 200000]);
 
   //////////////
@@ -33,7 +33,9 @@ const MyFilterMileage = () => {
   const handleminPriceChange = (string: string) => {
     const newminPrice = Number(string);
     setMinPrice(newminPrice);
-
+    setMileage((state) => {
+      return { ...state, minMileage: newminPrice };
+    });
     if (newminPrice > maxPrice) {
       setMaxPrice(newminPrice);
     }
@@ -41,7 +43,9 @@ const MyFilterMileage = () => {
   const handlemaxPriceChange = (string: string) => {
     const newmaxPrice = Number(string);
     setMaxPrice(newmaxPrice);
-
+    setMileage((state) => {
+      return { ...state, maxMileage: newmaxPrice };
+    });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);
     }

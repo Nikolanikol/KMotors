@@ -41,13 +41,17 @@ const Filter = ({}) => {
 
     startTransition(() => {
       router.push(
-        `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}`
+        `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}`
       );
     });
   };
   /////////////////////////////////
-  const [price, setPrice] = useState({ minPrice: null, maxPrice: null });
-
+  const [price, setPrice] = useState({ minPrice: "", maxPrice: "" });
+  const [mileage, setMileage] = useState({
+    minMileage: "",
+    maxMileage: "",
+  });
+  const [year, setYear] = useState({ minYear: "", maxYear: "" });
   return (
     <div className="flex flex-col gap-2">
       <h2>Производитель</h2>
@@ -84,12 +88,10 @@ const Filter = ({}) => {
 
       <div>------------------</div>
       <MyFilterPrice setPrice={setPrice} />
-      <MyFilterMileage />
-      <MyFilterYear />
+      <MyFilterMileage setMileage={setMileage} />
+      <MyFilterYear setYear={setYear} />
       {/* ///////////////////////////// */}
-      <Button disabled={action == null} onClick={() => handleAction(action)}>
-        Показать
-      </Button>
+      <Button onClick={() => handleAction(action)}>Показать</Button>
       {isPending && (
         <div className="top-0 left-0 bottom-0 right-0 z-20 absolute bg-gray-300 opacity-30 border-2 border-black">
           ⏳ Обновляем...

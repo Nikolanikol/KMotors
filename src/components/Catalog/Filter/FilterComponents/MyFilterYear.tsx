@@ -13,7 +13,7 @@ import {
 import { generateNumbersArray } from "@/utils/generateNumbersArray";
 
 const priceOptions = generateNumbersArray(1980, 2025, 1);
-const MyFilterYear = () => {
+const MyFilterYear = ({ setYear }) => {
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -28,7 +28,9 @@ const MyFilterYear = () => {
   const handleminPriceChange = (string: string) => {
     const newminPrice = Number(string);
     setMinPrice(newminPrice);
-
+    setYear((state) => {
+      return { ...state, minYear: newminPrice };
+    });
     if (newminPrice > maxPrice) {
       setMaxPrice(newminPrice);
     }
@@ -36,7 +38,9 @@ const MyFilterYear = () => {
   const handlemaxPriceChange = (number: string) => {
     const newmaxPrice = Number(number);
     setMaxPrice(newmaxPrice);
-
+    setYear((state) => {
+      return { ...state, maxYear: newmaxPrice };
+    });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);
     }

@@ -1,6 +1,6 @@
-import { count } from "console";
 import Link from "next/link";
 import { Pagintaion } from "./Pagintaion";
+import { generateFilterQuery } from "./utils";
 
 async function getCars(query: string, offset: string = "0") {
   try {
@@ -25,7 +25,7 @@ async function getCars(query: string, offset: string = "0") {
     );
 
     const fallbackData = await fallbackRes.json();
-    // console.log("no ok");
+
     console.log(fallbackData);
 
     return {
@@ -36,15 +36,25 @@ async function getCars(query: string, offset: string = "0") {
 }
 const CarsRow = async ({ searchParams }) => {
   const params = await searchParams;
-  let action = params.action ? params.action : "(And.Hidden.N._.CarType.Y.)";
-  let offset = params.page ? (params.page - 1) * 20 : "0";
-  let minPrice = params.priceMin ? params.priceMin : "0";
-  let maxPrice = params.priceMax ? params.priceMax : "1000000";
-  const { data, count } = await getCars(action, offset);
-  let arr = [];
-  for (let i = 0; i < count; i = i + 20) {
-    arr.push(i);
-  }
+  const action = params.action ? params.action : "(And.Hidden.N._.CarType.Y.)";
+  const offset = params.page ? (params.page - 1) * 20 : "0";
+  /*************  ✨ Windsurf Command 🌟  *************/
+  const filters = {
+    minPrice: params.priceMin ?? "0",
+    maxPrice: params.priceMax ?? "1000000",
+    minMileage: params.mileageMin ?? "0",
+    maxMileage: params.mileageMax ?? "1000000",
+    minYear: params.yearMin ?? "",
+    maxYear: params.yearMax ?? "2030",
+  };
+
+  const string = generateFilterQuery(filters);
+  const newString =
+    action.slice(0, action.length - 1) +
+    string +
+    action.slice(action.length - 1);
+  console.log(string);
+  const { data, count } = await getCars(newString, offset);
 
   return (
     <div>
@@ -54,59 +64,61 @@ const CarsRow = async ({ searchParams }) => {
           <Pagintaion count={count} />
         </div>
       </div>
-      {data.map((item) => (
-        <div key={item.Id}>
-          <div className=" border-1 border-black overflow-hidden col-span-1  ">
-            <div className="overflow-hidden h-50  flex justify-center items-center relative">
-              <img
-                src={"https://ci.encar.com" + item.Photos[0]?.location}
-                alt=""
-              />
-            </div>
-            <div className="flex flex-col gap-2 ">
-              <div className="text-2xs font-bold border-b-2 h-24  pt-2 px-2 text-center">
-                {" "}
-                <span>
-                  {item.Manufacturer} {item.Model} {item.Badge}{" "}
-                  {item.Transmission}
-                </span>
+      {data &&
+        data.length > 0 &&
+        data.map((item) => (
+          <div key={item.Id}>
+            <div className=" border-1 border-black overflow-hidden col-span-1  ">
+              <div className="overflow-hidden h-50  flex justify-center items-center relative">
+                <img
+                  src={"https://ci.encar.com" + item.Photos[0]?.location}
+                  alt=""
+                />
               </div>
-              <div className="flex justify-evenly">
-                <span>Год:</span>
-                <span>{item.Year} </span>
-                <span>
-                  Пробег: {item.Mileage && item.Mileage.toLocaleString("ru-RU")}{" "}
-                  км
-                </span>
-              </div>
+              <div className="flex flex-col gap-2 ">
+                <div className="text-2xs font-bold border-b-2 h-24  pt-2 px-2 text-center">
+                  {" "}
+                  <span>
+                    {item.Manufacturer} {item.Model} {item.Badge}{" "}
+                    {item.Transmission}
+                  </span>
+                </div>
+                <div className="flex justify-evenly">
+                  <span>Год:</span>
+                  <span>{item.Year} </span>
+                  <span>
+                    Пробег:{" "}
+                    {item.Mileage && item.Mileage.toLocaleString("ru-RU")} км
+                  </span>
+                </div>
 
-              <div className="flex justify-evenly">
-                <span>Цена:</span>
-                <span>{item.Price} вон</span>
-              </div>
-              <div className="flex justify-evenly h-12">
-                <span>Тип топлива:</span>
+                <div className="flex justify-evenly">
+                  <span>Цена:</span>
+                  <span>{item.Price} вон</span>
+                </div>
+                <div className="flex justify-evenly h-12">
+                  <span>Тип топлива:</span>
 
-                <span>{item.FuelType}</span>
-              </div>
-              <div>
-                <button
-                  className="cursor-pointer self-stretch w-full mt-auto"
-                  variant={"outline"}
-                >
-                  <Link
-                    target="_blank"
-                    href={`/car/${item.Id}`}
-                    className=" w-full"
+                  <span>{item.FuelType}</span>
+                </div>
+                <div>
+                  <button
+                    className="cursor-pointer self-stretch w-full mt-auto"
+                    variant={"outline"}
                   >
-                    Подробнеe
-                  </Link>
-                </button>
+                    <Link
+                      target="_blank"
+                      href={`/car/${item.Id}`}
+                      className=" w-full"
+                    >
+                      Подробнеe
+                    </Link>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 };
