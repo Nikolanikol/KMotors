@@ -1,0 +1,57 @@
+import React, { FC } from "react";
+import json from "./data.json";
+import { catalog } from "./data";
+import { FaCheck } from "react-icons/fa";
+
+interface OptionsRowProps {
+  data: {
+    choice: string[];
+    standard: string[];
+  };
+}
+
+const OptionsRow: FC<OptionsRowProps> = ({ data }) => {
+  //   console.log(json, "OptionsRow");
+  //   const newArr = json.map((item) => {
+  //     const value = item.DisplayValue;
+  //     const code = item.Metadata.Code[0];
+  //     return { value, code };
+  //   });
+
+  return (
+    <div>
+      {/* <div>
+        choice
+        {data.choice.map((item) => (
+          <p>{item}</p>
+        ))}
+      </div> */}
+      <div>
+        <div className="shadow-2xl rounded-2xl  px-8 py-5">
+          <h2 className="heading-3">Характеристики автомобиля</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 py-8">
+            {data.standard.map((item) => {
+              return catalog.map((i) => {
+                if (item == i.code) {
+                  return (
+                    <p
+                      key={i.code}
+                      className="flex justify-between gap-5 max-w-[400px]"
+                    >
+                      <span>{i.translatedValue}</span> <FaCheck />
+                    </p>
+                  );
+                }
+              });
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OptionsRow;
+
+// 1051 белая кожа
+// 1057 8 люймов дисплей

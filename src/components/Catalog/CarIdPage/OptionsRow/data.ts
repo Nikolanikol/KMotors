@@ -1,0 +1,248 @@
+export const catalog:{value: string, code: string, translatedValue: string}[] = [
+  { value: "선루프", code: "010", translatedValue: "Люк" },
+  { value: "헤드램프(HID)", code: "029", translatedValue: "Фары HID" },
+  { value: "헤드램프(LED)", code: "075", translatedValue: "Фары LED" },
+  {
+    value: "파워 전동 트렁크",
+    code: "059",
+    translatedValue: "Электропривод багажника",
+  },
+  {
+    value: "고스트 도어 클로징",
+    code: "080",
+    translatedValue: "Автозакрытие дверей (Ghost Closing)",
+  },
+  {
+    value: "전동접이 사이드 미러",
+    code: "024",
+    translatedValue: "Электроскладываемые зеркала",
+  },
+  { value: "알루미늄 휠", code: "017", translatedValue: "Алюминиевые диски" },
+  { value: "루프랙", code: "062", translatedValue: "Рейлинги на крыше" },
+  {
+    value: "열선 스티어링 휠",
+    code: "082",
+    translatedValue: "Рулевое колесо с подогревом",
+  },
+  {
+    value: "전동 조절 스티어링 휠",
+    code: "083",
+    translatedValue: "Электрорегулировка руля",
+  },
+  {
+    value: "패들 시프트",
+    code: "084",
+    translatedValue: "Подрулевые переключатели",
+  },
+  {
+    value: "스티어링 휠 리모컨",
+    code: "031",
+    translatedValue: "Кнопки управления на руле",
+  },
+  {
+    value: "ECM 룸미러",
+    code: "030",
+    translatedValue: "Зеркало с автоматическим затемнением (ECM)",
+  },
+  {
+    value: "하이패스",
+    code: "074",
+    translatedValue: "Система оплаты проезда (Hi-Pass)",
+  },
+  { value: "파워 도어록", code: "006", translatedValue: "Электрозамки дверей" },
+  {
+    value: "파워 스티어링 휠",
+    code: "008",
+    translatedValue: "Электроусилитель руля",
+  },
+  {
+    value: "파워 윈도우",
+    code: "007",
+    translatedValue: "Электростеклоподъёмники",
+  },
+  {
+    value: "에어백(운전석)",
+    code: "026",
+    translatedValue: "Подушка безопасности водителя",
+  },
+  {
+    value: "에어백(동승석)",
+    code: "027",
+    translatedValue: "Подушка безопасности пассажира",
+  },
+  {
+    value: "에어백(사이드)",
+    code: "020",
+    translatedValue: "Боковые подушки безопасности",
+  },
+  {
+    value: "에어백(커튼)",
+    code: "056",
+    translatedValue: "Шторки безопасности",
+  },
+  {
+    value: "브레이크 잠김 방지(ABS)",
+    code: "001",
+    translatedValue: "Антиблокировочная система (ABS)",
+  },
+  {
+    value: "미끄럼 방지(TCS)",
+    code: "019",
+    translatedValue: "Система против пробуксовки (TCS)",
+  },
+  {
+    value: "차체자세 제어장치(ESC)",
+    code: "055",
+    translatedValue: "Система стабилизации (ESC)",
+  },
+  {
+    value: "타이어 공기압센서(TPMS)",
+    code: "033",
+    translatedValue: "Датчик давления в шинах (TPMS)",
+  },
+  {
+    value: "차선이탈 경보 시스템(LDWS)",
+    code: "088",
+    translatedValue: "Система предупреждения о выходе из полосы (LDWS)",
+  },
+  {
+    value: "전자제어 서스펜션(ECS)",
+    code: "002",
+    translatedValue: "Электронно управляемая подвеска (ECS)",
+  },
+  {
+    value: "주차감지센서(전방)",
+    code: "085",
+    translatedValue: "Передние парковочные датчики",
+  },
+  {
+    value: "주차감지센서(후방)",
+    code: "032",
+    translatedValue: "Задние парковочные датчики",
+  },
+  {
+    value: "후측방 경보 시스템",
+    code: "086",
+    translatedValue: "Система контроля слепых зон",
+  },
+  { value: "후방 카메라", code: "058", translatedValue: "Камера заднего вида" },
+  {
+    value: "360도 어라운드 뷰",
+    code: "087",
+    translatedValue: "Камеры кругового обзора (360°)",
+  },
+  {
+    value: "크루즈 컨트롤(일반)",
+    code: "068",
+    translatedValue: "Обычный круиз-контроль",
+  },
+  {
+    value: "크루즈 컨트롤(어댑티브)",
+    code: "079",
+    translatedValue: "Адаптивный круиз-контроль",
+  },
+  {
+    value: "헤드업 디스플레이(HUD)",
+    code: "095",
+    translatedValue: "Проекционный дисплей (HUD)",
+  },
+  {
+    value: "전자식 주차브레이크(EPB)",
+    code: "094",
+    translatedValue: "Электронный стояночный тормоз (EPB)",
+  },
+  {
+    value: "자동 에어컨",
+    code: "023",
+    translatedValue: "Автоматический кондиционер",
+  },
+  { value: "스마트키", code: "057", translatedValue: "Смарт-ключ" },
+  {
+    value: "무선도어 잠금장치",
+    code: "015",
+    translatedValue: "Беспроводная блокировка дверей",
+  },
+  { value: "레인센서", code: "081", translatedValue: "Датчик дождя" },
+  {
+    value: "오토 라이트",
+    code: "097",
+    translatedValue: "Автоматическое освещение",
+  },
+  {
+    value: "커튼/블라인드(뒷좌석)",
+    code: "092",
+    translatedValue: "Шторки/жалюзи (задние сиденья)",
+  },
+  {
+    value: "커튼/블라인드(후방)",
+    code: "093",
+    translatedValue: "Шторки/жалюзи (заднее стекло)",
+  },
+  { value: "내비게이션", code: "005", translatedValue: "Навигация" },
+  {
+    value: "앞좌석 AV 모니터",
+    code: "004",
+    translatedValue: "AV-монитор передних сидений",
+  },
+  {
+    value: "뒷좌석 AV 모니터",
+    code: "054",
+    translatedValue: "AV-монитор задних сидений",
+  },
+  { value: "블루투스", code: "096", translatedValue: "Bluetooth" },
+  { value: "CD 플레이어", code: "003", translatedValue: "CD-проигрыватель" },
+  { value: "USB 단자", code: "072", translatedValue: "USB-порт" },
+  { value: "AUX 단자", code: "071", translatedValue: "AUX-порт" },
+  { value: "가죽시트", code: "014", translatedValue: "Кожаные сиденья" },
+  {
+    value: "전동시트(운전석)",
+    code: "021",
+    translatedValue: "Электросиденье водителя",
+  },
+  {
+    value: "전동시트(동승석)",
+    code: "035",
+    translatedValue: "Электросиденье пассажира",
+  },
+  {
+    value: "전동시트(뒷좌석)",
+    code: "089",
+    translatedValue: "Электросиденье заднего ряда",
+  },
+  {
+    value: "열선시트(앞좌석)",
+    code: "022",
+    translatedValue: "Подогрев передних сидений",
+  },
+  {
+    value: "열선시트(뒷좌석)",
+    code: "063",
+    translatedValue: "Подогрев задних сидений",
+  },
+  {
+    value: "메모리 시트(운전석)",
+    code: "051",
+    translatedValue: "Память сиденья водителя",
+  },
+  {
+    value: "메모리 시트(동승석)",
+    code: "078",
+    translatedValue: "Память сиденья пассажира",
+  },
+  {
+    value: "통풍시트(운전석)",
+    code: "034",
+    translatedValue: "Вентиляция сиденья водителя",
+  },
+  {
+    value: "통풍시트(동승석)",
+    code: "077",
+    translatedValue: "Вентиляция сиденья пассажира",
+  },
+  {
+    value: "통풍시트(뒷좌석)",
+    code: "090",
+    translatedValue: "Вентиляция задних сидений",
+  },
+  { value: "마사지 시트", code: "091", translatedValue: "Массажное сиденье" },
+];

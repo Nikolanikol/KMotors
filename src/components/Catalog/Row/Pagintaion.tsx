@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useTransition } from "react";
 import { Pagination } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
+import clsx from "clsx";
 export const Pagintaion = ({ count }: { count: number }) => {
   const router = useRouter();
   const params = useSearchParams();
@@ -22,16 +23,17 @@ export const Pagintaion = ({ count }: { count: number }) => {
   }, [count]);
   return (
     <div>
-      {isPending && (
-        <div className="top-0 left-0 bottom-0 right-0 z-20 absolute bg-gray-300 opacity-30 border-2 border-black">
-          ⏳ Обновляем...
+      {/* {isPending && (
+        <div className=" z-20 absolute bg-gray-300 opacity-30 border-2 border-black">
+          ⏳
         </div>
-      )}
+      )} */}
       <Pagination
         onChange={(e) => handlePageChange(e)}
         total={count}
         pageSize={20}
         current={currentPage}
+        className={clsx(isPending && "opacity-20")}
       />
     </div>
   );

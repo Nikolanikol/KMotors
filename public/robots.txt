@@ -7,4 +7,3 @@ Host: https://kmotors.shop//
 
 # Sitemaps
 Sitemap: https://kmotors.shop/sitemap.xml
-Sitemap: https://kmotors.shop/sitemap-0.xml

@@ -1,0 +1,38 @@
+/* .lg-outer{
+    background-color: #fff;
+    border-radius: 10%;
+    overflow: hidden;
+    box-shadow: #6969691f 20px 20px 20px;
+
+} */
+
+
+/* .lg-backdrop{
+    background-color: #fff;
+
+} */
+/* .lg-image{ */
+    /* width: 100%;
+    height: 100%; */
+/* } */
+.lg-thumb-outer{
+
+    background-color: #fff!important;
+    /* height: 200px;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap; */
+
+
+}
+/* 
+.lg-outer{
+    max-height: 1000px!important;
+}
+
+.lg-thumb {
+  overflow-x: hidden !important;
+  flex-wrap: wrap !important;
+  justify-content: center;
+}
+ */

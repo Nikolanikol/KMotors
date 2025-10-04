@@ -1,7 +1,6 @@
-// "use client";
-
 import Filter from "@/components/Catalog/Filter/Filter";
 import CarsRow from "@/components/Catalog/Row/CarsRow";
+import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 
 //MY proxy string
 // https://proxy-8mpk.onrender.com/proxy?url=https
@@ -26,8 +25,9 @@ const fetchCatalog = async (query: string = "(And.Hidden.N._.CarType.Y.)") => {
       .then((data) => data.json())
       .then((res) => {
         const data = res.iNav.Nodes.find(
-          (i) => i.DisplayName === "국산여부"
-        ).Facets.find((i) => i.IsSelected === true).Refinements.Nodes[0].Facets;
+          (i: any) => i.DisplayName === "국산여부"
+        ).Facets.find((i: any) => i.IsSelected === true).Refinements.Nodes[0]
+          .Facets;
 
         return data;
       });
@@ -41,8 +41,8 @@ const fetchCatalog = async (query: string = "(And.Hidden.N._.CarType.Y.)") => {
 
         .then((res) => {
           const data = res.iNav.Nodes.find(
-            (i) => i.DisplayName === "국산여부"
-          ).Facets.find((i) => i.IsSelected === true).Refinements.Nodes[0]
+            (i: any) => i.DisplayName === "국산여부"
+          ).Facets.find((i: any) => i.IsSelected === true).Refinements.Nodes[0]
             .Facets;
           //   console.log(data);
           return data;
@@ -52,17 +52,21 @@ const fetchCatalog = async (query: string = "(And.Hidden.N._.CarType.Y.)") => {
 
   // .catch(()=>{
 };
-export default async function ({ searchParams }) {
-  const filterData = await fetchCatalog(searchParams);
+export default async function ({
+  searchParams,
+}: {
+  searchParams: CarSearchParams;
+}) {
+  //   const filterData = await fetchCatalog(searchParams);
 
   //   console.log(filterData); // filter data
   return (
-    <div className="grid grid-cols-6 gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-2 h-full m-0 mx-auto">
       {/* каталога */}
-      <div className="col-span-2 border-2 border-amber-800">
+      <div className="col-span-1 lg:col-span-4 h-ful px-1 py-2 ">
         <Filter />
       </div>
-      <div className="col-span-4 border-2">
+      <div className="col-span-1 lg:col-span-8  h-full ">
         <CarsRow searchParams={searchParams} />
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { CarSearchParams } from "./Types";
+
 const generateFilterQuery = ({
   minPrice = "",
   maxPrice = "",
@@ -29,4 +31,28 @@ const generateFilterQuery = ({
   return mileage + price + year + "";
 };
 
-export { generateFilterQuery };
+
+function getString(params: CarSearchParams) {
+    console.log(params.action)
+
+    const action =
+    params.action ? params.action : "(And.Hidden.N._.CarType.Y.)";
+  /*************  ✨ Windsurf Command 🌟  *************/
+
+  const filters = {
+    minPrice: params.priceMin ?? "0",
+    maxPrice: params.priceMax ?? "1000000",
+    minMileage: params.mileageMin ?? "0",
+    maxMileage: params.mileageMax ?? "1000000",
+    minYear: params.yearMin ?? "",
+    maxYear: params.yearMax ?? "2030",
+  };
+
+  const string = generateFilterQuery(filters);
+  console.log(string);
+  return action.slice(0, action.length - 1) +
+    string +
+    action.slice(action.length - 1);
+}
+
+export {getString}

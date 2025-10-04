@@ -50,6 +50,7 @@ export default function RootLayout({
           type="image/png"
           href="/favicon_io/android-chrome-192x192.png"
         />
+
         {/* Google Analytics 4 */}
         <Script
           strategy="afterInteractive"
