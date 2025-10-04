@@ -8,16 +8,15 @@ export const Pagintaion = ({ count }: { count: number }) => {
   const params = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [currentPage, setCurrentPage] = useState(1);
-  const handlePageChange = (newPage: string) => {
+  const handlePageChange = (newPage: number | string) => {
     setCurrentPage(Number(newPage));
     const newParams = new URLSearchParams(params.toString());
-    newParams.set("page", newPage);
+    newParams.set("page", newPage.toString());
     startTransition(() => {
       router.push(`/catalog?${newParams.toString()}`);
     });
   };
-  //   console.log(currentPage, "currentPage");
-  //   console.log(params.get("page"), "currentPage");
+
   useEffect(() => {
     setCurrentPage(1);
   }, [count]);

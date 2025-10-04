@@ -1,5 +1,5 @@
 "use client";
-import { FC, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import LightGallery from "lightgallery/react";
 import type { LightGallery as LGInstance } from "lightgallery/lightgallery";
 import lgZoom from "lightgallery/plugins/zoom";
@@ -28,7 +28,7 @@ const CarouselLight = ({
   const onInit = useCallback((detail: any) => {
     if (detail) {
       lightGalleryRef.current = detail.instance;
-      lightGalleryRef.current.openGallery();
+      lightGalleryRef.current?.openGallery();
     }
   }, []);
 
