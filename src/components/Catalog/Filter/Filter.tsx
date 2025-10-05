@@ -68,7 +68,7 @@ const Filter = ({}) => {
           <SelectValue placeholder="Производитель" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={""}>Выберите производителя</SelectItem>
+          <SelectItem value={null}>Выберите производителя</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
               {item.DisplayValue}
@@ -145,7 +145,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
           <SelectValue placeholder="Производитель" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={""}>Выберите модель</SelectItem>
+          <SelectItem value={null}>Выберите модель</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block border-2 ">
@@ -194,7 +194,7 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
           <SelectValue placeholder="Производитель" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={""}>Выберите поколение</SelectItem>
+          <SelectItem value={null}>Выберите поколение</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block border-2 ">
