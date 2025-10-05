@@ -20,6 +20,7 @@ import {
 import MyFilterPrice from "./FilterComponents/MyFilterPrice";
 import MyFilterMileage from "./FilterComponents/MyFilterMileage";
 import MyFilterYear from "./FilterComponents/MyFilterYear";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 /*************  ✨ Windsurf Command ⭐  *************/
 
@@ -146,14 +147,16 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={null}>Выберите модель</SelectItem>
-          {data.map((item) => (
-            <SelectItem key={item.Action} value={item.Action} className="">
-              <div className="w-full block border-2 ">
-                <span>{item.DisplayValue}</span>{" "}
-                <span className="font-bold ">{`(${item.Count})`}</span>
-              </div>
-            </SelectItem>
-          ))}
+          <ScrollArea className="h-96">
+            {data.map((item) => (
+              <SelectItem key={item.Action} value={item.Action} className="">
+                <div className="w-full block border-2 ">
+                  <span>{item.DisplayValue}</span>{" "}
+                  <span className="font-bold ">{`(${item.Count})`}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </ScrollArea>
         </SelectContent>
       </Select>
     </div>
