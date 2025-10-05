@@ -67,11 +67,7 @@ const CarCard = ({
             <p className="font-bold">{convertNumber(price)} вон</p>
           </div>
           <SlidingButton className="px-2  ">
-            <Link
-              className="block "
-              target="_blank"
-              href={`https://carnex.vercel.app/car/${id}`}
-            >
+            <Link className="block " target="_blank" href={`/catalog/${id}`}>
               Подробнее
             </Link>{" "}
           </SlidingButton>

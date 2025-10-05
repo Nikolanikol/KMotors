@@ -1,4 +1,4 @@
-import Brands from "@/components/Home/Brands";
+import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import Main from "@/components/Home/Main";
 

@@ -74,9 +74,9 @@ export const fetchGeneration = async(query:string)=>{
     .then(data=>data.json())
     .then((res) => {
 
-        const data      =  res.iNav.Nodes.find(i=>i.DisplayName === '국산여부').Facets.find(i=>i.IsSelected === true).Refinements.Nodes[0].Facets.find(i=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i) => i.IsSelected === true).Refinements.Nodes[0].Facets
-        console.log(data)
-        return data as GenerationResponce
+        const data      =  res.iNav.Nodes.find((i:any)=>i.DisplayName === '국산여부').Facets.find((i:any)=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i:any)=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i:any) => i.IsSelected === true).Refinements.Nodes[0].Facets
+
+        return data 
 
     })
 
@@ -85,7 +85,7 @@ export const fetchGeneration = async(query:string)=>{
          const res =  fetch(`https://encar-proxy-main.onrender.com/api/nav?count=true&q=${query}&inav=%7CMetadata%7CSort`)
         .then(data=>data.json())
     .then((res) => {
-        const data      =  res.iNav.Nodes.find(i=>i.DisplayName === '국산여부').Facets.find(i=>i.IsSelected === true).Refinements.Nodes[0].Facets.find(i=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i) => i.IsSelected === true).Refinements.Nodes[0].Facets
+        const data      =  res.iNav.Nodes.find((i:any)=>i.DisplayName === '국산여부').Facets.find((i:any)=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i:any)=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i:any) => i.IsSelected === true).Refinements.Nodes[0].Facets
         console.log(data)
         return data as GenerationResponce
 

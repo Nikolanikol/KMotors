@@ -13,7 +13,13 @@ import {
 import { generateNumbersArray } from "@/utils/generateNumbersArray";
 
 const priceOptions = generateNumbersArray(1980, 2025, 1);
-const MyFilterYear = ({ setYear }) => {
+const MyFilterYear = ({
+  setYear,
+}: {
+  setYear: React.Dispatch<
+    React.SetStateAction<{ minYear: string; maxYear: string }>
+  >;
+}) => {
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -29,7 +35,7 @@ const MyFilterYear = ({ setYear }) => {
     const newminPrice = Number(string);
     setMinPrice(newminPrice);
     setYear((state) => {
-      return { ...state, minYear: newminPrice };
+      return { ...state, minYear: newminPrice.toString() };
     });
     if (newminPrice > maxPrice) {
       setMaxPrice(newminPrice);
@@ -39,12 +45,11 @@ const MyFilterYear = ({ setYear }) => {
     const newmaxPrice = Number(number);
     setMaxPrice(newmaxPrice);
     setYear((state) => {
-      return { ...state, maxYear: newmaxPrice };
+      return { ...state, maxYear: newmaxPrice.toString() };
     });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);
     }
-    console.log(maxPrice);
   };
 
   return (

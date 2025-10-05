@@ -1,10 +1,8 @@
 "use client";
-import React, { use, useEffect, useRef, useState } from "react";
-
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { data } from "./FilterData";
-
 import {
   Select,
   SelectContent,
@@ -35,15 +33,20 @@ const Filter = ({}) => {
   const [modelActionDrill, setModelActionDrill] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>("");
 
-  const handleAction = (value: string) => {
-    startTransition(() => {
-      router.push(
-        `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}`
-      );
-    });
+  const handleAction = (value: string | null) => {
+    if (value != null) {
+      startTransition(() => {
+        router.push(
+          `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}`
+        );
+      });
+    }
   };
   /////////////////////////////////
-  const [price, setPrice] = useState({ minPrice: "", maxPrice: "" });
+  const [price, setPrice] = useState({
+    minPrice: "",
+    maxPrice: "",
+  });
   const [mileage, setMileage] = useState({
     minMileage: "",
     maxMileage: "",
@@ -65,7 +68,7 @@ const Filter = ({}) => {
           <SelectValue placeholder="Производитель" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>Выберите производителя</SelectItem>
+          <SelectItem value={""}>Выберите производителя</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
               {item.DisplayValue}
@@ -142,7 +145,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
           <SelectValue placeholder="Производитель" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>Выберите модель</SelectItem>
+          <SelectItem value={""}>Выберите модель</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block border-2 ">
@@ -191,7 +194,7 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
           <SelectValue placeholder="Производитель" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>Выберите поколение</SelectItem>
+          <SelectItem value={""}>Выберите поколение</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block border-2 ">

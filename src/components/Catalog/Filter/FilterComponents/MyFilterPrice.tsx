@@ -12,10 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Options } from "./Types";
 
 const priceOptions = generateNumbersArray(0, 10000, 100);
-const MyFilterPrice = ({ setPrice }) => {
+const MyFilterPrice = ({
+  setPrice,
+}: {
+  setPrice: React.Dispatch<
+    SetStateAction<{ minPrice: string; maxPrice: string }>
+  >;
+}) => {
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -31,7 +36,7 @@ const MyFilterPrice = ({ setPrice }) => {
     const newminPrice = Number(string);
     setMinPrice(newminPrice);
     setPrice((state) => {
-      return { ...state, minPrice: newminPrice };
+      return { ...state, minPrice: newminPrice.toString() };
     });
     if (newminPrice > maxPrice) {
       setMaxPrice(newminPrice);
@@ -41,7 +46,7 @@ const MyFilterPrice = ({ setPrice }) => {
     const newmaxPrice = Number(number);
     setMaxPrice(newmaxPrice);
     setPrice((state) => {
-      return { ...state, maxPrice: newmaxPrice };
+      return { ...state, maxPrice: newmaxPrice.toString() };
     });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);
@@ -51,10 +56,6 @@ const MyFilterPrice = ({ setPrice }) => {
   return (
     <>
       <h2 className="text-left my-3 font-bold">Цена</h2>
-      {/* <div className="w-full h-10 border-2 flex justify-between px-3">
-        <div>{convertNumber(minPrice)} 원</div>
-        <div>{convertNumber(maxPrice)} 원</div>
-      </div> */}
 
       <div className="flex justify-between">
         <Select

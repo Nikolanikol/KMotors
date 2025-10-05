@@ -1,6 +1,6 @@
 "use client";
 import { generateNumbersArray } from "@/utils/generateNumbersArray";
-import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
+import { convertNumberKm } from "@/utils/splitNumber";
 
 import { useState } from "react";
 
@@ -13,14 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import { ScrollArea } from "@/UI/ShadcnScrollArea";
 
 const priceOptions = generateNumbersArray(0, 200000, 10000);
 
-const MyFilterMileage = ({ setMileage }) => {
-  const [value, setValue] = useState([0, 200000]);
-
-  //////////////
+const MyFilterMileage = ({
+  setMileage,
+}: {
+  setMileage: React.Dispatch<
+    React.SetStateAction<{ minMileage: string; maxMileage: string }>
+  >;
+}) => {
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -34,7 +36,7 @@ const MyFilterMileage = ({ setMileage }) => {
     const newminPrice = Number(string);
     setMinPrice(newminPrice);
     setMileage((state) => {
-      return { ...state, minMileage: newminPrice };
+      return { ...state, minMileage: newminPrice.toString() };
     });
     if (newminPrice > maxPrice) {
       setMaxPrice(newminPrice);
@@ -44,7 +46,7 @@ const MyFilterMileage = ({ setMileage }) => {
     const newmaxPrice = Number(string);
     setMaxPrice(newmaxPrice);
     setMileage((state) => {
-      return { ...state, maxMileage: newmaxPrice };
+      return { ...state, maxMileage: newmaxPrice.toString() };
     });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);
@@ -53,10 +55,7 @@ const MyFilterMileage = ({ setMileage }) => {
   return (
     <>
       <h2 className="text-left my-3 font-bold">Пробег</h2>
-      {/* <div className="w-full h-10 border-2 flex justify-between px-3">
-        <div>{convertNumberKm(minPrice)} км</div>
-        <div>{convertNumberKm(maxPrice)} км</div>
-      </div> */}
+
       <div className="flex justify-between">
         <Select
           onValueChange={handleminPriceChange}
