@@ -3,6 +3,7 @@ import DetailInfo from "@/components/Catalog/CarIdPage/DetailInfo";
 import Header from "@/components/Catalog/CarIdPage/Header";
 import OptionsRow from "@/components/Catalog/CarIdPage/OptionsRow/OptionsRow";
 import { Button } from "@/components/ui/button";
+import Script from "next/script";
 
 import { FC } from "react";
 
@@ -56,6 +57,12 @@ const Page: FC<PageProps> = async ({ params }) => {
 
   return (
     <div className="bg-gray-200 py-5 rounded-3xl">
+      <Script
+        id="product-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="container mx-auto ">
         <Header data={data} />
         <CarouselLight photos={data.photos} />
