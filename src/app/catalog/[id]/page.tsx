@@ -6,14 +6,61 @@ import { Button } from "@/components/ui/button";
 import Script from "next/script";
 
 import { FC } from "react";
-import { useTranslation } from "react-i18next";
+
 import { formatDate } from "@/utils/formatDate";
+import { Metadata } from "next";
 
 interface PageProps {
   params: {
     id: string;
   };
 }
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const data = await fetchData(params.id);
+  if (!data) return { title: "Автомобиль | KMotors", description: "" };
+
+  const carName = [
+    data.category.manufacturerEnglishName,
+    data.category.modelGroupEnglishName,
+    data.category.gradeDetailEnglishName,
+    data.category.gradeEnglishName,
+  ].join(" ");
+
+  const carData = formatDate(data?.category?.yearMonth);
+  const vin = data?.vin || "не указано";
+  const mileage = data?.spec.mileage?.toLocaleString() || "неизвестно";
+  const price = data?.advertisement?.price
+    ? (data.advertisement.price * 10000).toLocaleString()
+    : "не указана";
+
+  const description = `${carName} ${carData} — VIN: ${vin}, пробег: ${mileage} км, цена: ${price} KRW. Автомобиль из Южной Кореи, доступен на Kmotors.shop.`;
+
+  return {
+    title: `${carName} ${carData} — VIN: ${vin} | KMotors`,
+    description,
+    openGraph: {
+      title: `${carName} ${carData} — VIN: ${vin}`,
+      description,
+      images: [
+        data?.photos?.[0]?.location
+          ? `https://ci.encar.com${data.photos[0].location}`
+          : "/noimage.png",
+      ],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${carName} ${carData} — VIN: ${vin}`,
+      description,
+      images: [
+        data?.photos?.[0]?.location
+          ? `https://ci.encar.com${data.photos[0].location}`
+          : "/noimage.png",
+      ],
+    },
+  };
+}
+
 export async function fetchData(id: string): Promise<any> {
   try {
     return await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`)
@@ -83,6 +130,17 @@ const Page: FC<PageProps> = async ({ params }) => {
       />
       <div className="container mx-auto ">
         <Header data={data} />
+        <div className="flex flex-col md:flex-row justify-between text-sm text-gray-600 gap-2">
+          <p className="flex flex-wrap gap-2">
+            <span>
+              VIN: <span className="font-mono">{data.vin || "не указано"}</span>
+            </span>
+            <span>| Номер: {data.vehicleNo}</span>
+          </p>
+          <span className="font-semibold text-gray-800">
+            Пробег: {data.spec.mileage.toLocaleString()} км
+          </span>
+        </div>
         <CarouselLight photos={data.photos} />
         <OptionsRow data={data.options} />
         <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />

@@ -24,7 +24,7 @@ const Header = ({ data }) => {
         </div>
       </h1>
 
-      <div className="flex flex-col md:flex-row justify-between text-sm text-gray-600 gap-2">
+      {/* <div className="flex flex-col md:flex-row justify-between text-sm text-gray-600 gap-2">
         <p className="flex flex-wrap gap-2">
           <span>
             VIN: <span className="font-mono">{data.vin || "не указано"}</span>
@@ -34,7 +34,7 @@ const Header = ({ data }) => {
         <span className="font-semibold text-gray-800">
           Пробег: {data.spec.mileage.toLocaleString()} км
         </span>
-      </div>
+      </div> */}
     </header>
   );
 };
