@@ -4,7 +4,6 @@ import Header from "@/components/Catalog/CarIdPage/Header";
 import OptionsRow from "@/components/Catalog/CarIdPage/OptionsRow/OptionsRow";
 import { Button } from "@/components/ui/button";
 import Script from "next/script";
-import { translateGenerationRow } from "@/utils/translateGenerationRow";
 
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,13 +24,12 @@ export async function fetchData(id: string): Promise<any> {
   }
 }
 const Page: FC<PageProps> = async ({ params }) => {
-  const { t } = useTranslation();
   const data = await fetchData(params.id);
   // =================?
-  const carName = `${translateGenerationRow(data.category.manufacturerName, t)}
-              ${translateGenerationRow(data.category.modelName, t)}
-              ${translateGenerationRow(data.category.gradeName, t)}`.trim();
-  const carData = formatDate(data.category.yearMonth);
+  const carName = `${data?.category?.manufacturerName}
+              ${data?.category?.modelName}
+              ${data?.category?.gradeName}`.trim();
+  const carData = formatDate(data?.category?.yearMonth);
   const mainPhoto = data?.photos?.[0]?.location
     ? `https://ci.encar.com${data.photos[0].location}`
     : "/noimage.png";
@@ -43,7 +41,7 @@ const Page: FC<PageProps> = async ({ params }) => {
     image: [mainPhoto],
     description: `${carName} ${carData} — ${data?.fuelType}, ${data?.transmission}, пробег ${data?.mileage} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
     sku: data?.vehicleId,
-    vinNumber: data.vehicleNo,
+    vinNumber: data?.vehicleNo,
     brand: {
       "@type": "Brand",
       name: carName || "Неизвестный бренд",
