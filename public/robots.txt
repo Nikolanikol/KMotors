@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://kmotors.shop/
+Host: https://kmotors.shop//
 
 # Sitemaps
 Sitemap: https://kmotors.shop/sitemap.xml
