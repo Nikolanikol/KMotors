@@ -22,6 +22,37 @@ export async function fetchData(id: string): Promise<any> {
 }
 const Page: FC<PageProps> = async ({ params }) => {
   const data = await fetchData(params.id);
+  const mainPhoto = data?.photos?.[0]?.location
+    ? `https://ci.encar.com${data.photos[0].location}`
+    : "/noimage.png";
+  // --- JSON-LD Schema.org Product ---
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: `${data?.manufacturer} ${data?.model} ${data?.year || ""}`.trim(),
+    image: [mainPhoto],
+    description: `${data?.manufacturer} ${data?.model} ${data?.year} — ${data?.fuelType}, ${data?.transmission}, пробег ${data?.mileage} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
+    sku: data?.vehicleId,
+    brand: {
+      "@type": "Brand",
+      name: data?.manufacturer || "Неизвестный бренд",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `https://www.kmotors.shop/catalog/${data?.vehicleId}`,
+      priceCurrency: "KRW",
+      price: data?.price || "0",
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/UsedCondition",
+    },
+    vehicleConfiguration: `${data?.transmission || ""}, ${
+      data?.fuelType || ""
+    }`,
+    vehicleEngine: {
+      "@type": "EngineSpecification",
+      fuelType: data?.fuelType || "",
+    },
+  };
 
   return (
     <div className="bg-gray-200 py-5 rounded-3xl">

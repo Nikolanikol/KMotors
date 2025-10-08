@@ -27,8 +27,16 @@ export const metadata: Metadata = {
   },
   other: {
     "yandex-verification": "f71551035d1c4fbb",
-    keywords:
-      "Hyundai, Kia, Genesis, SsangYong, корейские автомобили, каталог авто, цены на авто, авто из Южной Кореи, купить авто, характеристики автомобилей, отзывы об авто, kmotors, кмоторс, кмоторсшоп",
+    keywords: [
+      "Hyundai",
+      "Kia",
+      "Genesis",
+      "SsangYong",
+      "корейские автомобили",
+      "авто из Южной Кореи",
+      "купить авто",
+      "цены",
+    ],
   },
 };
 
@@ -44,6 +52,18 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
           rel="stylesheet"
         /> */}
+        <meta name="robots" content="index, follow" />
+        <link
+          rel="alternate"
+          href="https://www.kmotors.shop/"
+          hrefLang="ru-ru"
+        />
+        <link
+          rel="alternate"
+          href="https://www.kmotors.shop/"
+          hrefLang="x-default"
+        />
+
         <link rel="canonical" href="https://www.kmotors.shop/" />
         <link
           rel="icon"
@@ -64,6 +84,24 @@ export default function RootLayout({
             gtag('config', 'G-ZMRTQCD8SF');
           `}
         </Script>
+        <Script
+          id="structured-data"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Kmotors",
+              url: "https://kmotors.shop/",
+              logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
+              sameAs: [
+                "https://t.me/kmotorsshop",
+                "https://www.instagram.com/kmotors.shop/",
+              ],
+            }),
+          }}
+        />
       </head>
 
       <body className="min-h-screen flex flex-col   mx-auto ">
