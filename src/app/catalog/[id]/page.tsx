@@ -48,7 +48,7 @@ const Page: FC<PageProps> = async ({ params }) => {
       data.category.gradeEnglishName,
     ].join(" "),
     image: [mainPhoto],
-    description: `${carName} ${carData} — ${data?.fuel}, ${data?.carShape} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
+    description: `${carName} ${carData} — ${data?.category.gradeEnglishName}, ${data?.spec.mileage} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
 
     brand: {
       "@type": "Brand",
@@ -58,9 +58,8 @@ const Page: FC<PageProps> = async ({ params }) => {
       "@type": "Offer",
       url: `https://www.kmotors.shop/catalog/${data?.vehicleId}`,
       priceCurrency: "KRW",
-      price: {
-        price: data?.advertisement?.price * 10000,
-      },
+      price: data?.advertisement?.price * 10000,
+
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/UsedCondition",
     },
