@@ -25,10 +25,14 @@ export async function fetchData(id: string): Promise<any> {
 }
 const Page: FC<PageProps> = async ({ params }) => {
   const data = await fetchData(params.id);
+  console.log(data);
   // =================?
-  const carName = `${data?.category?.manufacturerName}
-              ${data?.category?.modelName}
-              ${data?.category?.gradeName}`.trim();
+  const carName = [
+    data.category.manufacturerEnglishName,
+    data.category.modelGroupEnglishName,
+    data.category.gradeDetailEnglishName,
+    data.category.gradeEnglishName,
+  ].join(" ");
   const carData = formatDate(data?.category?.yearMonth);
   const mainPhoto = data?.photos?.[0]?.location
     ? `https://ci.encar.com${data.photos[0].location}`
@@ -37,11 +41,15 @@ const Page: FC<PageProps> = async ({ params }) => {
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
-    name: `${carName}`,
+    name: [
+      data.category.manufacturerEnglishName,
+      data.category.modelGroupEnglishName,
+      data.category.gradeDetailEnglishName,
+      data.category.gradeEnglishName,
+    ].join(" "),
     image: [mainPhoto],
-    description: `${carName} ${carData} — ${data?.fuelType}, ${data?.transmission}, пробег ${data?.mileage} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
-    sku: data?.vehicleId,
-    vinNumber: data?.vehicleNo,
+    description: `${carName} ${carData} — ${data?.fuel}, ${data?.carShape} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
+
     brand: {
       "@type": "Brand",
       name: carName || "Неизвестный бренд",
@@ -50,13 +58,16 @@ const Page: FC<PageProps> = async ({ params }) => {
       "@type": "Offer",
       url: `https://www.kmotors.shop/catalog/${data?.vehicleId}`,
       priceCurrency: "KRW",
-      price: data?.price || "0",
+      price: {
+        price: data?.advertisement?.price * 10000,
+      },
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/UsedCondition",
     },
     vehicleConfiguration: `${data?.transmission || ""}, ${
       data?.fuelType || ""
     }`,
+    vin: data?.vin,
     vehicleEngine: {
       "@type": "EngineSpecification",
       fuelType: data?.fuelType || "",
