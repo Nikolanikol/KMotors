@@ -1,6 +1,6 @@
 module.exports = {
-  siteUrl: "https://kmotors.shop//",
+  siteUrl: "https://kmotors.shop",
   generateRobotsTxt: true,
-  changefreq: "weekly",
-  priority: 0.7,
+  sitemapSize: 5000,
+  outDir: "./public", // по умолчанию, в public
 };

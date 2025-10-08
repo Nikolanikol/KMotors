@@ -1,3 +1,7 @@
+# Разрешаем всем поисковикам индексировать сайт
 User-agent: *
-Allow: /
-Sitemap: https://kmotors.vercel.app/sitemap.xml
+Disallow: /api/           # Закрываем API
+Disallow: /admin/         # Закрываем админку
+Disallow: /login/         # Закрываем страницу логина
+Allow: /                  # Разрешаем всё остальное, включая каталог и страницы авто
+Sitemap: https://kmotors.shop/sitemap.xml
