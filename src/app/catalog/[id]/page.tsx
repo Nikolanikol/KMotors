@@ -16,7 +16,7 @@ interface PageProps {
   };
 }
 export async function generateMetadata({ params }): Promise<Metadata> {
-  const data = await fetchData(params.id);
+  const data = await fetchData(params?.id);
   if (!data) return { title: "Автомобиль | KMotors", description: "" };
 
   const carName = [
@@ -72,7 +72,7 @@ export async function fetchData(id: string): Promise<any> {
 }
 const Page: FC<PageProps> = async ({ params }) => {
   const data = await fetchData(params.id);
-  console.log(data);
+
   // =================?
   const carName = [
     data.category.manufacturerEnglishName,

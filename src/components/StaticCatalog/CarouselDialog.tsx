@@ -12,6 +12,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Image from "next/image";
+import CarouselLight from "./Carousel/Carousel";
 
 export default function CarouselDialog({
   images,
@@ -21,44 +22,7 @@ export default function CarouselDialog({
   images: string[];
 }) {
   const [visible, setVisible] = useState(isVisible);
-
-  //   const [loading, setLoading] = useState(false);
-  //   const [success, setSuccess] = useState(false);
-
-  //   const [form, setForm] = useState({
-  //     name: "",
-  //     phone: "",
-  //     email: "",
-  //     message: "",
-  //     method: "",
-  //   });
-
-  //   const handleChange = (
-  //     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  //   ) => {
-  //     setForm({ ...form, [e.target.name]: e.target.value });
-  //   };
-
-  //   const handleSubmit = async (e: React.FormEvent) => {
-  //     e.preventDefault();
-  //     setLoading(true);
-  //     setSuccess(false);
-
-  //     const res = await fetch("/api/contact", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(form),
-  //     });
-
-  //     setLoading(false);
-  //     if (res.ok) {
-  //       setSuccess(true);
-  //       setForm({ name: "", phone: "", email: "", message: "", method: "" });
-  //     } else {
-  //       alert("Ошибка при отправке");
-  //     }
-  //   };
-
+  console.log(images);
   return (
     <div className="max-w-md ">
       <SlidingButton
@@ -73,7 +37,9 @@ export default function CarouselDialog({
         <Dialog open={visible} onOpenChange={setVisible}>
           <DialogTitle></DialogTitle>
           <DialogContent className="max-w-[70vw] max-h-[80vh] p-0 rounded-xl">
-            <Carousel type="catalog">
+            <CarouselLight photos={images} />
+
+            {/* <Carousel type="catalog">
               <CarouselContent className="">
                 {images.map((img: string, index: number) => (
                   <CarouselItem
@@ -90,7 +56,7 @@ export default function CarouselDialog({
               </CarouselContent>
               <CarouselPrevious className="top-0 hover:bg-amber-500 left-0 h-full z-20  w-5 md:w-8 border-r-0 rounded-tr-none rounded-br-none" />
               <CarouselNext className="top-0 left-full hover:bg-amber-500 h-full w-5 md:w-8 border-l-0 rounded-tl-none z-20 rounded-bl-none" />
-            </Carousel>
+            </Carousel> */}
           </DialogContent>
         </Dialog>
       )}

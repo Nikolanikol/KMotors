@@ -1,4 +1,7 @@
+"use server";
+
 export async function getCars(query: string, offset: string = "0") {
+    console.log(query, 'query')
   try {
     const res = await fetch(
       `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20

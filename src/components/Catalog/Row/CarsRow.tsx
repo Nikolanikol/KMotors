@@ -1,15 +1,17 @@
-import Link from "next/link";
 import { Pagintaion } from "./Pagintaion";
 import { getString } from "./utils";
 import { getCars } from "./utils/service";
 import { CarSearchParams } from "./utils/Types";
 import CarCard from "./CarCard";
+import { Suspense } from "react";
 
 const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   const params = await searchParams;
   const offset = params.page;
   const newString = getString(params);
+
   const { data, count } = await getCars(newString, offset);
+
   return (
     <div className="px-8">
       <div className=" grid grid-cols-1 md:grid-cols-2   items-start gap-4 min-h-[80vh]">

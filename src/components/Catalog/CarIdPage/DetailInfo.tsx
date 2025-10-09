@@ -93,7 +93,6 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
     )
       .then((data) => data.json())
       .then((res) => {
-        console.log("DETAILINFO", res);
         setData(res);
       })
 

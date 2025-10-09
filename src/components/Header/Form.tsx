@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {  SlidingButton } from "@/components/ui/button";
+import { SlidingButton } from "@/components/ui/button";
 import {
   Dialog,
-
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -21,7 +20,21 @@ import {
 } from "../ui/select";
 export default function ContactForm({ isVisible }: { isVisible: boolean }) {
   const [visible, setVisible] = useState(isVisible);
+  const count = useRef(0);
+  const intervalId = useRef<NodeJS.Timeout | number>(0);
 
+  useEffect(() => {
+    intervalId.current = setInterval(() => {
+      if (count.current >= 5) {
+        clearInterval(intervalId.current); // остановка интервала
+        return;
+      }
+      setVisible(true);
+      count.current++;
+    }, 5000);
+
+    return () => clearInterval(intervalId.current); // очистка при размонтировании
+  }, []);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
