@@ -3,16 +3,33 @@ import CarsRow from "@/components/Catalog/Row/CarsRow";
 import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Metadata } from "next";
 
-//MY proxy string
-// https://proxy-8mpk.onrender.com/proxy?url=https
+export async function generateMetadata({ searchParams }): Promise<Metadata> {
+  const params = await searchParams;
+  const page = parseInt(params.page || "1");
 
-//Basarish proxy string
-// filterString
-// https://encar-proxy-main.onrender.com/api/nav?count=true&q=(And.Hidden.N._.CarType.Y.)&inav=%7CMetadata%7CSort
-// carString
-// https://api.encar.com/search/car/list/general?count=true&q=${query}&inav=%7CMetadata%7CSort
+  const canonicalUrl = `https://kmotors.shop/catalog${
+    page > 1 ? `?page=${page}` : ""
+  }`;
 
+  return {
+    title: `Каталог корейских автомобилей${
+      page > 1 ? ` - Страница ${page}` : ""
+    }`,
+    description: "...",
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    other: {
+      // Пагинация для Google
+      ...(page > 1 && {
+        prev: `https://kmotors.shop/catalog?page=${page - 1}`,
+      }),
+      next: `https://kmotors.shop/catalog?page=${page + 1}`,
+    },
+  };
+}
 export default async function ({
   searchParams,
 }: {
