@@ -20,12 +20,12 @@ export default async function ({
 }) {
   return (
     <div>
-      <form action="" className="border-2 flex justify-end">
+      {/* <form action="" className="border-2 flex justify-end">
         {" "}
         <div className="flex ">
           <Input type="text" /> <Button type="submit">submit</Button>
         </div>
-      </form>
+      </form> */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-2 h-full m-0 mx-auto">
         {/* каталог */}
         <div className="col-span-1 lg:col-span-4 h-ful px-1 py-2 ">
