@@ -1,7 +1,0 @@
-# Разрешаем всем поисковикам индексировать сайт
-User-agent: *
-Disallow: /api/           # Закрываем API
-Disallow: /admin/         # Закрываем админку
-Disallow: /login/         # Закрываем страницу логина
-Allow: /                  # Разрешаем всё остальное, включая каталог и страницы авто
-Sitemap: https://kmotors.shop/sitemap.xml

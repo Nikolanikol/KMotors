@@ -142,7 +142,6 @@ const Page: FC<PageProps> = async ({ params }) => {
           </span>
         </div>
         <CarouselLight photos={data.photos} />
-        <OptionsRow data={data.options} />
         <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
         <div className="flex items-center justify-center mt-6">
           <Button className="py-3 px-6 text-lg" variant="destructive">
@@ -157,6 +156,7 @@ const Page: FC<PageProps> = async ({ params }) => {
             </a>
           </Button>
         </div>
+        <OptionsRow data={data.options} />
       </div>
     </div>
   );

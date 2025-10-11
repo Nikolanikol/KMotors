@@ -36,7 +36,7 @@ const CarCard = ({
           width={700}
           height={400}
           src={`https://ci.encar.com${photo}`}
-          alt="car photo"
+          alt={`${manufacture} ${model} `}
         />
       </div>
       <div className="text-wrapper px-5">

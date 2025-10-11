@@ -7,27 +7,11 @@ import { Metadata } from "next";
 
 export async function generateMetadata({ searchParams }): Promise<Metadata> {
   const params = await searchParams;
-  const page = parseInt(params.page || "1");
-
-  const canonicalUrl = `https://kmotors.shop/catalog${
-    page > 1 ? `?page=${page}` : ""
-  }`;
+  const manufacture = params.manufacture || "";
 
   return {
-    title: `Каталог корейских автомобилей${
-      page > 1 ? ` - Страница ${page}` : ""
-    }`,
-    description: "...",
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    other: {
-      // Пагинация для Google
-      ...(page > 1 && {
-        prev: `https://kmotors.shop/catalog?page=${page - 1}`,
-      }),
-      next: `https://kmotors.shop/catalog?page=${page + 1}`,
-    },
+    title: `Купить${manufacture} авто | KMotors`,
+    description: `Каталог ${manufacture} автомобилей из Кореи...`,
   };
 }
 export default async function ({
@@ -35,6 +19,7 @@ export default async function ({
 }: {
   searchParams: CarSearchParams;
 }) {
+  console.log(searchParams);
   return (
     <div>
       <form action="" className="border-2 flex justify-end">

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { data } from "./FilterData";
@@ -31,6 +31,7 @@ const Filter = ({}) => {
   const [manufactureAction, setManufactureAction] = useState<string | null>(
     null
   );
+  const [manufacture, setManufacture] = useState<string | null>(null);
   const [modelActionDrill, setModelActionDrill] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>("");
 
@@ -38,7 +39,7 @@ const Filter = ({}) => {
     if (value != null) {
       startTransition(() => {
         router.push(
-          `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}`
+          `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}&manufacture=%${manufacture}`
         );
       });
     }
@@ -62,7 +63,9 @@ const Filter = ({}) => {
         onValueChange={(e) => {
           setAction(e);
           setManufactureAction(e);
-          console.log("hello");
+          setManufacture(
+            () => data.filter((item) => item.Action == e)[0].title
+          );
         }}
       >
         <SelectTrigger>
@@ -72,7 +75,7 @@ const Filter = ({}) => {
           <SelectItem value={null}>Выберите производителя</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
-              {item.DisplayValue}
+              {item.title}
             </SelectItem>
           ))}
         </SelectContent>

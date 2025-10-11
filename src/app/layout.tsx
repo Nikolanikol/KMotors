@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     title: "Каталог корейских авто — Hyundai, Kia, Genesis",
     description:
       "Выбирайте лучшие автомобили из Южной Кореи. Фото, цены, характеристики, отзывы.",
-    url: "https://kmotors.vercel.app/",
+    url: "https://kmotors.shop/",
     siteName: "Kmotors",
     images: [
       {
-        url: "https://kmotors.vercel.app/preview/preview.png",
+        url: "https://kmotors.shop/preview/preview.png",
         width: 1200,
         height: 630,
         alt: "Каталог корейских авто — Hyundai, Kia, Genesis",
@@ -53,18 +53,14 @@ export default function RootLayout({
           rel="stylesheet"
         /> */}
         <meta name="robots" content="index, follow" />
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ru-ru" />
         <link
           rel="alternate"
-          href="https://www.kmotors.shop/"
-          hrefLang="ru-ru"
-        />
-        <link
-          rel="alternate"
-          href="https://www.kmotors.shop/"
+          href="https://kmotors.shop/"
           hrefLang="x-default"
         />
 
-        <link rel="canonical" href="https://www.kmotors.shop/" />
+        <link rel="canonical" href="https://kmotors.shop/" />
         <link
           rel="icon"
           type="image/png"
@@ -106,9 +102,7 @@ export default function RootLayout({
 
       <body className="min-h-screen flex flex-col   mx-auto ">
         <h1 className="absolute -left-9999999">
-          Авто из кореи под заказ Автомобили из Южной Кореи: Hyundai, Kia,
-          Genesis, SsangYong, BMW, Mercedes-Benz, Audi, Volkswagen — каталог
-          моделей, цены, характеристики
+          Авто из Южной Кореи под заказ
         </h1>
         <Header />
         <main className="flex-grow min-h-[70vh]">{children}</main>
