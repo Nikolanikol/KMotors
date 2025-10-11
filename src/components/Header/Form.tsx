@@ -31,7 +31,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
       }
       setVisible(true);
       count.current++;
-    }, 10000);
+    }, 50000);
 
     return () => clearInterval(intervalId.current); // очистка при размонтировании
   }, []);
