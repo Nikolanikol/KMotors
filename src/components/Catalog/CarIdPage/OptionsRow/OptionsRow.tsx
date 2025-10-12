@@ -16,13 +16,6 @@ interface OptionsRowProps {
 }
 
 const OptionsRow: FC<OptionsRowProps> = ({ data }) => {
-  //   console.log(json, "OptionsRow");
-  //   const newArr = json.map((item) => {
-  //     const value = item.DisplayValue;
-  //     const code = item.Metadata.Code[0];
-  //     return { value, code };
-  //   });
-
   return (
     <div>
       {/* <div>

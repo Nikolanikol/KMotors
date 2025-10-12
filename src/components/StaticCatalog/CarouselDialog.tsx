@@ -22,7 +22,7 @@ export default function CarouselDialog({
   images: string[];
 }) {
   const [visible, setVisible] = useState(isVisible);
-  console.log(images);
+
   return (
     <div className="max-w-md ">
       <SlidingButton

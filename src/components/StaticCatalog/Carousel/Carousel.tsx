@@ -27,7 +27,7 @@ const CarouselLight = ({ photos }: { photos: string[] }) => {
       setGalleryContainer(containerRef.current);
     }
   }, []);
-  console.log(photos);
+
   return (
     <div className="App">
       <div style={{ height: "800px" }} ref={containerRef}></div>

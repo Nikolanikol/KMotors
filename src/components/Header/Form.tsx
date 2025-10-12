@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SlidingButton } from "@/components/ui/button";
+import { usePathname } from "next/navigation";
+
 import {
   Dialog,
   DialogContent,
@@ -18,26 +20,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+
 export default function ContactForm({ isVisible }: { isVisible: boolean }) {
+  // ========== СОСТОЯНИЕ ==========
   const [visible, setVisible] = useState(isVisible);
-  const count = useRef(0);
-  const intervalId = useRef<NodeJS.Timeout | number>(0);
-
-  useEffect(() => {
-    intervalId.current = setInterval(() => {
-      if (count.current >= 5) {
-        clearInterval(intervalId.current); // остановка интервала
-        return;
-      }
-      setVisible(true);
-      count.current++;
-    }, 50000);
-
-    return () => clearInterval(intervalId.current); // очистка при размонтировании
-  }, []);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // ✅ FIX: Получаем текущий путь чтобы не триггерить в админке
+  const pathname = usePathname();
+
+  // ========== REFS ==========
+  // ✅ FIX: Используем useRef для флага (он не будет перерисовываться)
+  const hasTriggeredRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ========== ФОРМА ==========
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -46,10 +44,47 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
     method: "",
   });
 
+  // ========== ТАЙМЕР ДЛЯ АВТОМАТИЧЕСКОГО ПОКАЗА ==========
+  useEffect(() => {
+    // ✅ FIX: Если уже показывали или явно открыта - не показываем снова
+    if (hasTriggeredRef.current || isVisible) {
+      return;
+    }
+    // ✅ FIX: НЕ триггерим форму в админке!
+    if (pathname.startsWith("/admin")) {
+      console.log("🔒 В админке - форма не триггерится");
+      return;
+    }
+    console.log("⏱️ Таймер на показ формы запущен: 30 сек");
+
+    // ✅ FIX: setTimeout вместо setInterval (нужен только один раз)
+    timerRef.current = setTimeout(() => {
+      if (!hasTriggeredRef.current) {
+        console.log("📋 Показываем форму по таймеру");
+        setVisible(true);
+        hasTriggeredRef.current = true; // ✅ Отмечаем что уже показали
+      }
+    }, 30000); // 30 секунд
+
+    // ✅ FIX: Очистка при размонтировании
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        console.log("🧹 Таймер очищен");
+      }
+    };
+  }, [isVisible]); // ✅ FIX: Добавили зависимость isVisible
+
+  // ========== ОБРАБОТЧИКИ ==========
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setVisible(open);
+    console.log(`🔄 Dialog ${open ? "открыт" : "закрыт"}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,33 +92,47 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
     setLoading(true);
     setSuccess(false);
 
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    setLoading(false);
-    if (res.ok) {
-      setSuccess(true);
-      setForm({ name: "", phone: "", email: "", message: "", method: "" });
-    } else {
-      alert("Ошибка при отправке");
+      if (res.ok) {
+        console.log("✅ Форма успешно отправлена");
+        setSuccess(true);
+        setForm({ name: "", phone: "", email: "", message: "", method: "" });
+
+        // ✅ FIX: Автоматически закрываем через 2 секунды
+        setTimeout(() => {
+          setVisible(false);
+        }, 2000);
+      } else {
+        console.error("❌ Ошибка при отправке");
+        alert("Ошибка при отправке");
+      }
+    } catch (error) {
+      console.error("❌ Ошибка подключения:", error);
+      alert("Ошибка подключения");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md ">
-      <SlidingButton onClick={() => setVisible(!visible)}>
+    <div className="max-w-md">
+      <SlidingButton
+        onClick={() => {
+          console.log("👆 Нажата кнопка 'Оставить заявку'");
+          setVisible(true);
+        }}
+      >
         {visible ? "Скрыть форму" : "Оставить заявку"}
       </SlidingButton>
 
       {visible && (
-        <Dialog open={visible} onOpenChange={setVisible}>
-          {/* <DialogTrigger asChild>
-            <Button>Оставить заявку</Button>
-          </DialogTrigger> */}
-
+        <Dialog open={visible} onOpenChange={handleOpenChange}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="text-center">Оставьте заявку</DialogTitle>
@@ -99,6 +148,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 onChange={handleChange}
                 placeholder="Ваше имя"
                 required
+                disabled={loading}
               />
               <Input
                 name="phone"
@@ -106,25 +156,28 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 onChange={handleChange}
                 placeholder="Телефон"
                 required
+                disabled={loading}
               />
               <Input
                 name="email"
                 value={form.email}
                 onChange={handleChange}
                 placeholder="Email"
+                disabled={loading}
               />
               <Select
                 required
                 value={form.method}
                 onValueChange={(value) => setForm({ ...form, method: value })}
+                disabled={loading}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Способ связи" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="telegram">Telegram</SelectItem>
-                  <SelectItem value="whatsapp">Whatsapp</SelectItem>
-                  <SelectItem value="phone">Звонок</SelectItem>
+                  <SelectItem value="telegram">💬 Telegram</SelectItem>
+                  <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
+                  <SelectItem value="phone">☎️ Звонок</SelectItem>
                 </SelectContent>
               </Select>
               <Textarea
@@ -133,16 +186,17 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 onChange={handleChange}
                 placeholder="Комментарий или модель авто"
                 rows={4}
+                disabled={loading}
               />
               <SlidingButton
                 type="submit"
-                disabled={loading}
+                disabled={loading || !form.name || !form.phone || !form.method}
                 className="w-full"
               >
-                {loading ? "Отправка..." : "Отправить"}
+                {loading ? "⏳ Отправка..." : "✉️ Отправить"}
               </SlidingButton>
               {success && (
-                <p className="text-green-600 text-sm text-center">
+                <p className="text-green-600 text-sm text-center font-bold">
                   ✅ Заявка успешно отправлена
                 </p>
               )}

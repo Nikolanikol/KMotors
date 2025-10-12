@@ -21,14 +21,15 @@ export const fetchModels = async (query: string) => {
     )
       .then((data) => data.json())
       .then((res) => {
-
+        
         const data = res.iNav.Nodes.find((i:any) => i.DisplayName === "국산여부")
           .Facets.find((i:any) => i.IsSelected === true)
           .Refinements.Nodes[0].Facets.find((i:any) => i.IsSelected === true)
           .Refinements.Nodes[0].Facets;
-        console.log(data);
+
         return data as ModelsResponce[];
-      });
+      })
+
     return res;
   } catch (error) {
     const res = fetch(
@@ -86,7 +87,7 @@ export const fetchGeneration = async(query:string)=>{
         .then(data=>data.json())
     .then((res) => {
         const data      =  res.iNav.Nodes.find((i:any)=>i.DisplayName === '국산여부').Facets.find((i:any)=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i:any)=>i.IsSelected === true).Refinements.Nodes[0].Facets.find((i:any) => i.IsSelected === true).Refinements.Nodes[0].Facets
-        console.log(data)
+
         return data as GenerationResponce
 
     })

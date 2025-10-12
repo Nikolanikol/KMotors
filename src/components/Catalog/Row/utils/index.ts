@@ -33,7 +33,7 @@ const generateFilterQuery = ({
 
 
 function getString(params: CarSearchParams) {
-    console.log(params.action)
+
 
     const action =
     params.action ? params.action : "(And.Hidden.N._.CarType.Y.)";
@@ -49,7 +49,7 @@ function getString(params: CarSearchParams) {
   };
 
   const string = generateFilterQuery(filters);
-  console.log(string);
+
   return action.slice(0, action.length - 1) +
     string +
     action.slice(action.length - 1);

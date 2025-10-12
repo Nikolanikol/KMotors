@@ -16,14 +16,7 @@ export default async function StaticCatalog() {
     transmission: string;
     fuel: string;
   }
-  //   const [cars, setCars] = useState<Car[]>([]);
-  //   const [isFormVisible, setIsFormVisible] = useState(false);
-  //   useEffect(() => {
-  //     fetch("/data/cars.json")
-  //       .then((res) => res.json())
-  //       .then((data) => setCars(data))
-  //       .then((res) => console.log(res));
-  //   }, []);
+
   // Читаем JSON-файл на этапе сборки
   const filePath = path.join(process.cwd(), "public/data/cars.json");
   const fileContent = await fs.readFile(filePath, "utf-8");

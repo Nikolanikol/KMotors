@@ -66,9 +66,7 @@ export async function fetchData(id: string): Promise<any> {
     return await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`)
       .then((data) => data.json())
       .then((res) => res);
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 }
 const Page: FC<PageProps> = async ({ params }) => {
   const data = await fetchData(params.id);
@@ -163,3 +161,5 @@ const Page: FC<PageProps> = async ({ params }) => {
 };
 
 export default Page;
+
+// ===================

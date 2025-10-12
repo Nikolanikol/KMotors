@@ -7,10 +7,10 @@ import { Metadata } from "next";
 
 export async function generateMetadata({ searchParams }): Promise<Metadata> {
   const params = await searchParams;
-  const manufacture = params.manufacture || "";
+  const manufacture = params.manufacture?.slice(1) || "";
 
   return {
-    title: `Купить${manufacture} авто | KMotors`,
+    title: `Купить ${manufacture} авто | KMotors`,
     description: `Каталог ${manufacture} автомобилей из Кореи...`,
   };
 }
@@ -19,7 +19,6 @@ export default async function ({
 }: {
   searchParams: CarSearchParams;
 }) {
-  console.log(searchParams);
   return (
     <div>
       <form action="" className="border-2 flex justify-end">

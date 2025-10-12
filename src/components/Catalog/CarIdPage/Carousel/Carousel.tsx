@@ -12,6 +12,7 @@ import "lightgallery/css/lg-zoom.css";
 import "./carousel.css";
 const CarouselLight = ({
   photos,
+  mode,
 }: {
   photos: {
     code: string;
@@ -20,6 +21,7 @@ const CarouselLight = ({
     updateDateTime: string;
     type: string;
   }[];
+  mode?: string;
 }) => {
   const lightGalleryRef = useRef<LGInstance>(null);
   const containerRef = useRef(null);
@@ -37,7 +39,7 @@ const CarouselLight = ({
       setGalleryContainer(containerRef.current);
     }
   }, []);
-  //   console.log(photos);
+
   return (
     <div className="App">
       <div style={{ height: "800px" }} ref={containerRef}></div>
@@ -52,10 +54,12 @@ const CarouselLight = ({
         thumbHeight={"100px"}
         dynamicEl={photos.map((item) => ({
           src:
-            "https://ci.encar.com" +
-            item.path +
-            "?impolicy=heightRate&rh=696&cw=1160&ch=696&cg=Center&wtmk=https://ci.encar.com/wt_mark/w_mark_04.png&t=20250912164710",
-          thumb: "https://ci.encar.com" + item.path,
+            mode == "static"
+              ? item
+              : "https://ci.encar.com" +
+                item.path +
+                "?impolicy=heightRate&rh=696&cw=1160&ch=696&cg=Center&wtmk=https://ci.encar.com/wt_mark/w_mark_04.png&t=20250912164710",
+          thumb: mode == "static" ? item : "https://ci.encar.com" + item.path,
         }))}
       />
     </div>
