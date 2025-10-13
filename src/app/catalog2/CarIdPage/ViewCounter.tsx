@@ -11,10 +11,11 @@ export default function ViewCounter({ carId }: ViewCounterProps) {
     // Отправляем просмотр на сервер (в фоне, не блокирует)
     const sendView = async () => {
       try {
-        await fetch(`/api/views/${carId}`, {
+        const res = await fetch(`/api/views/${carId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         });
+        console.log("View recorded", res);
       } catch (error) {
         console.error("Failed to record view:", error);
       }

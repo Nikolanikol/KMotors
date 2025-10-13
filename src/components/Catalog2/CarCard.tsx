@@ -40,13 +40,24 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
   } = car;
   return (
     <div className="shadow-2xl self-center border-2 inline-block rounded-2xl overflow-hidden md:min-w-[300px]  xl:min-w-[400px] ">
-      <div className="max-w-[400px] max-h-[225px] overflow-hidden lg:max-w-[600px] xl:max-h-[500px]">
-        <Image
-          width={700}
-          height={400}
-          src={image_urls[0]}
-          alt={`${brand} ${model} `}
-        />
+      {/* ========== ФОТО КОНТЕЙНЕР ========== */}
+      {/* ✅ FIX: aspect-ratio фиксирует пропорции 16:9 */}
+      <div className="relative w-full aspect-video bg-gray-200 overflow-hidden rounded-t-2xl">
+        {image_urls[0] ? (
+          <Image
+            width={700}
+            height={394}
+            src={image_urls[0]}
+            alt={`${brand} ${model}`}
+            className="w-full h-full object-cover" // ✅ FIX: object-cover заполняет контейнер
+            priority={false}
+          />
+        ) : (
+          // ✅ FIX: Плейсхолдер если нет фото
+          <div className="w-full h-full flex items-center justify-center bg-gray-300">
+            <span className="text-gray-500 text-sm">Фото недоступно</span>
+          </div>
+        )}
       </div>
       <div className="text-wrapper px-5">
         <div className="py-3 ">

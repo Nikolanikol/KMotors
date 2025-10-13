@@ -13,6 +13,7 @@ import {
   ImagePlus,
   AlertCircle,
   CheckCircle,
+  GripVertical,
 } from "lucide-react";
 
 interface CarEditFormProps {
@@ -54,6 +55,43 @@ export default function CarEditForm({
     image_urls: initialCar?.image_urls || [],
     status: initialCar?.status || "available",
   });
+  //   / ✅ FIX: Drag state для переупорядочивания
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+    console.log(`🎯 Начали перетаскивание фото #${index + 1}`);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    console.log(`🔄 Перемещаем фото #${draggedIndex + 1} → #${dropIndex + 1}`);
+
+    // Создаем новый массив и переупорядочиваем
+    const newUrls = [...form.image_urls];
+    const [draggedUrl] = newUrls.splice(draggedIndex, 1);
+    newUrls.splice(dropIndex, 0, draggedUrl);
+
+    setForm((prev) => ({
+      ...prev,
+      image_urls: newUrls,
+    }));
+
+    setDraggedIndex(null);
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -160,16 +198,16 @@ export default function CarEditForm({
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  //   const handleDrop = (e: React.DragEvent) => {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //     setDragActive(false);
 
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      handleMultipleImageUpload(files);
-    }
-  };
+  //     const files = e.dataTransfer.files;
+  //     if (files && files.length > 0) {
+  //       handleMultipleImageUpload(files);
+  //     }
+  //   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -500,7 +538,7 @@ export default function CarEditForm({
             </div>
           )}
 
-          {/* Список загруженных фото */}
+          {/* ✅ NEW: Список загруженных фото С ПЕРЕУПОРЯДОЧИВАНИЕМ */}
           {form.image_urls.length > 0 && (
             <div className="mt-6">
               <p className="text-sm font-medium text-gray-700 mb-3">
@@ -508,12 +546,38 @@ export default function CarEditForm({
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {form.image_urls.map((url, idx) => (
-                  <div key={idx} className="relative group">
+                  <div
+                    key={idx}
+                    draggable
+                    onDragStart={() => handleDragStart(idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    className={`relative group cursor-move transition-all ${
+                      draggedIndex === idx ? "opacity-50 scale-95" : ""
+                    } ${
+                      dragOverIndex === idx
+                        ? "ring-2 ring-blue-500 scale-105"
+                        : ""
+                    }`}
+                  >
                     <img
                       src={url}
                       alt={`Photo ${idx + 1}`}
                       className="w-full h-32 object-cover rounded-lg shadow"
                     />
+
+                    {/* Grip icon для перетаскивания */}
+                    <div className="absolute top-1 left-1 bg-gray-900/70 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition">
+                      <GripVertical className="w-4 h-4" />
+                    </div>
+
+                    {/* Номер фото */}
+                    <div className="absolute top-1 right-1 bg-gray-900 text-white px-2 py-1 rounded text-xs font-bold">
+                      #{idx + 1}
+                    </div>
+
+                    {/* Кнопка удаления */}
                     <div className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                       <button
                         type="button"
@@ -525,12 +589,15 @@ export default function CarEditForm({
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="absolute top-1 right-1 bg-gray-900 text-white px-2 py-1 rounded text-xs font-bold">
-                      #{idx + 1}
-                    </div>
                   </div>
                 ))}
               </div>
+
+              {/* Подсказка */}
+              <p className="text-xs text-gray-500 mt-3 p-2 bg-gray-50 rounded">
+                💡 Перетаскивай фото чтобы изменить порядок. Первое фото будет
+                главным на карточке.
+              </p>
             </div>
           )}
         </fieldset>

@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import CarouselLight from "@/components/StaticCatalog/Carousel/Carousel";
+import ViewCounter from "../CarIdPage/ViewCounter";
 // import ViewCounter from "@/components/Catalog/CarIdPage/ViewCounter";
 
 interface PageProps {
@@ -353,7 +354,7 @@ export default async function CarDetailPage({ params }: PageProps) {
       </div>
 
       {/* ⭐ ViewCounter - отправляет просмотр на сервер */}
-      {/* <ViewCounter carId={car.id} /> */}
+      <ViewCounter carId={car.id} />
     </div>
   );
 }

@@ -42,7 +42,7 @@ export default async function CatalogPage({
 }) {
   // На сервере загружаем все авто один раз при генерации
   const allCars = await getAllCars(); // пока на этапе тестов
-  console.log("allCars", allCars);
+  //   console.log("allCars", allCars);
   return (
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-2 h-full m-0 mx-auto">
