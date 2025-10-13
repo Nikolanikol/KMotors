@@ -61,7 +61,9 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
       </div>
       <div className="text-wrapper px-5">
         <div className="py-3 ">
-          <h3 className="heading-3 line-clamp-1">{model}</h3>
+          <h3 className="heading-3 line-clamp-1">
+            {brand} {model}
+          </h3>
           <h4 className="opacity-20 ">{brand}</h4>
         </div>
         <div className="icon-row py-4 flex gap-5 justify-around border-t-2 border-b-2 h-[105px] ">

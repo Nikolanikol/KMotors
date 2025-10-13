@@ -314,14 +314,6 @@ export default async function CarDetailPage({ params }: PageProps) {
         {/* ========== CTA КНОПКА ========== */}
         <div className="flex gap-4 mb-8">
           <a
-            href="https://t.me/kmotorsshop"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 active:scale-95 text-center"
-          >
-            💬 Написать в Telegram
-          </a>
-          <a
             href="https://wa.me/+821077324344"
             target="_blank"
             rel="noopener noreferrer"
