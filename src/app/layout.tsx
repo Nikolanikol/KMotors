@@ -36,6 +36,8 @@ export const metadata: Metadata = {
       "авто из Южной Кореи",
       "купить авто",
       "цены",
+      "kmotors",
+      "кмоторс ",
     ],
   },
 };
@@ -48,10 +50,6 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <head>
-        {/* <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap"
-          rel="stylesheet"
-        /> */}
         <meta name="robots" content="index, follow" />
         <link rel="alternate" href="https://kmotors.shop/" hrefLang="ru-ru" />
         <link
