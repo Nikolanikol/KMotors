@@ -22,13 +22,21 @@ const Brands = () => {
             pagination={{ clickable: true }}
             navigation={true}
             loop={true}
-            className="py-10 px5 h-[300px]"
+            className="py-10 px5 h-[300px] brands-swiper"
             initialSlide={0}
             breakpoints={{
-              320: { slidesPerView: 1 },
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-              1440: { slidesPerView: 4 },
+              320: {
+                slidesPerView: 1,
+              },
+              640: {
+                slidesPerView: 2,
+              },
+              1024: {
+                slidesPerView: 3,
+              },
+              1440: {
+                slidesPerView: 4,
+              },
             }}
           >
             {logoArray.map(({ logo, name, action }, index) => (

@@ -87,7 +87,7 @@ export default function Footer() {
                 <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
                   <Mail className="w-4 h-4" />
                 </div>
-                <span>info@kmotors.shop</span>
+                <span>{process.env.NEXT_PUBLIC_EMAIL}</span>
               </a>
             </div>
 
