@@ -9,6 +9,7 @@ import { FC } from "react";
 
 import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
+import VinMileageSection from "@/components/Catalog/CarIdPage/VinRow";
 
 interface PageProps {
   params: {
@@ -17,8 +18,9 @@ interface PageProps {
 }
 export async function generateMetadata({ params }): Promise<Metadata> {
   const data = await fetchData(params?.id);
-  if (!data) return { title: "Автомобиль | KMotors", description: "" };
 
+  if (!data || data === undefined)
+    return { title: "Автомобиль | KMotors", description: "" };
   const carName = [
     data.category.manufacturerEnglishName,
     data.category.modelGroupEnglishName,
@@ -70,7 +72,7 @@ export async function fetchData(id: string): Promise<any> {
 }
 const Page: FC<PageProps> = async ({ params }) => {
   const data = await fetchData(params.id);
-
+  if (data === undefined) return <div>not found</div>;
   // =================?
   const carName = [
     data.category.manufacturerEnglishName,
@@ -128,17 +130,12 @@ const Page: FC<PageProps> = async ({ params }) => {
       />
       <div className="container mx-auto ">
         <Header data={data} />
-        <div className="flex flex-col md:flex-row justify-between text-sm text-gray-600 gap-2">
-          <p className="flex flex-wrap gap-2">
-            <span>
-              VIN: <span className="font-mono">{data.vin || "не указано"}</span>
-            </span>
-            <span>| Номер: {data.vehicleNo}</span>
-          </p>
-          <span className="font-semibold text-gray-800">
-            Пробег: {data.spec.mileage.toLocaleString()} км
-          </span>
-        </div>
+        <VinMileageSection
+          vin={data.vin}
+          vehicleNo={data.vehicleNo}
+          mileage={data.spec.mileage}
+        />
+
         <CarouselLight photos={data.photos} />
         <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
         <div className="flex items-center justify-center mt-6">

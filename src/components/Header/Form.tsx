@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import SocialRow from "../ui/SocialRow";
 
 export default function ContactForm({ isVisible }: { isVisible: boolean }) {
   // ========== СОСТОЯНИЕ ==========
@@ -201,6 +202,20 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 </p>
               )}
             </form>
+            <hr />
+
+            <div>
+              {" "}
+              <SocialRow />
+              {/* <a
+                  href="https://www.tiktok.com/@kmotorrss"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-gray-800"
+                >
+                  <FaTiktok />
+                </a> */}
+            </div>
           </DialogContent>
         </Dialog>
       )}

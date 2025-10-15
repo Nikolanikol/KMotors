@@ -5,10 +5,20 @@ import { usePathname } from "next/navigation";
 
 import ContactForm from "./Form";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
+export interface NavLink {
+  href: string;
+  label: string;
+}
 export default function Header() {
   const pathname = usePathname();
 
+  const navLinks: NavLink[] = [
+    { href: "/", label: "Главная" },
+    { href: "/catalog", label: "Каталог" },
+    { href: "/catalog2", label: "Наши авто" },
+    { href: "/buy", label: "Порядок работы" },
+    { href: "/contact", label: "Контакты" },
+  ];
   const linkStyle = (path: string) =>
     pathname === path
       ? { fontWeight: "bold", textDecoration: "underline" }
@@ -21,49 +31,28 @@ export default function Header() {
           <h1 className="text-2xl font-bol  ">KMotors</h1>
         </Link>
         <nav className=" gap-5  hidden md:flex md:items-center">
-          <Link href="/" style={linkStyle("/")}>
-            Главная
-          </Link>
-          <Link href="/catalog" style={linkStyle("/catalog")}>
-            Каталог
-          </Link>
-          <Link href="/catalog2" style={linkStyle("/catalog2")}>
-            Наши авто
-          </Link>
-          <Link href="/contact" style={linkStyle("/contact")}>
-            Контакты
-          </Link>
+          {navLinks.map((link) => (
+            <Link key={link.href} href={link.href} style={linkStyle(link.href)}>
+              {link.label}
+            </Link>
+          ))}
         </nav>
         <ToggleGroup
           type="single"
           value="0"
           className=" bg-gray-300 md:hidden rounded-2xl px-2 fixed bottom-[6%] z-40 -translate-x-1/2 left-1/2"
         >
-          <ToggleGroupItem value="a">
-            {" "}
-            <Link href="/" style={linkStyle("/")}>
-              Главная
-            </Link>
-          </ToggleGroupItem>
-          <ToggleGroupItem value="b">
-            {" "}
-            <Link href="/catalog" style={linkStyle("/catalog")}>
-              Каталог
-            </Link>
-          </ToggleGroupItem>
-          <ToggleGroupItem value="c">
-            {" "}
-            <Link href="/catalog2" style={linkStyle("/catalog2")}>
-              Наши авто
-            </Link>
-          </ToggleGroupItem>
-          <ToggleGroupItem value="c">
-            {" "}
-            <Link href="/contact" style={linkStyle("/contact")}>
-              Контакты
-            </Link>
-          </ToggleGroupItem>
+          <nav className=" flex flex-nowrap">
+            {navLinks.map((link) => (
+              <ToggleGroupItem key={link.href} value={link.href}>
+                <Link href={link.href} style={linkStyle(link.href)}>
+                  {link.label}
+                </Link>
+              </ToggleGroupItem>
+            ))}
+          </nav>
         </ToggleGroup>
+
         <ContactForm isVisible={false} />
       </div>
     </header>
