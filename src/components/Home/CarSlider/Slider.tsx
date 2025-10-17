@@ -18,7 +18,7 @@ export default function AutoSlider({ data }: { data: ICar[] }) {
         disableOnInteraction: false,
         pauseOnMouseEnter: true,
       }}
-      pagination={{ clickable: true }}
+      // pagination={{ clickable: true }}
       navigation={true}
       loop={true}
       className="py-10 px5 h-[570px] text-center"
