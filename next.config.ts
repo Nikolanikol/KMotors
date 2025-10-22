@@ -2,10 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  images: {
-    domains: ["ci.encar.com",        "dyadajdrxnvzkrmuoaku.supabase.co",
-],
-  },
+images: {
+  remotePatterns: [
+    {
+      protocol: 'https',
+      hostname: 'ci.encar.com',
+      port: '',
+      pathname: '/**',
+    },
+  ],
+},
     eslint: {
     ignoreDuringBuilds: true,
   },
