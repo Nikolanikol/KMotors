@@ -35,11 +35,11 @@ const CarCard = ({
     <div className="group relative w-full max-w-[400px] mx-auto bg-white rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-orange-400 shadow-lg hover:shadow-2xl transition-all duration-300">
       {/* Image Container */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-        <Image
-          fill
+        <img
+          //   fill
           src={`https://ci.encar.com${photo}`}
           alt={`${manufacture} ${model}`}
-          className="object-cover group-hover:scale-110 transition-transform duration-500"
+          className="object-cover h-full group-hover:scale-110 transition-transform duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
 
