@@ -44,13 +44,13 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
       {/* ✅ FIX: aspect-ratio фиксирует пропорции 16:9 */}
       <div className="relative w-full aspect-video bg-gray-200 overflow-hidden rounded-t-2xl">
         {image_urls[0] ? (
-          <Image
+          <img
             width={700}
             height={394}
             src={image_urls[0]}
             alt={`${brand} ${model}`}
             className="w-full h-full object-cover" // ✅ FIX: object-cover заполняет контейнер
-            priority={false}
+            // priority={false}
           />
         ) : (
           // ✅ FIX: Плейсхолдер если нет фото
