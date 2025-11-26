@@ -16,7 +16,10 @@ export async function getCars(query: string, offset: string = "0") {
     );
     const data = await res.json();
 
-    return data.SearchResults;
+    return   {
+      data: data.SearchResults,
+      count: data.Count,
+    } ;
   } catch {
     const fallbackRes = await fetch(
       `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20
@@ -26,7 +29,7 @@ export async function getCars(query: string, offset: string = "0") {
     );
 
     const fallbackData = await fallbackRes.json();
-
+    console.log(fallbackData, "fallbackData");
     return {
       data: fallbackData.SearchResults,
       count: fallbackData.Count,

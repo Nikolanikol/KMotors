@@ -11,7 +11,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   const newString = getString(params);
 
   const { data, count } = await getCars(newString, offset);
-
+  console.log(data, "data");
   return (
     <div className="px-8">
       <div className=" grid grid-cols-1 md:grid-cols-2   items-start gap-4 min-h-[80vh]">
