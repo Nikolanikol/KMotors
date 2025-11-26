@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SlidingButton } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "../ui/select";
 export default function ContactForm() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -46,7 +48,7 @@ export default function ContactForm() {
       setSuccess(true);
       setForm({ name: "", phone: "", email: "", message: "", method: "" });
     } else {
-      alert("Ошибка при отправке");
+      alert(t('contact.error'));
     }
   };
 
@@ -57,21 +59,21 @@ export default function ContactForm() {
           name="name"
           value={form.name}
           onChange={handleChange}
-          placeholder="Ваше имя"
+          placeholder={t('contact.name')}
           required
         />
         <Input
           name="phone"
           value={form.phone}
           onChange={handleChange}
-          placeholder="Телефон"
+          placeholder={t('contact.phone')}
           required
         />
         <Input
           name="email"
           value={form.email}
           onChange={handleChange}
-          placeholder="Email"
+          placeholder={t('contact.email')}
         />
         <Select
           required
@@ -79,27 +81,27 @@ export default function ContactForm() {
           onValueChange={(value) => setForm({ ...form, method: value })}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Способ связи" />
+            <SelectValue placeholder={t('contact.contactMethod')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="telegram">Telegram</SelectItem>
-            <SelectItem value="whatsapp">Whatsapp</SelectItem>
-            <SelectItem value="phone">Звонок</SelectItem>
+            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            <SelectItem value="phone">{t('contact.phoneCall')}</SelectItem>
           </SelectContent>
         </Select>
         <Textarea
           name="message"
           value={form.message}
           onChange={handleChange}
-          placeholder="Комментарий или модель авто"
+          placeholder={t('contact.message')}
           rows={4}
         />
         <SlidingButton type="submit" disabled={loading} className="w-full">
-          {loading ? "Отправка..." : "Отправить"}
+          {loading ? t('contact.sending') : t('contact.send')}
         </SlidingButton>
         {success && (
           <p className="text-green-600 text-sm text-center">
-            ✅ Заявка успешно отправлена
+            ✅ {t('contact.success')}
           </p>
         )}
       </form>

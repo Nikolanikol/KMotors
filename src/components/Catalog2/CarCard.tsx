@@ -1,9 +1,12 @@
+"use client";
+
 import { SlidingButton } from "@/components/ui/button";
 import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
 import { Fuel, Gauge, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 interface CarCardProps {
   car: {
@@ -23,6 +26,7 @@ interface CarCardProps {
   };
 }
 const CarCard: FC<CarCardProps> = ({ car }) => {
+  const { t } = useTranslation(['common', 'cars']);
   const {
     id,
     badge,
@@ -55,7 +59,7 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
         ) : (
           // ✅ FIX: Плейсхолдер если нет фото
           <div className="w-full h-full flex items-center justify-center bg-gray-300">
-            <span className="text-gray-500 text-sm">Фото недоступно</span>
+            <span className="text-gray-500 text-sm">{t('common:car.noPhoto', { defaultValue: 'Фото недоступно' })}</span>
           </div>
         )}
       </div>
@@ -69,7 +73,7 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
         <div className="icon-row py-4 flex gap-5 justify-around border-t-2 border-b-2 h-[105px] ">
           <div className="flex flex-col items-center">
             <Fuel className="w-5 h-5 " />
-            <p>{mileage.toLocaleString("ru")} км</p>
+            <p>{mileage.toLocaleString("ru")} {t('common:common.km')}</p>
           </div>
           <div className="flex flex-col items-center">
             <Gauge className="w-5 h-5 " />
@@ -82,8 +86,8 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
         </div>
         <div className="footer flex justify-between py-5">
           <div>
-            <div>Цена покупки</div>
-            <p className="font-bold">{price.toLocaleString("ru")} вон</p>
+            <div>{t('common:car.buyPrice')}</div>
+            <p className="font-bold">{price.toLocaleString("ru")} {t('common:common.won')}</p>
           </div>
           <SlidingButton className="px-2  ">
             <Link
@@ -92,7 +96,7 @@ const CarCard: FC<CarCardProps> = ({ car }) => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Подробнее
+              {t('common:car.details')}
             </Link>
           </SlidingButton>
         </div>

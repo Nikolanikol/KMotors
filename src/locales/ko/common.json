@@ -64,11 +64,13 @@
     "name": "이름",
     "email": "이메일",
     "phone": "전화번호",
-    "message": "메시지",
+    "message": "댓글 또는 자동차 모델",
     "send": "보내기",
     "sending": "전송 중...",
-    "success": "메시지가 성공적으로 전송되었습니다!",
-    "error": "메시지 전송 중 오류 발생"
+    "success": "요청이 성공적으로 전송되었습니다!",
+    "error": "메시지 전송 중 오류 발생",
+    "contactMethod": "연락 방법",
+    "phoneCall": "전화 통화"
   },
   "common": {
     "submit": "제출",
@@ -85,6 +87,7 @@
     "error": "오류",
     "success": "성공",
     "confirm": "확인",
+    "menu": "메뉴",
     "km": "km",
     "won": "원"
   },
@@ -100,5 +103,15 @@
     "editCar": "차량 편집",
     "deleteCar": "차량 삭제",
     "uploadImages": "이미지 업로드"
+  },
+  "footer": {
+    "tagline": "한국에서 자동차를 구매하는 신뢰할 수 있는 파트너. 현대, 기아, 제네시스 — 최고의 가격과 품질.",
+    "location": "대한민국 → 러시아",
+    "navigation": "내비게이션",
+    "contacts": "연락처",
+    "socialMedia": "소셜 미디어",
+    "scrollToTop": "맨 위로",
+    "copyright": "모든 권리 보유",
+    "privacy": "개인정보 보호정책"
   }
 }

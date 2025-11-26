@@ -7,8 +7,11 @@ import {
 } from "react-icons/fa";
 import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 export default function Footer() {
+  const { t } = useTranslation();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -27,49 +30,48 @@ export default function Footer() {
               <span className="text-orange-500">K</span>Motors
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Ваш надёжный партнёр в покупке автомобилей из Южной Кореи.
-              Hyundai, Kia, Genesis — лучшие цены и качество.
+              {t('footer.tagline')}
             </p>
             <div className="flex items-center gap-2 text-gray-400 text-xs">
               <MapPin className="w-4 h-4 text-orange-500" />
-              <span>Южная Корея → Россия</span>
+              <span>{t('footer.location')}</span>
             </div>
           </div>
 
           {/* Column 2 - Quick Links */}
           <div className="space-y-4">
-            <h4 className="text-lg font-bold text-white mb-4">Навигация</h4>
+            <h4 className="text-lg font-bold text-white mb-4">{t('footer.navigation')}</h4>
             <nav className="space-y-2">
               <Link
                 href="/"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                Главная
+                {t('nav.home')}
               </Link>
               <Link
                 href="/catalog"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                Каталог автомобилей
+                {t('nav.catalog')}
               </Link>
               <Link
-                href="/how-to-buy"
+                href="/buy"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                Как купить
+                {t('nav.buy')}
               </Link>
               <Link
                 href="/contact"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                Контакты
+                {t('nav.contact')}
               </Link>
             </nav>
           </div>
 
           {/* Column 3 - Contacts */}
           <div className="space-y-4">
-            <h4 className="text-lg font-bold text-white mb-4">Контакты</h4>
+            <h4 className="text-lg font-bold text-white mb-4">{t('footer.contacts')}</h4>
             <div className="space-y-3">
               <a
                 href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
@@ -94,7 +96,7 @@ export default function Footer() {
             {/* Social Links */}
             <div className="pt-4">
               <h5 className="text-sm font-semibold text-gray-400 mb-3">
-                Мы в соцсетях
+                {t('footer.socialMedia')}
               </h5>
               <div className="flex gap-3">
                 <a
@@ -157,13 +159,13 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-6 mt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-gray-400 text-xs text-center md:text-left">
-              © {new Date().getFullYear()} KMotors. Все права защищены.
+              © {new Date().getFullYear()} KMotors. {t('footer.copyright')}.
               <span className="mx-2">|</span>
               <Link
                 href="/privacy"
                 className="hover:text-orange-500 transition-colors"
               >
-                Политика конфиденциальности
+                {t('footer.privacy')}
               </Link>
             </div>
 
@@ -171,9 +173,9 @@ export default function Footer() {
             <button
               onClick={scrollToTop}
               className="group flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg transition-all text-sm font-semibold shadow-lg hover:shadow-xl"
-              aria-label="Наверх"
+              aria-label={t('footer.scrollToTop')}
             >
-              <span>Наверх</span>
+              <span>{t('footer.scrollToTop')}</span>
               <ArrowUp className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
             </button>
           </div>

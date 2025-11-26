@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import ContactForm from "./Form";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -10,20 +11,21 @@ import { Menu, X, Phone, Mail } from "lucide-react";
 
 export interface NavLink {
   href: string;
-  label: string;
+  labelKey: string;
 }
 
 export default function Header() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks: NavLink[] = [
-    { href: "/", label: "Главная" },
-    { href: "/catalog", label: "Каталог" },
-    { href: "/catalog2", label: "Наши авто" },
-    { href: "/buy", label: "Порядок работы" },
-    { href: "/contact", label: "Контакты" },
+    { href: "/", labelKey: "nav.home" },
+    { href: "/catalog", labelKey: "nav.catalog" },
+    { href: "/catalog2", labelKey: "nav.catalog" },
+    { href: "/buy", labelKey: "nav.buy" },
+    { href: "/contact", labelKey: "nav.contact" },
   ];
 
   // Обработка скролла
@@ -84,7 +86,7 @@ export default function Header() {
                       : "text-gray-700 hover:text-orange-600 hover:bg-orange-50"
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                   {pathname === link.href && (
                     <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-orange-500 rounded-full"></span>
                   )}
@@ -103,7 +105,7 @@ export default function Header() {
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Меню"
+                aria-label={t('common.menu')}
               >
                 {isMobileMenuOpen ? (
                   <X className="w-6 h-6 text-gray-900" />
@@ -133,7 +135,7 @@ export default function Header() {
                     : "bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-600"
                 }`}
               >
-                {link.label}
+                {t(link.labelKey)}
               </Link>
             ))}
 
@@ -153,7 +155,7 @@ export default function Header() {
                 className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:text-orange-600 transition-colors"
               >
                 <Mail className="w-4 h-4" />
-                <span className="text-sm">info@kmotors.shop</span>
+                <span className="text-sm">{process.env.NEXT_PUBLIC_EMAIL}</span>
               </a>
             </div>
           </nav>
@@ -179,7 +181,7 @@ export default function Header() {
               asChild
             >
               <Link href={link.href} className="text-xs font-medium">
-                {link.label}
+                {t(link.labelKey)}
               </Link>
             </ToggleGroupItem>
           ))}
