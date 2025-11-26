@@ -113,5 +113,52 @@
     "scrollToTop": "To Top",
     "copyright": "All rights reserved",
     "privacy": "Privacy Policy"
+  },
+  "buy": {
+    "title": "How to Buy a Car from Korea",
+    "subtitle": "Complete guide through the buying process. We'll walk you through all 8 steps",
+    "step": "Step",
+    "important": "Important",
+    "note": "Note",
+    "ready": "Ready to start?",
+    "readyDescription": "Choose a car from our catalog and begin your journey to the perfect vehicle",
+    "goToCatalog": "Go to Catalog",
+    "steps": {
+      "step1": {
+        "title": "Choose a Car",
+        "description": "Browse our catalog of cars from South Korea. Filter by brand, model, year, and price. Find the perfect option for you."
+      },
+      "step2": {
+        "title": "Make a Deposit",
+        "description": "Make a deposit of 2,000,000 won from the car's cost. We'll reserve the car for you and start the paperwork.",
+        "highlight": "All funds are insured and guaranteed to be returned if the car doesn't suit you."
+      },
+      "step3": {
+        "title": "Inspection and Check",
+        "description": "Our specialist conducts a full inspection of the car in South Korea. You'll receive a photo and video report with all details."
+      },
+      "step4": {
+        "title": "Pay the Balance",
+        "description": "After confirmation, pay the remaining amount. We'll purchase the car and start preparing it for export."
+      },
+      "step5": {
+        "title": "Customs Processing",
+        "description": "Our team handles all customs procedures. The car is processed for export to Russia with all necessary documents."
+      },
+      "step6": {
+        "title": "Delivery to Russia",
+        "description": "The car is shipped to Russia by sea. We track every stage of delivery and keep you informed.",
+        "highlight": "Delivery to Vladivostok typically takes 7-14 days depending on the destination."
+      },
+      "step7": {
+        "title": "Customs Clearance",
+        "description": "Upon arrival in Russia, we assist with customs clearance. All fees and taxes are paid according to Russian legislation."
+      },
+      "step8": {
+        "title": "Receive Your Car",
+        "description": "Your car is ready for pickup! We'll hand over the car with all necessary documents and keys.",
+        "highlight": "Congratulations! Your new car is now ready to use."
+      }
+    }
   }
 }
