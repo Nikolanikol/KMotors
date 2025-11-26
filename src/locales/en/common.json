@@ -73,6 +73,9 @@
   "contact": {
     "title": "Contact Us",
     "pageDescription": "Want to learn more about Korean cars or get a personalized selection? Fill out the form below — we'll contact you shortly.",
+    "formTitle": "FILL OUT",
+    "formTitleHighlight": "THE FORM",
+    "formSubtitle": "and our manager will contact you shortly",
     "name": "Name",
     "email": "Email",
     "phone": "Phone",

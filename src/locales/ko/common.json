@@ -73,6 +73,9 @@
   "contact": {
     "title": "문의하기",
     "pageDescription": "한국 자동차에 대해 더 알고 싶거나 맞춤형 선택을 받고 싶으신가요? 아래 양식을 작성해 주시면 곧 연락드리겠습니다.",
+    "formTitle": "양식을",
+    "formTitleHighlight": "작성하세요",
+    "formSubtitle": "관리자가 곧 연락드리겠습니다",
     "name": "이름",
     "email": "이메일",
     "phone": "전화번호",
