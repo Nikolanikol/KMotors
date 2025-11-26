@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "home": "홈",
+    "catalog": "카탈로그",
+    "buy": "구매 방법",
+    "contact": "연락처"
+  },
+  "catalog": {
+    "title": "한국 자동차 카탈로그",
+    "description": "꿈의 자동차를 선택하세요",
+    "filters": "필터",
+    "sort": "정렬",
+    "results": "결과",
+    "noResults": "차량을 찾을 수 없습니다",
+    "loading": "로딩 중...",
+    "showMore": "더 보기",
+    "total": "총 차량"
+  },
+  "car": {
+    "brand": "브랜드",
+    "model": "모델",
+    "year": "연도",
+    "price": "가격",
+    "mileage": "주행거리",
+    "fuel": "연료",
+    "transmission": "변속기",
+    "description": "설명",
+    "details": "자세히",
+    "vin": "차량번호",
+    "status": "상태",
+    "available": "이용 가능",
+    "sold": "판매됨",
+    "buyPrice": "구매 가격",
+    "views": "조회수"
+  },
+  "filter": {
+    "all": "전체",
+    "brand": "브랜드",
+    "priceRange": "가격 범위",
+    "yearRange": "연도 범위",
+    "mileageRange": "주행거리",
+    "fuelType": "연료 유형",
+    "transmissionType": "변속기 유형",
+    "reset": "초기화",
+    "apply": "적용",
+    "from": "시작",
+    "to": "끝"
+  },
+  "fuel": {
+    "gasoline": "가솔린",
+    "diesel": "디젤",
+    "hybrid": "하이브리드",
+    "electric": "전기",
+    "lpg": "LPG"
+  },
+  "transmission": {
+    "automatic": "자동",
+    "manual": "수동",
+    "cvt": "CVT",
+    "amt": "AMT"
+  },
+  "contact": {
+    "title": "문의하기",
+    "name": "이름",
+    "email": "이메일",
+    "phone": "전화번호",
+    "message": "메시지",
+    "send": "보내기",
+    "sending": "전송 중...",
+    "success": "메시지가 성공적으로 전송되었습니다!",
+    "error": "메시지 전송 중 오류 발생"
+  },
+  "common": {
+    "submit": "제출",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "close": "닫기",
+    "search": "검색",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "confirm": "확인",
+    "km": "km",
+    "won": "원"
+  },
+  "admin": {
+    "title": "관리자 패널",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "email": "이메일",
+    "password": "비밀번호",
+    "cars": "차량",
+    "analytics": "분석",
+    "addCar": "차량 추가",
+    "editCar": "차량 편집",
+    "deleteCar": "차량 삭제",
+    "uploadImages": "이미지 업로드"
+  }
+}

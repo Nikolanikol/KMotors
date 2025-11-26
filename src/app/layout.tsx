@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
+import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -99,12 +100,14 @@ export default function RootLayout({
       </head>
 
       <body className="min-h-screen flex flex-col   mx-auto ">
-        <h1 className="absolute -left-9999999">
-          Авто из Южной Кореи под заказ
-        </h1>
-        <Header />
-        <main className="flex-grow min-h-[70vh]">{children}</main>
-        <Footer />
+        <I18nProvider>
+          <h1 className="absolute -left-9999999">
+            Авто из Южной Кореи под заказ
+          </h1>
+          <Header />
+          <main className="flex-grow min-h-[70vh]">{children}</main>
+          <Footer />
+        </I18nProvider>
       </body>
     </html>
   );

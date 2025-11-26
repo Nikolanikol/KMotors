@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import ContactForm from "./Form";
+import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Menu, X, Phone, Mail } from "lucide-react";
 
@@ -58,6 +59,7 @@ export default function Header() {
               <Mail className="w-4 h-4" />
               <span>{process.env.NEXT_PUBLIC_EMAIL}</span>
             </a>
+            <LanguageSwitcher />
           </div>
 
           {/* Main header */}
@@ -92,6 +94,9 @@ export default function Header() {
 
             {/* CTA Button + Mobile Menu Toggle */}
             <div className="flex items-center gap-4">
+              <div className="lg:hidden">
+                <LanguageSwitcher />
+              </div>
               <ContactForm isVisible={false} />
 
               {/* Mobile menu button */}

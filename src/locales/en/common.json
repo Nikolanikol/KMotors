@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "home": "Home",
+    "catalog": "Catalog",
+    "buy": "How to Buy",
+    "contact": "Contact"
+  },
+  "catalog": {
+    "title": "Korean Cars Catalog",
+    "description": "Choose your dream car",
+    "filters": "Filters",
+    "sort": "Sort",
+    "results": "Results",
+    "noResults": "No cars found",
+    "loading": "Loading...",
+    "showMore": "Show more",
+    "total": "Total cars"
+  },
+  "car": {
+    "brand": "Brand",
+    "model": "Model",
+    "year": "Year",
+    "price": "Price",
+    "mileage": "Mileage",
+    "fuel": "Fuel",
+    "transmission": "Transmission",
+    "description": "Description",
+    "details": "Details",
+    "vin": "VIN number",
+    "status": "Status",
+    "available": "Available",
+    "sold": "Sold",
+    "buyPrice": "Purchase price",
+    "views": "Views"
+  },
+  "filter": {
+    "all": "All",
+    "brand": "Brand",
+    "priceRange": "Price range",
+    "yearRange": "Year range",
+    "mileageRange": "Mileage",
+    "fuelType": "Fuel type",
+    "transmissionType": "Transmission type",
+    "reset": "Reset",
+    "apply": "Apply",
+    "from": "From",
+    "to": "To"
+  },
+  "fuel": {
+    "gasoline": "Gasoline",
+    "diesel": "Diesel",
+    "hybrid": "Hybrid",
+    "electric": "Electric",
+    "lpg": "LPG"
+  },
+  "transmission": {
+    "automatic": "Automatic",
+    "manual": "Manual",
+    "cvt": "CVT",
+    "amt": "AMT"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "message": "Message",
+    "send": "Send",
+    "sending": "Sending...",
+    "success": "Message sent successfully!",
+    "error": "Error sending message"
+  },
+  "common": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "km": "km",
+    "won": "won"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "cars": "Cars",
+    "analytics": "Analytics",
+    "addCar": "Add Car",
+    "editCar": "Edit Car",
+    "deleteCar": "Delete Car",
+    "uploadImages": "Upload Images"
+  }
+}
