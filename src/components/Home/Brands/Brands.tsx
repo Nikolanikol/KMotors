@@ -4,12 +4,16 @@ import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { useTranslation } from "react-i18next";
 import { logoArray } from "./data";
+
 const Brands = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="h-[70vh] bg-gradient-orange pt-10">
       <div className="flex flex-col justify-center gap-30">
-        <h2 className="heading-2 text-center">Brands</h2>
+        <h2 className="heading-2 text-center">{t('home.brands.title')}</h2>
         <div className="carouselwrapper  min-h-24 px-5">
           <Swiper
             modules={[Autoplay, Pagination]} // 👈 обязательно!

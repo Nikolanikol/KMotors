@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { data } from "./FilterData";
 import {
   Select,
@@ -25,6 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 /*************  ✨ Windsurf Command ⭐  *************/
 
 const Filter = ({}) => {
+  const { t } = useTranslation();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   ///Filters
@@ -56,7 +58,7 @@ const Filter = ({}) => {
   const [year, setYear] = useState({ minYear: "", maxYear: "" });
   return (
     <div className="flex flex-col gap-2">
-      <h2>Производитель</h2>
+      <h2>{t('filter.manufacturer')}</h2>
 
       <Select
         value={manufactureAction}
@@ -69,10 +71,10 @@ const Filter = ({}) => {
         }}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Производитель" />
+          <SelectValue placeholder={t('filter.manufacturer')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>Выберите производителя</SelectItem>
+          <SelectItem value={null}>{t('filter.selectManufacturer')}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
               {item.title}
@@ -95,10 +97,10 @@ const Filter = ({}) => {
       <MyFilterMileage setMileage={setMileage} />
       <MyFilterYear setYear={setYear} />
       {/* ///////////////////////////// */}
-      <Button onClick={() => handleAction(action)}>Показать</Button>
+      <Button onClick={() => handleAction(action)}>{t('filter.show')}</Button>
       {isPending && (
         <div className="top-0 left-0   bottom-0 right-0 z-20 absolute bg-gray-300 opacity-30 border-2 border-black">
-          ⏳ Обновляем...
+          {t('filter.updating')}
         </div>
       )}
     </div>
@@ -117,6 +119,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
   setAction,
   setModelActionDrill,
 }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState<ModelsResponce[]>([]);
   const [modelAction, setModelAction] = useState<string | null>(null);
   const prevActionRef = useRef<string | null>(null);
@@ -133,7 +136,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
 
   return (
     <div>
-      <h2>Модель</h2>
+      <h2>{t('filter.model')}</h2>
       {/* {action} */}
       <Select
         disabled={action == null}
@@ -146,10 +149,10 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
         defaultValue={null}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Производитель" />
+          <SelectValue placeholder={t('filter.model')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>Выберите модель</SelectItem>
+          <SelectItem value={null}>{t('filter.selectModel')}</SelectItem>
           <ScrollArea className="h-96">
             {data.map((item) => (
               <SelectItem key={item.Action} value={item.Action} className="">
@@ -171,6 +174,7 @@ interface GenerationRowProps {
   setAction: React.Dispatch<React.SetStateAction<string | null>>;
 }
 const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
+  const { t } = useTranslation();
   const [GenerationAction, setGenerationAction] = useState<string | null>(null);
   const [data, setData] = useState<GenerationResponce[]>([]);
   const prevActionRef = useRef<string | null>(null);
@@ -186,7 +190,7 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
 
   return (
     <div>
-      <h2>Поколение</h2>
+      <h2>{t('filter.generation')}</h2>
 
       <Select
         value={GenerationAction}
@@ -197,10 +201,10 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
         disabled={action == null}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Производитель" />
+          <SelectValue placeholder={t('filter.generation')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>Выберите поколение</SelectItem>
+          <SelectItem value={null}>{t('filter.selectGeneration')}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block border-2 ">

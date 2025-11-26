@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Select,
@@ -20,6 +21,7 @@ const MyFilterYear = ({
     React.SetStateAction<{ minYear: string; maxYear: string }>
   >;
 }) => {
+  const { t } = useTranslation();
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -54,7 +56,7 @@ const MyFilterYear = ({
 
   return (
     <>
-      <h2 className="text-left my-3 font-bold">Год</h2>
+      <h2 className="text-left my-3 font-bold">{t('filter.year')}</h2>
 
       <div className="flex justify-between">
         <Select

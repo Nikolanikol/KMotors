@@ -1,6 +1,7 @@
 "use client";
 import { generateNumbersArray } from "@/utils/generateNumbersArray";
 import { convertNumberKm } from "@/utils/splitNumber";
+import { useTranslation } from "react-i18next";
 
 import { useState } from "react";
 
@@ -23,6 +24,7 @@ const MyFilterMileage = ({
     React.SetStateAction<{ minMileage: string; maxMileage: string }>
   >;
 }) => {
+  const { t } = useTranslation();
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -54,7 +56,7 @@ const MyFilterMileage = ({
   };
   return (
     <>
-      <h2 className="text-left my-3 font-bold">Пробег</h2>
+      <h2 className="text-left my-3 font-bold">{t('filter.mileage')}</h2>
 
       <div className="flex justify-between">
         <Select
@@ -66,11 +68,11 @@ const MyFilterMileage = ({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>{convertNumberKm(minPrice)} км</SelectLabel>{" "}
+              <SelectLabel>{convertNumberKm(minPrice)} {t('common.km')}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">
                 {filteredFromOptions.map((option) => (
                   <SelectItem key={option} value={option.toString()}>
-                    {convertNumberKm(option)} км
+                    {convertNumberKm(option)} {t('common.km')}
                   </SelectItem>
                 ))}
               </div>
@@ -86,11 +88,11 @@ const MyFilterMileage = ({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>{convertNumberKm(maxPrice)} км</SelectLabel>{" "}
+              <SelectLabel>{convertNumberKm(maxPrice)} {t('common.km')}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">
                 {filteredToOptions.map((option) => (
                   <SelectItem key={option} value={option.toString()}>
-                    {convertNumberKm(option)} км
+                    {convertNumberKm(option)} {t('common.km')}
                   </SelectItem>
                 ))}
               </div>

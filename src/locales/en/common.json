@@ -44,7 +44,18 @@
     "reset": "Reset",
     "apply": "Apply",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "manufacturer": "Manufacturer",
+    "selectManufacturer": "Select manufacturer",
+    "model": "Model",
+    "selectModel": "Select model",
+    "generation": "Generation",
+    "selectGeneration": "Select generation",
+    "show": "Show",
+    "updating": "⏳ Updating...",
+    "price": "Price",
+    "mileage": "Mileage",
+    "year": "Year"
   },
   "fuel": {
     "gasoline": "Gasoline",
@@ -61,6 +72,7 @@
   },
   "contact": {
     "title": "Contact Us",
+    "pageDescription": "Want to learn more about Korean cars or get a personalized selection? Fill out the form below — we'll contact you shortly.",
     "name": "Name",
     "email": "Email",
     "phone": "Phone",
@@ -159,6 +171,16 @@
         "description": "Your car is ready for pickup! We'll hand over the car with all necessary documents and keys.",
         "highlight": "Congratulations! Your new car is now ready to use."
       }
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Find the Car of Your Dreams",
+      "subtitle": "From Korea to Anywhere in the World!",
+      "catalogButton": "Catalog"
+    },
+    "brands": {
+      "title": "Brands"
     }
   }
 }

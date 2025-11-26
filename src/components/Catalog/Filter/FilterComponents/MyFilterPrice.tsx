@@ -1,5 +1,6 @@
 "use client";
 import { SetStateAction, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { convertNumber } from "@/utils/splitNumber";
 import { generateNumbersArray } from "@/utils/generateNumbersArray";
 
@@ -21,6 +22,7 @@ const MyFilterPrice = ({
     SetStateAction<{ minPrice: string; maxPrice: string }>
   >;
 }) => {
+  const { t } = useTranslation();
   const [minPrice, setMinPrice] = useState(priceOptions[0]);
   const [maxPrice, setMaxPrice] = useState(
     priceOptions[priceOptions.length - 1]
@@ -55,7 +57,7 @@ const MyFilterPrice = ({
 
   return (
     <>
-      <h2 className="text-left my-3 font-bold">Цена</h2>
+      <h2 className="text-left my-3 font-bold">{t('filter.price')}</h2>
 
       <div className="flex justify-between">
         <Select
@@ -67,11 +69,11 @@ const MyFilterPrice = ({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup defaultValue={"a"}>
-              <SelectLabel>{convertNumber(minPrice)} вон</SelectLabel>{" "}
+              <SelectLabel>{convertNumber(minPrice)} {t('common.won')}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">
                 {filteredFromOptions.map((option) => (
                   <SelectItem key={option} value={option.toString()}>
-                    {convertNumber(option)} вон
+                    {convertNumber(option)} {t('common.won')}
                   </SelectItem>
                 ))}
               </div>
@@ -87,11 +89,11 @@ const MyFilterPrice = ({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>{convertNumber(maxPrice)} вон</SelectLabel>{" "}
+              <SelectLabel>{convertNumber(maxPrice)} {t('common.won')}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">
                 {filteredToOptions.map((option) => (
                   <SelectItem key={option} value={option.toString()}>
-                    {convertNumber(option)} вон
+                    {convertNumber(option)} {t('common.won')}
                   </SelectItem>
                 ))}
               </div>
