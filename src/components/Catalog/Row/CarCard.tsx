@@ -52,10 +52,10 @@ const CarCard = ({
         {/* Title Section */}
         <div className="space-y-1">
           <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
-            {translateGenerationRow(model, t)}
+            {model}
           </h3>
           <p className="text-sm text-gray-400 font-medium">
-            {translateGenerationRow(manufacture, t)}
+            {manufacture}
           </p>
         </div>
 

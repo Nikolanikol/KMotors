@@ -202,7 +202,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
               </span>
             </div>
             <p className="text-lg font-bold text-gray-900">
-              {translateGenerationRow(data.maker, t)}
+              {data.maker}
             </p>
           </div>
 
@@ -215,7 +215,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
               </span>
             </div>
             <p className="text-lg font-bold text-gray-900">
-              {translateGenerationRow(data.model, t) ?? "—"}
+              {data.model ?? "—"}
             </p>
           </div>
 

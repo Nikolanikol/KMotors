@@ -20,11 +20,11 @@ const Header = ({ data }) => {
           <div className="flex items-center gap-2">
             <div className="w-2 h-10 bg-gradient-to-b from-orange-500 to-orange-400 rounded-full"></div>
             <h1 className="lg:text-4xl text-2xl font-bold text-gray-900">
-              {translateGenerationRow(data.category.manufacturerName, t)}{" "}
+              {data.category.manufacturerName}{" "}
               <span className="text-orange-600">
-                {translateGenerationRow(data.category.modelName, t)}
+                {data.category.modelName}
               </span>{" "}
-              {translateGenerationRow(data.category.gradeName, t)}
+              {data.category.gradeName}
             </h1>
           </div>
 
