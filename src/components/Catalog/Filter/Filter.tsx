@@ -22,7 +22,6 @@ import {
 import MyFilterPrice from "./FilterComponents/MyFilterPrice";
 import MyFilterMileage from "./FilterComponents/MyFilterMileage";
 import MyFilterYear from "./FilterComponents/MyFilterYear";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 /*************  ✨ Windsurf Command ⭐  *************/
 
@@ -152,22 +151,20 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
         <SelectTrigger>
           <SelectValue placeholder={t("filter.model")} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[min(384px,var(--radix-select-content-available-height))]">
           <SelectItem value={null}>{t("filter.selectModel")}</SelectItem>
-          <ScrollArea className="h-96">
-            {data.map((item) => (
-              <SelectItem key={item.Action} value={item.Action} className="">
-                <div className="w-full block border-2 ">
-                  <span>
-                    {i18n.language === "ko"
-                      ? item.DisplayValue
-                      : item.Metadata?.EngName?.[0] || item.DisplayValue}
-                  </span>{" "}
-                  <span className="font-bold ">{`(${item.Count})`}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </ScrollArea>
+          {data.map((item) => (
+            <SelectItem key={item.Action} value={item.Action} className="">
+              <div className="w-full block border-2 ">
+                <span>
+                  {i18n.language === "ko"
+                    ? item.DisplayValue
+                    : item.Metadata?.EngName?.[0] || item.DisplayValue}
+                </span>{" "}
+                <span className="font-bold ">{`(${item.Count})`}</span>
+              </div>
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

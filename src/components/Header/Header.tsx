@@ -42,7 +42,7 @@ export default function Header() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
+        className={`sticky top-0 z-50 transition-all duration-300 w-full overflow-hidden ${
           isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white"
         }`}
       >
