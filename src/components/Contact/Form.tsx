@@ -3,16 +3,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { SlidingButton } from "@/components/ui/button";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 export default function ContactForm() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -21,14 +13,10 @@ export default function ContactForm() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    email: "",
     message: "",
-    method: "",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -37,71 +25,59 @@ export default function ContactForm() {
     setLoading(true);
     setSuccess(false);
 
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, source: "contact" }),
+      });
 
-    setLoading(false);
-    if (res.ok) {
-      setSuccess(true);
-      setForm({ name: "", phone: "", email: "", message: "", method: "" });
-    } else {
-      alert(t('contact.error'));
+      if (res.ok) {
+        setSuccess(true);
+        setForm({ name: "", phone: "", message: "" });
+      } else {
+        alert(t("contact.error"));
+      }
+    } catch {
+      alert(t("contact.error"));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md ">
-      <form onSubmit={handleSubmit} className="space-y-4 ">
+    <div className="max-w-md">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           name="name"
           value={form.name}
           onChange={handleChange}
-          placeholder={t('contact.name')}
+          placeholder={t("contact.name")}
           required
         />
         <Input
           name="phone"
           value={form.phone}
           onChange={handleChange}
-          placeholder={t('contact.phone')}
+          placeholder={t("contact.phone")}
           required
         />
         <Input
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder={t('contact.email')}
-        />
-        <Select
-          required
-          value={form.method}
-          onValueChange={(value) => setForm({ ...form, method: value })}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={t('contact.contactMethod')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="telegram">Telegram</SelectItem>
-            <SelectItem value="whatsapp">WhatsApp</SelectItem>
-            <SelectItem value="phone">{t('contact.phoneCall')}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Textarea
           name="message"
           value={form.message}
           onChange={handleChange}
-          placeholder={t('contact.message')}
-          rows={4}
+          placeholder={t("contact.message")}
         />
-        <SlidingButton type="submit" disabled={loading} className="w-full">
-          {loading ? t('contact.sending') : t('contact.send')}
+        <SlidingButton
+          type="submit"
+          disabled={loading || !form.name || !form.phone}
+          className="w-full"
+        >
+          {loading ? t("contact.sending") : t("contact.send")}
         </SlidingButton>
         {success && (
           <p className="text-green-600 text-sm text-center">
-            ✅ {t('contact.success')}
+            ✅ {t("contact.success")}
           </p>
         )}
       </form>

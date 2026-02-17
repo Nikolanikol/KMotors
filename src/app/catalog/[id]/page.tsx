@@ -1,7 +1,8 @@
-import CarouselLight from "@/components/Catalog/CarIdPage/Carousel/Carousel";
-import DetailInfo from "@/components/Catalog/CarIdPage/DetailInfo";
-import Header from "@/components/Catalog/CarIdPage/Header";
-import OptionsRow from "@/components/Catalog/CarIdPage/OptionsRow/OptionsRow";
+import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
+import DetailInfo from "@/components/Catalog/CarDetail/DetailInfo";
+import Header from "@/components/Catalog/CarDetail/Header";
+import OptionsRow from "@/components/Catalog/CarDetail/OptionsRow/OptionsRow";
+import CustomsCalculator from "@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator";
 import { Button } from "@/components/ui/button";
 import Script from "next/script";
 
@@ -9,7 +10,7 @@ import { FC } from "react";
 
 import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
-import VinMileageSection from "@/components/Catalog/CarIdPage/VinRow";
+import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 
 interface PageProps {
   params: {
@@ -138,6 +139,12 @@ const Page: FC<PageProps> = async ({ params }) => {
 
         <CarouselLight photos={data.photos} />
         <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
+        <CustomsCalculator
+          priceKRW={data?.advertisement?.price * 10000}
+          yearMonth={data?.category?.yearMonth}
+          engineVolume={data?.spec?.displacement ?? 0}
+          fuelType={data?.fuel}
+        />
         <div className="flex items-center justify-center mt-6">
           <Button className="py-3 px-6 text-lg" variant="destructive">
             <a

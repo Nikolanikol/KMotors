@@ -3,7 +3,9 @@
     "home": "홈",
     "catalog": "카탈로그",
     "buy": "구매 방법",
-    "contact": "연락처"
+    "contact": "연락처",
+    "parts": "부품",
+    "blog": "블로그"
   },
   "catalog": {
     "title": "한국 자동차 카탈로그",
@@ -31,7 +33,55 @@
     "available": "이용 가능",
     "sold": "판매됨",
     "buyPrice": "구매 가격",
-    "views": "조회수"
+    "views": "조회수",
+    "carStatus": "차량 상태",
+    "detailedInfo": "상세 정보",
+    "bodyType": "차체 유형",
+    "engineVolume": "배기량",
+    "vehicleType": "차량 유형",
+    "registrationDate": "등록일",
+    "manufacturer": "제조사",
+    "history": "이력 및 통계",
+    "accidents": "사고",
+    "ownerChanges": "소유자 변경",
+    "plateChanges": "번호판 변경",
+    "theft": "도난",
+    "floods": "침수",
+    "floodsTotal": "전손",
+    "floodsPartial": "분손",
+    "myAccidents": "내 사고",
+    "otherAccidents": "타인 사고",
+    "ownerHistory": "소유자 이력",
+    "accidentReport": "사고 내역",
+    "theftCount": "총 도난 횟수",
+    "insuranceCoverage": "보험 처리",
+    "parts": "부품",
+    "labor": "공임",
+    "painting": "도색",
+    "specs": "차량 사양",
+    "standardOptions": "기본 옵션",
+    "choiceOptions": "선택 옵션",
+    "standardEquipment": "기본 장착",
+    "additionalOptions": "추가 옵션",
+    "optionsIncluded": "옵션 포함",
+    "optionsAvailable": "선택 가능",
+    "totalOptions": "총 옵션",
+    "vinCode": "VIN 코드",
+    "vehicleNumber": "차량 번호",
+    "mileageNote": "한국 원본 주행거리",
+    "plateNumber": "번호",
+    "condition": {
+      "excellent": "우수",
+      "good": "양호",
+      "attention": "주의 필요"
+    },
+    "optionCategory": {
+      "comfort": "편의",
+      "safety": "안전",
+      "entertainment": "엔터테인먼트",
+      "technology": "기술",
+      "other": "기타"
+    }
   },
   "filter": {
     "all": "전체",
@@ -85,7 +135,19 @@
     "success": "요청이 성공적으로 전송되었습니다!",
     "error": "메시지 전송 중 오류 발생",
     "contactMethod": "연락 방법",
-    "phoneCall": "전화 통화"
+    "phoneCall": "전화 통화",
+    "hideForm": "폼 닫기",
+    "openForm": "상담 신청",
+    "leaveRequest": "상담 신청하기",
+    "subtitle": "곧 연락드리겠습니다",
+    "yourName": "이름",
+    "methodTelegram": "💬 Telegram",
+    "methodWhatsapp": "💬 WhatsApp",
+    "methodPhone": "☎️ 전화",
+    "submit": "✉️ 보내기",
+    "submitting": "⏳ 전송 중...",
+    "successModal": "✅ 요청이 성공적으로 전송되었습니다",
+    "errorSend": "전송 오류"
   },
   "common": {
     "submit": "제출",
@@ -104,7 +166,10 @@
     "confirm": "확인",
     "menu": "메뉴",
     "km": "km",
-    "won": "원"
+    "won": "원",
+    "notSpecified": "미지정",
+    "copied": "복사됨!",
+    "date": "날짜"
   },
   "admin": {
     "title": "관리자 패널",
@@ -185,5 +250,23 @@
     "brands": {
       "title": "브랜드"
     }
+  },
+  "blog": {
+    "title": "블로그",
+    "subtitle": "자동차 시장 뉴스, 가이드 및 리뷰",
+    "search": "기사 검색...",
+    "all": "전체",
+    "news": "뉴스",
+    "guides": "가이드",
+    "reviews": "리뷰",
+    "other": "기타",
+    "empty": "아직 기사가 없습니다. 곧 콘텐츠가 업로드됩니다!",
+    "readMore": "자세히 보기",
+    "backToBlog": "← 블로그로 돌아가기",
+    "publishedAt": "게시됨",
+    "found": "기사 {{count}}개 발견",
+    "source": "출처",
+    "notFound": "기사를 찾을 수 없습니다",
+    "noContent": "기사 내용을 사용할 수 없습니다"
   }
 }

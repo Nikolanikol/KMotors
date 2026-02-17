@@ -2435,6 +2435,22 @@
   "폴스타" : "Polestar",
   "스즈키" : "Suzuki",
   "험머" : "Hummer",
-  "동풍소콘" : "Dongfeng Socon "
+  "동풍소콘" : "Dongfeng Socon",
 
+  "쌍용": "SsangYong",
+  "르노": "Renault",
+  "르노삼성": "Renault Samsung",
+  "벤츠": "Mercedes-Benz",
+  "아우디": "Audi",
+
+  "왜건": "Wagon",
+  "픽업트럭": "Pickup Truck",
+  "픽업": "Pickup",
+  "컨버터블": "Convertible",
+  "크로스오버": "Crossover",
+  "2도어": "2-Door",
+  "3도어": "3-Door",
+  "도어": "Door",
+  "LPG": "LPG",
+  "CNG": "CNG"
 }

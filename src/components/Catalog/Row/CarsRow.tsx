@@ -1,4 +1,4 @@
-import { Pagintaion } from "./Pagintaion";
+import { Pagination } from "./Pagination";
 import { getString } from "./utils";
 import { getCars } from "./utils/service";
 import { CarSearchParams } from "./utils/Types";
@@ -45,7 +45,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
           )}
       </div>
       <div className="flex gap-2 mt-4">
-        <Pagintaion count={count} />
+        <Pagination count={count} />
       </div>
     </div>
   );

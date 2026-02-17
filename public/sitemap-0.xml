@@ -1,26 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://kmotors.shop/sitemap.xml</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/contact</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/buy</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/admin/login</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/admin/cars/new</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/0b7ee816-9bfa-4906-9aa1-a6c6a89c7351</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/240e063f-79d6-4f84-8171-c977fad89f6f</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/312e64c2-295e-4532-80bc-41b7160a5ea7</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/3c58e42f-cb15-4e29-95cb-9869f1d1df83</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/47e08ff5-9d11-4bf9-8dd9-7c51db121238</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/4da56d38-bc93-48a8-93f2-4cb1c8fc4053</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/65283a20-64a7-42bc-9f0b-461f6cd1f04c</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/706060d4-bdf1-450b-af1a-07568d37a1b0</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/80b8df11-e3bb-4464-a994-6fd1d7ac77f0</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/8b5bc978-b335-471f-a54f-7ec637863fb0</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/90b53ea6-4bb2-475c-afe3-9af5b8f34425</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/b91ac95a-b7d4-475b-9e50-963b4b262f55</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/d13b8f04-f2a5-447a-8052-de0faeb2c8de</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/d660f724-d55b-4b28-b8cb-fbb0372dcffc</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/de2b97e6-17f0-4f9f-9e50-65560bfdfd52</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://kmotors.shop/catalog2/fe3e4ffe-030a-42d7-99a3-cecd389e1072</loc><lastmod>2025-11-26T08:53:56.978Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kmotors.shop/sitemap.xml</loc><lastmod>2026-02-17T14:29:38.139Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kmotors.shop/contact</loc><lastmod>2026-02-17T14:29:38.140Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kmotors.shop/buy</loc><lastmod>2026-02-17T14:29:38.140Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kmotors.shop/blog</loc><lastmod>2026-02-17T14:29:38.140Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kmotors.shop/parts</loc><lastmod>2026-02-17T14:29:38.140Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kmotors.shop</loc><lastmod>2026-02-17T14:29:38.140Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>

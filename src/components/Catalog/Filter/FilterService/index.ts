@@ -58,7 +58,7 @@ export interface GenerationResponce{
     Value : string
     Action : string
     Metadata : {
-        // EngName : string[]
+        EngName : string[]
         Code: string[]
     }
 }

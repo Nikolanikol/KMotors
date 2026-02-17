@@ -9,5 +9,11 @@
       "develop": false,
       "staging": false
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/rss-sync",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

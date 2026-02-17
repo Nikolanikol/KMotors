@@ -3,7 +3,9 @@
     "home": "Home",
     "catalog": "Catalog",
     "buy": "How to Buy",
-    "contact": "Contact"
+    "contact": "Contact",
+    "parts": "Parts",
+    "blog": "Blog"
   },
   "catalog": {
     "title": "Korean Cars Catalog",
@@ -31,7 +33,55 @@
     "available": "Available",
     "sold": "Sold",
     "buyPrice": "Purchase price",
-    "views": "Views"
+    "views": "Views",
+    "carStatus": "Car Status",
+    "detailedInfo": "Detailed Information",
+    "bodyType": "Body Type",
+    "engineVolume": "Engine Displacement",
+    "vehicleType": "Vehicle Type",
+    "registrationDate": "Registration Date",
+    "manufacturer": "Manufacturer",
+    "history": "History & Statistics",
+    "accidents": "Accidents",
+    "ownerChanges": "Owner Changes",
+    "plateChanges": "Plate Changes",
+    "theft": "Theft",
+    "floods": "Floods",
+    "floodsTotal": "Total",
+    "floodsPartial": "Partial",
+    "myAccidents": "My Accidents",
+    "otherAccidents": "Other Accidents",
+    "ownerHistory": "Owner History",
+    "accidentReport": "Accident Report",
+    "theftCount": "Total Thefts",
+    "insuranceCoverage": "Insurance Coverage",
+    "parts": "Parts",
+    "labor": "Labor",
+    "painting": "Painting",
+    "specs": "Car Specifications",
+    "standardOptions": "Standard Options",
+    "choiceOptions": "Optional Features",
+    "standardEquipment": "Standard Equipment",
+    "additionalOptions": "Additional Options",
+    "optionsIncluded": "options included",
+    "optionsAvailable": "available to choose",
+    "totalOptions": "Total options",
+    "vinCode": "VIN Code",
+    "vehicleNumber": "Vehicle Number",
+    "mileageNote": "Original mileage from South Korea",
+    "plateNumber": "Number",
+    "condition": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "attention": "Needs Attention"
+    },
+    "optionCategory": {
+      "comfort": "Comfort",
+      "safety": "Safety",
+      "entertainment": "Entertainment",
+      "technology": "Technology",
+      "other": "Other"
+    }
   },
   "filter": {
     "all": "All",
@@ -85,7 +135,19 @@
     "success": "Request sent successfully!",
     "error": "Error sending message",
     "contactMethod": "Contact method",
-    "phoneCall": "Phone call"
+    "phoneCall": "Phone call",
+    "hideForm": "Hide form",
+    "openForm": "Leave a request",
+    "leaveRequest": "Leave a Request",
+    "subtitle": "We will contact you shortly",
+    "yourName": "Your name",
+    "methodTelegram": "💬 Telegram",
+    "methodWhatsapp": "💬 WhatsApp",
+    "methodPhone": "☎️ Phone call",
+    "submit": "✉️ Send",
+    "submitting": "⏳ Sending...",
+    "successModal": "✅ Request sent successfully",
+    "errorSend": "Error sending"
   },
   "common": {
     "submit": "Submit",
@@ -104,7 +166,10 @@
     "confirm": "Confirm",
     "menu": "Menu",
     "km": "km",
-    "won": "won"
+    "won": "won",
+    "notSpecified": "not specified",
+    "copied": "Copied!",
+    "date": "Date"
   },
   "admin": {
     "title": "Admin Panel",
@@ -185,5 +250,23 @@
     "brands": {
       "title": "Brands"
     }
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Car market news, guides and reviews",
+    "search": "Search articles...",
+    "all": "All",
+    "news": "News",
+    "guides": "Guides",
+    "reviews": "Reviews",
+    "other": "Other",
+    "empty": "No articles yet. Content coming soon!",
+    "readMore": "Read more",
+    "backToBlog": "← Back to Blog",
+    "publishedAt": "Published",
+    "found": "{{count}} articles found",
+    "source": "Source",
+    "notFound": "Article not found",
+    "noContent": "Article content not available"
   }
 }

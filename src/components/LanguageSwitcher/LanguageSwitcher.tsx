@@ -25,6 +25,7 @@ export default function LanguageSwitcher() {
 
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode);
+    localStorage.setItem('kmotors-language', langCode);
     const lang = languages.find((l) => l.code === langCode) || languages[0];
     setCurrentLanguage(lang);
     setIsOpen(false);

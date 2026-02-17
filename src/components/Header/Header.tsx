@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import ContactForm from "./Form";
+import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Menu, X, Phone, Mail } from "lucide-react";
@@ -23,9 +23,11 @@ export default function Header() {
   const navLinks: NavLink[] = [
     { href: "/", labelKey: "nav.home" },
     { href: "/catalog", labelKey: "nav.catalog" },
-    { href: "/catalog2", labelKey: "nav.catalog" },
+
     { href: "/buy", labelKey: "nav.buy" },
     { href: "/contact", labelKey: "nav.contact" },
+    { href: "/parts", labelKey: "nav.parts" },
+    { href: "/blog", labelKey: "nav.blog" },
   ];
 
   // Обработка скролла
@@ -105,7 +107,7 @@ export default function Header() {
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label={t('common.menu')}
+                aria-label={t("common.menu")}
               >
                 {isMobileMenuOpen ? (
                   <X className="w-6 h-6 text-gray-900" />
