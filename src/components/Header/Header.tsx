@@ -42,11 +42,11 @@ export default function Header() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 w-full overflow-hidden ${
+        className={`sticky top-0 z-50 transition-all duration-300 w-full ${
           isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white"
         }`}
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 overflow-x-hidden">
           {/* Top bar - Contact info */}
           <div className="hidden lg:flex items-center justify-end gap-6 py-2 border-b border-gray-100 text-sm text-gray-600">
             <a
