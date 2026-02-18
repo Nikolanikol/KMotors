@@ -70,13 +70,13 @@ export default function LanguageSwitcher() {
         <>
           {/* Оверлей для закрытия при клике вне */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
 
           {/* Список языков */}
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
             {languages.map((lang) => (
               <button
                 key={lang.code}
