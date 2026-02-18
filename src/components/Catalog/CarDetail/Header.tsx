@@ -3,7 +3,7 @@
 import { formatDate } from "@/utils/formatDate";
 import { convertNumber } from "@/utils/splitNumber";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
-import { Star } from "lucide-react";
+import { Star, Phone, MapPin, User } from "lucide-react";
 
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -48,6 +48,51 @@ const Header = ({ data }) => {
               <p className="text-orange-100 text-sm mt-1">вон</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Contact section */}
+      <div className="pt-4 border-t-2 border-orange-100">
+        <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+
+          {/* Телефон */}
+          <a
+            href={`tel:${data.contact.no}`}
+            className="flex items-center gap-3 px-4 py-3 bg-white border-2 border-orange-200 rounded-2xl hover:border-orange-400 hover:shadow-md transition-all group"
+          >
+            <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+              <Phone className="w-4 h-4 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Телефон продавца</p>
+              <p className="text-sm font-bold text-gray-900">{data.contact.no}</p>
+            </div>
+          </a>
+
+          {/* Адрес */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-white border-2 border-gray-100 rounded-2xl">
+            <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-gray-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Адрес</p>
+              <p className="text-sm font-bold text-gray-900">{data.contact.address}</p>
+            </div>
+          </div>
+
+          {/* Тип продавца */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-white border-2 border-gray-100 rounded-2xl">
+            <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
+              <User className="w-4 h-4 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Продавец</p>
+              <p className="text-sm font-bold text-gray-900">
+                {data.contact.userType === "DEALER" ? "Дилер" : "Частное лицо"}
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 
