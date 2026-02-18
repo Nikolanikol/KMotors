@@ -52,14 +52,8 @@ export default function RootLayout({
     <html lang="ru">
       <head>
         <meta name="robots" content="index, follow" />
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ru-ru" />
-        <link
-          rel="alternate"
-          href="https://kmotors.shop/"
-          hrefLang="x-default"
-        />
-
-        <link rel="canonical" href="https://kmotors.shop/" />
+        {/* x-default hreflang — язык выбирается на клиенте через localStorage */}
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="x-default" />
         <link
           rel="icon"
           type="image/png"
@@ -79,15 +73,15 @@ export default function RootLayout({
             gtag('config', 'G-ZMRTQCD8SF');
           `}
         </Script>
+        {/* Organization JSON-LD — не defer, нужен при загрузке страницы */}
         <Script
           id="structured-data"
           type="application/ld+json"
-          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "Kmotors",
+              name: "KMotors",
               url: "https://kmotors.shop/",
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
               sameAs: [
@@ -101,9 +95,6 @@ export default function RootLayout({
 
       <body className="min-h-screen flex flex-col   mx-auto ">
         <I18nProvider>
-          <h1 className="absolute -left-9999999">
-            Авто из Южной Кореи под заказ
-          </h1>
           <Header />
           <main className="flex-grow min-h-[70vh]">{children}</main>
           <Footer />
