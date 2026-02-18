@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 
@@ -15,13 +15,40 @@ export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(languages[0]);
   const [mounted, setMounted] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Устанавливаем текущий язык при монтировании
     const lang = languages.find((l) => l.code === i18n.language) || languages[0];
     setCurrentLanguage(lang);
   }, [i18n.language]);
+
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, []);
+
+  const handleOpen = () => {
+    updatePosition();
+    setIsOpen((prev) => !prev);
+  };
+
+  // Пересчитываем позицию при скролле/ресайзе пока дропдаун открыт
+  useEffect(() => {
+    if (!isOpen) return;
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen, updatePosition]);
 
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode);
@@ -47,7 +74,8 @@ export default function LanguageSwitcher() {
     <div className="relative">
       {/* Кнопка переключателя */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={handleOpen}
         className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
         aria-label="Выбрать язык"
       >
@@ -65,7 +93,7 @@ export default function LanguageSwitcher() {
         </svg>
       </button>
 
-      {/* Выпадающее меню */}
+      {/* Выпадающее меню — fixed, вне потока любого overflow */}
       {isOpen && (
         <>
           {/* Оверлей для закрытия при клике вне */}
@@ -75,8 +103,11 @@ export default function LanguageSwitcher() {
             aria-hidden="true"
           />
 
-          {/* Список языков */}
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
+          {/* Список языков — fixed позиция от кнопки */}
+          <div
+            className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden"
+            style={{ top: dropdownPos.top, right: dropdownPos.right }}
+          >
             {languages.map((lang) => (
               <button
                 key={lang.code}
