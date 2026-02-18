@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import Main from "@/components/Home/Main";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://kmotors.shop/",
+  },
+};
 
 export default function Home() {
   return (

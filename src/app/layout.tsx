@@ -52,8 +52,10 @@ export default function RootLayout({
     <html lang="ru">
       <head>
         <meta name="robots" content="index, follow" />
-        {/* x-default hreflang — язык выбирается на клиенте через localStorage */}
+        {/* hreflang — язык выбирается на клиенте через localStorage */}
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ru" />
         <link rel="alternate" href="https://kmotors.shop/" hrefLang="x-default" />
+        <meta property="og:url" content="https://kmotors.shop/" />
         <link
           rel="icon"
           type="image/png"
