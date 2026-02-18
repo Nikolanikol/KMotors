@@ -30,48 +30,52 @@ export default function Footer() {
               <span className="text-orange-500">K</span>Motors
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              {t('footer.tagline')}
+              {t("footer.tagline")}
             </p>
             <div className="flex items-center gap-2 text-gray-400 text-xs">
               <MapPin className="w-4 h-4 text-orange-500" />
-              <span>{t('footer.location')}</span>
+              <span>{t("footer.location")}</span>
             </div>
           </div>
 
           {/* Column 2 - Quick Links */}
           <div className="space-y-4">
-            <h4 className="text-lg font-bold text-white mb-4">{t('footer.navigation')}</h4>
+            <h4 className="text-lg font-bold text-white mb-4">
+              {t("footer.navigation")}
+            </h4>
             <nav className="space-y-2">
               <Link
                 href="/"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                {t('nav.home')}
+                {t("nav.home")}
               </Link>
               <Link
                 href="/catalog"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                {t('nav.catalog')}
+                {t("nav.catalog")}
               </Link>
               <Link
                 href="/buy"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                {t('nav.buy')}
+                {t("nav.buy")}
               </Link>
               <Link
                 href="/contact"
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
-                {t('nav.contact')}
+                {t("nav.contact")}
               </Link>
             </nav>
           </div>
 
           {/* Column 3 - Contacts */}
           <div className="space-y-4">
-            <h4 className="text-lg font-bold text-white mb-4">{t('footer.contacts')}</h4>
+            <h4 className="text-lg font-bold text-white mb-4">
+              {t("footer.contacts")}
+            </h4>
             <div className="space-y-3">
               <a
                 href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
@@ -83,7 +87,7 @@ export default function Footer() {
                 <span>{process.env.NEXT_PUBLIC_NUMBER_PHONE}</span>
               </a>
               <a
-                href="mailto:info@kmotors.shop"
+                href={`mailto:${process.env.NEXT_PUBLIC_EMAIL}`}
                 className="flex items-center gap-3 text-gray-400 hover:text-orange-500 transition-colors text-sm group"
               >
                 <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
@@ -96,11 +100,11 @@ export default function Footer() {
             {/* Social Links */}
             <div className="pt-4">
               <h5 className="text-sm font-semibold text-gray-400 mb-3">
-                {t('footer.socialMedia')}
+                {t("footer.socialMedia")}
               </h5>
               <div className="flex gap-3">
                 <a
-                  href="https://instagram.com/kmotorrss"
+                  href="https://instagram.com/kmotors_parts"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#d084a8] to-[#c27080] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
@@ -126,7 +130,7 @@ export default function Footer() {
                 </a>
 
                 <a
-                  href="https://t.me/tirlye"
+                  href="https://t.me/caparts"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#7aa8c7] to-[#5a8fb0] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
@@ -138,7 +142,7 @@ export default function Footer() {
                   <FaTelegramPlane size={18} />
                 </a>
 
-                <a
+                {/* <a
                   href="https://www.tiktok.com/@kmotorrss"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -149,7 +153,7 @@ export default function Footer() {
                   aria-label="TikTok"
                 >
                   <FaTiktok size={18} />
-                </a>
+                </a> */}
               </div>
             </div>
           </div>
@@ -159,13 +163,13 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-6 mt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-gray-400 text-xs text-center md:text-left">
-              © {new Date().getFullYear()} KMotors. {t('footer.copyright')}.
+              © {new Date().getFullYear()} KMotors. {t("footer.copyright")}.
               <span className="mx-2">|</span>
               <Link
                 href="/privacy"
                 className="hover:text-orange-500 transition-colors"
               >
-                {t('footer.privacy')}
+                {t("footer.privacy")}
               </Link>
             </div>
 
@@ -173,9 +177,9 @@ export default function Footer() {
             <button
               onClick={scrollToTop}
               className="group flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg transition-all text-sm font-semibold shadow-lg hover:shadow-xl"
-              aria-label={t('footer.scrollToTop')}
+              aria-label={t("footer.scrollToTop")}
             >
-              <span>{t('footer.scrollToTop')}</span>
+              <span>{t("footer.scrollToTop")}</span>
               <ArrowUp className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
             </button>
           </div>
