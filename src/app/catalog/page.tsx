@@ -9,9 +9,32 @@ export async function generateMetadata({ searchParams }): Promise<Metadata> {
   const params = await searchParams;
   const manufacture = params.manufacture?.slice(1) || "";
 
+  const title = manufacture
+    ? `Купить ${manufacture} из Кореи — каталог авто | KMotors`
+    : "Каталог авто из Кореи — Hyundai, Kia, Genesis | KMotors";
+
+  const description = manufacture
+    ? `Каталог ${manufacture} из Южной Кореи. Актуальные цены, фото, характеристики. Доставка в Россию, Казахстан, Узбекистан. KMotors (кмоторс).`
+    : "Каталог корейских автомобилей из Южной Кореи: Hyundai, Kia, Genesis, SsangYong. Актуальные цены, фото, характеристики. Доставка в СНГ. KMotors (кмоторс).";
+
   return {
-    title: `Купить ${manufacture} авто | KMotors`,
-    description: `Каталог ${manufacture} автомобилей из Кореи...`,
+    title,
+    description,
+    keywords: [
+      manufacture ? `${manufacture} из Кореи` : "авто из Кореи",
+      "каталог корейских авто",
+      "купить авто из Кореи",
+      "кмоторс каталог",
+      "Hyundai из Кореи",
+      "Kia из Кореи",
+      "Genesis из Кореи",
+      "корейские автомобили цены",
+    ],
+    alternates: {
+      canonical: manufacture
+        ? `https://kmotors.shop/catalog?manufacture=.${manufacture}`
+        : "https://kmotors.shop/catalog",
+    },
   };
 }
 export default async function ({

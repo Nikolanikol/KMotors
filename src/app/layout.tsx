@@ -6,21 +6,44 @@ import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Корейские автомобили Hyundai, Kia, Genesis — каталог моделей и цены",
+  title: {
+    default: "KMotors — авто из Кореи | Hyundai, Kia, Genesis",
+    template: "%s | KMotors",
+  },
   description:
-    "Обзор корейских автомобилей: Hyundai, Kia, Genesis, SsangYong. Характеристики, цены, фото, отзывы. Каталог авто из Южной Кореи",
+    "KMotors (кмоторс) — покупка и доставка автомобилей из Южной Кореи в Россию, Казахстан, Узбекистан. Hyundai, Kia, Genesis. Честные цены, без посредников.",
+  keywords: [
+    "авто из Кореи",
+    "купить авто из Кореи",
+    "корейские автомобили",
+    "авто из Южной Кореи",
+    "кмоторс",
+    "кмоторсшоп",
+    "kmotors",
+    "kmotors.shop",
+    "Hyundai из Кореи",
+    "Kia из Кореи",
+    "Genesis из Кореи",
+    "доставка авто из Кореи",
+    "авто из Кореи в Россию",
+    "авто из Кореи в Казахстан",
+    "авто из Кореи в Узбекистан",
+    "купить корейское авто",
+    "пригнать авто из Кореи",
+    "авто под заказ из Кореи",
+  ],
   openGraph: {
-    title: "Каталог корейских авто — Hyundai, Kia, Genesis",
+    title: "KMotors — авто из Кореи | Hyundai, Kia, Genesis",
     description:
-      "Выбирайте лучшие автомобили из Южной Кореи. Фото, цены, характеристики, отзывы.",
+      "Покупка и доставка автомобилей из Южной Кореи в страны СНГ. Hyundai, Kia, Genesis — честные цены, без посредников.",
     url: "https://kmotors.shop/",
-    siteName: "Kmotors",
+    siteName: "KMotors",
     images: [
       {
         url: "https://kmotors.shop/preview/preview.png",
         width: 1200,
         height: 630,
-        alt: "Каталог корейских авто — Hyundai, Kia, Genesis",
+        alt: "KMotors — авто из Кореи",
       },
     ],
     locale: "ru_RU",
@@ -28,18 +51,6 @@ export const metadata: Metadata = {
   },
   other: {
     "yandex-verification": "f71551035d1c4fbb",
-    keywords: [
-      "Hyundai",
-      "Kia",
-      "Genesis",
-      "SsangYong",
-      "корейские автомобили",
-      "авто из Южной Кореи",
-      "купить авто",
-      "цены",
-      "kmotors",
-      "кмоторс ",
-    ],
   },
 };
 

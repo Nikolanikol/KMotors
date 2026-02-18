@@ -4,6 +4,9 @@ import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import Main from "@/components/Home/Main";
 
 export const metadata: Metadata = {
+  title: "KMotors — авто из Кореи | Купить Hyundai, Kia, Genesis в СНГ",
+  description:
+    "KMotors (кмоторсшоп) — покупка автомобилей из Южной Кореи с доставкой в Россию, Казахстан, Узбекистан. Большой каталог Hyundai, Kia, Genesis. Честная цена, помощь с растаможкой.",
   alternates: {
     canonical: "https://kmotors.shop/",
   },
