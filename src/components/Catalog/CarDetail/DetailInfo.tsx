@@ -102,11 +102,12 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
   const { t } = useTranslation("common");
   useEffect(() => {
     fetch(
-      `https://api.encar.com/v1/readside/record/vehicle/${id}/open?vehicleNo=${carnumber}`
+      `https://api.encar.com/v1/readside/record/vehicle/${id}/open?vehicleNo=${carnumber}`,
     )
       .then((data) => data.json())
       .then((res) => {
         setData(res);
+        console.log(res, "res");
       })
 
       .then(() => setIsloading(false))
@@ -122,11 +123,23 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
       totalAccidents + data.robberCnt + data.floodTotalLossCnt;
 
     if (totalProblems === 0 && data.ownerChangeCnt <= 2) {
-      return { status: t("car.condition.excellent"), color: "green", icon: CheckCircle };
+      return {
+        status: t("car.condition.excellent"),
+        color: "green",
+        icon: CheckCircle,
+      };
     } else if (totalProblems <= 2) {
-      return { status: t("car.condition.good"), color: "blue", icon: TrendingUp };
+      return {
+        status: t("car.condition.good"),
+        color: "blue",
+        icon: TrendingUp,
+      };
     } else {
-      return { status: t("car.condition.attention"), color: "red", icon: AlertTriangle };
+      return {
+        status: t("car.condition.attention"),
+        color: "red",
+        icon: AlertTriangle,
+      };
     }
   };
 
@@ -140,8 +153,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
           carStatus.color === "green"
             ? "bg-green-50 border-green-300"
             : carStatus.color === "blue"
-            ? "bg-blue-50 border-blue-300"
-            : "bg-red-50 border-red-300"
+              ? "bg-blue-50 border-blue-300"
+              : "bg-red-50 border-red-300"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -150,8 +163,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
               carStatus.color === "green"
                 ? "text-green-600"
                 : carStatus.color === "blue"
-                ? "text-blue-600"
-                : "text-red-600"
+                  ? "text-blue-600"
+                  : "text-red-600"
             }`}
           />
           <div>
@@ -163,8 +176,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
                 carStatus.color === "green"
                   ? "text-green-700"
                   : carStatus.color === "blue"
-                  ? "text-blue-700"
-                  : "text-red-700"
+                    ? "text-blue-700"
+                    : "text-red-700"
               }`}
             >
               {carStatus.status}
@@ -310,7 +323,9 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
           {/* ДТП */}
           <div className="bg-gradient-to-br from-red-50 to-white border border-red-200 rounded-xl p-4 text-center">
             <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-2" />
-            <p className="text-xs font-semibold text-gray-600 mb-1">{t("car.accidents")}</p>
+            <p className="text-xs font-semibold text-gray-600 mb-1">
+              {t("car.accidents")}
+            </p>
             <p className="text-3xl font-bold text-red-600">
               {data.myAccidentCnt + data.otherAccidentCnt}
             </p>
@@ -341,7 +356,9 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
           {/* Угоны */}
           <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-xl p-4 text-center">
             <AlertCircle className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-            <p className="text-xs font-semibold text-gray-600 mb-1">{t("car.theft")}</p>
+            <p className="text-xs font-semibold text-gray-600 mb-1">
+              {t("car.theft")}
+            </p>
             <p className="text-3xl font-bold text-purple-600">
               {data.robberCnt}
             </p>
@@ -371,7 +388,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
               </p>
               {data.floodDate && (
                 <p className="text-gray-600 text-xs">
-                  <span className="font-semibold">{t("common.date")}:</span> {data.floodDate}
+                  <span className="font-semibold">{t("common.date")}:</span>{" "}
+                  {data.floodDate}
                 </p>
               )}
             </div>
@@ -392,7 +410,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
               </p>
               {data.robberDate && (
                 <p className="text-gray-600 text-xs">
-                  <span className="font-semibold">{t("common.date")}:</span> {data.robberDate}
+                  <span className="font-semibold">{t("common.date")}:</span>{" "}
+                  {data.robberDate}
                 </p>
               )}
             </div>
@@ -412,7 +431,9 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
                 </span>
               </p>
               <p className="text-gray-700">
-                <span className="font-semibold">{t("car.otherAccidents")}:</span>{" "}
+                <span className="font-semibold">
+                  {t("car.otherAccidents")}:
+                </span>{" "}
                 <span className="text-red-600 font-bold">
                   {data.otherAccidentCnt}
                 </span>
@@ -467,14 +488,18 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
             <table className="w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-                  <th className="px-4 py-3 text-left font-semibold">{t("common.date")}</th>
+                  <th className="px-4 py-3 text-left font-semibold">
+                    {t("common.date")}
+                  </th>
                   <th className="px-4 py-3 text-right font-semibold">
                     {t("car.insuranceCoverage")}
                   </th>
                   <th className="px-4 py-3 text-right font-semibold">
                     {t("car.parts")}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold">{t("car.labor")}</th>
+                  <th className="px-4 py-3 text-right font-semibold">
+                    {t("car.labor")}
+                  </th>
                   <th className="px-4 py-3 text-right font-semibold">
                     {t("car.painting")}
                   </th>

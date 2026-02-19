@@ -68,7 +68,10 @@ export async function fetchData(id: string): Promise<any> {
   try {
     return await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`)
       .then((data) => data.json())
-      .then((res) => res);
+      .then((res) => {
+        console.log(res, "respage");
+        return res;
+      });
   } catch (error) {}
 }
 const Page: FC<PageProps> = async ({ params }) => {

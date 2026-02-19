@@ -18,6 +18,9 @@ const RSS_FEEDS = [
 // Max new articles per sync run (across all feeds combined)
 const MAX_NEW_PER_RUN = 5;
 
+// Only accept articles published within the last N days
+const MAX_AGE_DAYS = 7;
+
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
@@ -65,18 +68,19 @@ export async function GET(req: NextRequest) {
           return db - da;
         });
 
+        const cutoff = Date.now() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+
         for (const item of sorted) {
           if (totalAdded >= MAX_NEW_PER_RUN) break;
+
+          // Skip old articles
+          const pubTime = item.pubDate ? new Date(item.pubDate).getTime() : 0;
+          if (!pubTime || pubTime < cutoff) continue;
 
           const slug = slugFromUrl(item.guid || item.link);
           if (!slug || existingSlugs.has(slug)) continue;
 
-          let publishedAt: string;
-          try {
-            publishedAt = new Date(item.pubDate).toISOString();
-          } catch {
-            publishedAt = new Date().toISOString();
-          }
+          const publishedAt = new Date(item.pubDate).toISOString();
 
           // Insert as draft
           const { data: inserted, error: insertError } = await supabase
