@@ -19,7 +19,7 @@ const RSS_FEEDS = [
 const MAX_NEW_PER_RUN = 5;
 
 // Only accept articles published within the last N days
-const MAX_AGE_DAYS = 7;
+const MAX_AGE_DAYS = 20;
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
