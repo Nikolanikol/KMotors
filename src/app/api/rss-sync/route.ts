@@ -3,11 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 import { fetchRssFeed, parseRssItems, slugFromUrl, escapeHtml } from "@/lib/rss";
 
 const RSS_FEEDS = [
-  {
-    url: "https://www.vedomosti.ru/rss/rubric/auto/auto_industry.xml",
-    tags: ["ведомости", "автопром"],
-    source: "vedomosti.ru",
-  },
+
   {
     url: "https://www.vedomosti.ru/rss/rubric/auto/cars.xml",
     tags: ["ведомости", "авто"],
