@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
     );
 
     let totalAdded = 0;
+    let totalInFeed = 0;
+    let skippedOld = 0;
+    let skippedDuplicate = 0;
     const allErrors: string[] = [];
 
     for (const feed of RSS_FEEDS) {
@@ -54,6 +57,7 @@ export async function GET(req: NextRequest) {
         // Vedomosti is UTF-8 (default)
         const xml = await fetchRssFeed(feed.url);
         const items = parseRssItems(xml);
+        totalInFeed += items.length;
 
         if (!items.length) continue;
 
@@ -71,10 +75,16 @@ export async function GET(req: NextRequest) {
 
           // Skip old articles
           const pubTime = item.pubDate ? new Date(item.pubDate).getTime() : 0;
-          if (!pubTime || pubTime < cutoff) continue;
+          if (!pubTime || pubTime < cutoff) {
+            skippedOld++;
+            continue;
+          }
 
           const slug = slugFromUrl(item.guid || item.link);
-          if (!slug || existingSlugs.has(slug)) continue;
+          if (!slug || existingSlugs.has(slug)) {
+            skippedDuplicate++;
+            continue;
+          }
 
           const publishedAt = new Date(item.pubDate).toISOString();
 
@@ -163,6 +173,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       feeds: RSS_FEEDS.length,
+      totalInFeed,
+      skippedOld,
+      skippedDuplicate,
       added: totalAdded,
       errors: allErrors.length ? allErrors : undefined,
     });

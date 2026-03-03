@@ -98,7 +98,7 @@ export default function Footer() {
             </div>
 
             {/* Social Links */}
-            <div className="pt-4">
+            {/* <div className="pt-4">
               <h5 className="text-sm font-semibold text-gray-400 mb-3">
                 {t("footer.socialMedia")}
               </h5>
@@ -142,7 +142,7 @@ export default function Footer() {
                   <FaTelegramPlane size={18} />
                 </a>
 
-                {/* <a
+                <a
                   href="https://www.tiktok.com/@kmotorrss"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -153,9 +153,9 @@ export default function Footer() {
                   aria-label="TikTok"
                 >
                   <FaTiktok size={18} />
-                </a> */}
+                </a>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
