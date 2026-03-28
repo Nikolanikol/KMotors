@@ -6,6 +6,15 @@
 
 ---
 
+## Screenshots
+
+![Screen 1](public/screenshots/screen1.png)
+![Screen 2](public/screenshots/screen2.png)
+![Screen 3](public/screenshots/screen3.png)
+![Screen 4](public/screenshots/screen4.png)
+
+---
+
 ## Features
 
 - **Car catalog** — real-time data from Encar API with filters by brand, price, year, and mileage
