@@ -61,6 +61,17 @@ export async function generateMetadata({ params }): Promise<Metadata> {
           : "/noimage.png",
       ],
     },
+    alternates: {
+      canonical: `https://kmotors.shop/catalog/${params.id}`,
+      languages: {
+        ru: `https://kmotors.shop/catalog/${params.id}`,
+        en: `https://kmotors.shop/catalog/${params.id}`,
+        ko: `https://kmotors.shop/catalog/${params.id}`,
+        ka: `https://kmotors.shop/catalog/${params.id}`,
+        ar: `https://kmotors.shop/catalog/${params.id}`,
+        "x-default": `https://kmotors.shop/catalog/${params.id}`,
+      },
+    },
   };
 }
 

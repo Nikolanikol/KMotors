@@ -8,7 +8,7 @@ export default function I18nProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Восстанавливаем сохранённый язык только на клиенте, после гидратации
     const saved = localStorage.getItem('kmotors-language');
-    if (saved && ['ru', 'en', 'ko'].includes(saved)) {
+    if (saved && ['ru', 'en', 'ko', 'ka', 'ar'].includes(saved)) {
       i18n.changeLanguage(saved);
     }
   }, []);

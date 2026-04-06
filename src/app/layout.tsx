@@ -63,8 +63,12 @@ export default function RootLayout({
     <html lang="ru">
       <head>
         <meta name="robots" content="index, follow" />
-        {/* hreflang — язык выбирается на клиенте через localStorage */}
+        {/* hreflang — все языки указывают на один URL (клиентский i18n) */}
         <link rel="alternate" href="https://kmotors.shop/" hrefLang="ru" />
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="en" />
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ko" />
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ka" />
+        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ar" />
         <link rel="alternate" href="https://kmotors.shop/" hrefLang="x-default" />
         <meta property="og:url" content="https://kmotors.shop/" />
         <link
@@ -86,17 +90,24 @@ export default function RootLayout({
             gtag('config', 'G-ZMRTQCD8SF');
           `}
         </Script>
-        {/* Organization JSON-LD — не defer, нужен при загрузке страницы */}
+        {/* Organization + AutoDealer JSON-LD */}
         <Script
           id="structured-data"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Organization",
+              "@type": ["Organization", "AutoDealer"],
               name: "KMotors",
               url: "https://kmotors.shop/",
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
+              image: "https://kmotors.shop/preview/preview.png",
+              description:
+                "Покупка и доставка автомобилей из Южной Кореи в Россию, Казахстан, Узбекистан, Грузию и страны арабского мира. Hyundai, Kia, Genesis.",
+              areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
+              priceRange: "$$",
+              currenciesAccepted: "KRW, RUB, USD",
+              paymentAccepted: "Cash, Bank Transfer",
               sameAs: [
                 "https://t.me/kmotorsshop",
                 "https://www.instagram.com/kmotors.shop/",

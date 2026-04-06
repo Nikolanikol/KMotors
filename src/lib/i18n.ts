@@ -8,6 +8,10 @@ import ruCommon from '../locales/ru/common.json';
 import ruCars from '../locales/ru/cars.json';
 import koCommon from '../locales/ko/common.json';
 import koCars from '../locales/ko/cars.json';
+import kaCommon from '../locales/ka/common.json';
+import kaCars from '../locales/ka/cars.json';
+import arCommon from '../locales/ar/common.json';
+import arCars from '../locales/ar/cars.json';
 
 i18n
   .use(initReactI18next)
@@ -17,7 +21,7 @@ i18n
     fallbackLng: 'ru',
 
     // Поддерживаемые языки
-    supportedLngs: ['ru', 'en', 'ko'],
+    supportedLngs: ['ru', 'en', 'ko', 'ka', 'ar'],
 
     // Отладка (выключить в продакшене)
     debug: false,
@@ -35,6 +39,14 @@ i18n
       ko: {
         common: koCommon,
         cars: koCars,
+      },
+      ka: {
+        common: kaCommon,
+        cars: kaCars,
+      },
+      ar: {
+        common: arCommon,
+        cars: arCars,
       },
     },
 

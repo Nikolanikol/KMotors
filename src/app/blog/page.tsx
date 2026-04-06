@@ -23,9 +23,34 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://kmotors.shop/blog",
+    languages: {
+      ru: "https://kmotors.shop/blog",
+      en: "https://kmotors.shop/blog",
+      ko: "https://kmotors.shop/blog",
+      ka: "https://kmotors.shop/blog",
+      ar: "https://kmotors.shop/blog",
+      "x-default": "https://kmotors.shop/blog",
+    },
   },
 };
 
 export default function BlogPage() {
-  return <BlogClientPage />;
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Главная", item: "https://kmotors.shop/" },
+      { "@type": "ListItem", position: 2, name: "Блог", item: "https://kmotors.shop/blog" },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <BlogClientPage />
+    </>
+  );
 }

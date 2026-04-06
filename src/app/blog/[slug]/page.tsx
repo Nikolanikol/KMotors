@@ -54,6 +54,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     alternates: {
       canonical: `https://kmotors.shop/blog/${slug}`,
+      languages: {
+        ru: `https://kmotors.shop/blog/${slug}`,
+        en: `https://kmotors.shop/blog/${slug}`,
+        ko: `https://kmotors.shop/blog/${slug}`,
+        ka: `https://kmotors.shop/blog/${slug}`,
+        ar: `https://kmotors.shop/blog/${slug}`,
+        "x-default": `https://kmotors.shop/blog/${slug}`,
+      },
     },
   };
 }

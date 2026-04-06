@@ -29,6 +29,14 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://kmotors.shop/parts",
+    languages: {
+      ru: "https://kmotors.shop/parts",
+      en: "https://kmotors.shop/parts",
+      ko: "https://kmotors.shop/parts",
+      ka: "https://kmotors.shop/parts",
+      ar: "https://kmotors.shop/parts",
+      "x-default": "https://kmotors.shop/parts",
+    },
   },
   keywords: [
     "запчасти из Кореи",
