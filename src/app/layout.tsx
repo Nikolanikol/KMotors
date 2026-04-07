@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header/Header";
-import Footer from "@/components/Footer/Footer";
-import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import Script from "next/script";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: {
@@ -11,14 +9,13 @@ export const metadata: Metadata = {
     template: "%s | KMotors",
   },
   description:
-    "KMotors (кмоторс) — покупка и доставка автомобилей из Южной Кореи в Россию, Казахстан, Узбекистан. Hyundai, Kia, Genesis. Честные цены, без посредников.",
+    "KMotors (кмоторс) — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
   keywords: [
     "авто из Кореи",
     "купить авто из Кореи",
     "корейские автомобили",
     "авто из Южной Кореи",
     "кмоторс",
-    "кмоторсшоп",
     "kmotors",
     "kmotors.shop",
     "Hyundai из Кореи",
@@ -28,54 +25,30 @@ export const metadata: Metadata = {
     "авто из Кореи в Россию",
     "авто из Кореи в Казахстан",
     "авто из Кореи в Узбекистан",
-    "купить корейское авто",
-    "пригнать авто из Кореи",
-    "авто под заказ из Кореи",
   ],
-  openGraph: {
-    title: "KMotors — авто из Кореи | Hyundai, Kia, Genesis",
-    description:
-      "Покупка и доставка автомобилей из Южной Кореи в страны СНГ. Hyundai, Kia, Genesis — честные цены, без посредников.",
-    url: "https://kmotors.shop/",
-    siteName: "KMotors",
-    images: [
-      {
-        url: "https://kmotors.shop/preview/preview.png",
-        width: 1200,
-        height: 630,
-        alt: "KMotors — авто из Кореи",
-      },
-    ],
-    locale: "ru_RU",
-    type: "website",
-  },
   other: {
     "yandex-verification": "f71551035d1c4fbb",
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
+  // Читаем lang из cookie (выставляется middleware при каждом запросе)
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("kmotors-lang")?.value || "ru";
+
   return (
-    <html lang="ru">
+    <html lang={lang}>
       <head>
         <meta name="robots" content="index, follow" />
-        {/* hreflang — все языки указывают на один URL (клиентский i18n) */}
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ru" />
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="en" />
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ko" />
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ka" />
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="ar" />
-        <link rel="alternate" href="https://kmotors.shop/" hrefLang="x-default" />
-        <meta property="og:url" content="https://kmotors.shop/" />
-        <link
-          rel="icon"
-          type="image/png"
-          href="/favicon_io/android-chrome-192x192.png"
-        />
+        <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="ru" />
+        <link rel="alternate" href="https://kmotors.shop/en/" hrefLang="en" />
+        <link rel="alternate" href="https://kmotors.shop/ko/" hrefLang="ko" />
+        <link rel="alternate" href="https://kmotors.shop/ka/" hrefLang="ka" />
+        <link rel="alternate" href="https://kmotors.shop/ar/" hrefLang="ar" />
+        <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="x-default" />
+        <link rel="icon" type="image/png" href="/favicon_io/android-chrome-192x192.png" />
 
         {/* Google Analytics 4 */}
         <Script
@@ -90,6 +63,7 @@ export default function RootLayout({
             gtag('config', 'G-ZMRTQCD8SF');
           `}
         </Script>
+
         {/* Organization + AutoDealer JSON-LD */}
         <Script
           id="structured-data"
@@ -103,11 +77,9 @@ export default function RootLayout({
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
               image: "https://kmotors.shop/preview/preview.png",
               description:
-                "Покупка и доставка автомобилей из Южной Кореи в Россию, Казахстан, Узбекистан, Грузию и страны арабского мира. Hyundai, Kia, Genesis.",
+                "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
               areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
               priceRange: "$$",
-              currenciesAccepted: "KRW, RUB, USD",
-              paymentAccepted: "Cash, Bank Transfer",
               sameAs: [
                 "https://t.me/kmotorsshop",
                 "https://www.instagram.com/kmotors.shop/",
@@ -116,13 +88,8 @@ export default function RootLayout({
           }}
         />
       </head>
-
-      <body className="min-h-screen flex flex-col   mx-auto ">
-        <I18nProvider>
-          <Header />
-          <main className="flex-grow min-h-[70vh]">{children}</main>
-          <Footer />
-        </I18nProvider>
+      <body className="min-h-screen flex flex-col mx-auto">
+        {children}
       </body>
     </html>
   );

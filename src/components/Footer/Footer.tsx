@@ -7,10 +7,17 @@ import {
 } from "react-icons/fa";
 import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+
+const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 export default function Footer() {
   const { t } = useTranslation();
+  const pathname = usePathname();
+
+  const segments = pathname.split("/");
+  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -45,25 +52,25 @@ export default function Footer() {
             </h4>
             <nav className="space-y-2">
               <Link
-                href="/"
+                href={`/${lang}/`}
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
                 {t("nav.home")}
               </Link>
               <Link
-                href="/catalog"
+                href={`/${lang}/catalog`}
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
                 {t("nav.catalog")}
               </Link>
               <Link
-                href="/buy"
+                href={`/${lang}/buy`}
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
                 {t("nav.buy")}
               </Link>
               <Link
-                href="/contact"
+                href={`/${lang}/contact`}
                 className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
               >
                 {t("nav.contact")}

@@ -81,7 +81,7 @@ export default function BlogPostPage() {
         <p className="text-xl text-[#002C5F] font-semibold">404</p>
         <p className="text-gray-500">{t("blog.notFound", "Статья не найдена")}</p>
         <Link
-          href="/blog"
+          href={`/${lang}/blog`}
           className="mt-2 inline-flex items-center gap-2 text-sm text-[#BB162B] hover:text-[#9B1220] font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -112,7 +112,7 @@ export default function BlogPostPage() {
       <div className="max-w-3xl mx-auto px-4 py-10">
         {/* Back link */}
         <Link
-          href="/blog"
+          href={`/${lang}/blog`}
           className="inline-flex items-center gap-1.5 text-sm text-[#BB162B] hover:text-[#9B1220] font-medium mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

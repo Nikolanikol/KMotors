@@ -10,9 +10,15 @@ import {
   Anchor,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { usePathname } from "next/navigation";
+
+const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 export default function HowToBuyPage() {
   const { t } = useTranslation();
+  const pathname = usePathname();
+  const segments = pathname.split("/");
+  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   const steps = [
     {
@@ -154,7 +160,7 @@ export default function HowToBuyPage() {
             {t('buy.readyDescription')}
           </p>
           <a
-            href="/catalog"
+            href={`/${lang}/catalog`}
             className="inline-block bg-white text-orange-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors shadow-lg"
           >
             {t('buy.goToCatalog')}

@@ -14,20 +14,25 @@ export interface NavLink {
   labelKey: string;
 }
 
+const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+
 export default function Header() {
   const pathname = usePathname();
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const navLinks: NavLink[] = [
-    { href: "/", labelKey: "nav.home" },
-    { href: "/catalog", labelKey: "nav.catalog" },
+  // Extract current lang from URL (e.g. /ru/catalog → "ru")
+  const segments = pathname.split("/");
+  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
-    { href: "/buy", labelKey: "nav.buy" },
-    { href: "/contact", labelKey: "nav.contact" },
-    { href: "/parts", labelKey: "nav.parts" },
-    { href: "/blog", labelKey: "nav.blog" },
+  const navLinks: NavLink[] = [
+    { href: `/${lang}/`, labelKey: "nav.home" },
+    { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
+    { href: `/${lang}/buy`, labelKey: "nav.buy" },
+    { href: `/${lang}/contact`, labelKey: "nav.contact" },
+    { href: `/${lang}/parts`, labelKey: "nav.parts" },
+    { href: `/${lang}/blog`, labelKey: "nav.blog" },
   ];
 
   // Обработка скролла
@@ -69,7 +74,7 @@ export default function Header() {
           {/* Main header */}
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
-            <Link href="/" className="group">
+            <Link href={`/${lang}/`} className="group">
               <h1 className="text-3xl font-bold flex items-center gap-1 transition-transform group-hover:scale-105">
                 <span className="text-orange-500">K</span>
                 <span className="text-gray-900">Motors</span>

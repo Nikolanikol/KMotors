@@ -5,6 +5,7 @@ import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { Fuel, Gauge, Settings, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 interface CarCardProps {
@@ -19,6 +20,8 @@ interface CarCardProps {
   price: string;
 }
 
+const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+
 const CarCard = ({
   photo,
   id,
@@ -30,6 +33,9 @@ const CarCard = ({
   price,
 }: CarCardProps) => {
   const { t } = useTranslation(['common', 'cars']);
+  const pathname = usePathname();
+  const segments = pathname.split("/");
+  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   return (
     <div className="group relative w-full max-w-[400px] mx-auto bg-white rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-orange-400 shadow-lg hover:shadow-2xl transition-all duration-300">
@@ -114,7 +120,7 @@ const CarCard = ({
 
           {/* Button */}
           <Link
-            href={`/catalog/${id}`}
+            href={`/${lang}/catalog/${id}`}
             target="_blank"
             className="group/btn flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-300 hover:gap-3 shadow-md hover:shadow-lg"
           >

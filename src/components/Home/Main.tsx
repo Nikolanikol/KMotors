@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { SlidingButton } from "../ui/button";
 
+const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+
 const Main = () => {
   const { t } = useTranslation();
+  const pathname = usePathname();
+  const segments = pathname.split("/");
+  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   return (
     <div className="min-h-[70vh] aurora-bg">
@@ -17,7 +23,7 @@ const Main = () => {
         <p className="text-lg mb-6">{t('home.hero.subtitle')}</p>
 
         <SlidingButton>
-          <Link className="block" href="/catalog">
+          <Link className="block" href={`/${lang}/catalog`}>
             {t('home.hero.catalogButton')}
           </Link>
         </SlidingButton>

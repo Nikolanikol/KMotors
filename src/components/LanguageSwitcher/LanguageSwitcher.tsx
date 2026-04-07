@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 
@@ -12,7 +13,11 @@ const languages = [
   { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
+const SUPPORTED_LANGS = languages.map((l) => l.code);
+
 export default function LanguageSwitcher() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(languages[0]);
@@ -20,11 +25,16 @@ export default function LanguageSwitcher() {
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  // Detect current lang from URL
   useEffect(() => {
     setMounted(true);
-    const lang = languages.find((l) => l.code === i18n.language) || languages[0];
-    setCurrentLanguage(lang);
-  }, [i18n.language]);
+    const segments = pathname.split('/');
+    const urlLang = segments[1];
+    const detected = SUPPORTED_LANGS.includes(urlLang)
+      ? languages.find((l) => l.code === urlLang) || languages[0]
+      : languages[0];
+    setCurrentLanguage(detected);
+  }, [pathname]);
 
   const updatePosition = useCallback(() => {
     if (buttonRef.current) {
@@ -41,7 +51,6 @@ export default function LanguageSwitcher() {
     setIsOpen((prev) => !prev);
   };
 
-  // Пересчитываем позицию при скролле/ресайзе пока дропдаун открыт
   useEffect(() => {
     if (!isOpen) return;
     window.addEventListener('scroll', updatePosition, true);
@@ -53,14 +62,25 @@ export default function LanguageSwitcher() {
   }, [isOpen, updatePosition]);
 
   const changeLanguage = (langCode: string) => {
+    // Replace the lang segment in the URL: /ru/catalog/123 → /en/catalog/123
+    const segments = pathname.split('/');
+    if (SUPPORTED_LANGS.includes(segments[1])) {
+      segments[1] = langCode;
+    } else {
+      segments.splice(1, 0, langCode);
+    }
+    const newPath = segments.join('/') || '/';
+
+    // Update i18n state and cookie
     i18n.changeLanguage(langCode);
-    localStorage.setItem('kmotors-language', langCode);
+    document.cookie = `kmotors-lang=${langCode}; path=/; max-age=31536000; SameSite=Lax`;
+
     const lang = languages.find((l) => l.code === langCode) || languages[0];
     setCurrentLanguage(lang);
     setIsOpen(false);
+    router.push(newPath);
   };
 
-  // Избегаем гидратации SSR
   if (!mounted) {
     return (
       <div className="relative">
@@ -74,7 +94,6 @@ export default function LanguageSwitcher() {
 
   return (
     <div className="relative">
-      {/* Кнопка переключателя */}
       <button
         ref={buttonRef}
         onClick={handleOpen}
@@ -95,17 +114,13 @@ export default function LanguageSwitcher() {
         </svg>
       </button>
 
-      {/* Выпадающее меню — fixed, вне потока любого overflow */}
       {isOpen && (
         <>
-          {/* Оверлей для закрытия при клике вне */}
           <div
             className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-
-          {/* Список языков — fixed позиция от кнопки */}
           <div
             className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden"
             style={{ top: dropdownPos.top, right: dropdownPos.right }}
