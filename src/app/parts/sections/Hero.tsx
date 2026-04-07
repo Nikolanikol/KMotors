@@ -2,8 +2,10 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function Hero() {
+  const { t } = useTranslation();
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,20 +54,19 @@ export function Hero() {
             <div className="flex items-center gap-4">
               <div className="h-px w-12 bg-[#BB162B]" />
               <span className="text-white/80 text-sm font-medium tracking-wider uppercase">
-                Прямые поставки из Кореи
+                {t("parts.hero.badge")}
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-              Оригинальные <span className="text-[#BB162B]">запчасти</span>
+              {t("parts.hero.title1")}{" "}
+              <span className="text-[#BB162B]">{t("parts.hero.titleHighlight")}</span>
               <br />
-              из Кореи
+              {t("parts.hero.title2")}
             </h1>
 
             <p className="text-lg text-white/80 max-w-xl">
-              Hyundai, Kia и другие корейские бренды с доставкой по всему миру.
-              Прямые поставки из Южной Кореи. Гарантия оригинальности.
-              Конкурентные цены.
+              {t("parts.hero.subtitle")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -74,7 +75,7 @@ export function Hero() {
                 onClick={() => scrollToSection("contacts")}
                 className="bg-[#BB162B] hover:bg-[#9B1220] text-white px-8 py-6 text-base font-semibold group"
               >
-                Оставить заявку
+                {t("parts.hero.ctaRequest")}
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button
@@ -83,7 +84,7 @@ export function Hero() {
                 onClick={() => scrollToSection("catalog")}
                 className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-base font-semibold"
               >
-                Смотреть каталог
+                {t("parts.hero.ctaCatalog")}
               </Button>
             </div>
 
@@ -91,15 +92,15 @@ export function Hero() {
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
               <div>
                 <div className="text-3xl font-bold text-white">10+</div>
-                <div className="text-sm text-white/60">Лет опыта</div>
+                <div className="text-sm text-white/60">{t("parts.hero.statYears")}</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-white">5000+</div>
-                <div className="text-sm text-white/60">Запчастей</div>
+                <div className="text-sm text-white/60">{t("parts.hero.statParts")}</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-white">100%</div>
-                <div className="text-sm text-white/60">Оригинал</div>
+                <div className="text-sm text-white/60">{t("parts.hero.statOriginal")}</div>
               </div>
             </div>
           </div>
@@ -107,7 +108,6 @@ export function Hero() {
           {/* Right Column - Brand Logos */}
           <div className="hidden lg:flex flex-col items-center justify-center space-y-8 animate-fade-in">
             <div className="relative">
-              {/* Hyundai Logo */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-6 transform hover:scale-105 transition-transform duration-300">
                 <div className="text-center">
                   <div className="text-5xl font-bold text-white italic tracking-tight">
@@ -118,8 +118,6 @@ export function Hero() {
                   </div>
                 </div>
               </div>
-
-              {/* Kia Logo */}
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 transform hover:scale-105 transition-transform duration-300">
                 <div className="text-center">
                   <div className="text-5xl font-bold text-white tracking-wider">
@@ -130,8 +128,6 @@ export function Hero() {
                   </div>
                 </div>
               </div>
-
-              {/* Decorative elements */}
               <div className="absolute -top-4 -right-4 w-24 h-24 border-2 border-[#BB162B]/30 rounded-full" />
               <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-[#BB162B]/20 rounded-full" />
             </div>

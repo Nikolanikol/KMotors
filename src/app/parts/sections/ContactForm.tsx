@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Send, Phone, User, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
 
 export function ContactForm() {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,7 +29,6 @@ export function ContactForm() {
       },
       { threshold: 0.1 },
     );
-
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
@@ -40,20 +41,17 @@ export function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const response = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, source: "parts" }),
       });
-
-      if (!response.ok) throw new Error("Ошибка отправки");
-
-      toast.success("Заявка отправлена! Мы свяжемся с вами в течение часа");
+      if (!response.ok) throw new Error("Send error");
+      toast.success(t("parts.contact.successMsg"));
       setFormData({ name: "", phone: "", message: "" });
     } catch {
-      toast.error("Не удалось отправить заявку. Попробуйте позже или позвоните нам");
+      toast.error(t("parts.contact.errorMsg"));
     } finally {
       setIsSubmitting(false);
     }
@@ -74,15 +72,15 @@ export function ContactForm() {
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="h-px w-12 bg-[#BB162B]" />
             <span className="text-[#BB162B] text-sm font-medium tracking-wider uppercase">
-              Связаться с нами
+              {t("parts.contact.badge")}
             </span>
             <div className="h-px w-12 bg-[#BB162B]" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Оставить заявку
+            {t("parts.contact.title")}
           </h2>
           <p className="text-white/70 max-w-2xl mx-auto">
-            Напишите имя и телефон — мы свяжемся с вами в течение часа и уточним детали.
+            {t("parts.contact.subtitle")}
           </p>
         </div>
 
@@ -95,7 +93,7 @@ export function ContactForm() {
           <div className="grid md:grid-cols-5">
             {/* Left side - Contact info */}
             <div className="md:col-span-2 bg-[#002C5F] p-8 text-white">
-              <h3 className="text-xl font-semibold mb-6">Контакты</h3>
+              <h3 className="text-xl font-semibold mb-6">{t("parts.contact.contactsTitle")}</h3>
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
@@ -103,7 +101,7 @@ export function ContactForm() {
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm text-white/60 mb-1">Телефон</div>
+                    <div className="text-sm text-white/60 mb-1">{t("parts.contact.phoneLabel")}</div>
                     <a
                       href="tel:+821077324344"
                       className="font-medium hover:text-[#BB162B] transition-colors"
@@ -118,7 +116,7 @@ export function ContactForm() {
                     <Send className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm text-white/60 mb-1">Telegram</div>
+                    <div className="text-sm text-white/60 mb-1">{t("parts.contact.telegramLabel")}</div>
                     <a
                       href="https://t.me/caparts"
                       target="_blank"
@@ -135,7 +133,7 @@ export function ContactForm() {
                     <Send className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-sm text-white/60 mb-1">Telegram</div>
+                    <div className="text-sm text-white/60 mb-1">{t("parts.contact.telegramLabel")}</div>
                     <a
                       href="https://t.me/koreanapart"
                       target="_blank"
@@ -149,9 +147,9 @@ export function ContactForm() {
               </div>
 
               <div className="mt-10 pt-6 border-t border-white/20">
-                <div className="text-sm text-white/60 mb-2">Режим работы</div>
-                <div className="font-medium">Пн-Пт: 9:00 - 18:00</div>
-                <div className="text-white/60">Сб-Вс: выходной</div>
+                <div className="text-sm text-white/60 mb-2">{t("parts.contact.hoursTitle")}</div>
+                <div className="font-medium">{t("parts.contact.weekdays")}</div>
+                <div className="text-white/60">{t("parts.contact.weekend")}</div>
               </div>
             </div>
 
@@ -160,7 +158,7 @@ export function ContactForm() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-gray-700">
-                    Имя <span className="text-[#BB162B]">*</span>
+                    {t("parts.contact.nameLabel")} <span className="text-[#BB162B]">*</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -169,7 +167,7 @@ export function ContactForm() {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      placeholder="Ваше имя"
+                      placeholder={t("parts.contact.namePlaceholder")}
                       className="pl-10"
                       required
                     />
@@ -178,7 +176,7 @@ export function ContactForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-gray-700">
-                    Телефон <span className="text-[#BB162B]">*</span>
+                    {t("parts.contact.phoneLabel")} <span className="text-[#BB162B]">*</span>
                   </Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -187,7 +185,7 @@ export function ContactForm() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="+7 (999) 999-99-99"
+                      placeholder={t("parts.contact.phonePlaceholder")}
                       className="pl-10"
                       required
                     />
@@ -196,7 +194,7 @@ export function ContactForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="message" className="text-gray-700">
-                    Комментарий
+                    {t("parts.contact.messageLabel")}
                   </Label>
                   <div className="relative">
                     <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -205,7 +203,7 @@ export function ContactForm() {
                       name="message"
                       value={formData.message}
                       onChange={handleChange}
-                      placeholder="Запчасть, марка авто, вопрос..."
+                      placeholder={t("parts.contact.messagePlaceholder")}
                       className="pl-10"
                     />
                   </div>
@@ -219,18 +217,18 @@ export function ContactForm() {
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Отправка...
+                      {t("parts.contact.submittingBtn")}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
                       <Send className="w-5 h-5" />
-                      Отправить заявку
+                      {t("parts.contact.submitBtn")}
                     </span>
                   )}
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
-                  Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+                  {t("parts.contact.privacy")}
                 </p>
               </form>
             </div>

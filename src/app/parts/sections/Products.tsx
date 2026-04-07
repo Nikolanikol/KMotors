@@ -2,65 +2,29 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const products = [
-  {
-    id: 1,
-    name: "Свеча зажигания Hyundai/Kia",
-    partNumber: "18855-10060",
-    price: 12000,
-    image: "/parts/spark-plug.jpg",
-    brand: "Hyundai Mobis",
-    inStock: true,
-  },
-  {
-    id: 2,
-    name: "Масляный фильтр оригинал",
-    partNumber: "26300-35505",
-    price: 8500,
-    image: "/parts/oil-filter.jpg",
-    brand: "Hyundai Mobis",
-    inStock: true,
-  },
-  {
-    id: 3,
-    name: "Тормозные колодки передние",
-    partNumber: "58101-1GA00",
-    price: 45000,
-    image: "/parts/brake-pads.jpg",
-    brand: "Mando",
-    inStock: true,
-  },
-  {
-    id: 4,
-    name: "Амортизатор передний",
-    partNumber: "54651-3X100",
-    price: 89000,
-    image: "/parts/shock-absorber.jpg",
-    brand: "Hyundai Mobis",
-    inStock: true,
-  },
-  {
-    id: 5,
-    name: "Радиатор охлаждения",
-    partNumber: "25310-1R000",
-    price: 156000,
-    image: "/parts/radiator.jpg",
-    brand: "Hyundai Mobis",
-    inStock: false,
-  },
-  {
-    id: 6,
-    name: "Генератор в сборе",
-    partNumber: "37300-2B400",
-    price: 245000,
-    image: "/parts/alternator.jpg",
-    brand: "Valeo",
-    inStock: true,
-  },
+  { id: 1, partNumber: "18855-10060", price: 12000, image: "/parts/spark-plug.jpg",    brand: "Hyundai Mobis", inStock: true  },
+  { id: 2, partNumber: "26300-35505", price: 8500,  image: "/parts/oil-filter.jpg",    brand: "Hyundai Mobis", inStock: true  },
+  { id: 3, partNumber: "58101-1GA00", price: 45000, image: "/parts/brake-pads.jpg",    brand: "Mando",         inStock: true  },
+  { id: 4, partNumber: "54651-3X100", price: 89000, image: "/parts/shock-absorber.jpg",brand: "Hyundai Mobis", inStock: true  },
+  { id: 5, partNumber: "25310-1R000", price: 156000,image: "/parts/radiator.jpg",      brand: "Hyundai Mobis", inStock: false },
+  { id: 6, partNumber: "37300-2B400", price: 245000,image: "/parts/alternator.jpg",    brand: "Valeo",         inStock: true  },
+];
+
+// Product names are generic enough to use directly from translation keys
+const PRODUCT_NAME_KEYS = [
+  "parts.products.p0",
+  "parts.products.p1",
+  "parts.products.p2",
+  "parts.products.p3",
+  "parts.products.p4",
+  "parts.products.p5",
 ];
 
 export function Products() {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -74,23 +38,16 @@ export function Products() {
       },
       { threshold: 0.1 },
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("ko-KR").format(price);
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("ko-KR").format(price);
 
   const scrollToContacts = () => {
     const element = document.getElementById("contacts");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+    if (element) element.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -101,16 +58,15 @@ export function Products() {
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="h-px w-12 bg-[#BB162B]" />
             <span className="text-[#BB162B] text-sm font-medium tracking-wider uppercase">
-              Популярные товары
+              {t("parts.products.badge")}
             </span>
             <div className="h-px w-12 bg-[#BB162B]" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-4">
-            Хиты продаж
+            {t("parts.products.title")}
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Самые востребованные запчасти для корейских автомобилей. Все позиции
-            в наличии на складе в Сеуле.
+            {t("parts.products.subtitle")}
           </p>
         </div>
 
@@ -120,28 +76,25 @@ export function Products() {
             <div
               key={product.id}
               className={`bg-white rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 group ${
-                isVisible
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-8"
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
-              style={{
-                transitionDelay: isVisible ? `${index * 100}ms` : "0ms",
-              }}
+              style={{ transitionDelay: isVisible ? `${index * 100}ms` : "0ms" }}
             >
               {/* Image */}
               <div className="relative h-56 bg-gray-50 overflow-hidden">
                 <img
                   src={product.image}
-                  alt={product.name}
+                  alt={product.partNumber}
                   className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                 />
                 {product.inStock ? (
                   <div className="absolute top-4 left-4 flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                    <Check className="w-3 h-3" />В наличии
+                    <Check className="w-3 h-3" />
+                    {t("parts.products.inStock")}
                   </div>
                 ) : (
                   <div className="absolute top-4 left-4 bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">
-                    Под заказ
+                    {t("parts.products.onOrder")}
                   </div>
                 )}
                 <div className="absolute top-4 right-4 bg-[#002C5F] text-white px-3 py-1 rounded-full text-xs font-medium">
@@ -152,10 +105,10 @@ export function Products() {
               {/* Content */}
               <div className="p-6">
                 <div className="text-xs text-gray-400 mb-2">
-                  Артикул: {product.partNumber}
+                  {t("parts.products.article")}: {product.partNumber}
                 </div>
                 <h3 className="text-lg font-semibold text-[#002C5F] mb-3 line-clamp-2">
-                  {product.name}
+                  {t(PRODUCT_NAME_KEYS[index], { defaultValue: product.partNumber })}
                 </h3>
                 <div className="flex items-center justify-between">
                   <div>
@@ -170,7 +123,7 @@ export function Products() {
                     className="bg-[#002C5F] hover:bg-[#001f45] text-white"
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Заказать
+                    {t("parts.products.orderBtn")}
                   </Button>
                 </div>
               </div>
@@ -180,15 +133,13 @@ export function Products() {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
-            Не нашли нужную запчасть? Свяжитесь с нами — поможем с подбором!
-          </p>
+          <p className="text-gray-600 mb-4">{t("parts.products.notFoundText")}</p>
           <Button
             onClick={scrollToContacts}
             variant="outline"
             className="border-2 border-[#002C5F] text-[#002C5F] hover:bg-[#002C5F] hover:text-white"
           >
-            Оставить запрос
+            {t("parts.products.leaveRequest")}
           </Button>
         </div>
       </div>
