@@ -5,6 +5,32 @@ import { createServerClient } from "@/lib/supabase";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+async function fetchCoverImage(models: string[], tags: string[]): Promise<string | null> {
+  const apiKey = process.env.PEXELS_API_KEY;
+  if (!apiKey) return null;
+
+  // Строим поисковый запрос: модели авто → теги → fallback
+  const queries = [
+    models[0] ? `${models[0]} car` : null,
+    tags.find(t => t.match(/Hyundai|Kia|Genesis/i)) ? `${tags.find(t => t.match(/Hyundai|Kia|Genesis/i))} car` : null,
+    "korean car",
+  ].filter(Boolean) as string[];
+
+  for (const query of queries) {
+    try {
+      const res = await fetch(
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=5&orientation=landscape`,
+        { headers: { Authorization: apiKey } }
+      );
+      const data = await res.json();
+      if (data.photos?.length > 0) {
+        return data.photos[0].src.large2x;
+      }
+    } catch {}
+  }
+  return null;
+}
+
 interface BlogTopic {
   id: string;
   slug: string;
@@ -169,6 +195,9 @@ async function handleGenerate(req: NextRequest) {
     return NextResponse.json({ error: "Failed to translate article", details: String(err) }, { status: 500 });
   }
 
+  // Получить обложку с Pexels
+  const coverUrl = await fetchCoverImage(topic.models, topic.tags);
+
   // Сохранить в blog_posts как черновик
   const { data: inserted, error: insertError } = await supabase
     .from("blog_posts")
@@ -176,6 +205,7 @@ async function handleGenerate(req: NextRequest) {
       slug: topic.slug,
       category: topic.category,
       source: "ai-generated",
+      cover_url: coverUrl,
       published: false,
       published_at: new Date().toISOString(),
       tags: topic.tags,

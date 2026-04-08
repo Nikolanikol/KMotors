@@ -131,11 +131,6 @@ export default function BlogPostPage() {
               <span className="px-3 py-0.5 rounded-full bg-[#BB162B]/10 text-[#BB162B] font-medium text-xs">
                 {t(CATEGORY_LABELS[post.category] || "blog.other")}
               </span>
-              {post.source && (
-                <span className="text-gray-400 text-xs">
-                  {t("blog.source", "Источник")}: {post.source}
-                </span>
-              )}
             </div>
 
             {/* Title */}
