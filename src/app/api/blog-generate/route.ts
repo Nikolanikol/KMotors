@@ -6,37 +6,40 @@ import topics from "@/data/blog-topics.json";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-const LANGS = ["ru", "en", "ko", "ka", "ar"] as const;
+// Запрос 1: генерация статьи на русском
+const PROMPT_GENERATE = (topic: string) => `
+Ты — эксперт по корейскому автопрому и SEO-копирайтер. Напиши статью для автомобильного блога.
 
-const PROMPT_TEMPLATE = (topic: string) => `
-Ты — эксперт по корейскому автопрому и SEO-копирайтер. Напиши подробную статью для автомобильного блога.
+Тема: "${topic}"
 
-Тема статьи: "${topic}"
+Требования:
+- Объём: 400–500 слов
+- Стиль: экспертный, информативный
+- Структура: введение → 3 раздела с ## заголовками → вывод
+- Формат: Markdown (## заголовки, **жирный**, списки)
+- Фокус: польза для покупателя авто из Кореи
 
-Требования к статье:
-- Объём: 600–900 слов на русском
-- Стиль: экспертный, информативный, без воды
-- Структура: введение → 3–4 раздела с подзаголовками H2 → вывод
-- Формат контента: Markdown (используй ## для H2, **жирный**, списки)
-- Фокус: практическая польза для покупателя авто из Кореи
-
-Верни ТОЛЬКО валидный JSON без markdown-обёртки, без комментариев. Структура:
+Верни ТОЛЬКО валидный JSON (без markdown-обёртки):
 {
-  "title_ru": "...",
-  "title_en": "...",
-  "title_ko": "...",
-  "title_ka": "...",
-  "title_ar": "...",
-  "excerpt_ru": "краткое описание 1–2 предложения на русском",
-  "excerpt_en": "краткое описание на английском",
-  "excerpt_ko": "краткое описание на корейском",
-  "excerpt_ka": "краткое описание на грузинском",
-  "excerpt_ar": "краткое описание на арабском",
-  "content_ru": "полный текст статьи в Markdown на русском",
-  "content_en": "полный перевод статьи на английский",
-  "content_ko": "полный перевод статьи на корейский",
-  "content_ka": "полный перевод статьи на грузинский",
-  "content_ar": "полный перевод статьи на арабский"
+  "title_ru": "заголовок статьи",
+  "excerpt_ru": "краткое описание 1–2 предложения",
+  "content_ru": "полный текст в Markdown"
+}
+`;
+
+// Запрос 2: перевод на 4 языка
+const PROMPT_TRANSLATE = (title: string, excerpt: string, content: string) => `
+Переведи этот автомобильный контент на 4 языка: английский, корейский, грузинский, арабский.
+
+Заголовок: ${title}
+Краткое описание: ${excerpt}
+Текст статьи: ${content}
+
+Верни ТОЛЬКО валидный JSON (без markdown-обёртки):
+{
+  "title_en": "...", "title_ko": "...", "title_ka": "...", "title_ar": "...",
+  "excerpt_en": "...", "excerpt_ko": "...", "excerpt_ka": "...", "excerpt_ar": "...",
+  "content_en": "...", "content_ko": "...", "content_ka": "...", "content_ar": "..."
 }
 `;
 
@@ -63,21 +66,16 @@ async function handleGenerate(req: NextRequest) {
 
   const supabase = createServerClient();
 
-  // Find next unused topic
-  const { data: existingRows } = await supabase
-    .from("blog_posts")
-    .select("slug");
-
+  // Найти следующую неиспользованную тему
+  const { data: existingRows } = await supabase.from("blog_posts").select("slug");
   const usedSlugs = new Set((existingRows || []).map((r: { slug: string }) => r.slug));
 
-  // Allow manual topic override via POST body
+  // Ручной выбор темы через POST body: { "slug": "..." }
   let chosenTopic: typeof topics[number] | undefined;
   if (req.method === "POST") {
     try {
       const body = await req.json().catch(() => ({}));
-      if (body.slug) {
-        chosenTopic = topics.find((t) => t.slug === body.slug);
-      }
+      if (body.slug) chosenTopic = topics.find((t) => t.slug === body.slug);
     } catch {}
   }
 
@@ -89,10 +87,9 @@ async function handleGenerate(req: NextRequest) {
     return NextResponse.json({ ok: true, message: "All topics already generated" });
   }
 
-  // Generate article with Gemini
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash-lite",
     generationConfig: {
       temperature: 0.7,
       maxOutputTokens: 8192,
@@ -100,24 +97,30 @@ async function handleGenerate(req: NextRequest) {
     },
   });
 
-  let articleData: Record<string, string>;
+  // Запрос 1: генерация на русском
+  let ruData: { title_ru: string; excerpt_ru: string; content_ru: string };
   try {
-    const result = await model.generateContent(PROMPT_TEMPLATE(chosenTopic.topic));
-    const text = result.response.text();
-    articleData = JSON.parse(text);
+    const result = await model.generateContent(PROMPT_GENERATE(chosenTopic.topic));
+    ruData = JSON.parse(result.response.text());
+    if (!ruData.title_ru || !ruData.content_ru) throw new Error("Missing RU fields");
   } catch (err) {
-    console.error("Gemini generation error:", err);
-    return NextResponse.json({ error: "Failed to generate article", details: String(err) }, { status: 500 });
+    console.error("Gemini generate error:", err);
+    return NextResponse.json({ error: "Failed to generate article in Russian", details: String(err) }, { status: 500 });
   }
 
-  // Validate required fields
-  const requiredFields = LANGS.flatMap((l) => [`title_${l}`, `excerpt_${l}`, `content_${l}`]);
-  const missing = requiredFields.filter((f) => !articleData[f]);
-  if (missing.length > 0) {
-    return NextResponse.json({ error: "Gemini returned incomplete data", missing }, { status: 500 });
+  // Запрос 2: перевод на 4 языка
+  let translData: Record<string, string>;
+  try {
+    const result = await model.generateContent(
+      PROMPT_TRANSLATE(ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
+    );
+    translData = JSON.parse(result.response.text());
+  } catch (err) {
+    console.error("Gemini translate error:", err);
+    return NextResponse.json({ error: "Failed to translate article", details: String(err) }, { status: 500 });
   }
 
-  // Save to Supabase as draft
+  // Сохранить в Supabase как черновик
   const { data: inserted, error: insertError } = await supabase
     .from("blog_posts")
     .insert({
@@ -127,21 +130,21 @@ async function handleGenerate(req: NextRequest) {
       published: false,
       published_at: new Date().toISOString(),
       tags: chosenTopic.tags,
-      title_ru: articleData.title_ru,
-      title_en: articleData.title_en,
-      title_ko: articleData.title_ko,
-      title_ka: articleData.title_ka,
-      title_ar: articleData.title_ar,
-      excerpt_ru: articleData.excerpt_ru,
-      excerpt_en: articleData.excerpt_en,
-      excerpt_ko: articleData.excerpt_ko,
-      excerpt_ka: articleData.excerpt_ka,
-      excerpt_ar: articleData.excerpt_ar,
-      content_ru: articleData.content_ru,
-      content_en: articleData.content_en,
-      content_ko: articleData.content_ko,
-      content_ka: articleData.content_ka,
-      content_ar: articleData.content_ar,
+      title_ru: ruData.title_ru,
+      excerpt_ru: ruData.excerpt_ru,
+      content_ru: ruData.content_ru,
+      title_en: translData.title_en,
+      title_ko: translData.title_ko,
+      title_ka: translData.title_ka,
+      title_ar: translData.title_ar,
+      excerpt_en: translData.excerpt_en,
+      excerpt_ko: translData.excerpt_ko,
+      excerpt_ka: translData.excerpt_ka,
+      excerpt_ar: translData.excerpt_ar,
+      content_en: translData.content_en,
+      content_ko: translData.content_ko,
+      content_ka: translData.content_ka,
+      content_ar: translData.content_ar,
     })
     .select("id")
     .single();
@@ -153,22 +156,20 @@ async function handleGenerate(req: NextRequest) {
 
   const postId = inserted?.id;
 
-  // Send Telegram notification
+  // Уведомление в Telegram
   if (CHAT_ID && postId) {
     const caption =
       `🤖 <b>AI-статья готова к публикации</b>\n\n` +
-      `📝 <b>${escapeHtml(articleData.title_ru)}</b>\n\n` +
-      `${escapeHtml(articleData.excerpt_ru)}\n\n` +
+      `📝 <b>${escapeHtml(ruData.title_ru)}</b>\n\n` +
+      `${escapeHtml(ruData.excerpt_ru)}\n\n` +
       `🌐 Языки: RU · EN · KO · KA · AR\n` +
       `🏷 ${chosenTopic.tags.join(", ")}`;
 
     const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "✅ Опубликовать", callback_data: `publish:${postId}` },
-          { text: "❌ Удалить", callback_data: `delete:${postId}` },
-        ],
-      ],
+      inline_keyboard: [[
+        { text: "✅ Опубликовать", callback_data: `publish:${postId}` },
+        { text: "❌ Удалить", callback_data: `delete:${postId}` },
+      ]],
     };
 
     await fetch(`${TELEGRAM_API}/sendMessage`, {
@@ -187,6 +188,6 @@ async function handleGenerate(req: NextRequest) {
     ok: true,
     slug: chosenTopic.slug,
     postId,
-    title: articleData.title_ru,
+    title: ruData.title_ru,
   });
 }
