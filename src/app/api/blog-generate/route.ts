@@ -1,53 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createServerClient } from "@/lib/supabase";
-import topics from "@/data/blog-topics.json";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// Запрос 1: генерация статьи на русском
-const PROMPT_GENERATE = (topic: string) => `
-Ты — эксперт по корейскому автопрому и SEO-копирайтер. Напиши статью для автомобильного блога.
+interface BlogTopic {
+  id: string;
+  slug: string;
+  topic: string;
+  category: string;
+  type: string;
+  models: string[];
+  tags: string[];
+  priority: number;
+  status: string;
+  notes: string | null;
+}
 
-Тема: "${topic}"
+const TYPE_LABELS: Record<string, string> = {
+  comparison: "сравнение двух или более моделей",
+  review: "обзор модели с плюсами и минусами",
+  guide: "практический гайд с пошаговыми инструкциями",
+  education: "образовательный материал об автомобилях, технологиях или рынке",
+};
+
+function buildGeneratePrompt(topic: BlogTopic): string {
+  const typeLabel = TYPE_LABELS[topic.type] || topic.type;
+  const modelsLine = topic.models.length
+    ? `Модели в статье: ${topic.models.join(", ")}.`
+    : "";
+  const notesLine = topic.notes ? `Дополнительные инструкции: ${topic.notes}` : "";
+
+  return `Ты — эксперт по корейскому автопрому и SEO-копирайтер. Напиши статью для автомобильного блога.
+
+Тема: "${topic.topic}"
+Тип контента: ${typeLabel}
+${modelsLine}
+${notesLine}
 
 Требования:
 - Объём: 400–500 слов
-- Стиль: экспертный, информативный
+- Стиль: экспертный, информативный, без воды
 - Структура: введение → 3 раздела с ## заголовками → вывод
 - Формат: Markdown (## заголовки, **жирный**, списки)
-- Фокус: польза для покупателя авто из Кореи
+- Фокус: практическая польза для покупателя авто из Кореи в СНГ
 
-Верни ТОЛЬКО валидный JSON (без markdown-обёртки):
+Верни ТОЛЬКО валидный JSON без markdown-обёртки:
 {
   "title_ru": "заголовок статьи",
   "excerpt_ru": "краткое описание 1–2 предложения",
   "content_ru": "полный текст в Markdown"
+}`;
 }
-`;
 
-// Запрос 2: перевод на 4 языка
-const PROMPT_TRANSLATE = (title: string, excerpt: string, content: string) => `
-Переведи этот автомобильный контент на 4 языка: английский, корейский, грузинский, арабский.
+function buildTranslatePrompt(title: string, excerpt: string, content: string): string {
+  return `Переведи этот автомобильный контент на 4 языка: английский, корейский, грузинский, арабский.
+Сохрани Markdown-форматирование в content.
 
 Заголовок: ${title}
 Краткое описание: ${excerpt}
-Текст статьи: ${content}
+Текст: ${content}
 
-Верни ТОЛЬКО валидный JSON (без markdown-обёртки):
+Верни ТОЛЬКО валидный JSON без markdown-обёртки:
 {
   "title_en": "...", "title_ko": "...", "title_ka": "...", "title_ar": "...",
   "excerpt_en": "...", "excerpt_ko": "...", "excerpt_ka": "...", "excerpt_ar": "...",
   "content_en": "...", "content_ko": "...", "content_ka": "...", "content_ar": "..."
+}`;
 }
-`;
 
 function escapeHtml(str: string) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 export async function GET(req: NextRequest) {
@@ -66,25 +90,50 @@ async function handleGenerate(req: NextRequest) {
 
   const supabase = createServerClient();
 
-  // Найти следующую неиспользованную тему
-  const { data: existingRows } = await supabase.from("blog_posts").select("slug");
-  const usedSlugs = new Set((existingRows || []).map((r: { slug: string }) => r.slug));
+  // Выбрать тему: вручную через POST body { "id": "..." } или автоматически по приоритету
+  let topic: BlogTopic | null = null;
 
-  // Ручной выбор темы через POST body: { "slug": "..." }
-  let chosenTopic: typeof topics[number] | undefined;
   if (req.method === "POST") {
     try {
       const body = await req.json().catch(() => ({}));
-      if (body.slug) chosenTopic = topics.find((t) => t.slug === body.slug);
+      if (body.id) {
+        const { data } = await supabase
+          .from("blog_topics")
+          .select("*")
+          .eq("id", body.id)
+          .single();
+        topic = data;
+      }
     } catch {}
   }
 
-  if (!chosenTopic) {
-    chosenTopic = topics.find((t) => !usedSlugs.has(t.slug));
+  if (!topic) {
+    // Автоматически: первая pending-тема с максимальным приоритетом
+    const { data } = await supabase
+      .from("blog_topics")
+      .select("*")
+      .eq("status", "pending")
+      .order("priority", { ascending: false })
+      .limit(1)
+      .single();
+    topic = data;
   }
 
-  if (!chosenTopic) {
-    return NextResponse.json({ ok: true, message: "All topics already generated" });
+  if (!topic) {
+    return NextResponse.json({ ok: true, message: "No pending topics available" });
+  }
+
+  // Проверить что slug ещё не использован
+  const { data: existing } = await supabase
+    .from("blog_posts")
+    .select("id")
+    .eq("slug", topic.slug)
+    .single();
+
+  if (existing) {
+    // Пометить как generated и вернуть
+    await supabase.from("blog_topics").update({ status: "generated" }).eq("id", topic.id);
+    return NextResponse.json({ ok: true, message: "Topic already generated", slug: topic.slug });
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -100,19 +149,19 @@ async function handleGenerate(req: NextRequest) {
   // Запрос 1: генерация на русском
   let ruData: { title_ru: string; excerpt_ru: string; content_ru: string };
   try {
-    const result = await model.generateContent(PROMPT_GENERATE(chosenTopic.topic));
+    const result = await model.generateContent(buildGeneratePrompt(topic));
     ruData = JSON.parse(result.response.text());
     if (!ruData.title_ru || !ruData.content_ru) throw new Error("Missing RU fields");
   } catch (err) {
     console.error("Gemini generate error:", err);
-    return NextResponse.json({ error: "Failed to generate article in Russian", details: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate article", details: String(err) }, { status: 500 });
   }
 
   // Запрос 2: перевод на 4 языка
   let translData: Record<string, string>;
   try {
     const result = await model.generateContent(
-      PROMPT_TRANSLATE(ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
+      buildTranslatePrompt(ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
     );
     translData = JSON.parse(result.response.text());
   } catch (err) {
@@ -120,16 +169,16 @@ async function handleGenerate(req: NextRequest) {
     return NextResponse.json({ error: "Failed to translate article", details: String(err) }, { status: 500 });
   }
 
-  // Сохранить в Supabase как черновик
+  // Сохранить в blog_posts как черновик
   const { data: inserted, error: insertError } = await supabase
     .from("blog_posts")
     .insert({
-      slug: chosenTopic.slug,
-      category: chosenTopic.category,
+      slug: topic.slug,
+      category: topic.category,
       source: "ai-generated",
       published: false,
       published_at: new Date().toISOString(),
-      tags: chosenTopic.tags,
+      tags: topic.tags,
       title_ru: ruData.title_ru,
       excerpt_ru: ruData.excerpt_ru,
       content_ru: ruData.content_ru,
@@ -154,16 +203,27 @@ async function handleGenerate(req: NextRequest) {
     return NextResponse.json({ error: "Failed to save article", details: insertError.message }, { status: 500 });
   }
 
+  // Обновить статус темы → generated
+  await supabase.from("blog_topics").update({ status: "generated" }).eq("id", topic.id);
+
   const postId = inserted?.id;
 
   // Уведомление в Telegram
   if (CHAT_ID && postId) {
+    const typeEmoji: Record<string, string> = {
+      comparison: "⚖️",
+      review: "🔍",
+      guide: "📋",
+      education: "🎓",
+    };
+
     const caption =
       `🤖 <b>AI-статья готова к публикации</b>\n\n` +
-      `📝 <b>${escapeHtml(ruData.title_ru)}</b>\n\n` +
+      `${typeEmoji[topic.type] || "📝"} <b>${escapeHtml(ruData.title_ru)}</b>\n\n` +
       `${escapeHtml(ruData.excerpt_ru)}\n\n` +
+      `📂 Тип: ${topic.type} · Приоритет: ${topic.priority}/10\n` +
       `🌐 Языки: RU · EN · KO · KA · AR\n` +
-      `🏷 ${chosenTopic.tags.join(", ")}`;
+      `🏷 ${topic.tags.join(", ")}`;
 
     const keyboard = {
       inline_keyboard: [[
@@ -186,8 +246,10 @@ async function handleGenerate(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    slug: chosenTopic.slug,
+    slug: topic.slug,
     postId,
     title: ruData.title_ru,
+    type: topic.type,
+    priority: topic.priority,
   });
 }
