@@ -1,42 +1,60 @@
 // app/sitemap.xml/route.ts
 import { NextResponse } from "next/server";
-import { getCars } from "@/components/Catalog/Row/utils/service";
 
-const PAGE_SIZE = 20;
 const BASE = "https://kmotors.shop";
+const PAGE_SIZE = 20;
+const ENCAR_API = "https://api.encar.com/search/car/list/premium";
+const ENCAR_PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
+const QUERY = "(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A.))";
+const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 
-export const revalidate = 3600; // обновляем каждый час
+export const revalidate = 3600;
+
+async function fetchCount(): Promise<number> {
+  const url = `${ENCAR_API}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C0%7C1`;
+  try {
+    const res = await fetch(url, { headers: { "user-agent": UA } });
+    if (!res.ok) throw new Error();
+    const json = await res.json();
+    return Number(json.Count) || 0;
+  } catch {
+    try {
+      const proxyUrl = `${ENCAR_PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C0%7C1`;
+      const res = await fetch(proxyUrl);
+      const json = await res.json();
+      return Number(json.Count) || 0;
+    } catch {
+      return 0;
+    }
+  }
+}
 
 export async function GET() {
-  // Получаем общее количество машин чтобы знать сколько страниц sitemap нужно
-  let totalPages = 1;
+  let totalPages = 5; // safe fallback
   try {
-    const { count } = await getCars("", "0");
-    if (count && count > 0) {
-      totalPages = Math.ceil(count / PAGE_SIZE);
+    const count = await fetchCount();
+    if (count > 0) {
+      totalPages = Math.min(Math.ceil(count / PAGE_SIZE), 200);
     }
   } catch {
-    totalPages = 5; // fallback — хотя бы первые 5 страниц
+    totalPages = 5;
   }
-
-  // Ограничиваем до 200 страниц (4000 машин) — разумный предел
-  totalPages = Math.min(totalPages, 200);
 
   const staticSitemaps = [
     `${BASE}/sitemap-main.xml`,
     `${BASE}/sitemap-blog.xml`,
   ];
 
-  // Динамические страницы каталога
-  const catalogSitemaps = Array.from({ length: totalPages }, (_, i) =>
-    `${BASE}/sitemap-new-${i + 1}.xml`
+  const catalogSitemaps = Array.from(
+    { length: totalPages },
+    (_, i) => `${BASE}/sitemap-new-${i + 1}.xml`
   );
 
-  const allSitemaps = [...staticSitemaps, ...catalogSitemaps];
+  const all = [...staticSitemaps, ...catalogSitemaps];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allSitemaps.map((loc) => `  <sitemap><loc>${loc}</loc></sitemap>`).join("\n")}
+${all.map((loc) => `  <sitemap><loc>${loc}</loc></sitemap>`).join("\n")}
 </sitemapindex>`;
 
   return new NextResponse(xml, {
