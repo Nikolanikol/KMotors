@@ -107,10 +107,30 @@ export default async function Home({ params }: Props) {
     ],
   };
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "AutoDealer",
+    name: "KMotors",
+    url: "https://kmotors.shop",
+    logo: "https://kmotors.shop/favicon_io/android-chrome-512x512.png",
+    image: "https://kmotors.shop/preview/preview.png",
+    telephone: "+821077324344",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "권선로 308-5 103호 1층",
+      addressLocality: "수원시 권선구",
+      addressRegion: "경기도",
+      addressCountry: "KR",
+    },
+    areaServed: ["RU", "KZ", "UZ", "GE", "SA", "KR"],
+    sameAs: [],
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
     <div className="min-h-[70vh]">
       <Main />
       <div className="py-20 rounded-[50px] md:rounded-[100px] mt-[-100px] relative z-10 bg-white overflow-hidden">
