@@ -81,7 +81,13 @@
       "entertainment": "الترفيه",
       "technology": "التكنولوجيا",
       "other": "أخرى"
-    }
+    },
+    "firstRegistration": "تاريخ التسجيل الأول",
+    "sellerPhone": "هاتف البائع",
+    "sellerAddress": "العنوان",
+    "seller": "البائع",
+    "dealer": "وكيل",
+    "privateSeller": "فرد خاص"
   },
   "filter": {
     "all": "الكل",

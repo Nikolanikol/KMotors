@@ -81,7 +81,13 @@
       "entertainment": "엔터테인먼트",
       "technology": "기술",
       "other": "기타"
-    }
+    },
+    "firstRegistration": "최초 등록일",
+    "sellerPhone": "판매자 전화",
+    "sellerAddress": "주소",
+    "seller": "판매자",
+    "dealer": "딜러",
+    "privateSeller": "개인"
   },
   "filter": {
     "all": "전체",

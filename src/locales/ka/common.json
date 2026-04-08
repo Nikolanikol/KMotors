@@ -81,7 +81,13 @@
       "entertainment": "გართობა",
       "technology": "ტექნოლოგია",
       "other": "სხვა"
-    }
+    },
+    "firstRegistration": "პირველი რეგისტრაციის თარიღი",
+    "sellerPhone": "გამყიდველის ტელეფონი",
+    "sellerAddress": "მისამართი",
+    "seller": "გამყიდველი",
+    "dealer": "დილერი",
+    "privateSeller": "კერძო პირი"
   },
   "filter": {
     "all": "ყველა",

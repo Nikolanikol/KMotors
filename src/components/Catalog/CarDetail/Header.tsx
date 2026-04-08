@@ -9,7 +9,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 
 const Header = ({ data }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'cars']);
 
   return (
     <header className="space-y-6 px-6 py-8 bg-gradient-to-br from-orange-50 via-white to-orange-50 rounded-3xl border-2 border-orange-100">
@@ -30,7 +30,7 @@ const Header = ({ data }) => {
 
           <div className="flex items-center gap-3 flex-wrap">
             <span className="px-4 py-2 bg-orange-100 text-orange-700 font-semibold rounded-full text-sm border border-orange-200">
-              <span>Дата первой регистрации: </span>
+              <span>{t('common:car.firstRegistration')}: </span>
               {formatDate(data.category.yearMonth)}
             </span>
           </div>
@@ -38,14 +38,14 @@ const Header = ({ data }) => {
 
         {/* Right side - Price */}
         <div className="flex flex-col items-start lg:items-end gap-2">
-          <p className="text-gray-600 text-sm font-medium">Цена покупки:</p>
+          <p className="text-gray-600 text-sm font-medium">{t('common:car.buyPrice')}:</p>
           <div className="relative">
             <div className="absolute -inset-3 bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl blur opacity-30"></div>
             <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 text-white px-6 py-4 rounded-2xl shadow-lg">
               <p className="text-3xl font-bold">
                 {convertNumber(data.advertisement.price)}
               </p>
-              <p className="text-orange-100 text-sm mt-1">вон</p>
+              <p className="text-orange-100 text-sm mt-1">{t('common:common.won')}</p>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ const Header = ({ data }) => {
               <Phone className="w-4 h-4 text-orange-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Телефон продавца</p>
+              <p className="text-xs text-gray-500 font-medium">{t('common:car.sellerPhone')}</p>
               <p className="text-sm font-bold text-gray-900">{data.contact.no}</p>
             </div>
           </a>
@@ -75,7 +75,7 @@ const Header = ({ data }) => {
               <MapPin className="w-4 h-4 text-gray-500" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Адрес</p>
+              <p className="text-xs text-gray-500 font-medium">{t('common:car.sellerAddress')}</p>
               <p className="text-sm font-bold text-gray-900">{data.contact.address}</p>
             </div>
           </div>
@@ -86,9 +86,9 @@ const Header = ({ data }) => {
               <User className="w-4 h-4 text-blue-500" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Продавец</p>
+              <p className="text-xs text-gray-500 font-medium">{t('common:car.seller')}</p>
               <p className="text-sm font-bold text-gray-900">
-                {data.contact.userType === "DEALER" ? "Дилер" : "Частное лицо"}
+                {data.contact.userType === "DEALER" ? t('common:car.dealer') : t('common:car.privateSeller')}
               </p>
             </div>
           </div>

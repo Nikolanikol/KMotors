@@ -81,7 +81,13 @@
       "entertainment": "Развлечения",
       "technology": "Технологии",
       "other": "Другое"
-    }
+    },
+    "firstRegistration": "Дата первой регистрации",
+    "sellerPhone": "Телефон продавца",
+    "sellerAddress": "Адрес",
+    "seller": "Продавец",
+    "dealer": "Дилер",
+    "privateSeller": "Частное лицо"
   },
   "filter": {
     "all": "Все",

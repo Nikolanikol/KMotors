@@ -81,7 +81,13 @@
       "entertainment": "Entertainment",
       "technology": "Technology",
       "other": "Other"
-    }
+    },
+    "firstRegistration": "First Registration Date",
+    "sellerPhone": "Seller's Phone",
+    "sellerAddress": "Address",
+    "seller": "Seller",
+    "dealer": "Dealer",
+    "privateSeller": "Private Seller"
   },
   "filter": {
     "all": "All",
