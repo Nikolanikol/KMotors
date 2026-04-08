@@ -30,14 +30,14 @@ async function fetchCount(): Promise<number> {
 }
 
 export async function GET() {
-  let totalPages = 5; // safe fallback
+  let totalPages = 50; // fallback: 50 pages × 20 cars = 1000 slots
   try {
     const count = await fetchCount();
     if (count > 0) {
       totalPages = Math.min(Math.ceil(count / PAGE_SIZE), 200);
     }
   } catch {
-    totalPages = 5;
+    totalPages = 50;
   }
 
   const staticSitemaps = [
