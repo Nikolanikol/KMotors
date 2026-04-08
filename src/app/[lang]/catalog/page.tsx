@@ -1,5 +1,7 @@
 import Filter from "@/components/Catalog/Filter/Filter";
 import CarsRow from "@/components/Catalog/Row/CarsRow";
+import { getString } from "@/components/Catalog/Row/utils";
+import { getCars } from "@/components/Catalog/Row/utils/service";
 import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 import { Metadata } from "next";
 
@@ -91,6 +93,8 @@ const CATALOG_LABEL: Record<string, string> = {
 
 export default async function CatalogPage({ params, searchParams }: Props) {
   const { lang } = await params;
+  const sp = await searchParams;
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -100,12 +104,42 @@ export default async function CatalogPage({ params, searchParams }: Props) {
     ],
   };
 
+  // ItemList schema — fetch deduplicated by Next.js cache (same call as CarsRow)
+  let itemListSchema = null;
+  try {
+    const query = getString(sp);
+    const { data } = await getCars(query, sp.page);
+    if (data && data.length > 0) {
+      itemListSchema = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: CATALOG_LABEL[lang] || "Catalog",
+        url: `https://kmotors.shop/${lang}/catalog`,
+        numberOfItems: data.length,
+        itemListElement: data.map((car: { Id: string; Manufacturer?: string; Model?: string; Year?: string; Price?: string }, index: number) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          url: `https://kmotors.shop/${lang}/catalog/${car.Id}`,
+          name: [car.Manufacturer, car.Model, car.Year].filter(Boolean).join(" "),
+        })),
+      };
+    }
+  } catch {
+    // schema is optional — don't break page if fetch fails
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      {itemListSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+        />
+      )}
       <div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-2 h-full m-0 mx-auto">
           <div className="col-span-1 lg:col-span-4 h-full px-1 py-2">
