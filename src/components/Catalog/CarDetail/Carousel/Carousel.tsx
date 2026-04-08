@@ -13,6 +13,7 @@ import "./carousel.css";
 const CarouselLight = ({
   photos,
   mode,
+  carName,
 }: {
   photos: {
     code: string;
@@ -22,6 +23,7 @@ const CarouselLight = ({
     type: string;
   }[];
   mode?: string;
+  carName?: string;
 }) => {
   const lightGalleryRef = useRef<LGInstance>(null);
   const containerRef = useRef(null);
@@ -52,7 +54,7 @@ const CarouselLight = ({
         hideBarsDelay={0}
         dynamic={true}
         thumbHeight={"100px"}
-        dynamicEl={photos.map((item) => ({
+        dynamicEl={photos.map((item, index) => ({
           src:
             mode == "static"
               ? item
@@ -60,6 +62,7 @@ const CarouselLight = ({
                 item.path +
                 "?impolicy=heightRate&rh=696&cw=1160&ch=696&cg=Center&wtmk=https://ci.encar.com/wt_mark/w_mark_04.png&t=20250912164710",
           thumb: mode == "static" ? item : "https://ci.encar.com" + item.path,
+          alt: carName ? `${carName} — фото ${index + 1}` : item.desc || `Car photo ${index + 1}`,
         }))}
       />
     </div>

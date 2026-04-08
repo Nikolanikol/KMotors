@@ -150,7 +150,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           vehicleNo={data.vehicleNo}
           mileage={data.spec.mileage}
         />
-        <CarouselLight photos={data.photos} />
+        <CarouselLight photos={data.photos} carName={`${carName} ${carData}`} />
         <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
         <CustomsCalculator
           priceKRW={data?.advertisement?.price * 10000}

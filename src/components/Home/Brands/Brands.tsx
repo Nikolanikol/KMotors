@@ -77,7 +77,7 @@ const BrandCard = ({ logo, name }: BrandCardProps) => {
   return (
     <div className="flex justify-center pl-0 text-center">
       <div className="flex flex-col gap-2 items-center justify-between  ">
-        <Image height={150} src={logo} alt="logo" />
+        <Image height={150} src={logo} alt={`${name} — Korean car brand`} />
         <h4 className="font-bold text-xl">{name}</h4>
       </div>
     </div>
