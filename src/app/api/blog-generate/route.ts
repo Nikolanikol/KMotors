@@ -5,26 +5,41 @@ import { createServerClient } from "@/lib/supabase";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-async function fetchCoverImage(models: string[], tags: string[]): Promise<string | null> {
+async function fetchCoverImage(models: string[], tags: string[], type: string): Promise<string | null> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) return null;
 
-  // Строим поисковый запрос: модели авто → теги → fallback
-  const queries = [
-    models[0] ? `${models[0]} car` : null,
-    tags.find(t => t.match(/Hyundai|Kia|Genesis/i)) ? `${tags.find(t => t.match(/Hyundai|Kia|Genesis/i))} car` : null,
-    "korean car",
-  ].filter(Boolean) as string[];
+  // Строим очередь запросов от конкретного к общему
+  const brand = models[0]?.split(" ")[0]; // "Hyundai", "Kia", "Genesis"
+  const model = models[0]; // "Hyundai Tucson"
+
+  const queries: string[] = [];
+
+  if (model) queries.push(`${model}`);
+  if (brand) queries.push(`${brand} car interior`);
+  if (brand) queries.push(`${brand} automobile`);
+
+  // Fallback по типу контента
+  const typeFallbacks: Record<string, string> = {
+    comparison: "car comparison luxury sedan",
+    review: "modern car showroom",
+    guide: "car dealership",
+    education: "car engine mechanics",
+  };
+  queries.push(typeFallbacks[type] || "luxury korean car");
+  queries.push("modern automobile");
 
   for (const query of queries) {
     try {
       const res = await fetch(
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=5&orientation=landscape`,
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=10&orientation=landscape`,
         { headers: { Authorization: apiKey } }
       );
       const data = await res.json();
       if (data.photos?.length > 0) {
-        return data.photos[0].src.large2x;
+        // Берём случайное фото из первых 5 для разнообразия
+        const pick = data.photos[Math.floor(Math.random() * Math.min(5, data.photos.length))];
+        return pick.src.large2x;
       }
     } catch {}
   }
@@ -196,7 +211,7 @@ async function handleGenerate(req: NextRequest) {
   }
 
   // Получить обложку с Pexels
-  const coverUrl = await fetchCoverImage(topic.models, topic.tags);
+  const coverUrl = await fetchCoverImage(topic.models, topic.tags, topic.type);
 
   // Сохранить в blog_posts как черновик
   const { data: inserted, error: insertError } = await supabase

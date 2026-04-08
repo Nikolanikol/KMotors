@@ -39,6 +39,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@splidejs/react-splide": "^0.7.12",
     "@supabase/supabase-js": "^2.75.0",
+    "@tailwindcss/typography": "^0.5.19",
     "antd": "^5.27.4",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
