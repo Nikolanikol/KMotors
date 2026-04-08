@@ -1,9 +1,15 @@
-# *
 User-agent: *
 Allow: /
+
+# Block API and admin routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /admin/login
 
 # Host
 Host: https://kmotors.shop
 
 # Sitemaps
 Sitemap: https://kmotors.shop/sitemap.xml
+Sitemap: https://kmotors.shop/sitemap-main.xml
+Sitemap: https://kmotors.shop/sitemap-blog.xml

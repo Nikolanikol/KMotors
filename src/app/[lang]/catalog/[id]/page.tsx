@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ params }) => {
-  const { id } = await params;
+  const { lang, id } = await params;
   const data = await fetchData(id);
   if (!data) return <div>not found</div>;
 
@@ -102,7 +102,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     brand: { "@type": "Brand", name: data.category.manufacturerEnglishName || "Unknown" },
     offers: {
       "@type": "Offer",
-      url: `https://kmotors.shop/ru/catalog/${data?.vehicleId}`,
+      url: `https://kmotors.shop/${lang}/catalog/${data?.vehicleId}`,
       priceCurrency: "KRW",
       price: data?.advertisement?.price * 10000,
       availability: "https://schema.org/InStock",
