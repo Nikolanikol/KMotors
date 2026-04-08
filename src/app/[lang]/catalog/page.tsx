@@ -85,13 +85,18 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-export default async function CatalogPage({ searchParams }: Props) {
+const CATALOG_LABEL: Record<string, string> = {
+  ru: "Каталог", en: "Catalog", ko: "카탈로그", ka: "კატალოგი", ar: "الكتالوج",
+};
+
+export default async function CatalogPage({ params, searchParams }: Props) {
+  const { lang } = await params;
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: "https://kmotors.shop/" },
-      { "@type": "ListItem", position: 2, name: "Catalog", item: "https://kmotors.shop/catalog" },
+      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
     ],
   };
 

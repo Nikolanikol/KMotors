@@ -83,9 +83,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+const BUY_LABEL: Record<string, string> = {
+  ru: "Как купить", en: "How to Buy", ko: "구매 방법", ka: "შეძენა", ar: "كيفية الشراء",
+};
+
 export default async function BuyPage({ params }: Props) {
   const { lang } = await params;
   const faqs = FAQ_BY_LANG[lang] || FAQ_BY_LANG.ru;
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BUY_LABEL[lang] || "How to Buy", item: `https://kmotors.shop/${lang}/buy` },
+    ],
+  };
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -99,10 +112,8 @@ export default async function BuyPage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <BuyClientPage />
     </>
   );

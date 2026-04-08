@@ -93,6 +93,20 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     ? `https://ci.encar.com${data.photos[0].location}`
     : "/noimage.png";
 
+  const CATALOG_LABEL: Record<string, string> = {
+    ru: "Каталог", en: "Catalog", ko: "카탈로그", ka: "კატალოგი", ar: "الكتالوج",
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
+      { "@type": "ListItem", position: 3, name: carName, item: `https://kmotors.shop/${lang}/catalog/${id}` },
+    ],
+  };
+
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -117,6 +131,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
 
   return (
     <div className="bg-gray-200 py-5 rounded-3xl">
+      <Script
+        id="breadcrumb-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Script
         id="product-schema"
         type="application/ld+json"

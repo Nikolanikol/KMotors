@@ -62,9 +62,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+const BLOG_LABEL: Record<string, string> = {
+  ru: "Блог", en: "Blog", ko: "블로그", ka: "ბლოგი", ar: "المدونة",
+};
+
 export default async function BlogPostPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { lang, slug } = await params;
   const post = await fetchPost(slug);
+
+  const breadcrumbSchema = post ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BLOG_LABEL[lang] || "Blog", item: `https://kmotors.shop/${lang}/blog` },
+      { "@type": "ListItem", position: 3, name: post.title_ru, item: `https://kmotors.shop/${lang}/blog/${slug}` },
+    ],
+  } : null;
 
   const jsonLd = post ? {
     "@context": "https://schema.org",
@@ -85,6 +99,13 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <>
+      {breadcrumbSchema && (
+        <Script
+          id="breadcrumb-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+      )}
       {jsonLd && (
         <Script
           id="article-jsonld"

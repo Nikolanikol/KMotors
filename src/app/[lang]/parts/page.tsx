@@ -67,14 +67,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function PartsPage() {
+const PARTS_LABEL: Record<string, string> = {
+  ru: "Запчасти", en: "Parts", ko: "부품", ka: "სათადარიგო ნაწილები", ar: "قطع الغيار",
+};
+
+export default async function PartsPage({ params }: Props) {
+  const { lang } = await params;
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `https://kmotors.shop/${lang}/parts` },
+    ],
+  };
+
   return (
-    <div>
-      <Hero />
-      <Catalog />
-      <Products />
-      <About />
-      <ContactForm />
-    </div>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <div>
+        <Hero />
+        <Catalog />
+        <Products />
+        <About />
+        <ContactForm />
+      </div>
+    </>
   );
 }
