@@ -42,6 +42,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: meta.title,
     description: meta.description,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: `https://kmotors.shop/${lang}/`,
+      siteName: "KMotors",
+      type: "website",
+      locale: lang === "ko" ? "ko_KR" : lang === "ar" ? "ar_SA" : lang === "ka" ? "ka_GE" : lang === "en" ? "en_US" : "ru_RU",
+      images: [
+        {
+          url: "https://kmotors.shop/preview/preview.png",
+          width: 1200,
+          height: 630,
+          alt: meta.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+      images: ["https://kmotors.shop/preview/preview.png"],
+    },
     alternates: {
       canonical: `https://kmotors.shop/${lang}/`,
       languages: {
@@ -56,8 +78,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function Home() {
+export default async function Home({ params }: Props) {
+  const { lang } = await params;
+  const meta = LANG_META[lang] || LANG_META.ru;
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "KMotors",
+    url: "https://kmotors.shop/",
+    description: meta.description,
+    inLanguage: lang,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `https://kmotors.shop/${lang}/catalog?manufacture={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+    ],
+  };
+
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
     <div className="min-h-[70vh]">
       <Main />
       <div className="py-20 rounded-[50px] md:rounded-[100px] mt-[-100px] relative z-10 bg-white overflow-hidden">
@@ -72,5 +125,6 @@ export default function Home() {
       </div>
       <Brands />
     </div>
+    </>
   );
 }
