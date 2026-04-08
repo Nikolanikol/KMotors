@@ -27,6 +27,7 @@ const CarCard = ({
   id,
   model,
   manufacture,
+  year,
   mileage,
   transmission,
   fuel,
