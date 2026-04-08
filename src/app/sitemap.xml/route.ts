@@ -47,7 +47,7 @@ export async function GET() {
 
   const catalogSitemaps = Array.from(
     { length: totalPages },
-    (_, i) => `${BASE}/sitemap-new-${i + 1}.xml`
+    (_, i) => `${BASE}/sitemap-catalog/${i + 1}`
   );
 
   const all = [...staticSitemaps, ...catalogSitemaps];

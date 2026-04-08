@@ -1,4 +1,4 @@
-// app/sitemap-new-[page].xml/route.ts
+// app/sitemap-catalog/[page]/route.ts
 import { NextResponse } from "next/server";
 
 const BASE = "https://kmotors.shop";
@@ -7,7 +7,8 @@ const PAGE_SIZE = 20;
 const ENCAR_API = "https://api.encar.com/search/car/list/premium";
 const ENCAR_PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
 const QUERY = "(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A.))";
-const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
+const UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 
 async function fetchCars(offset: number) {
   const url = `${ENCAR_API}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C${offset}%7C${PAGE_SIZE}`;
@@ -20,7 +21,6 @@ async function fetchCars(offset: number) {
     const json = await res.json();
     return json.SearchResults as { Id: number; LastModified?: string }[];
   } catch {
-    // fallback to proxy
     const proxyUrl = `${ENCAR_PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C${offset}%7C${PAGE_SIZE}`;
     const res = await fetch(proxyUrl, { next: { revalidate: 3600 } });
     const json = await res.json();
