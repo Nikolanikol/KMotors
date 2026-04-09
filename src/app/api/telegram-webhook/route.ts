@@ -42,6 +42,20 @@ export async function POST(req: NextRequest) {
     | { text?: string; chat?: { id: number }; message_id?: number }
     | undefined;
 
+  // DEBUG: вернуть что пришло
+  if (message?.text?.startsWith("/debug")) {
+    return NextResponse.json({
+      ok: true,
+      debug: {
+        text: message.text,
+        chatId: message.chat?.id,
+        allowedChatId: ALLOWED_CHAT_ID,
+        match: String(message.chat?.id) === String(ALLOWED_CHAT_ID),
+        hasToken: !!process.env.TELEGRAM_BOT_TOKEN,
+      }
+    });
+  }
+
   if (message?.text && message.chat?.id) {
     const chatId = message.chat.id;
 
