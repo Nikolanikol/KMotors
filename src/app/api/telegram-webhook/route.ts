@@ -9,11 +9,16 @@ function ok() {
 }
 
 async function sendMessage(chatId: number, text: string, extra?: Record<string, unknown>) {
-  await fetch(`${TELEGRAM_API}/sendMessage`, {
+  const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", ...extra }),
   });
+  const data = await res.json();
+  if (!data.ok) {
+    console.error("Telegram sendMessage error:", JSON.stringify(data));
+  }
+  return data;
 }
 
 export async function POST(req: NextRequest) {
@@ -60,6 +65,11 @@ export async function POST(req: NextRequest) {
     if (text === "/status") {
       await handleStatusCommand(chatId);
       return ok();
+    }
+
+    if (text === "/ping") {
+      const r = await sendMessage(chatId, "🏓 pong");
+      return NextResponse.json({ ok: true, telegram: r });
     }
 
     if (text === "/help") {
