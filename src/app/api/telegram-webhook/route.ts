@@ -21,6 +21,20 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
   return data;
 }
 
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    env: {
+      hasToken: !!process.env.TELEGRAM_BOT_TOKEN,
+      hasChatId: !!process.env.TELEGRAM_CHAT_ID,
+      chatId: process.env.TELEGRAM_CHAT_ID,
+      hasSecret: !!process.env.TELEGRAM_WEBHOOK_SECRET,
+      siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    },
+    version: "v4",
+  });
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-telegram-bot-api-secret-token");
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
