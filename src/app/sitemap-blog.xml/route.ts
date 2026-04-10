@@ -25,7 +25,7 @@ export async function GET() {
     const supabase = createServerClient();
     const { data: posts } = await supabase
       .from("blog_posts")
-      .select("slug, published_at")
+      .select("slug, published_at, tags")
       .eq("published", true)
       .order("published_at", { ascending: false });
 
@@ -37,6 +37,7 @@ export async function GET() {
 
     const urlBlocks: string[] = [];
 
+    // Статьи блога
     for (const post of posts) {
       const lastmod = post.published_at || new Date().toISOString();
 
@@ -47,6 +48,22 @@ export async function GET() {
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
 ${alternates(post.slug)}
+  </url>`);
+      }
+    }
+
+    // Страницы тегов
+    const allTags = new Set<string>();
+    for (const post of posts) {
+      (post.tags || []).forEach((tag: string) => allTags.add(tag));
+    }
+    for (const tag of allTags) {
+      const encodedTag = encodeURIComponent(tag);
+      for (const lang of LANGS) {
+        urlBlocks.push(`  <url>
+    <loc>${BASE}/${lang}/blog/tag/${encodedTag}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>`);
       }
     }
