@@ -7,6 +7,7 @@ import { Star, Phone, MapPin, User } from "lucide-react";
 
 import React from "react";
 import { useTranslation } from "react-i18next";
+import LocationMap from "./LocationMap";
 
 const Header = ({ data }) => {
   const { t } = useTranslation(['common', 'cars']);
@@ -70,14 +71,17 @@ const Header = ({ data }) => {
           </a>
 
           {/* Адрес */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-white border-2 border-gray-100 rounded-2xl">
-            <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center">
-              <MapPin className="w-4 h-4 text-gray-500" />
+          <div className="flex flex-col gap-2 px-4 py-3 bg-white border-2 border-gray-100 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-4 h-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">{t('common:car.sellerAddress')}</p>
+                <p className="text-sm font-bold text-gray-900">{data.contact.address}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">{t('common:car.sellerAddress')}</p>
-              <p className="text-sm font-bold text-gray-900">{data.contact.address}</p>
-            </div>
+            <LocationMap address={data.contact.address} />
           </div>
 
           {/* Тип продавца */}
