@@ -298,11 +298,17 @@ async function handleGenerate(req: NextRequest) {
       `🌐 Языки: RU · EN · KO · KA · AR\n` +
       `🏷 ${finalTags.join(", ")}`;
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kmotors.shop";
     const keyboard = {
-      inline_keyboard: [[
-        { text: "✅ Опубликовать", callback_data: `publish:${postId}` },
-        { text: "❌ Удалить", callback_data: `delete:${postId}` },
-      ]],
+      inline_keyboard: [
+        [
+          { text: "✅ Опубликовать", callback_data: `publish:${postId}` },
+          { text: "✏️ Редактировать", url: `${siteUrl}/admin/blog/${postId}` },
+        ],
+        [
+          { text: "❌ Удалить", callback_data: `delete:${postId}` },
+        ],
+      ],
     };
 
     await fetch(`${TELEGRAM_API}/sendMessage`, {
