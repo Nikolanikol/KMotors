@@ -73,25 +73,50 @@ function buildGeneratePrompt(topic: BlogTopic): string {
     : "";
   const notesLine = topic.notes ? `Дополнительные инструкции: ${topic.notes}` : "";
 
-  return `Ты — эксперт по корейскому автопрому и SEO-копирайтер. Напиши статью для автомобильного блога.
+  const tagHints = [
+    ...topic.models,
+    ...topic.tags,
+    topic.type,
+  ].filter(Boolean).join(", ");
 
-Тема: "${topic.topic}"
-Тип контента: ${typeLabel}
+  return `Ты — опытный автомобилист и знаток корейского авторынка. Ты помогаешь людям из СНГ выбирать и покупать автомобили из Кореи. Пишешь как умный друг — без занудства и маркетинговых штампов, но с реальными знаниями.
+
+Тема статьи: "${topic.topic}"
+Тип: ${typeLabel}
 ${modelsLine}
 ${notesLine}
 
-Требования:
-- Объём: 400–500 слов
-- Стиль: экспертный, информативный, без воды
-- Структура: введение → 3 раздела с ## заголовками → вывод
-- Формат: Markdown (## заголовки, **жирный**, списки)
-- Фокус: практическая польза для покупателя авто из Кореи в СНГ
+СТИЛЬ И ПОДАЧА:
+- Говори как человек, который сам ездил на этих машинах и знает их изнутри
+- Вместо сухих цифр — живые сравнения: не "123 л.с.", а "хватает для города, но на трассе с полным салоном чувствуешь нехватку"
+- Приводи конкретные сценарии владения: "если едешь раз в неделю на дачу — подойдёт, если по горному серпантину — уже нет"
+- Честно говори о слабых местах — это строит доверие, а не отпугивает
+- Никакого корпоративного языка, никаких "данный автомобиль обладает превосходными характеристиками"
+- Читатель должен дочитать до конца, потому что интересно — а не потому что надо
+
+СТРУКТУРА (строго):
+1. Вступление (2–3 предложения) — сразу суть, без воды. Читатель должен понять о чём статья с первых слов
+2. Три раздела с ## заголовками — каждый раскрывает один аспект темы
+3. Финальный раздел "## Итог" — обязательно заканчивай конкретным выводом в формате:
+   **Брать если:** [конкретная ситуация]
+   **Не брать если:** [конкретная ситуация]
+
+ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ:
+- Объём: 450–550 слов
+- Формат: Markdown (## заголовки, **жирный** для важного, - списки где уместно)
+- Фокус: покупатель корейского авто из Кореи в СНГ — реальные цены, реальный рынок, реальные проблемы
+
+ТЕГИ (важно):
+Сгенерируй 5–8 точных тегов на основе: ${tagHints}
+Теги должны включать: названия моделей (и корейские названия если есть, например Avante = Elantra), названия двигателей, бренд, тип контента.
+Пример хороших тегов: ["Hyundai Elantra", "Avante", "Nu 1.6", "Hyundai", "сравнение двигателей", "обзор"]
 
 Верни ТОЛЬКО валидный JSON без markdown-обёртки:
 {
-  "title_ru": "заголовок статьи",
-  "excerpt_ru": "краткое описание 1–2 предложения",
-  "content_ru": "полный текст в Markdown"
+  "title_ru": "заголовок статьи — конкретный и цепляющий, без воды",
+  "excerpt_ru": "1–2 предложения: о чём статья и почему стоит читать",
+  "content_ru": "полный текст в Markdown",
+  "tags": ["тег1", "тег2", "тег3", "тег4", "тег5"]
 }`;
 }
 
@@ -188,7 +213,7 @@ async function handleGenerate(req: NextRequest) {
   });
 
   // Запрос 1: генерация на русском
-  let ruData: { title_ru: string; excerpt_ru: string; content_ru: string };
+  let ruData: { title_ru: string; excerpt_ru: string; content_ru: string; tags?: string[] };
   try {
     const result = await model.generateContent(buildGeneratePrompt(topic));
     ruData = JSON.parse(result.response.text());
@@ -210,8 +235,11 @@ async function handleGenerate(req: NextRequest) {
     return NextResponse.json({ error: "Failed to translate article", details: String(err) }, { status: 500 });
   }
 
+  // Теги: берём из ответа Gemini, fallback на теги из темы
+  const finalTags = (ruData.tags && ruData.tags.length > 0) ? ruData.tags : topic.tags;
+
   // Получить обложку с Pexels
-  const coverUrl = await fetchCoverImage(topic.models, topic.tags, topic.type);
+  const coverUrl = await fetchCoverImage(topic.models, finalTags, topic.type);
 
   // Сохранить в blog_posts как черновик
   const { data: inserted, error: insertError } = await supabase
@@ -223,7 +251,7 @@ async function handleGenerate(req: NextRequest) {
       cover_url: coverUrl,
       published: false,
       published_at: new Date().toISOString(),
-      tags: topic.tags,
+      tags: finalTags,
       title_ru: ruData.title_ru,
       excerpt_ru: ruData.excerpt_ru,
       content_ru: ruData.content_ru,
@@ -268,7 +296,7 @@ async function handleGenerate(req: NextRequest) {
       `${escapeHtml(ruData.excerpt_ru)}\n\n` +
       `📂 Тип: ${topic.type} · Приоритет: ${topic.priority}/10\n` +
       `🌐 Языки: RU · EN · KO · KA · AR\n` +
-      `🏷 ${topic.tags.join(", ")}`;
+      `🏷 ${finalTags.join(", ")}`;
 
     const keyboard = {
       inline_keyboard: [[
