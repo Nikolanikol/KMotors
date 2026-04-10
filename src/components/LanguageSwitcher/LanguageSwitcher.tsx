@@ -22,7 +22,7 @@ export default function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(languages[0]);
   const [mounted, setMounted] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0, maxHeight: 400 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Detect current lang from URL
@@ -42,6 +42,7 @@ export default function LanguageSwitcher() {
       setDropdownPos({
         top: rect.bottom + 8,
         right: window.innerWidth - rect.right,
+        maxHeight: window.innerHeight - rect.bottom - 24,
       });
     }
   }, []);
@@ -122,8 +123,8 @@ export default function LanguageSwitcher() {
             aria-hidden="true"
           />
           <div
-            className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden"
-            style={{ top: dropdownPos.top, right: dropdownPos.right }}
+            className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-y-auto"
+            style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
           >
             {languages.map((lang) => (
               <button
