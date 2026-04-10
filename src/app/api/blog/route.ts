@@ -28,6 +28,11 @@ export async function GET(req: NextRequest) {
       query = query.eq("category", category);
     }
 
+    const tag = searchParams.get("tag") || "";
+    if (tag.trim()) {
+      query = query.contains("tags", [tag.trim()]);
+    }
+
     if (search.trim()) {
       const s = search.trim();
       query = query.or(
