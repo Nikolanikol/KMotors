@@ -121,6 +121,38 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       price: data?.advertisement?.price * 10000,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/UsedCondition",
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          currency: "USD",
+          value: "0",
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "RU",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 7,
+            maxValue: 30,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 7,
+            maxValue: 30,
+            unitCode: "DAY",
+          },
+        },
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "RU",
+        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      },
     },
     vin: data?.vin,
     vehicleEngine: {
