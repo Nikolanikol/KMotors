@@ -1,20 +1,31 @@
 import { createServerClient } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
-// Парсим источник трафика из URL реферера
+const OWN_DOMAINS = ["kmotors.shop", "localhost"];
+
 function parseSource(referrer: string): string {
   if (!referrer) return "direct";
   try {
     const url = new URL(referrer);
-    const hostname = url.hostname;
+    const hostname = url.hostname.replace("www.", "");
+
+    // Саморефералы — не источник
+    if (OWN_DOMAINS.some((d) => hostname.includes(d))) return "direct";
+
     if (hostname.includes("google")) return "google";
     if (hostname.includes("yandex")) return "yandex";
     if (hostname.includes("t.me") || hostname.includes("telegram")) return "telegram";
     if (hostname.includes("instagram")) return "instagram";
     if (hostname.includes("vk.com")) return "vk";
-    if (hostname.includes("facebook")) return "facebook";
-    // Возвращаем домен для остальных источников
-    return hostname.replace("www.", "");
+    if (hostname.includes("facebook") || hostname.includes("fb.com")) return "facebook";
+    if (hostname.includes("youtube") || hostname.includes("youtu.be")) return "youtube";
+    if (hostname.includes("tiktok")) return "tiktok";
+    if (hostname.includes("whatsapp")) return "whatsapp";
+    if (hostname.includes("dzen.ru") || hostname.includes("zen.yandex")) return "dzen";
+    if (hostname.includes("avito")) return "avito";
+    if (hostname.includes("auto.ru")) return "auto.ru";
+
+    return hostname;
   } catch {
     return "direct";
   }
@@ -22,23 +33,47 @@ function parseSource(referrer: string): string {
 
 export async function POST(req: Request) {
   try {
-    const { path, referrer } = await req.json();
+    const { path, referrer, country, device, event, properties, sessionId } = await req.json();
 
+    const supabase = createServerClient();
+
+    // Событие (car_view и др.) → таблица events
+    if (event) {
+      await supabase.from("events").insert({
+        event,
+        session_id: sessionId || null,
+        properties: properties || {},
+      });
+
+      // car_view — дополнительно кэшируем имя машины для топа страниц
+      if (event === "car_view" && properties?.car_id && properties?.car_name) {
+        await supabase.from("car_names").upsert({
+          car_id: String(properties.car_id),
+          car_name: String(properties.car_name),
+          path: `/ru/catalog/${properties.car_id}`,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "car_id" });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    // Стандартный pageview → таблица page_views
     if (!path || typeof path !== "string") {
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 
     const source = parseSource(referrer || "");
 
-    const supabase = createServerClient();
     await supabase.from("page_views").insert({
-      path: path.slice(0, 500), // ограничиваем длину
+      path: path.slice(0, 500),
       referrer: source,
+      country: country || null,
+      device: device || null,
     });
 
     return NextResponse.json({ ok: true });
   } catch {
-    // Тихо игнорируем ошибки — трекинг не должен ломать сайт
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

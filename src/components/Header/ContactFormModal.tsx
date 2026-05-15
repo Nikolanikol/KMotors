@@ -31,15 +31,32 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
     message: "",
   });
 
-  // Автоматический показ через 30 сек (не в админке)
+  // Автопоказ: один раз, потом 7 дней не беспокоить
   useEffect(() => {
     if (hasTriggeredRef.current || isVisible) return;
     if (pathname.startsWith("/admin")) return;
+    // На карточке машины форма уже есть прямо под ценой
+    if (pathname.match(/\/catalog\/\d+/)) return;
+
+    // Проверяем localStorage — видел ли пользователь модалку за последние 7 дней
+    try {
+      const seen = localStorage.getItem("kmotors_modal_seen");
+      if (seen) {
+        const seenDate = parseInt(seen, 10);
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        if (Date.now() - seenDate < sevenDays) return;
+      }
+    } catch {
+      // localStorage недоступен (приватный режим) — показываем как обычно
+    }
 
     timerRef.current = setTimeout(() => {
       if (!hasTriggeredRef.current) {
         setVisible(true);
         hasTriggeredRef.current = true;
+        try {
+          localStorage.setItem("kmotors_modal_seen", Date.now().toString());
+        } catch {}
       }
     }, 30000);
 

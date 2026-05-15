@@ -7,7 +7,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { BlogPost } from "@/types/blog";
-import { ArrowLeft, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, Calendar, Tag, ChevronDown, ChevronUp } from "lucide-react";
+import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
 
 const CATEGORY_LABELS: Record<string, string> = {
   news: "blog.news",
@@ -36,6 +37,7 @@ export default function BlogPostPage() {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [ctaOpen, setCtaOpen] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -160,6 +162,36 @@ export default function BlogPostPage() {
                 {t("blog.noContent", "Содержимое статьи недоступно")}
               </p>
             )}
+
+            {/* CTA — призыв к действию после статьи */}
+            <div className="mt-2 p-6 bg-orange-50 border-2 border-orange-200 rounded-2xl">
+              <h3 className="text-lg font-bold text-[#002C5F] mb-1">
+                Готовы выбрать автомобиль?
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Более 10 000 автомобилей из Кореи в каталоге. Бесплатная консультация по подбору и таможне.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href={`/${lang}/catalog`}
+                  className="flex-1 text-center px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors"
+                >
+                  Смотреть каталог
+                </Link>
+                <button
+                  onClick={() => setCtaOpen((v) => !v)}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-semibold rounded-xl transition-colors"
+                >
+                  Получить консультацию
+                  {ctaOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+              {ctaOpen && (
+                <div className="mt-4">
+                  <CarRequestForm carId="" carName="Блог" source="blog" />
+                </div>
+              )}
+            </div>
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (

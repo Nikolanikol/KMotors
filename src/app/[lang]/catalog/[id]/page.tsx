@@ -3,6 +3,9 @@ import DetailInfo from "@/components/Catalog/CarDetail/DetailInfo";
 import Header from "@/components/Catalog/CarDetail/Header";
 import OptionsRow from "@/components/Catalog/CarDetail/OptionsRow/OptionsRow";
 import CustomsCalculator from "@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator";
+import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
+import StickyMobileCTA from "@/components/Catalog/CarDetail/StickyMobileCTA";
+import CarViewTracker from "@/components/Catalog/CarDetail/CarViewTracker";
 import { Button } from "@/components/ui/button";
 import Script from "next/script";
 import { FC } from "react";
@@ -15,11 +18,25 @@ interface PageProps {
 }
 
 export async function fetchData(id: string): Promise<any> {
+  // Основной источник — прямой Encar API, кэш 1 час
   try {
-    return await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`)
-      .then((data) => data.json());
+    const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) throw new Error(`Encar ${res.status}`);
+    return await res.json();
   } catch {
-    return undefined;
+    // Fallback: тот же прокси что использует каталог
+    try {
+      const res = await fetch(
+        `https://encar-proxy-main.onrender.com/api/vehicle/${id}`,
+        { next: { revalidate: 3600 } }
+      );
+      if (!res.ok) throw new Error(`proxy ${res.status}`);
+      return await res.json();
+    } catch {
+      return undefined;
+    }
   }
 }
 
@@ -177,6 +194,16 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       />
       <div className="container mx-auto">
         <Header data={data} />
+
+        {/* Шаг 4: форма заявки сразу под ценой */}
+        <div className="mt-4 bg-orange-50 border-2 border-orange-200 rounded-2xl p-6">
+          <p className="font-bold text-lg mb-1">Хочу эту машину</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Менеджер свяжется в течение 1 часа и расскажет об условиях доставки
+          </p>
+          <CarRequestForm carId={id} carName={`${carName} ${carData}`} />
+        </div>
+
         <VinMileageSection
           vin={data.vin}
           vehicleNo={data.vehicleNo}
@@ -188,7 +215,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           priceKRW={data?.advertisement?.price * 10000}
           yearMonth={data?.category?.yearMonth}
           engineVolume={data?.spec?.displacement ?? 0}
-          fuelType={data?.fuel}
+          fuelType={data?.spec?.fuelName}
+          carId={id}
+          carName={`${carName} ${carData}`}
         />
         <div className="flex items-center justify-center mt-6">
           <Button className="py-3 px-6 text-lg" variant="destructive">
@@ -202,6 +231,10 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         </div>
         <OptionsRow data={data.options} />
       </div>
+
+      {/* Шаг 5: sticky CTA на мобильном */}
+      <StickyMobileCTA carId={id} carName={`${carName} ${carData}`} />
+      <CarViewTracker carId={id} carName={`${carName} ${carData}`} />
     </div>
   );
 };

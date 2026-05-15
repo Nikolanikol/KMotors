@@ -2,152 +2,208 @@ import { createServerClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-// Типы данных
-interface PageStat {
-  path: string;
-  count: number;
-}
+// ─── Хелперы ────────────────────────────────────────────────────────────────
 
-interface SourceStat {
-  referrer: string;
-  count: number;
-}
-
-interface DayStat {
-  date: string;
-  count: number;
-}
-
-// Форматирование имени страницы
 function formatPath(path: string): string {
-  if (path === "/") return "🏠 Главная";
-  if (path === "/catalog") return "🚗 Каталог";
-  if (path === "/blog") return "📰 Блог";
-  if (path === "/buy") return "📋 Как купить";
-  if (path === "/contact") return "📞 Контакты";
-  if (path === "/parts") return "🔧 Запчасти";
-  if (path.startsWith("/blog/")) return `📄 ${path.replace("/blog/", "")}`;
-  if (path.startsWith("/catalog/")) return `🚘 Авто #${path.replace("/catalog/", "")}`;
-  return path;
+  const clean = path.replace(/^\/(ru|en|ko|ka|ar)/, "");
+  if (!clean || clean === "/") return "Главная";
+  if (clean.startsWith("/catalog/")) return `Авто #${clean.replace("/catalog/", "")}`;
+  if (clean.startsWith("/blog/")) return `Блог: ${clean.replace("/blog/", "")}`;
+  if (clean === "/catalog") return "Каталог";
+  if (clean === "/blog") return "Блог";
+  if (clean === "/contact") return "Контакты";
+  if (clean === "/buy") return "Как купить";
+  if (clean === "/parts") return "Запчасти";
+  return clean;
 }
 
-// Форматирование источника
-function formatSource(source: string): string {
-  const map: Record<string, string> = {
-    direct: "🔗 Прямые переходы",
-    google: "🔍 Google",
-    yandex: "🔍 Яндекс",
-    telegram: "✈️ Telegram",
-    instagram: "📸 Instagram",
-    vk: "💙 ВКонтакте",
-    facebook: "👤 Facebook",
-  };
-  return map[source] || `🌐 ${source}`;
+const SOURCE_LABELS: Record<string, string> = {
+  direct: "Прямые переходы",
+  google: "Google",
+  yandex: "Яндекс",
+  telegram: "Telegram",
+  instagram: "Instagram",
+  vk: "ВКонтакте",
+  facebook: "Facebook",
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  whatsapp: "WhatsApp",
+  dzen: "Дзен",
+  "avito": "Avito",
+  "auto.ru": "Auto.ru",
+};
+
+const SOURCE_COLORS: Record<string, string> = {
+  google: "#4285F4",
+  yandex: "#FF0000",
+  telegram: "#2AABEE",
+  instagram: "#E1306C",
+  vk: "#4C75A3",
+  facebook: "#1877F2",
+  youtube: "#FF0000",
+  tiktok: "#000000",
+  direct: "#6B7280",
+};
+
+const COUNTRY_NAMES: Record<string, string> = {
+  RU: "🇷🇺 Россия",
+  KZ: "🇰🇿 Казахстан",
+  UZ: "🇺🇿 Узбекистан",
+  GE: "🇬🇪 Грузия",
+  SA: "🇸🇦 Саудовская Аравия",
+  AE: "🇦🇪 ОАЭ",
+  KR: "🇰🇷 Корея",
+  DE: "🇩🇪 Германия",
+  US: "🇺🇸 США",
+  UA: "🇺🇦 Украина",
+  BY: "🇧🇾 Беларусь",
+  AM: "🇦🇲 Армения",
+  AZ: "🇦🇿 Азербайджан",
+};
+
+const LEAD_SOURCE_LABELS: Record<string, string> = {
+  car_detail: "Карточка машины",
+  car_detail_mobile: "Карточка (моб.)",
+  car_calculator: "Калькулятор",
+  header: "Шапка сайта",
+  contact: "Контакты",
+  parts: "Запчасти",
+  blog: "Блог",
+  unknown: "Неизвестно",
+};
+
+function fmtDate(str: string): string {
+  return new Date(str).toLocaleString("ru-RU", {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+  });
 }
 
-// Форматирование даты
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+function fmtShortDate(str: string): string {
+  const d = new Date(str);
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
+
+// ─── Страница ────────────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
-  // Дополнительная проверка на сервере
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("admin_session");
-  const adminPassword = process.env.ADMIN_PASSWORD;
-
-  if (!sessionCookie || sessionCookie.value !== adminPassword) {
+  if (!sessionCookie || sessionCookie.value !== process.env.ADMIN_PASSWORD) {
     redirect("/admin/login");
   }
 
   const supabase = createServerClient();
-
   const now = new Date();
-  const days7ago = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const days30ago = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const days14ago = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const days7ago  = new Date(now.getTime() -  7 * 86400000).toISOString();
+  const days30ago = new Date(now.getTime() - 30 * 86400000).toISOString();
+  const days14ago = new Date(now.getTime() - 14 * 86400000).toISOString();
 
-  // Загружаем все данные параллельно
+  // ── Все запросы параллельно ──────────────────────────────────────────────
   const [
     { count: total7 },
     { count: total30 },
-    { data: topPages7 },
-    { data: sources30 },
-    { data: dailyRaw },
+    { data: topPages },
+    { data: sources },
+    { data: dailyData },
+    { data: countries },
+    { data: devices },
+    { data: hourlyRaw },
+    { count: leadsTotal7 },
+    { count: leadsTotal30 },
+    { data: recentLeads },
+    { data: topCars },
   ] = await Promise.all([
-    // Всего за 7 дней
-    supabase
-      .from("page_views")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", days7ago),
-
-    // Всего за 30 дней
-    supabase
-      .from("page_views")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", days30ago),
-
-    // Топ страниц за 7 дней
-    supabase
-      .from("page_views")
-      .select("path")
-      .gte("created_at", days7ago),
-
-    // Источники за 30 дней
-    supabase
-      .from("page_views")
-      .select("referrer")
-      .gte("created_at", days30ago),
-
-    // Данные за 14 дней для графика по дням
-    supabase
-      .from("page_views")
-      .select("created_at")
-      .gte("created_at", days14ago)
-      .order("created_at", { ascending: true }),
+    // Визиты 7 дней
+    supabase.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", days7ago),
+    // Визиты 30 дней
+    supabase.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", days30ago),
+    // Топ страниц через RPC
+    supabase.rpc("get_top_pages", { since_date: days7ago, limit_count: 10 }),
+    // Источники через RPC
+    supabase.rpc("get_traffic_sources", { since_date: days30ago }),
+    // График по дням через RPC
+    supabase.rpc("get_daily_stats", { since_date: days14ago }),
+    // Страны
+    supabase.from("page_views").select("country").gte("created_at", days30ago).not("country", "is", null).limit(5000),
+    // Устройства
+    supabase.from("page_views").select("device").gte("created_at", days30ago).not("device", "is", null).limit(5000),
+    // Часы активности
+    supabase.from("page_views").select("created_at").gte("created_at", days7ago).limit(5000),
+    // Лиды 7 дней
+    supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days7ago),
+    // Лиды 30 дней
+    supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days30ago),
+    // Последние заявки
+    supabase.from("leads").select("id,name,phone,car_name,source_page,created_at").order("created_at", { ascending: false }).limit(20),
+    // Топ просматриваемых машин
+    supabase.rpc("get_top_cars", { since_date: days30ago, limit_count: 10 }),
   ]);
 
-  // Агрегируем топ страниц
-  const pageMap: Record<string, number> = {};
-  (topPages7 || []).forEach((row) => {
-    pageMap[row.path] = (pageMap[row.path] || 0) + 1;
-  });
-  const topPages: PageStat[] = Object.entries(pageMap)
-    .map(([path, count]) => ({ path, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+  // ── Агрегации ────────────────────────────────────────────────────────────
 
-  // Агрегируем источники
-  const sourceMap: Record<string, number> = {};
-  (sources30 || []).forEach((row) => {
-    const s = row.referrer || "direct";
-    sourceMap[s] = (sourceMap[s] || 0) + 1;
+  // Страны
+  const countryMap: Record<string, number> = {};
+  (countries || []).forEach((r) => {
+    if (r.country) countryMap[r.country] = (countryMap[r.country] || 0) + 1;
   });
-  const totalSourceCount = Object.values(sourceMap).reduce((a, b) => a + b, 0);
-  const sources: SourceStat[] = Object.entries(sourceMap)
-    .map(([referrer, count]) => ({ referrer, count }))
-    .sort((a, b) => b.count - a.count);
+  const countryStats = Object.entries(countryMap)
+    .sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxCountry = Math.max(...countryStats.map((c) => c[1]), 1);
 
-  // Агрегируем по дням
+  // Устройства
+  const deviceMap: Record<string, number> = {};
+  (devices || []).forEach((r) => {
+    if (r.device) deviceMap[r.device] = (deviceMap[r.device] || 0) + 1;
+  });
+  const totalDevices = Object.values(deviceMap).reduce((a, b) => a + b, 0) || 1;
+
+  // Часы активности
+  const hourMap: Record<number, number> = {};
+  for (let h = 0; h < 24; h++) hourMap[h] = 0;
+  (hourlyRaw || []).forEach((r) => {
+    const h = new Date(r.created_at).getHours();
+    hourMap[h] = (hourMap[h] || 0) + 1;
+  });
+  const maxHour = Math.max(...Object.values(hourMap), 1);
+
+  // График по дням — заполняем пропуски нулями
   const dayMap: Record<string, number> = {};
-  // Инициализируем последние 14 дней нулями
   for (let i = 13; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const key = d.toISOString().slice(0, 10);
-    dayMap[key] = 0;
+    const d = new Date(now.getTime() - i * 86400000);
+    dayMap[d.toISOString().slice(0, 10)] = 0;
   }
-  (dailyRaw || []).forEach((row) => {
-    const key = row.created_at.slice(0, 10);
-    dayMap[key] = (dayMap[key] || 0) + 1;
+  (dailyData || []).forEach((r: { date: string; count: number }) => {
+    if (r.date in dayMap) dayMap[r.date] = Number(r.count);
   });
-  const dailyStats: DayStat[] = Object.entries(dayMap).map(([date, count]) => ({
-    date,
-    count,
-  }));
-  const maxDayCount = Math.max(...dailyStats.map((d) => d.count), 1);
+  const dayStats = Object.entries(dayMap);
+  const maxDay = Math.max(...dayStats.map((d) => d[1]), 1);
 
-  const uniquePages = Object.keys(pageMap).length;
+  // Топ страниц — с именами машин из JOIN
+  const topPagesList = (topPages || []).map((r: { path: string; car_name: string | null; count: number }) => ({
+    path: r.path,
+    label: r.car_name || formatPath(r.path),
+    url: r.car_name ? `/ru/catalog/${r.path.match(/\/catalog\/(\d+)/)?.[1]}` : null,
+    count: Number(r.count),
+  }));
+  const maxPage = Math.max(...topPagesList.map((p: { count: number }) => p.count), 1);
+
+  // Источники
+  const sourceList = (sources || []) as { referrer: string; count: number }[];
+  const totalSources = sourceList.reduce((a, b) => a + Number(b.count), 0) || 1;
+
+  // Конверсия
+  const convRate = total30 && (leadsTotal30 || 0) > 0
+    ? (((leadsTotal30 || 0) / total30) * 100).toFixed(2)
+    : "0.00";
+
+  // Лиды по источнику
+  const leadsSourceMap: Record<string, number> = {};
+  (recentLeads || []).forEach((l) => {
+    const s = l.source_page || "unknown";
+    leadsSourceMap[s] = (leadsSourceMap[s] || 0) + 1;
+  });
+
+  // ── JSX ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -155,166 +211,291 @@ export default async function AdminPage() {
       <header className="bg-[#002C5F] text-white px-6 py-4 flex items-center justify-between">
         <div>
           <div className="text-lg font-bold">KMotors Admin</div>
-          <div className="text-xs text-blue-200">Аналитика посещений</div>
+          <div className="text-xs text-blue-200">Панель аналитики</div>
         </div>
-        <a
-          href="/"
-          className="text-xs text-blue-200 hover:text-white transition-colors"
-        >
-          ← На сайт
-        </a>
+        <a href="/" className="text-xs text-blue-200 hover:text-white transition-colors">← На сайт</a>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* Итоговые цифры */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="text-2xl font-bold text-[#002C5F]">
-              {(total7 || 0).toLocaleString("ru")}
+
+        {/* ── Главные метрики ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Визитов за 7 дней",   value: (total7  || 0).toLocaleString("ru"), color: "text-[#002C5F]" },
+            { label: "Визитов за 30 дней",  value: (total30 || 0).toLocaleString("ru"), color: "text-[#002C5F]" },
+            { label: "Заявок за 7 дней",    value: (leadsTotal7  || 0).toString(),       color: "text-orange-500" },
+            { label: "Конверсия (30 дн.)",  value: `${convRate}%`,                       color: "text-green-600" },
+          ].map((m) => (
+            <div key={m.label} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+              <div className="text-sm text-gray-500 mt-1">{m.label}</div>
             </div>
-            <div className="text-sm text-gray-500 mt-1">Визитов за 7 дней</div>
+          ))}
+        </div>
+
+        {/* ── График по дням ── */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="text-sm font-semibold text-gray-700 mb-4">Динамика визитов — последние 14 дней</div>
+          <div className="flex items-end gap-1 h-32">
+            {dayStats.map(([date, count]) => (
+              <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
+                <div
+                  className="w-full bg-[#002C5F] rounded-t hover:bg-orange-500 transition-colors"
+                  style={{ height: `${Math.max((count / maxDay) * 100, count > 0 ? 4 : 1)}%` }}
+                />
+                {/* Тултип */}
+                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                  {count} визитов
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="text-2xl font-bold text-[#002C5F]">
-              {(total30 || 0).toLocaleString("ru")}
-            </div>
-            <div className="text-sm text-gray-500 mt-1">Визитов за 30 дней</div>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="text-2xl font-bold text-[#002C5F]">{uniquePages}</div>
-            <div className="text-sm text-gray-500 mt-1">Уникальных страниц</div>
+          {/* Даты */}
+          <div className="flex gap-1 mt-2">
+            {dayStats.map(([date], i) => (
+              <div key={date} className="flex-1 text-center">
+                {(i === 0 || i === 6 || i === 13) && (
+                  <span className="text-xs text-gray-400">{fmtShortDate(date)}</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── Строка: топ страниц + источники ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
           {/* Топ страниц */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">
-              📊 Топ страниц — последние 7 дней
-            </h2>
-            {topPages.length === 0 ? (
-              <div className="text-sm text-gray-400 py-4 text-center">
-                Данных пока нет. Посетите страницы сайта, чтобы они появились здесь.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {topPages.map((page, i) => {
-                  const pct = Math.round((page.count / topPages[0].count) * 100);
-                  return (
-                    <div key={page.path} className="flex items-center gap-3">
-                      <div className="text-xs text-gray-400 w-4">{i + 1}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-sm text-gray-700 truncate">
-                            {formatPath(page.path)}
-                          </span>
-                          <span className="text-sm font-medium text-[#002C5F] ml-2 shrink-0">
-                            {page.count}
-                          </span>
-                        </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#002C5F] rounded-full"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Источники трафика */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">
-              🌐 Источники трафика — 30 дней
-            </h2>
-            {sources.length === 0 ? (
-              <div className="text-sm text-gray-400 py-4 text-center">
-                Данных пока нет.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {sources.map((src) => {
-                  const pct =
-                    totalSourceCount > 0
-                      ? Math.round((src.count / totalSourceCount) * 100)
-                      : 0;
-                  return (
-                    <div key={src.referrer} className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-sm text-gray-700">
-                            {formatSource(src.referrer)}
-                          </span>
-                          <div className="flex items-center gap-2 ml-2 shrink-0">
-                            <span className="text-xs text-gray-400">{pct}%</span>
-                            <span className="text-sm font-medium text-[#002C5F]">
-                              {src.count}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#BB162B] rounded-full"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* График по дням */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
-            📈 Динамика по дням — последние 14 дней
-          </h2>
-          {dailyStats.every((d) => d.count === 0) ? (
-            <div className="text-sm text-gray-400 py-4 text-center">
-              Данных пока нет.
-            </div>
-          ) : (
-            <div className="flex items-end gap-1.5 h-32">
-              {dailyStats.map((day) => {
-                const height = Math.round((day.count / maxDayCount) * 100);
-                return (
-                  <div
-                    key={day.date}
-                    className="flex-1 flex flex-col items-center gap-1"
-                  >
-                    <div className="relative w-full flex items-end justify-center h-24">
-                      <div
-                        className="w-full bg-[#002C5F] rounded-t opacity-80 hover:opacity-100 transition-opacity group relative"
-                        style={{ height: `${Math.max(height, 2)}%` }}
-                        title={`${day.count} визитов`}
+            <div className="text-sm font-semibold text-gray-700 mb-3">Топ страниц — 7 дней</div>
+            <div className="space-y-2">
+              {topPagesList.map((p: { path: string; label: string; url: string | null; count: number }) => (
+                <div key={p.path} className="space-y-1">
+                  <div className="flex justify-between text-sm gap-2">
+                    {p.url ? (
+                      <a
+                        href={p.url}
+                        target="_blank"
+                        className="text-orange-500 hover:underline truncate max-w-[70%]"
                       >
-                        {day.count > 0 && (
-                          <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-gray-600 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                            {day.count}
-                          </div>
-                        )}
-                      </div>
+                        {p.label}
+                      </a>
+                    ) : (
+                      <span className="text-gray-700 truncate max-w-[70%]">{p.label}</span>
+                    )}
+                    <span className="font-semibold text-gray-900 flex-shrink-0">{p.count}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
+                    <div
+                      className="bg-[#002C5F] h-1.5 rounded-full"
+                      style={{ width: `${(p.count / maxPage) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {topPagesList.length === 0 && (
+                <div className="text-sm text-gray-400 text-center py-4">Данных пока нет</div>
+              )}
+            </div>
+          </div>
+
+          {/* Источники */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-sm font-semibold text-gray-700 mb-3">Источники трафика — 30 дней</div>
+            <div className="space-y-2">
+              {sourceList.slice(0, 8).map((s) => {
+                const pct = Math.round((Number(s.count) / totalSources) * 100);
+                const color = SOURCE_COLORS[s.referrer] || "#6B7280";
+                return (
+                  <div key={s.referrer} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-700">{SOURCE_LABELS[s.referrer] || s.referrer}</span>
+                      <span className="text-gray-500 flex-shrink-0">{pct}% · {Number(s.count).toLocaleString("ru")}</span>
                     </div>
-                    <div className="text-[10px] text-gray-400 text-center leading-tight">
-                      {formatDate(day.date)}
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
                     </div>
                   </div>
                 );
               })}
+              {sourceList.length === 0 && (
+                <div className="text-sm text-gray-400 text-center py-4">Данных пока нет</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Строка: страны + устройства + часы ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Страны */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-sm font-semibold text-gray-700 mb-3">География — 30 дней</div>
+            <div className="space-y-2">
+              {countryStats.map(([code, count]) => (
+                <div key={code} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">{COUNTRY_NAMES[code] || `🌐 ${code}`}</span>
+                    <span className="font-semibold text-gray-900">{count}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5">
+                    <div
+                      className="bg-orange-400 h-1.5 rounded-full"
+                      style={{ width: `${(count / maxCountry) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {countryStats.length === 0 && (
+                <div className="text-sm text-gray-400 text-center py-4">Появится после деплоя</div>
+              )}
+            </div>
+          </div>
+
+          {/* Устройства */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-sm font-semibold text-gray-700 mb-3">Устройства — 30 дней</div>
+            {totalDevices > 1 ? (
+              <div className="space-y-3">
+                {[
+                  { key: "mobile",  label: "Мобильный", color: "bg-orange-400" },
+                  { key: "desktop", label: "Десктоп",   color: "bg-[#002C5F]" },
+                  { key: "tablet",  label: "Планшет",   color: "bg-blue-300"  },
+                ].map(({ key, label, color }) => {
+                  const cnt = deviceMap[key] || 0;
+                  const pct = Math.round((cnt / totalDevices) * 100);
+                  return (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-700">{label}</span>
+                        <span className="text-gray-500">{pct}% · {cnt}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-400 text-center py-4">Появится после деплоя</div>
+            )}
+          </div>
+
+          {/* Часы активности */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-sm font-semibold text-gray-700 mb-3">Часы активности — 7 дней</div>
+            <div className="flex items-end gap-px h-20">
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} className="flex-1 flex flex-col items-center group relative">
+                  <div
+                    className="w-full bg-[#002C5F] rounded-t hover:bg-orange-500 transition-colors"
+                    style={{ height: `${Math.max((hourMap[h] / maxHour) * 100, hourMap[h] > 0 ? 4 : 1)}%` }}
+                  />
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                    {h}:00 — {hourMap[h]}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Топ машин ── */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="text-sm font-semibold text-gray-700 mb-3">
+            Топ просматриваемых машин — 30 дней
+          </div>
+          {!topCars || topCars.length === 0 ? (
+            <div className="text-sm text-gray-400 text-center py-4">
+              Данные появятся после первых просмотров
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {(topCars as { car_name: string; car_id: string; count: number }[]).map((car, i) => (
+                <div key={car.car_id} className="flex items-center gap-3 py-2.5">
+                  <span className="text-lg font-bold text-gray-200 w-6 text-center flex-shrink-0">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <a
+                      href={`/ru/catalog/${car.car_id}`}
+                      target="_blank"
+                      className="text-sm font-medium text-gray-900 hover:text-orange-500 transition-colors truncate block"
+                    >
+                      {car.car_name}
+                    </a>
+                    <span className="text-xs text-gray-400">#{car.car_id}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-[#002C5F] flex-shrink-0">
+                    {Number(car.count).toLocaleString("ru")} просм.
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Подвал */}
+        {/* ── Заявки ── */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-gray-800">Заявки</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="text-2xl font-bold text-orange-500">{(leadsTotal7 || 0)}</div>
+              <div className="text-sm text-gray-500 mt-1">За 7 дней</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="text-2xl font-bold text-orange-500">{(leadsTotal30 || 0)}</div>
+              <div className="text-sm text-gray-500 mt-1">За 30 дней</div>
+            </div>
+            {Object.entries(leadsSourceMap).sort((a,b) => b[1]-a[1]).slice(0,2).map(([src, cnt]) => (
+              <div key={src} className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="text-2xl font-bold text-orange-500">{cnt}</div>
+                <div className="text-sm text-gray-500 mt-1">{LEAD_SOURCE_LABELS[src] || src}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Таблица заявок */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="text-sm font-semibold text-gray-700">Последние заявки</div>
+              <div className="text-xs text-gray-400">последние 20</div>
+            </div>
+            {!recentLeads || recentLeads.length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-gray-400">Заявок пока нет</div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {recentLeads.map((lead) => (
+                  <div key={lead.id} className="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 text-sm">{lead.name}</div>
+                      <a href={`tel:${lead.phone}`} className="text-orange-500 text-sm hover:underline">
+                        {lead.phone}
+                      </a>
+                      {lead.car_name && (
+                        <div className="text-xs text-gray-400 truncate">{lead.car_name}</div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-lg">
+                        {LEAD_SOURCE_LABELS[lead.source_page] || lead.source_page}
+                      </span>
+                      <span className="text-xs text-gray-400">{fmtDate(lead.created_at)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="text-center text-xs text-gray-400 pb-4">
-          Данные обновляются в реальном времени · KMotors Admin
+          KMotors Admin · данные обновляются в реальном времени
         </div>
       </main>
     </div>

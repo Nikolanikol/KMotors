@@ -106,7 +106,9 @@ export default function Header() {
               <div className="lg:hidden">
                 <LanguageSwitcher />
               </div>
-              <ContactForm isVisible={false} />
+              <div className="hidden lg:block">
+                <ContactForm isVisible={false} />
+              </div>
 
               {/* Mobile menu button */}
               <button

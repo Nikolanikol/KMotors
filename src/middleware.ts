@@ -4,6 +4,35 @@ import type { NextRequest } from "next/server";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 const DEFAULT_LANG = "ru";
 
+// Боты которых не трекаем
+const BOT_PATTERN = /bot|crawl|spider|scraper|python|curl|wget|axios|java\/|go-http|headless|phantom|selenium|puppeteer|playwright/i;
+
+function shouldTrack(request: NextRequest): boolean {
+  // Пропускаем RSC-запросы Next.js (React Server Component payload)
+  const accept = request.headers.get("accept") || "";
+  if (accept.includes("text/x-component")) return false;
+
+  // Пропускаем prefetch-запросы (hover на ссылку)
+  if (request.headers.get("next-router-prefetch") === "1") return false;
+  if (request.headers.get("purpose") === "prefetch") return false;
+
+  // Пропускаем ботов
+  const ua = request.headers.get("user-agent") || "";
+  if (!ua || BOT_PATTERN.test(ua)) return false;
+
+  // Пропускаем саморефералы (переходы внутри сайта)
+  const referer = request.headers.get("referer") || "";
+  if (referer) {
+    try {
+      const refHost = new URL(referer).hostname;
+      const ownHost = request.nextUrl.hostname;
+      if (refHost === ownHost) return false;
+    } catch {}
+  }
+
+  return true;
+}
+
 // Пути которые не нуждаются в lang-префиксе
 function isExcluded(path: string): boolean {
   return (
@@ -50,14 +79,26 @@ export function middleware(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365, // 1 год
     });
 
-    // Аналитика
-    const referrer = request.headers.get("referer") || "";
-    const origin = request.nextUrl.origin;
-    fetch(`${origin}/api/track`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path, referrer }),
-    }).catch(() => {});
+    // Аналитика — только реальные пользователи, не боты и не RSC
+    if (shouldTrack(request)) {
+      const referrer = request.headers.get("referer") || "";
+      const origin = request.nextUrl.origin;
+      // Страна — бесплатный заголовок Vercel, на localhost будет пустым
+      const country = request.headers.get("x-vercel-ip-country") || "";
+      // Устройство — определяем по User-Agent
+      const ua = request.headers.get("user-agent") || "";
+      const device = /mobile|android|iphone|ipad|ipod/i.test(ua)
+        ? "mobile"
+        : /tablet|ipad/i.test(ua)
+        ? "tablet"
+        : "desktop";
+
+      fetch(`${origin}/api/track`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, referrer, country, device }),
+      }).catch(() => {});
+    }
 
     return response;
   }

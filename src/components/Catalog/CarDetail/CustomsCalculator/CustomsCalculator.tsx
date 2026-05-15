@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { calcCustomsRU, calcCustomsUZ } from "@/utils/customsCalculator";
 import type { CustomsResultRU, CustomsResultUZ } from "@/utils/customsCalculator";
+import CarRequestForm from "../CarRequestForm";
 
 interface Props {
   priceKRW: number;
   yearMonth: string;
   engineVolume: number;
   fuelType?: string;
+  carId?: string;
+  carName?: string;
 }
 
 interface Rates {
@@ -37,6 +40,8 @@ export default function CustomsCalculator({
   yearMonth,
   engineVolume,
   fuelType,
+  carId,
+  carName,
 }: Props) {
   const [country, setCountry] = useState<Country>("ru");
   const [rates, setRates] = useState<Rates | null>(null);
@@ -236,6 +241,20 @@ export default function CustomsCalculator({
                     <p className="text-xs text-gray-400 bg-gray-50 rounded-lg p-3 leading-relaxed">
                       ⚠️ Расчёт ориентировочный для физических лиц по ставкам ЕАЭС. Не учтены: брокерские услуги, хранение, СБКТС, ЭПТС. Актуальные ставки уточняйте у таможенного брокера.
                     </p>
+
+                    {/* Шаг 6: CTA после результата RU */}
+                    {carId && carName && (
+                      <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p className="text-sm font-semibold text-blue-900 mb-2">
+                          Хотите точный расчёт с учётом доставки и брокерских услуг?
+                        </p>
+                        <CarRequestForm
+                          carId={carId}
+                          carName={carName}
+                          source="car_calculator"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -316,6 +335,20 @@ export default function CustomsCalculator({
                     <p className="text-xs text-gray-400 bg-gray-50 rounded-lg p-3 leading-relaxed">
                       ⚠️ Расчёт ориентировочный для физических лиц. Максимальный возраст авто — 7 лет, не ниже Euro-5. Не учтены: брокерские услуги, доставка, регистрация. Уточняйте у таможенного брокера.
                     </p>
+
+                    {/* Шаг 6: CTA после результата UZ */}
+                    {carId && carName && (
+                      <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p className="text-sm font-semibold text-blue-900 mb-2">
+                          Хотите точный расчёт с учётом доставки и брокерских услуг?
+                        </p>
+                        <CarRequestForm
+                          carId={carId}
+                          carName={carName}
+                          source="car_calculator"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
 

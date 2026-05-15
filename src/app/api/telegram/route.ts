@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase";
 
 interface ContactPayload {
   name: string;
   phone: string;
   message?: string;
-  source?: string; // "header" | "contact" | "parts"
+  source?: string;
+  carId?: string;
+  carName?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ContactPayload;
-    const { name, phone, message, source } = body;
+    const { name, phone, message, source, carId, carName } = body;
 
     if (!name || !phone) {
       return NextResponse.json(
@@ -39,13 +42,16 @@ export async function POST(req: NextRequest) {
       header: "Шапка сайта",
       contact: "Страница /contact",
       parts: "Страница /parts",
+      car_detail: "Карточка машины",
+      car_calculator: "Калькулятор таможни",
+      blog: "Блог",
     };
 
     const sourceText = source ? (sourceLabel[source] ?? source) : "Сайт";
 
     const text = `📬 Новая заявка — ${sourceText}
 👤 Имя: ${name}
-📞 Телефон: ${phone}${message ? `\n💬 Комментарий: ${message}` : ""}`;
+📞 Телефон: ${phone}${carName ? `\n🚗 Авто: ${carName}` : ""}${carId ? `\n🔗 encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}` : ""}${message ? `\n💬 Комментарий: ${message}` : ""}`;
 
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -64,6 +70,21 @@ export async function POST(req: NextRequest) {
         { error: "Ошибка отправки в Telegram", details: data.description },
         { status: 500 }
       );
+    }
+
+    // Сохраняем лид в Supabase параллельно — ошибка не блокирует ответ
+    try {
+      const supabase = createServerClient();
+      await supabase.from("leads").insert({
+        name,
+        phone,
+        message: message ?? null,
+        source_page: source ?? "unknown",
+        car_id: carId ?? null,
+        car_name: carName ?? null,
+      });
+    } catch (err) {
+      console.error("Supabase leads insert failed:", err);
     }
 
     return NextResponse.json({ success: true });

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { BlogPost } from "@/types/blog";
 
@@ -29,6 +30,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function BlogCard({ post }: BlogCardProps) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
+  const router = useRouter();
 
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
@@ -81,14 +83,17 @@ export default function BlogCard({ post }: BlogCardProps) {
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
               {post.tags.slice(0, 3).map((tag) => (
-                <a
+                <button
                   key={tag}
-                  href={`/${lang}/blog/tag/${encodeURIComponent(tag)}`}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(`/${lang}/blog/tag/${encodeURIComponent(tag)}`);
+                  }}
                   className="text-xs px-2 py-0.5 rounded-full bg-[#002C5F]/5 text-[#002C5F] hover:bg-[#BB162B]/10 hover:text-[#BB162B] transition-colors"
                 >
                   #{tag}
-                </a>
+                </button>
               ))}
             </div>
           )}

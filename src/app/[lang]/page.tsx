@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import Main from "@/components/Home/Main";
+import Stage from "@/components/Home/Stage";
 
 const LANG_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -144,6 +145,8 @@ export default async function Home({ params }: Props) {
         />
       </div>
       <Brands />
+      {/* Шаг 7: этапы покупки — только ru, Stage жёстко на русском */}
+      {lang === "ru" && <Stage />}
     </div>
     </>
   );

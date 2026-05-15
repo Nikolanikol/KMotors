@@ -5,29 +5,12 @@ import { createServerClient } from "@/lib/supabase";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-async function fetchCoverImage(models: string[], tags: string[], type: string): Promise<string | null> {
+async function fetchCoverImage(imageQuery: string): Promise<string | null> {
   const apiKey = process.env.PEXELS_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey || !imageQuery) return null;
 
-  // Строим очередь запросов от конкретного к общему
-  const brand = models[0]?.split(" ")[0]; // "Hyundai", "Kia", "Genesis"
-  const model = models[0]; // "Hyundai Tucson"
-
-  const queries: string[] = [];
-
-  if (model) queries.push(`${model}`);
-  if (brand) queries.push(`${brand} car interior`);
-  if (brand) queries.push(`${brand} automobile`);
-
-  // Fallback по типу контента
-  const typeFallbacks: Record<string, string> = {
-    comparison: "car comparison luxury sedan",
-    review: "modern car showroom",
-    guide: "car dealership",
-    education: "car engine mechanics",
-  };
-  queries.push(typeFallbacks[type] || "luxury korean car");
-  queries.push("modern automobile");
+  // Основной запрос от Gemini + fallback на корейское авто
+  const queries = [imageQuery, "korean car road landscape"];
 
   for (const query of queries) {
     try {
@@ -37,7 +20,6 @@ async function fetchCoverImage(models: string[], tags: string[], type: string): 
       );
       const data = await res.json();
       if (data.photos?.length > 0) {
-        // Берём случайное фото из первых 5 для разнообразия
         const pick = data.photos[Math.floor(Math.random() * Math.min(5, data.photos.length))];
         return pick.src.large2x;
       }
@@ -68,55 +50,39 @@ const TYPE_LABELS: Record<string, string> = {
 
 function buildGeneratePrompt(topic: BlogTopic): string {
   const typeLabel = TYPE_LABELS[topic.type] || topic.type;
-  const modelsLine = topic.models.length
-    ? `Модели в статье: ${topic.models.join(", ")}.`
-    : "";
-  const notesLine = topic.notes ? `Дополнительные инструкции: ${topic.notes}` : "";
+  const modelsLine = topic.models.length ? `Модели: ${topic.models.join(", ")}.` : "";
+  const notesLine = topic.notes ? `Уточнение: ${topic.notes}` : "";
+  const tagHints = [...topic.models, ...topic.tags, topic.type].filter(Boolean).join(", ");
 
-  const tagHints = [
-    ...topic.models,
-    ...topic.tags,
-    topic.type,
-  ].filter(Boolean).join(", ");
+  return `Ты ведёшь блог для людей, которые покупают корейские авто из Кореи в СНГ. Пишешь как человек, который сам через это прошёл — знаешь реальные цены, знаешь что скрывают дилеры, знаешь какие машины гниют через три года а какие ходят без проблем.
 
-  return `Ты — опытный автомобилист и знаток корейского авторынка. Ты помогаешь людям из СНГ выбирать и покупать автомобили из Кореи. Пишешь как умный друг — без занудства и маркетинговых штампов, но с реальными знаниями.
-
-Тема статьи: "${topic.topic}"
-Тип: ${typeLabel}
+Тема: "${topic.topic}"
+Тип материала: ${typeLabel}
 ${modelsLine}
 ${notesLine}
 
-СТИЛЬ И ПОДАЧА:
-- Говори как человек, который сам ездил на этих машинах и знает их изнутри
-- Вместо сухих цифр — живые сравнения: не "123 л.с.", а "хватает для города, но на трассе с полным салоном чувствуешь нехватку"
-- Приводи конкретные сценарии владения: "если едешь раз в неделю на дачу — подойдёт, если по горному серпантину — уже нет"
-- Честно говори о слабых местах — это строит доверие, а не отпугивает
-- Никакого корпоративного языка, никаких "данный автомобиль обладает превосходными характеристиками"
-- Читатель должен дочитать до конца, потому что интересно — а не потому что надо
+Вот пример правильного тона (первый абзац реальной статьи из блога):
+"Kia Sportage четвёртого поколения на корейском рынке стоит от 18 до 26 тысяч долларов в зависимости от года и комплектации. Звучит неплохо, пока не начинаешь считать таможню. С учётом пошлин машина 2021 года с двигателем 2.0 выходит примерно в 2,4 миллиона рублей во Владивостоке — и это без доставки до вашего города."
 
-СТРУКТУРА (строго):
-1. Вступление (2–3 предложения) — сразу суть, без воды. Читатель должен понять о чём статья с первых слов
-2. Три раздела с ## заголовками — каждый раскрывает один аспект темы
-3. Финальный раздел "## Итог" — обязательно заканчивай конкретным выводом в формате:
-   **Брать если:** [конкретная ситуация]
-   **Не брать если:** [конкретная ситуация]
+Пиши так же: конкретно, с цифрами, без восхвалений.
 
-ТЕХНИЧЕСКИЕ ТРЕБОВАНИЯ:
-- Объём: 450–550 слов
-- Формат: Markdown (## заголовки, **жирный** для важного, - списки где уместно)
-- Фокус: покупатель корейского авто из Кореи в СНГ — реальные цены, реальный рынок, реальные проблемы
+Структура:
+- Вступление: 2–3 предложения, сразу суть
+- Три раздела с ## заголовками
+- Финал "## Итог" с выводом: **Брать если:** / **Не брать если:**
 
-ТЕГИ (важно):
-Сгенерируй 5–8 точных тегов на основе: ${tagHints}
-Теги должны включать: названия моделей (и корейские названия если есть, например Avante = Elantra), названия двигателей, бренд, тип контента.
-Пример хороших тегов: ["Hyundai Elantra", "Avante", "Nu 1.6", "Hyundai", "сравнение двигателей", "обзор"]
+Объём: 500–600 слов. Markdown-форматирование.
 
-Верни ТОЛЬКО валидный JSON без markdown-обёртки:
+Сгенерируй 5–8 тегов из: ${tagHints}
+Включи корейские названия моделей если применимо (Avante = Elantra, Tucson = ix35 и т.д.)
+
+Верни ТОЛЬКО валидный JSON:
 {
-  "title_ru": "заголовок статьи — конкретный и цепляющий, без воды",
-  "excerpt_ru": "1–2 предложения: о чём статья и почему стоит читать",
+  "title_ru": "конкретный заголовок без воды",
+  "excerpt_ru": "1–2 предложения о чём статья",
   "content_ru": "полный текст в Markdown",
-  "tags": ["тег1", "тег2", "тег3", "тег4", "тег5"]
+  "tags": ["тег1", "тег2"],
+  "image_query": "точный запрос для поиска фото на Pexels на английском — 4-6 слов, описывает что должно быть на обложке. Для статьи о машине: модель + цвет + сцена. Для гайда: предмет или действие из статьи"
 }`;
 }
 
@@ -204,42 +170,65 @@ async function handleGenerate(req: NextRequest) {
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.5-flash",
     generationConfig: {
-      temperature: 0.7,
+      temperature: 0.9,
       maxOutputTokens: 8192,
       responseMimeType: "application/json",
     },
   });
 
+  // Retry-обёртка: 3 попытки с паузой 2 сек
+  async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastError = err;
+        console.error(`${label} — попытка ${attempt}/3:`, err);
+        if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * attempt));
+      }
+    }
+    throw lastError;
+  }
+
   // Запрос 1: генерация на русском
-  let ruData: { title_ru: string; excerpt_ru: string; content_ru: string; tags?: string[] };
+  let ruData: { title_ru: string; excerpt_ru: string; content_ru: string; tags?: string[]; image_query?: string };
   try {
-    const result = await model.generateContent(buildGeneratePrompt(topic));
-    ruData = JSON.parse(result.response.text());
-    if (!ruData.title_ru || !ruData.content_ru) throw new Error("Missing RU fields");
+    ruData = await withRetry(async () => {
+      const result = await model.generateContent(buildGeneratePrompt(topic));
+      const parsed = JSON.parse(result.response.text());
+      if (!parsed.title_ru || !parsed.content_ru) throw new Error("Missing RU fields");
+      return parsed;
+    }, "Gemini generate");
   } catch (err) {
-    console.error("Gemini generate error:", err);
-    return NextResponse.json({ error: "Failed to generate article", details: String(err) }, { status: 500 });
+    console.error("Gemini generate failed after 3 attempts:", err);
+    await supabase.from("blog_topics").update({ status: "failed" }).eq("id", topic.id);
+    return NextResponse.json({ error: "Failed to generate article after retries", details: String(err) }, { status: 500 });
   }
 
   // Запрос 2: перевод на 4 языка
   let translData: Record<string, string>;
   try {
-    const result = await model.generateContent(
-      buildTranslatePrompt(ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
-    );
-    translData = JSON.parse(result.response.text());
+    translData = await withRetry(async () => {
+      const result = await model.generateContent(
+        buildTranslatePrompt(ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
+      );
+      return JSON.parse(result.response.text());
+    }, "Gemini translate");
   } catch (err) {
-    console.error("Gemini translate error:", err);
-    return NextResponse.json({ error: "Failed to translate article", details: String(err) }, { status: 500 });
+    console.error("Gemini translate failed after 3 attempts:", err);
+    // Статья есть на русском — сохраняем без переводов, не теряем контент
+    console.warn("Saving article without translations");
+    translData = {};
   }
 
   // Теги: берём из ответа Gemini, fallback на теги из темы
   const finalTags = (ruData.tags && ruData.tags.length > 0) ? ruData.tags : topic.tags;
 
-  // Получить обложку с Pexels
-  const coverUrl = await fetchCoverImage(topic.models, finalTags, topic.type);
+  // Получить обложку с Pexels — используем запрос от Gemini
+  const coverUrl = await fetchCoverImage(ruData.image_query || "");
 
   // Сохранить в blog_posts как черновик
   const { data: inserted, error: insertError } = await supabase
