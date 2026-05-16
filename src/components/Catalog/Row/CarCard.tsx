@@ -126,9 +126,18 @@ const CarCard = ({
               {convertNumber(price)}
               <span className="text-sm text-gray-600 ml-1">{t('common:common.won')}</span>
             </p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              ≈ ${Math.round((Number(price) * 1000) / 1380).toLocaleString("en-US")} USD
-            </p>
+            {(() => {
+              const krw = typeof price === "number"
+                ? (price as number) * 10000
+                : Number(price) * 1000;
+              const usd = Math.round(krw / 1380);
+              if (!usd || isNaN(usd)) return null;
+              return (
+                <p className="text-sm text-gray-500 mt-1 font-medium">
+                  ≈ ${usd.toLocaleString("en-US")} <span className="text-xs font-normal">USD</span>
+                </p>
+              );
+            })()}
           </div>
 
           {/* Button */}
