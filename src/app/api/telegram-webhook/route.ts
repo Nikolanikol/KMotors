@@ -89,11 +89,12 @@ export async function POST(req: NextRequest) {
     if (message.text.startsWith("/start")) {
       const param = message.text.slice("/start".length).trim(); // "car_41289593" или ""
       const carId = param.startsWith("car_") ? param.slice(4) : null;
+      const isWebsite = param === "website";
 
       // Ответ клиенту
       const clientMsg = carId
         ? `👋 Здравствуйте!\n\nВаш запрос по автомобилю принят. Николай свяжется с вами в ближайшее время.\n\n⏱ Время ответа: в течение 1 часа`
-        : `👋 Здравствуйте!\n\nДобро пожаловать в KMotors! Напишите что вас интересует, и Николай скоро ответит.\n\n⏱ Время ответа: в течение 1 часа`;
+        : `👋 Здравствуйте!\n\nДобро пожаловать в KMotors — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
 
       await sendMessage(chatId, clientMsg);
 
@@ -111,7 +112,7 @@ export async function POST(req: NextRequest) {
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
           `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на KMotors</a>`
-        : `💬 <b>Новый пользователь открыл бота</b>\n\n` +
+        : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>`;
