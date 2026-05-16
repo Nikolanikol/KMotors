@@ -126,6 +126,9 @@ const CarCard = ({
               {convertNumber(price)}
               <span className="text-sm text-gray-600 ml-1">{t('common:common.won')}</span>
             </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              ≈ ${Math.round((Number(price) * 1000) / 1380).toLocaleString("en-US")} USD
+            </p>
           </div>
 
           {/* Button */}
