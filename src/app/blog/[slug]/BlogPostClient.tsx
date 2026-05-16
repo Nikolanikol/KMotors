@@ -101,22 +101,9 @@ export default function BlogPostPage({ initialPost }: Props) {
 
   return (
     <main className="min-h-screen bg-[#F5F7FA]">
-      {/* Breadcrumb + Cover */}
-      <div className="relative">
-        {post.cover_url ? (
-          <div className="w-full h-64 md:h-80 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.cover_url}
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent" />
-          </div>
-        ) : (
-          <div className="w-full h-32 bg-gradient-to-br from-[#002C5F] to-[#001f45]" />
-        )}
-        <div className="absolute top-4 left-0 right-0 px-4 max-w-3xl mx-auto">
+      {/* Breadcrumb */}
+      <div className="bg-gradient-to-br from-[#002C5F] to-[#001f45] px-4 pt-4 pb-3">
+        <div className="max-w-3xl mx-auto">
           <Breadcrumb items={[
             { label: "KMotors", href: `/${lang}/` },
             { label: t("blog.backToBlog"), href: `/${lang}/blog` },
@@ -124,6 +111,19 @@ export default function BlogPostPage({ initialPost }: Props) {
           ]} />
         </div>
       </div>
+      {/* Cover */}
+      {post.cover_url ? (
+        <div className="w-full h-64 md:h-80 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.cover_url}
+            alt={post.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="w-full h-16 bg-gradient-to-br from-[#002C5F] to-[#001f45]" />
+      )}
 
       <div className="max-w-3xl mx-auto px-4 py-10">
         {/* Back link */}
