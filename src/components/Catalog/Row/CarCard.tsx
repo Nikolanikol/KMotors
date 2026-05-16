@@ -22,6 +22,14 @@ interface CarCardProps {
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
+const BUY_FROM_KOREA: Record<string, string> = {
+  ru: "купить из Кореи",
+  en: "buy from Korea",
+  ko: "한국에서 구매",
+  ka: "კორეიდან შეძენა",
+  ar: "شراء من كوريا",
+};
+
 const CarCard = ({
   photo,
   id,
@@ -46,7 +54,7 @@ const CarCard = ({
           fill
           unoptimized
           src={`https://ci.encar.com${photo}`}
-          alt={`${manufacture} ${model} ${year} — ${t("common:car.buyFromKorea", "купить из Кореи")}`}
+          alt={`${manufacture} ${model} ${year} — ${BUY_FROM_KOREA[lang] ?? BUY_FROM_KOREA.ru}`}
           className="object-cover group-hover:scale-110 transition-transform duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
