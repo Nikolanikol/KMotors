@@ -54,7 +54,12 @@ export async function POST(req: NextRequest) {
 
   // Обработка команд (/generate, /topics, /status)
   const message = body?.message as
-    | { text?: string; chat?: { id: number }; message_id?: number }
+    | {
+        text?: string;
+        chat?: { id: number };
+        message_id?: number;
+        from?: { id: number; first_name?: string; last_name?: string; username?: string };
+      }
     | undefined;
 
   // DEBUG: вернуть что пришло
@@ -92,13 +97,24 @@ export async function POST(req: NextRequest) {
 
       await sendMessage(chatId, clientMsg);
 
+      // Формируем инфо о пользователе
+      const from = message.from;
+      const fullName = [from?.first_name, from?.last_name].filter(Boolean).join(" ") || "Неизвестно";
+      const username = from?.username ? `@${from.username}` : "нет username";
+      const replyLink = `tg://user?id=${chatId}`;
+
       // Уведомление на личный и рабочий чаты
       const ownerMsg = carId
         ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
-          `👤 chat_id: <code>${chatId}</code>\n` +
+          `👤 Имя: ${fullName}\n` +
+          `✈️ Telegram: ${username}\n` +
+          `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🔗 <a href="https://encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}">Открыть на Encar</a>\n` +
           `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на KMotors</a>`
-        : `💬 <b>Новый пользователь открыл бота</b>\n\n👤 chat_id: <code>${chatId}</code>`;
+        : `💬 <b>Новый пользователь открыл бота</b>\n\n` +
+          `👤 Имя: ${fullName}\n` +
+          `✈️ Telegram: ${username}\n` +
+          `💬 <a href="${replyLink}">Написать напрямую</a>`;
 
       const notifyTargets = [ALLOWED_CHAT_ID, WORK_CHAT_ID].filter(Boolean);
       await Promise.all(
