@@ -1,29 +1,39 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BlogList from "@/components/Blog/BlogList";
 import { BlogPost, BlogListResponse } from "@/types/blog";
 import { ChevronLeft, ChevronRight, Tag, ArrowLeft } from "lucide-react";
+import Breadcrumb from "@/components/Breadcrumb";
 
 const LIMIT = 12;
 
 interface Props {
   tag: string;
+  initialPosts?: BlogPost[];
+  initialTotal?: number;
+  initialTotalPages?: number;
 }
 
-export default function BlogTagClientPage({ tag }: Props) {
+export default function BlogTagClientPage({
+  tag,
+  initialPosts = [],
+  initialTotal = 0,
+  initialTotalPages = 1,
+}: Props) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const lang = i18n.language as "ru" | "en" | "ko";
 
   const [page, setPage] = useState(1);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
+  const [total, setTotal] = useState(initialTotal);
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
+  const [loading, setLoading] = useState(false);
+  const skipFirstFetch = useRef(initialPosts.length > 0);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -48,6 +58,10 @@ export default function BlogTagClientPage({ tag }: Props) {
   }, [lang, page, tag]);
 
   useEffect(() => {
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
     fetchPosts();
   }, [fetchPosts]);
 
@@ -56,6 +70,11 @@ export default function BlogTagClientPage({ tag }: Props) {
       {/* Hero */}
       <section className="bg-gradient-to-br from-[#002C5F] to-[#001f45] py-12 px-4">
         <div className="max-w-5xl mx-auto space-y-4">
+          <Breadcrumb items={[
+            { label: "KMotors", href: `/${lang}/` },
+            { label: t("blog.title"), href: `/${lang}/blog` },
+            { label: `#${tag}` },
+          ]} />
           <button
             onClick={() => router.back()}
             className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors"

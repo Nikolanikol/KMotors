@@ -9,6 +9,11 @@ import Link from "next/link";
 import { BlogPost } from "@/types/blog";
 import { ArrowLeft, Calendar, Tag, ChevronDown, ChevronUp } from "lucide-react";
 import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
+import Breadcrumb from "@/components/Breadcrumb";
+
+interface Props {
+  initialPost?: BlogPost | null;
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   news: "blog.news",
@@ -28,18 +33,19 @@ function formatDate(iso: string, lang: string) {
   }
 }
 
-export default function BlogPostPage() {
+export default function BlogPostPage({ initialPost }: Props) {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const lang = i18n.language as "ru" | "en" | "ko";
 
-  const [post, setPost] = useState<BlogPost | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [post, setPost] = useState<BlogPost | null>(initialPost ?? null);
+  const [loading, setLoading] = useState(!initialPost);
   const [notFound, setNotFound] = useState(false);
   const [ctaOpen, setCtaOpen] = useState(false);
 
   useEffect(() => {
+    if (initialPost) return;
     if (!slug) return;
     setLoading(true);
     fetch(`/api/blog/${slug}?lang=${lang}`)
@@ -55,7 +61,7 @@ export default function BlogPostPage() {
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [slug, lang]);
+  }, [slug, lang, initialPost]);
 
   if (loading) {
     return (
@@ -95,21 +101,29 @@ export default function BlogPostPage() {
 
   return (
     <main className="min-h-screen bg-[#F5F7FA]">
-      {/* Cover */}
-      {post.cover_url && (
-        <div className="w-full h-64 md:h-80 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.cover_url}
-            alt={post.title}
-            className="w-full h-full object-cover"
-          />
+      {/* Breadcrumb + Cover */}
+      <div className="relative">
+        {post.cover_url ? (
+          <div className="w-full h-64 md:h-80 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={post.cover_url}
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent" />
+          </div>
+        ) : (
+          <div className="w-full h-32 bg-gradient-to-br from-[#002C5F] to-[#001f45]" />
+        )}
+        <div className="absolute top-4 left-0 right-0 px-4 max-w-3xl mx-auto">
+          <Breadcrumb items={[
+            { label: "KMotors", href: `/${lang}/` },
+            { label: t("blog.backToBlog"), href: `/${lang}/blog` },
+            { label: post.title },
+          ]} />
         </div>
-      )}
-
-      {!post.cover_url && (
-        <div className="w-full h-32 bg-gradient-to-br from-[#002C5F] to-[#001f45]" />
-      )}
+      </div>
 
       <div className="max-w-3xl mx-auto px-4 py-10">
         {/* Back link */}

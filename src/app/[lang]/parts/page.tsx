@@ -73,6 +73,7 @@ const PARTS_LABEL: Record<string, string> = {
 
 export default async function PartsPage({ params }: Props) {
   const { lang } = await params;
+  const meta = PARTS_META[lang] || PARTS_META.ru;
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -83,9 +84,36 @@ export default async function PartsPage({ params }: Props) {
     ],
   };
 
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: meta.title,
+    description: meta.description,
+    url: `https://kmotors.shop/${lang}/parts`,
+    provider: {
+      "@type": "Organization",
+      name: "KMotors",
+      url: "https://kmotors.shop/",
+    },
+    serviceType: "Auto Parts Import",
+    areaServed: [
+      { "@type": "Country", name: "Russia" },
+      { "@type": "Country", name: "Kazakhstan" },
+      { "@type": "Country", name: "Uzbekistan" },
+      { "@type": "Country", name: "Georgia" },
+    ],
+    offers: {
+      "@type": "Offer",
+      availability: "https://schema.org/InStock",
+      priceCurrency: "USD",
+      seller: { "@type": "Organization", name: "KMotors" },
+    },
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
       <div>
         <Hero />
         <Catalog />

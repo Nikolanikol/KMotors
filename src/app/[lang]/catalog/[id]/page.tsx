@@ -7,7 +7,6 @@ import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
 import StickyMobileCTA from "@/components/Catalog/CarDetail/StickyMobileCTA";
 import CarViewTracker from "@/components/Catalog/CarDetail/CarViewTracker";
 import { Button } from "@/components/ui/button";
-import Script from "next/script";
 import { FC } from "react";
 import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
@@ -180,16 +179,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
 
   return (
     <div className="bg-gray-200 py-5 rounded-3xl">
-      <Script
-        id="breadcrumb-schema"
+      <script
         type="application/ld+json"
-        strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <Script
-        id="product-schema"
+      <script
         type="application/ld+json"
-        strategy="afterInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="container mx-auto">
@@ -209,7 +204,11 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           vehicleNo={data.vehicleNo}
           mileage={data.spec.mileage}
         />
-        <CarouselLight photos={data.photos} carName={`${carName} ${carData}`} />
+        <CarouselLight
+          photos={data.photos}
+          carName={`${carName} ${carData}`}
+          photoLabel={{ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" }[lang] || "photo"}
+        />
         <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
         <CustomsCalculator
           priceKRW={data?.advertisement?.price * 10000}

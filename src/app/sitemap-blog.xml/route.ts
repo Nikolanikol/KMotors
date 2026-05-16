@@ -59,11 +59,19 @@ ${alternates(post.slug)}
     }
     for (const tag of allTags) {
       const encodedTag = encodeURIComponent(tag);
+      const tagAlternates = [
+        ...LANGS.map(
+          (l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${BASE}/${l}/blog/tag/${encodedTag}"/>`
+        ),
+        `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/blog/tag/${encodedTag}"/>`,
+      ].join("\n");
+
       for (const lang of LANGS) {
         urlBlocks.push(`  <url>
     <loc>${BASE}/${lang}/blog/tag/${encodedTag}</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
+${tagAlternates}
   </url>`);
       }
     }

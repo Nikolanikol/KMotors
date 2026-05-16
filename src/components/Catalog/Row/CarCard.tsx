@@ -46,7 +46,7 @@ const CarCard = ({
           fill
           unoptimized
           src={`https://ci.encar.com${photo}`}
-          alt={`${manufacture} ${model} ${year} — купить из Кореи`}
+          alt={`${manufacture} ${model} ${year} — ${t("common:car.buyFromKorea", "купить из Кореи")}`}
           className="object-cover group-hover:scale-110 transition-transform duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
