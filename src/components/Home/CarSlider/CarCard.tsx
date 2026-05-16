@@ -131,16 +131,29 @@ const CarCard = ({
             )}
           </div>
 
-          {/* Button */}
-          <Link
-            href={`/${lang}/catalog/${id}`}
-            target="_blank"
-            className="group/btn flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-300 hover:gap-3 shadow-md hover:shadow-lg"
-          >
-            <span className="hidden sm:inline">{t('common:car.details')}</span>
-            <span className="sm:hidden">{t('common:car.details')}</span>
-            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-          </Link>
+          {/* Buttons */}
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/${lang}/catalog/${id}`}
+              target="_blank"
+              className="group/btn flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-300 hover:gap-3 shadow-md hover:shadow-lg"
+            >
+              <span className="hidden sm:inline">{t('common:car.details')}</span>
+              <span className="sm:hidden">{t('common:car.details')}</span>
+              <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+            </Link>
+            <a
+              href={`https://t.me/KMOTORS_form_bot?start=car_${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Написать в Telegram"
+              className="flex items-center justify-center w-12 h-12 bg-[#229ED9] hover:bg-[#1a8bc2] text-white rounded-xl transition-colors shadow-md hover:shadow-lg flex-shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.48 13.617l-2.95-.924c-.64-.203-.654-.64.136-.948l11.52-4.44c.532-.194 1 .12.376.943z"/>
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </div>
