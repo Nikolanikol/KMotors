@@ -38,6 +38,11 @@ const CarCard = ({
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
+  const krw = typeof price === "number"
+    ? (price as unknown as number) * 10000
+    : Number(price) * 1000;
+  const usdPrice = isNaN(krw) || krw === 0 ? null : Math.round(krw / 1380);
+
   return (
     <div className="group relative w-full max-w-[400px] mx-auto bg-white rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-orange-400 shadow-lg hover:shadow-2xl transition-all duration-300">
       {/* Image Container */}
@@ -118,6 +123,12 @@ const CarCard = ({
               {convertNumber(price)}
               <span className="text-sm text-gray-600 ml-1">{t('common:common.won')}</span>
             </p>
+            {usdPrice && (
+              <p className="text-sm text-gray-500 mt-1 font-medium">
+                ≈ ${usdPrice.toLocaleString("en-US")}{" "}
+                <span className="text-xs font-normal">USD</span>
+              </p>
+            )}
           </div>
 
           {/* Button */}

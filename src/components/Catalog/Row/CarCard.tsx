@@ -143,6 +143,7 @@ const CarCard = ({
                 {t("common:common.won")}
               </span>
             </p>
+            <div> 'это блок с ценой в рублях'</div>
             {usdPrice && (
               <p className="text-sm text-gray-500 mt-1 font-medium">
                 ≈ ${usdPrice.toLocaleString("en-US")}{" "}
