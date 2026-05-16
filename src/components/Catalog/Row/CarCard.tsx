@@ -41,14 +41,15 @@ const CarCard = ({
   fuel,
   price,
 }: CarCardProps) => {
-  const { t } = useTranslation(['common', 'cars']);
+  const { t } = useTranslation(["common", "cars"]);
   const pathname = usePathname();
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
-  const krw = typeof price === "number"
-    ? (price as unknown as number) * 10000
-    : Number(price) * 1000;
+  const krw =
+    typeof price === "number"
+      ? (price as unknown as number) * 10000
+      : Number(price) * 1000;
   const usdPrice = isNaN(krw) || krw === 0 ? null : Math.round(krw / 1380);
 
   return (
@@ -75,6 +76,7 @@ const CarCard = ({
           <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">
             {translateGenerationRow(model, t)}
           </h3>
+
           <p className="text-sm text-gray-400 font-medium">
             {translateGenerationRow(manufacture, t)}
           </p>
@@ -88,9 +90,11 @@ const CarCard = ({
               <Fuel className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('common:car.mileage')}</p>
+              <p className="text-xs text-gray-500 mb-1">
+                {t("common:car.mileage")}
+              </p>
               <p className="text-sm font-bold text-gray-900 whitespace-nowrap">
-                {convertNumberKm(mileage)} {t('common:common.km')}
+                {convertNumberKm(mileage)} {t("common:common.km")}
               </p>
             </div>
           </div>
@@ -101,7 +105,9 @@ const CarCard = ({
               <Gauge className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('common:car.fuel')}</p>
+              <p className="text-xs text-gray-500 mb-1">
+                {t("common:car.fuel")}
+              </p>
               <p className="text-sm font-bold text-gray-900 line-clamp-1">
                 {translateGenerationRow(fuel, t)}
               </p>
@@ -114,7 +120,9 @@ const CarCard = ({
               <Settings className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('common:car.transmission')}</p>
+              <p className="text-xs text-gray-500 mb-1">
+                {t("common:car.transmission")}
+              </p>
               <p className="text-sm font-bold text-gray-900 line-clamp-1">
                 {translateGenerationRow(transmission, t)}
               </p>
@@ -126,14 +134,19 @@ const CarCard = ({
         <div className="flex items-center justify-between gap-4">
           {/* Price */}
           <div className="flex-1">
-            <p className="text-xs text-gray-500 mb-1">{t('common:car.buyPrice')}</p>
+            <p className="text-xs text-gray-500 mb-1">
+              {t("common:car.buyPrice")}
+            </p>
             <p className="text-xl font-bold text-orange-600">
               {convertNumber(price)}
-              <span className="text-sm text-gray-600 ml-1">{t('common:common.won')}</span>
+              <span className="text-sm text-gray-600 ml-1">
+                {t("common:common.won")}
+              </span>
             </p>
             {usdPrice && (
               <p className="text-sm text-gray-500 mt-1 font-medium">
-                ≈ ${usdPrice.toLocaleString("en-US")} <span className="text-xs font-normal">USD</span>
+                ≈ ${usdPrice.toLocaleString("en-US")}{" "}
+                <span className="text-xs font-normal">USD</span>
               </p>
             )}
           </div>
@@ -144,8 +157,8 @@ const CarCard = ({
             target="_blank"
             className="group/btn flex items-center gap-2 px-5 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-300 hover:gap-3 shadow-md hover:shadow-lg"
           >
-            <span className="hidden sm:inline">{t('common:car.details')}</span>
-            <span className="sm:hidden">{t('common:car.details')}</span>
+            <span className="hidden sm:inline">{t("common:car.details")}</span>
+            <span className="sm:hidden">{t("common:car.details")}</span>
             <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
           </Link>
         </div>
