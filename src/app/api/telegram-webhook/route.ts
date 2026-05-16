@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
 function ok() {
   return NextResponse.json({ ok: true }, { status: 200 });
@@ -73,6 +74,12 @@ export async function POST(req: NextRequest) {
   if (message?.text && message.chat?.id) {
     const chatId = message.chat.id;
 
+    // /myid — любой пользователь получает свой chat_id (для настройки)
+    if (message.text.trim() === "/myid") {
+      await sendMessage(chatId, `🆔 Ваш chat_id: <code>${chatId}</code>`);
+      return ok();
+    }
+
     // Обработка /start от клиентов — ДО проверки на владельца
     if (message.text.startsWith("/start")) {
       const param = message.text.slice("/start".length).trim(); // "car_41289593" или ""
@@ -85,17 +92,18 @@ export async function POST(req: NextRequest) {
 
       await sendMessage(chatId, clientMsg);
 
-      // Уведомление владельцу
-      if (ALLOWED_CHAT_ID) {
-        const ownerMsg = carId
-          ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
-            `👤 chat_id: <code>${chatId}</code>\n` +
-            `🔗 <a href="https://encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}">Открыть на Encar</a>\n` +
-            `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на KMotors</a>`
-          : `💬 <b>Новый пользователь открыл бота</b>\n\n👤 chat_id: <code>${chatId}</code>`;
+      // Уведомление на личный и рабочий чаты
+      const ownerMsg = carId
+        ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
+          `👤 chat_id: <code>${chatId}</code>\n` +
+          `🔗 <a href="https://encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}">Открыть на Encar</a>\n` +
+          `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на KMotors</a>`
+        : `💬 <b>Новый пользователь открыл бота</b>\n\n👤 chat_id: <code>${chatId}</code>`;
 
-        await sendMessage(Number(ALLOWED_CHAT_ID), ownerMsg);
-      }
+      const notifyTargets = [ALLOWED_CHAT_ID, WORK_CHAT_ID].filter(Boolean);
+      await Promise.all(
+        notifyTargets.map(id => sendMessage(Number(id), ownerMsg))
+      );
 
       return ok();
     }
