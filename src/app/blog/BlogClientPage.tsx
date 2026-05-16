@@ -1,18 +1,25 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import BlogList from "@/components/Blog/BlogList";
 import BlogSearch from "@/components/Blog/BlogSearch";
 import BlogCategories from "@/components/Blog/BlogCategories";
+import Breadcrumb from "@/components/Breadcrumb";
 import { BlogPost, BlogListResponse } from "@/types/blog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const LIMIT = 12;
 
+interface ServerProps {
+  initialPosts?: BlogPost[];
+  initialTotal?: number;
+  initialTotalPages?: number;
+}
+
 // Inner component that uses useSearchParams — must be inside <Suspense>
-function BlogContent() {
+function BlogContent({ initialPosts = [], initialTotal = 0, initialTotalPages = 1 }: ServerProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -26,10 +33,11 @@ function BlogContent() {
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState(initialSearch);
   const [page, setPage] = useState(initialPage);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
+  const [total, setTotal] = useState(initialTotal);
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
+  const [loading, setLoading] = useState(false);
+  const skipFirstFetch = useRef(initialPosts.length > 0);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -57,6 +65,10 @@ function BlogContent() {
   }, [lang, category, search, page]);
 
   useEffect(() => {
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
     fetchPosts();
   }, [fetchPosts]);
 
@@ -154,18 +166,22 @@ function BlogContent() {
 }
 
 // Outer page — Hero is outside Suspense so it renders immediately
-export default function BlogPage() {
-  const { t } = useTranslation();
+export default function BlogPage({ initialPosts, initialTotal, initialTotalPages }: ServerProps) {
+  const { t, i18n } = useTranslation();
 
   return (
     <main className="min-h-screen bg-[#F5F7FA]">
       {/* Hero — outside Suspense, renders without useSearchParams */}
       <section className="bg-gradient-to-br from-[#002C5F] to-[#001f45] py-16 px-4">
-        <div className="max-w-5xl mx-auto text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-white">
+        <div className="max-w-5xl mx-auto space-y-4">
+          <Breadcrumb items={[
+            { label: "KMotors", href: `/${i18n.language}/` },
+            { label: t("blog.title") },
+          ]} />
+          <h1 className="text-3xl md:text-4xl font-bold text-white text-center">
             {t("blog.title")}
           </h1>
-          <p className="text-white/60 text-sm md:text-base max-w-lg mx-auto">
+          <p className="text-white/60 text-sm md:text-base max-w-lg mx-auto text-center">
             {t("blog.subtitle")}
           </p>
         </div>
@@ -186,7 +202,11 @@ export default function BlogPage() {
           </div>
         }
       >
-        <BlogContent />
+        <BlogContent
+          initialPosts={initialPosts}
+          initialTotal={initialTotal}
+          initialTotalPages={initialTotalPages}
+        />
       </Suspense>
     </main>
   );

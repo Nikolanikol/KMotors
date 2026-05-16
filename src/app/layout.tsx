@@ -1,7 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { cookies } from "next/headers";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#002C5F",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -66,22 +72,58 @@ export default async function RootLayout({
           `}
         </Script>
 
-        {/* Organization + AutoDealer JSON-LD */}
-        <Script
-          id="structured-data"
+        {/* LocalBusiness + AutoDealer JSON-LD */}
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": ["Organization", "AutoDealer"],
+              "@type": ["LocalBusiness", "AutoDealer"],
               name: "KMotors",
               url: "https://kmotors.shop/",
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
               image: "https://kmotors.shop/preview/preview.png",
               description:
                 "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
-              areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
+              telephone: "+821077324344",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "권선로 308-5 103호 1층",
+                addressLocality: "수원시 권선구",
+                addressRegion: "경기도",
+                addressCountry: "KR",
+              },
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: 37.2636,
+                longitude: 126.9723,
+              },
+              openingHoursSpecification: [
+                {
+                  "@type": "OpeningHoursSpecification",
+                  dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                  opens: "09:00",
+                  closes: "18:00",
+                },
+              ],
+              contactPoint: [
+                {
+                  "@type": "ContactPoint",
+                  telephone: "+821077324344",
+                  contactType: "customer service",
+                  availableLanguage: ["Russian", "Korean", "English"],
+                },
+                {
+                  "@type": "ContactPoint",
+                  url: "https://t.me/kmotorsshop",
+                  contactType: "customer service",
+                  availableLanguage: ["Russian", "Korean", "English"],
+                },
+              ],
+              currenciesAccepted: "USD",
+              paymentAccepted: "Bank Transfer",
               priceRange: "$$",
+              areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
               sameAs: [
                 "https://t.me/kmotorsshop",
                 "https://www.instagram.com/kmotors.shop/",

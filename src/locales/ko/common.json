@@ -19,6 +19,7 @@
     "total": "총 차량"
   },
   "car": {
+    "buyFromKorea": "한국에서 구매",
     "brand": "브랜드",
     "model": "모델",
     "year": "연도",

@@ -19,6 +19,7 @@
     "total": "Total cars"
   },
   "car": {
+    "buyFromKorea": "buy from Korea",
     "brand": "Brand",
     "model": "Model",
     "year": "Year",
