@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-const TG_URL = "https://t.me/KMOTORS_form_bot";
+const TG_URL = "https://t.me/KMOTORS_form_bot?start=website";
 
 const LABEL: Record<string, string> = {
   ru: "Написать в Telegram",

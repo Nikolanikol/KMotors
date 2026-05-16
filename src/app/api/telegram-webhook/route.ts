@@ -54,7 +54,12 @@ export async function POST(req: NextRequest) {
 
   // Обработка команд (/generate, /topics, /status)
   const message = body?.message as
-    | { text?: string; chat?: { id: number }; message_id?: number }
+    | {
+        text?: string;
+        chat?: { id: number };
+        message_id?: number;
+        from?: { id: number; first_name?: string; last_name?: string; username?: string };
+      }
     | undefined;
 
   // DEBUG: вернуть что пришло
@@ -84,21 +89,33 @@ export async function POST(req: NextRequest) {
     if (message.text.startsWith("/start")) {
       const param = message.text.slice("/start".length).trim(); // "car_41289593" или ""
       const carId = param.startsWith("car_") ? param.slice(4) : null;
+      const isWebsite = param === "website";
 
       // Ответ клиенту
       const clientMsg = carId
         ? `👋 Здравствуйте!\n\nВаш запрос по автомобилю принят. Николай свяжется с вами в ближайшее время.\n\n⏱ Время ответа: в течение 1 часа`
-        : `👋 Здравствуйте!\n\nДобро пожаловать в KMotors! Напишите что вас интересует, и Николай скоро ответит.\n\n⏱ Время ответа: в течение 1 часа`;
+        : `👋 Здравствуйте!\n\nДобро пожаловать в KMotors — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
 
       await sendMessage(chatId, clientMsg);
+
+      // Формируем инфо о пользователе
+      const from = message.from;
+      const fullName = [from?.first_name, from?.last_name].filter(Boolean).join(" ") || "Неизвестно";
+      const username = from?.username ? `@${from.username}` : "нет username";
+      const replyLink = `tg://user?id=${chatId}`;
 
       // Уведомление на личный и рабочий чаты
       const ownerMsg = carId
         ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
-          `👤 chat_id: <code>${chatId}</code>\n` +
-          `🔗 <a href="https://encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}">Открыть на Encar</a>\n` +
+          `👤 Имя: ${fullName}\n` +
+          `✈️ Telegram: ${username}\n` +
+          `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
+          `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
           `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на KMotors</a>`
-        : `💬 <b>Новый пользователь открыл бота</b>\n\n👤 chat_id: <code>${chatId}</code>`;
+        : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
+          `👤 Имя: ${fullName}\n` +
+          `✈️ Telegram: ${username}\n` +
+          `💬 <a href="${replyLink}">Написать напрямую</a>`;
 
       const notifyTargets = [ALLOWED_CHAT_ID, WORK_CHAT_ID].filter(Boolean);
       await Promise.all(
