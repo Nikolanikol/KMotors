@@ -18,6 +18,10 @@ function shouldTrack(request: NextRequest): boolean {
   const ua = request.headers.get("user-agent") || "";
   if (!ua || isbot(ua)) return false;
 
+  // Пропускаем владельца сайта (залогинен в админку)
+  const adminSession = request.cookies.get("admin_session");
+  if (adminSession?.value) return false;
+
   // Пропускаем саморефералы (переходы внутри сайта)
   const referer = request.headers.get("referer") || "";
   if (referer) {
