@@ -4,13 +4,18 @@ import { getCars } from "./utils/service";
 import { CarSearchParams } from "./utils/Types";
 import CarCard from "./CarCard";
 import { Suspense } from "react";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   const params = await searchParams;
   const offset = params.page;
   const newString = getString(params);
 
-  const { data, count } = await getCars(newString, offset);
+  const [{ data, count }, rates] = await Promise.all([
+    getCars(newString, offset),
+    getCurrencyRates(),
+  ]);
+
   return (
     <div className="px-8">
       <div className=" grid grid-cols-1 md:grid-cols-2   items-start gap-4 min-h-[80vh]">
@@ -39,6 +44,8 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
                 transmission={item.Transmission}
                 fuel={item.FuelType}
                 price={item.Price}
+                krwToRub={rates.krwToRub}
+                krwToUsd={rates.krwToUsd}
               />
             )
           )}
