@@ -50,25 +50,44 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     data.category.modelGroupEnglishName,
     data.category.gradeDetailEnglishName,
     data.category.gradeEnglishName,
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 
-  const carDate = formatDate(data?.category?.yearMonth);
-  const vin = data?.vin || "N/A";
-  const mileage = data?.spec.mileage?.toLocaleString() || "—";
-  const price = data?.advertisement?.price
-    ? (data.advertisement.price * 10000).toLocaleString()
-    : "—";
+  const year = formatDate(data?.category?.yearMonth);
+  const mileage = data?.spec.mileage?.toLocaleString("ru-RU") || "—";
+  const krwPrice = data?.advertisement?.price
+    ? data.advertisement.price * 10000
+    : null;
 
-  const description = `${carName} ${carDate} — VIN: ${vin}, ${mileage} km, ${price} KRW. South Korean car on Kmotors.shop.`;
+  // Приблизительная цена в рублях для RU описания
+  const rubPrice = krwPrice ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU") : null;
+
+  const TITLE: Record<string, string> = {
+    ru: `${carName} ${year} из Кореи — цена, доставка | KMotors`,
+    en: `${carName} ${year} from Korea — price, delivery | KMotors`,
+    ko: `한국산 ${carName} ${year} — 가격, 배송 | KMotors`,
+    ka: `${carName} ${year} კორეიდან — ფასი, მიტანა | KMotors`,
+    ar: `${carName} ${year} من كوريا — السعر والتوصيل | KMotors`,
+  };
+
+  const DESCRIPTION: Record<string, string> = {
+    ru: `Купить ${carName} ${year} из Кореи${rubPrice ? ` — от ${rubPrice} ₽ под ключ` : ""}. Пробег ${mileage} км. Личный осмотр в Сувоне, доставка 3–6 недель. KMotors.`,
+    en: `Buy ${carName} ${year} from South Korea. Mileage ${mileage} km. Personal inspection in Suwon, delivery in 3–6 weeks. KMotors.`,
+    ko: `${carName} ${year} 한국에서 구매. 주행거리 ${mileage} km. 수원 현지 직접 검사, 3–6주 배송. KMotors.`,
+    ka: `${carName} ${year} კორეიდან შეძენა. გარბენი ${mileage} კმ. პირადი დათვალიერება სუვონში, მიტანა 3–6 კვირა. KMotors.`,
+    ar: `شراء ${carName} ${year} من كوريا الجنوبية. المسافة ${mileage} كم. فحص شخصي في سوون، التوصيل 3–6 أسابيع. KMotors.`,
+  };
+
+  const title = TITLE[lang] ?? TITLE.ru;
+  const description = DESCRIPTION[lang] ?? DESCRIPTION.ru;
   const mainPhoto = data?.photos?.[0]?.location
     ? `https://ci.encar.com${data.photos[0].location}`
     : "/noimage.png";
 
   return {
-    title: `${carName} ${carDate} | KMotors`,
+    title,
     description,
     openGraph: {
-      title: `${carName} ${carDate}`,
+      title,
       description,
       images: [mainPhoto],
       type: "website",

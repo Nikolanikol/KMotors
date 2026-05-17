@@ -8,7 +8,13 @@ import "swiper/css/navigation";
 import { ICar } from "./dataType";
 import CarCard from "./CarCard";
 
-export default function AutoSlider({ data }: { data: ICar[] }) {
+interface AutoSliderProps {
+  data: ICar[];
+  krwToRub: number;
+  krwToUsd: number;
+}
+
+export default function AutoSlider({ data, krwToRub, krwToUsd }: AutoSliderProps) {
   return (
     <Swiper
       modules={[Autoplay, Pagination]} // 👈 обязательно!
@@ -44,6 +50,8 @@ export default function AutoSlider({ data }: { data: ICar[] }) {
               transmission={item.Transmission}
               fuel={item.FuelType}
               price={item.Price}
+              krwToRub={krwToRub}
+              krwToUsd={krwToUsd}
             />{" "}
           </SwiperSlide>
         ))}

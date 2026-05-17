@@ -18,6 +18,8 @@ interface CarCardProps {
   transmission: string;
   fuel: string;
   price: string;
+  krwToRub?: number;
+  krwToUsd?: number;
 }
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -41,6 +43,8 @@ const CarCard = ({
   transmission,
   fuel,
   price,
+  krwToRub,
+  krwToUsd,
 }: CarCardProps) => {
   const { t } = useTranslation(['common', 'cars']);
   const pathname = usePathname();
@@ -50,7 +54,19 @@ const CarCard = ({
   const krw = typeof price === "number"
     ? (price as unknown as number) * 10000
     : Number(price) * 1000;
-  const usdPrice = isNaN(krw) || krw === 0 ? null : Math.round(krw / 1380);
+
+  const convertedPrice = (() => {
+    if (!krw || isNaN(krw)) return null;
+    if (lang === "ru" && krwToRub) {
+      const rub = Math.round(krw * krwToRub);
+      return { value: rub.toLocaleString("ru-RU"), symbol: "₽" };
+    }
+    if (lang !== "ko" && krwToUsd) {
+      const usd = Math.round(krw * krwToUsd);
+      return { value: usd.toLocaleString("en-US"), symbol: "$" };
+    }
+    return null;
+  })();
 
   const carName = `${manufacture} ${model} ${year}`;
   const waText = encodeURIComponent((WA_CAR_TEXT[lang] ?? WA_CAR_TEXT.ru)(id, carName));
@@ -135,11 +151,13 @@ const CarCard = ({
               {convertNumber(price)}
               <span className="text-sm text-gray-600 ml-1">{t('common:common.won')}</span>
             </p>
-            {usdPrice && (
-              <p className="text-sm text-gray-500 mt-1 font-medium">
-                ≈ ${usdPrice.toLocaleString("en-US")}{" "}
-                <span className="text-xs font-normal">USD</span>
-              </p>
+            {convertedPrice && (
+              <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-lg">
+                <span className="text-xs text-blue-400">≈</span>
+                <span className="text-sm font-bold text-blue-700">
+                  {convertedPrice.value} {convertedPrice.symbol}
+                </span>
+              </div>
             )}
           </div>
 
