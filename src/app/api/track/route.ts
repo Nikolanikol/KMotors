@@ -1,23 +1,19 @@
 import { createServerClient } from "@/lib/supabase";
 import { NextResponse } from "next/server";
-import { isbot } from "isbot";
 
 const OWN_DOMAINS = ["kmotors.shop", "localhost"];
 
 // Страны датацентров — высокий риск ботов при direct трафике
 const DATACENTER_COUNTRIES = new Set(["US", "HK", "SG", "NL", "DE", "GB", "JP", "CA", "AU"]);
 
-// Целевые рынки — всегда пишем
-const TARGET_COUNTRIES = new Set(["RU", "KZ", "UZ", "GE", "AM", "AZ", "BY", "MD", "KG", "TJ", "TM"]);
+// Целевые рынки — всегда пишем (KR = Николай физически в Корее)
+const TARGET_COUNTRIES = new Set(["RU", "KZ", "UZ", "GE", "AM", "AZ", "BY", "MD", "KG", "TJ", "TM", "KR", "AE", "SA"]);
 
-function isLikelyBot(ua: string, country: string, referrer: string): boolean {
-  // Проверяем user-agent через isbot
-  if (!ua || isbot(ua)) return true;
-
-  // Если страна целевого рынка — точно не бот
+function isLikelyBot(country: string, referrer: string): boolean {
+  // Целевые рынки — всегда пропускаем
   if (TARGET_COUNTRIES.has(country)) return false;
 
-  // Датацентровая страна + direct трафик (нет реферера) = скорее всего бот
+  // Датацентровая страна + direct трафик (нет реферера) = бот из датацентра
   if (DATACENTER_COUNTRIES.has(country) && !referrer) return true;
 
   return false;
@@ -53,11 +49,10 @@ function parseSource(referrer: string): string {
 
 export async function POST(req: Request) {
   try {
-    const ua = req.headers.get("user-agent") || "";
     const { path, referrer, country, device, event, properties, sessionId } = await req.json();
 
-    // Фильтруем ботов на уровне API — двойная защита после middleware
-    if (isLikelyBot(ua, country || "", referrer || "")) {
+    // Гео-фильтр: второй слой после middleware (ловит IP-based ботов из датацентров)
+    if (isLikelyBot(country || "", referrer || "")) {
       return NextResponse.json({ ok: true, filtered: true });
     }
 
