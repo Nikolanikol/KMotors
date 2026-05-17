@@ -16,15 +16,19 @@ import { generateNumbersArray } from "@/utils/generateNumbersArray";
 const priceOptions = generateNumbersArray(1980, 2025, 1);
 const MyFilterYear = ({
   setYear,
+  defaultMin,
+  defaultMax,
 }: {
-  setYear: React.Dispatch<
-    React.SetStateAction<{ minYear: string; maxYear: string }>
-  >;
+  setYear: React.Dispatch<React.SetStateAction<{ minYear: string; maxYear: string }>>;
+  defaultMin?: string;
+  defaultMax?: string;
 }) => {
   const { t } = useTranslation();
-  const [minPrice, setMinPrice] = useState(priceOptions[0]);
+  const [minPrice, setMinPrice] = useState(
+    defaultMin ? Number(defaultMin) : priceOptions[0]
+  );
   const [maxPrice, setMaxPrice] = useState(
-    priceOptions[priceOptions.length - 1]
+    defaultMax ? Number(defaultMax) : priceOptions[priceOptions.length - 1]
   );
 
   const filteredFromOptions = priceOptions.filter(

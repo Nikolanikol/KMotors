@@ -17,15 +17,19 @@ import {
 const priceOptions = generateNumbersArray(0, 10000, 100);
 const MyFilterPrice = ({
   setPrice,
+  defaultMin,
+  defaultMax,
 }: {
-  setPrice: React.Dispatch<
-    SetStateAction<{ minPrice: string; maxPrice: string }>
-  >;
+  setPrice: React.Dispatch<SetStateAction<{ minPrice: string; maxPrice: string }>>;
+  defaultMin?: string;
+  defaultMax?: string;
 }) => {
   const { t } = useTranslation();
-  const [minPrice, setMinPrice] = useState(priceOptions[0]);
+  const [minPrice, setMinPrice] = useState(
+    defaultMin ? Number(defaultMin) : priceOptions[0]
+  );
   const [maxPrice, setMaxPrice] = useState(
-    priceOptions[priceOptions.length - 1]
+    defaultMax ? Number(defaultMax) : priceOptions[priceOptions.length - 1]
   );
 
   const filteredFromOptions = priceOptions.filter(
