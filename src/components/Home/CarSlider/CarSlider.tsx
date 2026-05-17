@@ -3,13 +3,14 @@ import AutoSlider from "./Slider";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 const getCars = async (reqString: string) => {
-  const res = await fetch(reqString, {
-    cache: "force-cache",
-  });
-
-  if (!res.ok) throw new Error("Failed to fetch cars");
-  const data: ICarResponce = await res.json();
-  return data.SearchResults;
+  try {
+    const res = await fetch(reqString, { cache: "force-cache" });
+    if (!res.ok) return [];
+    const data: ICarResponce = await res.json();
+    return data.SearchResults ?? [];
+  } catch {
+    return [];
+  }
 };
 
 type CarSliderProps = {
