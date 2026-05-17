@@ -19,15 +19,19 @@ const priceOptions = generateNumbersArray(0, 200000, 10000);
 
 const MyFilterMileage = ({
   setMileage,
+  defaultMin,
+  defaultMax,
 }: {
-  setMileage: React.Dispatch<
-    React.SetStateAction<{ minMileage: string; maxMileage: string }>
-  >;
+  setMileage: React.Dispatch<React.SetStateAction<{ minMileage: string; maxMileage: string }>>;
+  defaultMin?: string;
+  defaultMax?: string;
 }) => {
   const { t } = useTranslation();
-  const [minPrice, setMinPrice] = useState(priceOptions[0]);
+  const [minPrice, setMinPrice] = useState(
+    defaultMin ? Number(defaultMin) : priceOptions[0]
+  );
   const [maxPrice, setMaxPrice] = useState(
-    priceOptions[priceOptions.length - 1]
+    defaultMax ? Number(defaultMax) : priceOptions[priceOptions.length - 1]
   );
   const filteredFromOptions = priceOptions.filter(
     (option) => option <= maxPrice

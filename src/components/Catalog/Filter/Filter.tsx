@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
@@ -26,36 +26,50 @@ import MyFilterYear from "./FilterComponents/MyFilterYear";
 /*************  ✨ Windsurf Command ⭐  *************/
 
 const Filter = ({}) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  ///Filters
-  const [manufactureAction, setManufactureAction] = useState<string | null>(
-    null,
-  );
-  const [manufacture, setManufacture] = useState<string | null>(null);
+
+  // Читаем начальные значения из URL
+  const initAction = searchParams.get("action") ?? "";
+  const initManufacture = searchParams.get("manufacture")?.replace(/^%/, "") ?? null;
+  const initPriceMin = searchParams.get("priceMin") ?? "";
+  const initPriceMax = searchParams.get("priceMax") ?? "";
+  const initMileageMin = searchParams.get("mileageMin") ?? "";
+  const initMileageMax = searchParams.get("mileageMax") ?? "";
+  const initYearMin = searchParams.get("yearMin") ?? "";
+  const initYearMax = searchParams.get("yearMax") ?? "";
+
+  const [manufactureAction, setManufactureAction] = useState<string | null>(null);
+  const [manufacture, setManufacture] = useState<string | null>(initManufacture);
   const [modelActionDrill, setModelActionDrill] = useState<string | null>(null);
-  const [action, setAction] = useState<string | null>("");
+  const [action, setAction] = useState<string | null>(initAction);
 
   const handleAction = (value: string | null) => {
     if (value != null) {
+      const lang = i18n.language || "ru";
       startTransition(() => {
         router.push(
-          `/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}&manufacture=%${manufacture}`,
+          `/${lang}/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}&manufacture=%${manufacture}`,
         );
       });
     }
   };
-  /////////////////////////////////
+
   const [price, setPrice] = useState({
-    minPrice: "",
-    maxPrice: "",
+    minPrice: initPriceMin,
+    maxPrice: initPriceMax,
   });
   const [mileage, setMileage] = useState({
-    minMileage: "",
-    maxMileage: "",
+    minMileage: initMileageMin,
+    maxMileage: initMileageMax,
   });
-  const [year, setYear] = useState({ minYear: "", maxYear: "" });
+  const [year, setYear] = useState({
+    minYear: initYearMin,
+    maxYear: initYearMax,
+  });
+
   return (
     <div className="flex flex-col gap-2">
       <h2>{t("filter.manufacturer")}</h2>
@@ -93,9 +107,9 @@ const Filter = ({}) => {
       {/* ////////////////////////Generation */}
       <GenerationRow action={modelActionDrill} setAction={setAction} />
 
-      <MyFilterPrice setPrice={setPrice} />
-      <MyFilterMileage setMileage={setMileage} />
-      <MyFilterYear setYear={setYear} />
+      <MyFilterPrice setPrice={setPrice} defaultMin={initPriceMin} defaultMax={initPriceMax} />
+      <MyFilterMileage setMileage={setMileage} defaultMin={initMileageMin} defaultMax={initMileageMax} />
+      <MyFilterYear setYear={setYear} defaultMin={initYearMin} defaultMax={initYearMax} />
       {/* ///////////////////////////// */}
       <Button onClick={() => handleAction(action)}>{t("filter.show")}</Button>
       {isPending && (

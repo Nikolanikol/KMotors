@@ -190,6 +190,14 @@ export default async function ModelPage({ params }: Props) {
               reqString={`https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${model.encarQuery}&sr=%7CModifiedDate%7C0%7C20`}
               title=""
             />
+            <div className="text-center mt-4">
+              <Link
+                href={`/${lang}/catalog`}
+                className="inline-flex items-center gap-2 text-[#BB162B] hover:text-[#9B1220] font-semibold text-sm"
+              >
+                {isRu ? "Все автомобили в каталоге →" : "All cars in catalog →"}
+              </Link>
+            </div>
           </div>
         </section>
 
