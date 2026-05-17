@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import CarRequestForm from "./CarRequestForm";
 
 interface StickyMobileCTAProps {
@@ -10,6 +11,7 @@ interface StickyMobileCTAProps {
 }
 
 export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -30,7 +32,7 @@ export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps
           onClick={() => setModalOpen(true)}
           className="w-full bg-orange-500 active:bg-orange-600 text-white py-3.5 rounded-xl font-bold text-base"
         >
-          Хочу эту машину — оставить заявку
+          {t("car.wantThisCar", "Хочу эту машину — оставить заявку")}
         </button>
       </div>
 
@@ -52,9 +54,9 @@ export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps
               <X className="w-5 h-5" />
             </button>
 
-            <p className="font-bold text-lg mb-1">Хочу эту машину</p>
+            <p className="font-bold text-lg mb-1">{t("car.wantThisCarShort", "Хочу эту машину")}</p>
             <p className="text-sm text-gray-500 mb-4">
-              Менеджер свяжется в течение 1 часа
+              {t("car.managerContact", "Менеджер свяжется в течение 1 часа")}
             </p>
 
             <CarRequestForm

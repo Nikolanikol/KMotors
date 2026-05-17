@@ -5,6 +5,8 @@ import { getCars } from "@/components/Catalog/Row/utils/service";
 import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 import { Metadata } from "next";
 
+export const revalidate = 300;
+
 const CATALOG_META: Record<string, { default: string; withBrand: string; description: string }> = {
   ru: {
     default: "Каталог авто из Кореи — Hyundai, Kia, Genesis | KMotors",

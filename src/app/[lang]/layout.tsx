@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import I18nProvider from "@/components/I18nProvider/I18nProvider";
-import TelegramFloat from "@/components/TelegramFloat";
+import MessengerButtons from "@/components/MessengerButtons";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -23,7 +23,7 @@ export default async function LangLayout({ children, params }: Props) {
       <Header />
       <main className="flex-grow min-h-[70vh]">{children}</main>
       <Footer />
-      <TelegramFloat />
+      <MessengerButtons />
     </I18nProvider>
   );
 }

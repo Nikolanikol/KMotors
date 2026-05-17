@@ -3,6 +3,22 @@ import { NextResponse } from "next/server";
 
 const OWN_DOMAINS = ["kmotors.shop", "localhost"];
 
+// Страны датацентров — высокий риск ботов при direct трафике
+const DATACENTER_COUNTRIES = new Set(["US", "HK", "SG", "NL", "DE", "GB", "JP", "CA", "AU"]);
+
+// Целевые рынки — всегда пишем (KR = Николай физически в Корее)
+const TARGET_COUNTRIES = new Set(["RU", "KZ", "UZ", "GE", "AM", "AZ", "BY", "MD", "KG", "TJ", "TM", "KR", "AE", "SA"]);
+
+function isLikelyBot(country: string, referrer: string): boolean {
+  // Целевые рынки — всегда пропускаем
+  if (TARGET_COUNTRIES.has(country)) return false;
+
+  // Датацентровая страна + direct трафик (нет реферера) = бот из датацентра
+  if (DATACENTER_COUNTRIES.has(country) && !referrer) return true;
+
+  return false;
+}
+
 function parseSource(referrer: string): string {
   if (!referrer) return "direct";
   try {
@@ -34,6 +50,11 @@ function parseSource(referrer: string): string {
 export async function POST(req: Request) {
   try {
     const { path, referrer, country, device, event, properties, sessionId } = await req.json();
+
+    // Гео-фильтр: второй слой после middleware (ловит IP-based ботов из датацентров)
+    if (isLikelyBot(country || "", referrer || "")) {
+      return NextResponse.json({ ok: true, filtered: true });
+    }
 
     const supabase = createServerClient();
 

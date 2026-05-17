@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isbot } from "isbot";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 const DEFAULT_LANG = "ru";
-
-// Боты которых не трекаем
-const BOT_PATTERN = /bot|crawl|spider|scraper|python|curl|wget|axios|java\/|go-http|headless|phantom|selenium|puppeteer|playwright/i;
 
 function shouldTrack(request: NextRequest): boolean {
   // Пропускаем RSC-запросы Next.js (React Server Component payload)
@@ -18,7 +16,11 @@ function shouldTrack(request: NextRequest): boolean {
 
   // Пропускаем ботов
   const ua = request.headers.get("user-agent") || "";
-  if (!ua || BOT_PATTERN.test(ua)) return false;
+  if (!ua || isbot(ua)) return false;
+
+  // Пропускаем владельца сайта (залогинен в админку)
+  const adminSession = request.cookies.get("admin_session");
+  if (adminSession?.value) return false;
 
   // Пропускаем саморефералы (переходы внутри сайта)
   const referer = request.headers.get("referer") || "";
