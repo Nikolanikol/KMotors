@@ -29,7 +29,6 @@ export async function getCars(query: string, offset: string = "0") {
     );
 
     const fallbackData = await fallbackRes.json();
-    console.log(fallbackData, "fallbackData");
     return {
       data: fallbackData.SearchResults,
       count: fallbackData.Count,

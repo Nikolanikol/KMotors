@@ -88,7 +88,10 @@
     "sellerAddress": "Address",
     "seller": "Seller",
     "dealer": "Dealer",
-    "privateSeller": "Private Seller"
+    "privateSeller": "Private Seller",
+    "wantThisCar": "I want this car — leave a request",
+    "wantThisCarShort": "I want this car",
+    "managerContact": "Manager will contact you within 1 hour"
   },
   "filter": {
     "all": "All",
@@ -293,14 +296,70 @@
       "badge": "Catalog",
       "title": "Parts Categories",
       "subtitle": "Wide range of genuine parts for Korean vehicles. All items pass strict quality control.",
-      "cat0": { "title": "Engine & Components", "desc": "Pistons, rings, bearings, gaskets, belts", "i0": "Pistons", "i1": "Rings", "i2": "Bearings", "i3": "Gaskets" },
-      "cat1": { "title": "Body Parts", "desc": "Fenders, bumpers, doors, hoods, trunk lids", "i0": "Fenders", "i1": "Bumpers", "i2": "Doors", "i3": "Hoods" },
-      "cat2": { "title": "Suspension & Steering", "desc": "Shock absorbers, arms, tie rods, struts", "i0": "Shock Absorbers", "i1": "Control Arms", "i2": "Tie Rods", "i3": "Bushings" },
-      "cat3": { "title": "Brake System", "desc": "Discs, pads, calipers, cylinders", "i0": "Brake Discs", "i1": "Brake Pads", "i2": "Calipers", "i3": "Brake Hoses" },
-      "cat4": { "title": "Transmission", "desc": "Gearbox, clutch, driveshaft, axles", "i0": "Clutch", "i1": "Driveshafts", "i2": "Axles", "i3": "Bearings" },
-      "cat5": { "title": "Electrical", "desc": "Alternators, starters, headlights, batteries", "i0": "Alternators", "i1": "Starters", "i2": "Headlights", "i3": "Wiring" },
-      "cat6": { "title": "Filters & Consumables", "desc": "Oil, air, fuel, cabin filters", "i0": "Oil Filters", "i1": "Air Filters", "i2": "Fuel Filters", "i3": "Cabin Filters" },
-      "cat7": { "title": "Interior & Optics", "desc": "Headlights, taillights, mirrors, dashboards", "i0": "Headlights", "i1": "Taillights", "i2": "Mirrors", "i3": "Dashboards" }
+      "cat0": {
+        "title": "Engine & Components",
+        "desc": "Pistons, rings, bearings, gaskets, belts",
+        "i0": "Pistons",
+        "i1": "Rings",
+        "i2": "Bearings",
+        "i3": "Gaskets"
+      },
+      "cat1": {
+        "title": "Body Parts",
+        "desc": "Fenders, bumpers, doors, hoods, trunk lids",
+        "i0": "Fenders",
+        "i1": "Bumpers",
+        "i2": "Doors",
+        "i3": "Hoods"
+      },
+      "cat2": {
+        "title": "Suspension & Steering",
+        "desc": "Shock absorbers, arms, tie rods, struts",
+        "i0": "Shock Absorbers",
+        "i1": "Control Arms",
+        "i2": "Tie Rods",
+        "i3": "Bushings"
+      },
+      "cat3": {
+        "title": "Brake System",
+        "desc": "Discs, pads, calipers, cylinders",
+        "i0": "Brake Discs",
+        "i1": "Brake Pads",
+        "i2": "Calipers",
+        "i3": "Brake Hoses"
+      },
+      "cat4": {
+        "title": "Transmission",
+        "desc": "Gearbox, clutch, driveshaft, axles",
+        "i0": "Clutch",
+        "i1": "Driveshafts",
+        "i2": "Axles",
+        "i3": "Bearings"
+      },
+      "cat5": {
+        "title": "Electrical",
+        "desc": "Alternators, starters, headlights, batteries",
+        "i0": "Alternators",
+        "i1": "Starters",
+        "i2": "Headlights",
+        "i3": "Wiring"
+      },
+      "cat6": {
+        "title": "Filters & Consumables",
+        "desc": "Oil, air, fuel, cabin filters",
+        "i0": "Oil Filters",
+        "i1": "Air Filters",
+        "i2": "Fuel Filters",
+        "i3": "Cabin Filters"
+      },
+      "cat7": {
+        "title": "Interior & Optics",
+        "desc": "Headlights, taillights, mirrors, dashboards",
+        "i0": "Headlights",
+        "i1": "Taillights",
+        "i2": "Mirrors",
+        "i3": "Dashboards"
+      }
     },
     "products": {
       "badge": "Popular Items",
@@ -332,10 +391,14 @@
       "statFounded": "Founded",
       "statClients": "Clients",
       "statCountries": "Countries",
-      "adv0title": "Direct Supply", "adv0desc": "We work directly with manufacturers, no middlemen",
-      "adv1title": "Quality Guarantee", "adv1desc": "Only genuine parts with certificates",
-      "adv2title": "Fast Delivery", "adv2desc": "From 7 days to anywhere in the world",
-      "adv3title": "Personal Approach", "adv3desc": "VIN-based part selection assistance"
+      "adv0title": "Direct Supply",
+      "adv0desc": "We work directly with manufacturers, no middlemen",
+      "adv1title": "Quality Guarantee",
+      "adv1desc": "Only genuine parts with certificates",
+      "adv2title": "Fast Delivery",
+      "adv2desc": "From 7 days to anywhere in the world",
+      "adv3title": "Personal Approach",
+      "adv3desc": "VIN-based part selection assistance"
     },
     "contact": {
       "badge": "Contact Us",

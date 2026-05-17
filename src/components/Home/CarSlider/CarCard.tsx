@@ -62,7 +62,6 @@ const CarCard = ({
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
         <Image
           fill
-          unoptimized
           src={`https://ci.encar.com${photo}`}
           alt={`${manufacture} ${model} ${year} — купить из Кореи`}
           className="object-cover group-hover:scale-110 transition-transform duration-500"
