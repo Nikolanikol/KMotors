@@ -4,6 +4,7 @@ import { getString } from "@/components/Catalog/Row/utils";
 import { getCars } from "@/components/Catalog/Row/utils/service";
 import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const revalidate = 300;
 
@@ -193,7 +194,9 @@ export default async function CatalogPage({ params, searchParams }: Props) {
       <div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-2 h-full m-0 mx-auto">
           <div className="col-span-1 lg:col-span-4 h-full px-1 py-2">
-            <Filter />
+            <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-xl h-96" />}>
+              <Filter />
+            </Suspense>
           </div>
           <div className="col-span-1 lg:col-span-8 h-full">
             <CarsRow searchParams={searchParams} />
