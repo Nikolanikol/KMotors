@@ -1,7 +1,27 @@
 import { createServerClient } from "@/lib/supabase";
 import { NextResponse } from "next/server";
+import { isbot } from "isbot";
 
 const OWN_DOMAINS = ["kmotors.shop", "localhost"];
+
+// Страны датацентров — высокий риск ботов при direct трафике
+const DATACENTER_COUNTRIES = new Set(["US", "HK", "SG", "NL", "DE", "GB", "JP", "CA", "AU"]);
+
+// Целевые рынки — всегда пишем
+const TARGET_COUNTRIES = new Set(["RU", "KZ", "UZ", "GE", "AM", "AZ", "BY", "MD", "KG", "TJ", "TM"]);
+
+function isLikelyBot(ua: string, country: string, referrer: string): boolean {
+  // Проверяем user-agent через isbot
+  if (!ua || isbot(ua)) return true;
+
+  // Если страна целевого рынка — точно не бот
+  if (TARGET_COUNTRIES.has(country)) return false;
+
+  // Датацентровая страна + direct трафик (нет реферера) = скорее всего бот
+  if (DATACENTER_COUNTRIES.has(country) && !referrer) return true;
+
+  return false;
+}
 
 function parseSource(referrer: string): string {
   if (!referrer) return "direct";
@@ -33,7 +53,13 @@ function parseSource(referrer: string): string {
 
 export async function POST(req: Request) {
   try {
+    const ua = req.headers.get("user-agent") || "";
     const { path, referrer, country, device, event, properties, sessionId } = await req.json();
+
+    // Фильтруем ботов на уровне API — двойная защита после middleware
+    if (isLikelyBot(ua, country || "", referrer || "")) {
+      return NextResponse.json({ ok: true, filtered: true });
+    }
 
     const supabase = createServerClient();
 
