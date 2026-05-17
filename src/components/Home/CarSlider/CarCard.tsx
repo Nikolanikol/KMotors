@@ -152,9 +152,12 @@ const CarCard = ({
               <span className="text-sm text-gray-600 ml-1">{t('common:common.won')}</span>
             </p>
             {convertedPrice && (
-              <p className="text-sm text-gray-500 mt-1 font-medium">
-                ≈ {convertedPrice.symbol}{convertedPrice.value}
-              </p>
+              <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-lg">
+                <span className="text-xs text-blue-400">≈</span>
+                <span className="text-sm font-bold text-blue-700">
+                  {convertedPrice.value} {convertedPrice.symbol}
+                </span>
+              </div>
             )}
           </div>
 
