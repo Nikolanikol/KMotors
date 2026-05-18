@@ -46,21 +46,7 @@ export default async function RootLayout({
         <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="x-default" />
         <link rel="icon" type="image/png" href="/favicon_io/android-chrome-192x192.png" />
 
-        {/* Google Analytics 4 */}
-        <Script
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-ZMRTQCD8SF"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-ZMRTQCD8SF');
-          `}
-        </Script>
-
-        {/* LocalBusiness + AutoDealer JSON-LD */}
+        {/* LocalBusiness + AutoDealer JSON-LD — нативный script, не Next.js Script */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -71,8 +57,7 @@ export default async function RootLayout({
               url: "https://kmotors.shop/",
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
               image: "https://kmotors.shop/preview/preview.png",
-              description:
-                "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
+              description: "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
               telephone: "+821077324344",
               address: {
                 "@type": "PostalAddress",
@@ -81,51 +66,45 @@ export default async function RootLayout({
                 addressRegion: "경기도",
                 addressCountry: "KR",
               },
-              geo: {
-                "@type": "GeoCoordinates",
-                latitude: 37.2636,
-                longitude: 126.9723,
-              },
-              openingHoursSpecification: [
-                {
-                  "@type": "OpeningHoursSpecification",
-                  dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-                  opens: "09:00",
-                  closes: "18:00",
-                },
-              ],
+              geo: { "@type": "GeoCoordinates", latitude: 37.2636, longitude: 126.9723 },
+              openingHoursSpecification: [{
+                "@type": "OpeningHoursSpecification",
+                dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                opens: "09:00",
+                closes: "18:00",
+              }],
               contactPoint: [
-                {
-                  "@type": "ContactPoint",
-                  telephone: "+821077324344",
-                  contactType: "customer service",
-                  availableLanguage: ["Russian", "Korean", "English"],
-                },
-                {
-                  "@type": "ContactPoint",
-                  url: "https://t.me/kmotorsshop",
-                  contactType: "customer service",
-                  availableLanguage: ["Russian", "Korean", "English"],
-                },
+                { "@type": "ContactPoint", telephone: "+821077324344", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
+                { "@type": "ContactPoint", url: "https://t.me/kmotorsshop", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
               ],
               currenciesAccepted: "USD",
               paymentAccepted: "Bank Transfer",
               priceRange: "$$",
               areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
-              sameAs: [
-                "https://t.me/kmotorsshop",
-                "https://www.instagram.com/kmotors.shop/",
-              ],
+              sameAs: ["https://t.me/kmotorsshop", "https://www.instagram.com/kmotors.shop/"],
             }),
           }}
         />
+      </head>
+      <body className="min-h-screen flex flex-col mx-auto">
+        {children}
+
+        {/* Google Analytics 4 — Script должен быть в body, не в head */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZMRTQCD8SF"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZMRTQCD8SF');`}
+        </Script>
+
         {/* Microsoft Clarity */}
         <Script id="clarity" strategy="afterInteractive">
           {`(function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
             t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
             y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "wrkhuoyd68");`}
+          })(window,document,"clarity","script","wrkhuoyd68");`}
         </Script>
 
         {/* Yandex.Metrika */}
@@ -139,13 +118,8 @@ export default async function RootLayout({
           ym(109267986,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});`}
         </Script>
         <noscript>
-          <div>
-            <img src="https://mc.yandex.ru/watch/109267986" style={{position:"absolute",left:"-9999px"}} alt="" />
-          </div>
+          <div><img src="https://mc.yandex.ru/watch/109267986" style={{position:"absolute",left:"-9999px"}} alt="" /></div>
         </noscript>
-      </head>
-      <body className="min-h-screen flex flex-col mx-auto">
-        {children}
       </body>
     </html>
   );
