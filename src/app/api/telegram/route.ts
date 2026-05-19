@@ -8,12 +8,13 @@ interface ContactPayload {
   source?: string;
   carId?: string;
   carName?: string;
+  messenger?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ContactPayload;
-    const { name, phone, message, source, carId, carName } = body;
+    const { name, phone, message, source, carId, carName, messenger } = body;
 
     if (!name || !phone) {
       return NextResponse.json(
@@ -49,9 +50,17 @@ export async function POST(req: NextRequest) {
 
     const sourceText = source ? (sourceLabel[source] ?? source) : "Сайт";
 
+    const messengerEmoji: Record<string, string> = {
+      whatsapp: "💚 WhatsApp",
+      telegram: "✈️ Telegram",
+      viber: "💜 Viber",
+      call: "📞 Звонок",
+    };
+    const messengerText = messenger ? (messengerEmoji[messenger] ?? messenger) : null;
+
     const text = `📬 Новая заявка — ${sourceText}
 👤 Имя: ${name}
-📞 Телефон: ${phone}${carName ? `\n🚗 Авто: ${carName}` : ""}${carId ? `\n🔗 encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}` : ""}${message ? `\n💬 Комментарий: ${message}` : ""}`;
+📞 Телефон: ${phone}${messengerText ? `\n📱 Мессенджер: ${messengerText}` : ""}${carName ? `\n🚗 Авто: ${carName}` : ""}${carId ? `\n🔗 encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}` : ""}${message ? `\n💬 Комментарий: ${message}` : ""}`;
 
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,

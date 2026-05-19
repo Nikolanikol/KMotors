@@ -410,6 +410,8 @@
       "hoursTitle": "Working Hours",
       "weekdays": "Mon–Fri: 9:00 – 18:00",
       "weekend": "Sat–Sun: closed",
+      "messengerLabel": "How should we contact you?",
+      "messengerCall": "Phone call",
       "nameLabel": "Name",
       "namePlaceholder": "Your name",
       "phonePlaceholder": "+1 (999) 999-9999",

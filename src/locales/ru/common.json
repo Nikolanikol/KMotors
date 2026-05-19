@@ -410,6 +410,8 @@
       "hoursTitle": "Режим работы",
       "weekdays": "Пн-Пт: 9:00 - 18:00",
       "weekend": "Сб-Вс: выходной",
+      "messengerLabel": "Как с вами связаться?",
+      "messengerCall": "Звонок",
       "nameLabel": "Имя",
       "namePlaceholder": "Ваше имя",
       "phonePlaceholder": "+7 (999) 999-99-99",
