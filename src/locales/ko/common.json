@@ -410,6 +410,8 @@
       "hoursTitle": "운영 시간",
       "weekdays": "월~금: 9:00 – 18:00",
       "weekend": "토~일: 휴무",
+      "messengerLabel": "연락 방법을 선택해 주세요",
+      "messengerCall": "전화 통화",
       "nameLabel": "이름",
       "namePlaceholder": "성함을 입력해 주세요",
       "phonePlaceholder": "+82 10-0000-0000",
