@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
+import { type Value } from "react-phone-number-input";
 import { SlidingButton } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { MessengerSelector } from "@/components/ui/MessengerSelector";
 import { usePathname } from "next/navigation";
 
 import {
@@ -25,20 +28,16 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
   const hasTriggeredRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    message: "",
-  });
+  const [form, setForm] = useState({ name: "", message: "" });
+  const [phone, setPhone] = useState<Value | undefined>();
+  const [messenger, setMessenger] = useState("whatsapp");
+  const [tgUsername, setTgUsername] = useState("");
 
-  // Автопоказ: один раз, потом 7 дней не беспокоить
   useEffect(() => {
     if (hasTriggeredRef.current || isVisible) return;
     if (pathname.startsWith("/admin")) return;
-    // На карточке машины форма уже есть прямо под ценой
     if (pathname.match(/\/catalog\/\d+/)) return;
 
-    // Проверяем localStorage — видел ли пользователь модалку за последние 7 дней
     try {
       const seen = localStorage.getItem("kmotors_modal_seen");
       if (seen) {
@@ -46,9 +45,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
         if (Date.now() - seenDate < sevenDays) return;
       }
-    } catch {
-      // localStorage недоступен (приватный режим) — показываем как обычно
-    }
+    } catch {}
 
     timerRef.current = setTimeout(() => {
       if (!hasTriggeredRef.current) {
@@ -80,12 +77,20 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
       const res = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source: "header" }),
+        body: JSON.stringify({
+          ...form,
+          phone: phone ?? "",
+          messenger,
+          tg_username: tgUsername || undefined,
+          source: "header",
+        }),
       });
 
       if (res.ok) {
         setSuccess(true);
-        setForm({ name: "", phone: "", message: "" });
+        setForm({ name: "", message: "" });
+        setPhone(undefined);
+        setTgUsername("");
         setTimeout(() => setVisible(false), 2000);
       } else {
         alert(t("contact.errorSend"));
@@ -122,10 +127,9 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 required
                 disabled={loading}
               />
-              <Input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
+              <PhoneInput
+                value={phone}
+                onChange={setPhone}
                 placeholder={t("contact.phone")}
                 required
                 disabled={loading}
@@ -137,9 +141,17 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 placeholder={t("contact.message")}
                 disabled={loading}
               />
+              <MessengerSelector
+                messenger={messenger}
+                onMessengerChange={setMessenger}
+                tgUsername={tgUsername}
+                onTgUsernameChange={setTgUsername}
+                label={t("contact.messengerLabel")}
+                usernamePlaceholder={t("contact.tgUsernamePlaceholder")}
+              />
               <SlidingButton
                 type="submit"
-                disabled={loading || !form.name || !form.phone}
+                disabled={loading || !form.name || !phone}
                 className="w-full"
               >
                 {loading ? t("contact.submitting") : t("contact.submit")}

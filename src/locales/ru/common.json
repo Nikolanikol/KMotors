@@ -157,7 +157,9 @@
     "submit": "✉️ Отправить",
     "submitting": "⏳ Отправка...",
     "successModal": "✅ Заявка успешно отправлена",
-    "errorSend": "Ошибка при отправке"
+    "errorSend": "Ошибка при отправке",
+    "messengerLabel": "Как с вами связаться?",
+    "tgUsernamePlaceholder": "@ваш_username в Telegram"
   },
   "common": {
     "submit": "Отправить",
@@ -410,6 +412,8 @@
       "hoursTitle": "Режим работы",
       "weekdays": "Пн-Пт: 9:00 - 18:00",
       "weekend": "Сб-Вс: выходной",
+      "vinLabel": "VIN номер авто",
+      "vinPlaceholder": "Например: KMHD84LF8MU123456",
       "messengerLabel": "Как с вами связаться?",
       "messengerCall": "Звонок",
       "nameLabel": "Имя",

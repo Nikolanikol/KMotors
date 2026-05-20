@@ -157,7 +157,9 @@
     "submit": "✉️ Send",
     "submitting": "⏳ Sending...",
     "successModal": "✅ Request sent successfully",
-    "errorSend": "Error sending"
+    "errorSend": "Error sending",
+    "messengerLabel": "How should we contact you?",
+    "tgUsernamePlaceholder": "@your_telegram_username"
   },
   "common": {
     "submit": "Submit",
@@ -410,6 +412,8 @@
       "hoursTitle": "Working Hours",
       "weekdays": "Mon–Fri: 9:00 – 18:00",
       "weekend": "Sat–Sun: closed",
+      "vinLabel": "Vehicle VIN number",
+      "vinPlaceholder": "e.g. KMHD84LF8MU123456",
       "messengerLabel": "How should we contact you?",
       "messengerCall": "Phone call",
       "nameLabel": "Name",

@@ -157,7 +157,9 @@
     "submit": "✉️ 보내기",
     "submitting": "⏳ 전송 중...",
     "successModal": "✅ 요청이 성공적으로 전송되었습니다",
-    "errorSend": "전송 오류"
+    "errorSend": "전송 오류",
+    "messengerLabel": "연락 방법을 선택해 주세요",
+    "tgUsernamePlaceholder": "@텔레그램_사용자명"
   },
   "common": {
     "submit": "제출",
@@ -410,6 +412,8 @@
       "hoursTitle": "운영 시간",
       "weekdays": "월~금: 9:00 – 18:00",
       "weekend": "토~일: 휴무",
+      "vinLabel": "차량 VIN 번호",
+      "vinPlaceholder": "예: KMHD84LF8MU123456",
       "messengerLabel": "연락 방법을 선택해 주세요",
       "messengerCall": "전화 통화",
       "nameLabel": "이름",

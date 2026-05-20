@@ -2,19 +2,21 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
+import { type Value } from "react-phone-number-input";
 import { SlidingButton } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { MessengerSelector } from "@/components/ui/MessengerSelector";
+import { Input } from "@/components/ui/input";
 
 export default function ContactForm() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [phone, setPhone] = useState<Value | undefined>();
+  const [messenger, setMessenger] = useState("whatsapp");
+  const [tgUsername, setTgUsername] = useState("");
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    message: "",
-  });
+  const [form, setForm] = useState({ name: "", message: "" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,12 +31,20 @@ export default function ContactForm() {
       const res = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source: "contact" }),
+        body: JSON.stringify({
+          ...form,
+          phone: phone ?? "",
+          messenger,
+          tg_username: tgUsername || undefined,
+          source: "contact",
+        }),
       });
 
       if (res.ok) {
         setSuccess(true);
-        setForm({ name: "", phone: "", message: "" });
+        setForm({ name: "", message: "" });
+        setPhone(undefined);
+        setTgUsername("");
       } else {
         alert(t("contact.error"));
       }
@@ -55,10 +65,9 @@ export default function ContactForm() {
           placeholder={t("contact.name")}
           required
         />
-        <Input
-          name="phone"
-          value={form.phone}
-          onChange={handleChange}
+        <PhoneInput
+          value={phone}
+          onChange={setPhone}
           placeholder={t("contact.phone")}
           required
         />
@@ -68,9 +77,17 @@ export default function ContactForm() {
           onChange={handleChange}
           placeholder={t("contact.message")}
         />
+        <MessengerSelector
+          messenger={messenger}
+          onMessengerChange={setMessenger}
+          tgUsername={tgUsername}
+          onTgUsernameChange={setTgUsername}
+          label={t("contact.messengerLabel")}
+          usernamePlaceholder={t("contact.tgUsernamePlaceholder")}
+        />
         <SlidingButton
           type="submit"
-          disabled={loading || !form.name || !form.phone}
+          disabled={loading || !form.name || !phone}
           className="w-full"
         >
           {loading ? t("contact.sending") : t("contact.send")}
