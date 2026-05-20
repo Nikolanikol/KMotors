@@ -157,7 +157,9 @@
     "submit": "✉️ إرسال",
     "submitting": "⏳ جار الإرسال...",
     "successModal": "✅ تم إرسال الطلب بنجاح",
-    "errorSend": "خطأ في الإرسال"
+    "errorSend": "خطأ في الإرسال",
+    "messengerLabel": "كيف تفضل التواصل؟",
+    "tgUsernamePlaceholder": "@اسم_المستخدم_في_تيليغرام"
   },
   "common": {
     "submit": "إرسال",
@@ -410,6 +412,8 @@
       "hoursTitle": "ساعات العمل",
       "weekdays": "الإثنين–الجمعة: 9:00 – 18:00",
       "weekend": "السبت–الأحد: إجازة",
+      "vinLabel": "رقم VIN للسيارة",
+      "vinPlaceholder": "مثال: KMHD84LF8MU123456",
       "messengerLabel": "كيف تفضل التواصل؟",
       "messengerCall": "مكالمة هاتفية",
       "nameLabel": "الاسم",

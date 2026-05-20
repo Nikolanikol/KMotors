@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { type Value } from "react-phone-number-input";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { MessengerSelector } from "@/components/ui/MessengerSelector";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
 
 interface CarRequestFormProps {
@@ -20,14 +23,16 @@ export default function CarRequestForm({
 }: CarRequestFormProps) {
   const { t } = useTranslation();
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState<Value | undefined>();
+  const [messenger, setMessenger] = useState("whatsapp");
+  const [tgUsername, setTgUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone) return;
 
     setLoading(true);
     setError(false);
@@ -38,7 +43,9 @@ export default function CarRequestForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          phone: phone.trim(),
+          phone,
+          messenger,
+          tg_username: tgUsername || undefined,
           source,
           carId,
           carName,
@@ -48,7 +55,8 @@ export default function CarRequestForm({
       if (res.ok) {
         setSuccess(true);
         setName("");
-        setPhone("");
+        setPhone(undefined);
+        setTgUsername("");
         onSuccess?.();
       } else {
         setError(true);
@@ -83,17 +91,24 @@ export default function CarRequestForm({
         required
         disabled={loading}
       />
-      <Input
+      <PhoneInput
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={setPhone}
         placeholder={t("contact.phone")}
-        type="tel"
         required
         disabled={loading}
       />
+      <MessengerSelector
+        messenger={messenger}
+        onMessengerChange={setMessenger}
+        tgUsername={tgUsername}
+        onTgUsernameChange={setTgUsername}
+        label={t("contact.messengerLabel")}
+        usernamePlaceholder={t("contact.tgUsernamePlaceholder")}
+      />
       <button
         type="submit"
-        disabled={loading || !name.trim() || !phone.trim()}
+        disabled={loading || !name.trim() || !phone}
         className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
       >
         {loading ? (

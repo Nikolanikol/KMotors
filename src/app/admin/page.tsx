@@ -134,7 +134,7 @@ export default async function AdminPage() {
     // Лиды 30 дней
     supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days30ago),
     // Последние заявки
-    supabase.from("leads").select("id,name,phone,car_name,source_page,created_at").order("created_at", { ascending: false }).limit(20),
+    supabase.from("leads").select("id,name,phone,car_name,source_page,created_at,messenger,vin,tg_username").order("created_at", { ascending: false }).limit(20),
     // Топ просматриваемых машин
     supabase.rpc("get_top_cars", { since_date: days30ago, limit_count: 10 }),
   ]);
@@ -480,8 +480,37 @@ export default async function AdminPage() {
                       {lead.car_name && (
                         <div className="text-xs text-gray-400 truncate">{lead.car_name}</div>
                       )}
+                      {lead.vin && (
+                        <div className="text-xs text-gray-500 font-mono">VIN: {lead.vin}</div>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
+                      {lead.messenger === "whatsapp" && (
+                        <a
+                          href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-lg hover:bg-green-100 transition-colors"
+                        >
+                          💚 WhatsApp
+                        </a>
+                      )}
+                      {lead.messenger === "telegram" && (
+                        lead.tg_username ? (
+                          <a
+                            href={`https://t.me/${lead.tg_username.replace(/^@/, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-100 transition-colors"
+                          >
+                            ✈️ {lead.tg_username}
+                          </a>
+                        ) : (
+                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg">
+                            ✈️ Telegram
+                          </span>
+                        )
+                      )}
                       <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-lg">
                         {LEAD_SOURCE_LABELS[lead.source_page] || lead.source_page}
                       </span>

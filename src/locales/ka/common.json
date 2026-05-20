@@ -157,7 +157,9 @@
     "submit": "✉️ გაგზავნა",
     "submitting": "⏳ გაგზავნა...",
     "successModal": "✅ განაცხადი წარმატებით გაიგზავნა",
-    "errorSend": "გაგზავნის შეცდომა"
+    "errorSend": "გაგზავნის შეცდომა",
+    "messengerLabel": "როგორ დაგიკავშირდეთ?",
+    "tgUsernamePlaceholder": "@თქვენი_telegram_სახელი"
   },
   "common": {
     "submit": "გაგზავნა",
@@ -410,6 +412,8 @@
       "hoursTitle": "სამუშაო საათები",
       "weekdays": "ორშ–პარ: 9:00 – 18:00",
       "weekend": "შაბ–კვი: დასვენება",
+      "vinLabel": "მანქანის VIN ნომერი",
+      "vinPlaceholder": "მაგ: KMHD84LF8MU123456",
       "messengerLabel": "როგორ დაგიკავშირდეთ?",
       "messengerCall": "ზარი",
       "nameLabel": "სახელი",
