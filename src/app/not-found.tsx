@@ -72,60 +72,60 @@ export default function NotFound() {
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center px-4 py-12" dir={dir}>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12" dir={dir}>
       <div className="max-w-2xl w-full">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-orange-100 rounded-full mb-8">
-            <AlertCircle className="w-12 h-12 text-orange-600" />
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full" style="background-color:rgba(255,69,0,0.12) mb-8">
+            <AlertCircle className="w-12 h-12 style="color:var(--axis-orange)"" />
           </div>
-          <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-4">404</h1>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">{t.title}</h2>
-          <p className="text-lg text-gray-600 mb-2">{t.subtitle}</p>
-          <p className="text-gray-500">{t.hint}</p>
+          <h1 className="text-6xl md:text-7xl font-bold style="color:var(--axis-white)" mb-4">404</h1>
+          <h2 className="text-3xl md:text-4xl font-bold style="color:var(--axis-white)" mb-4">{t.title}</h2>
+          <p className="text-lg style="color:var(--axis-gray)" mb-2">{t.subtitle}</p>
+          <p className="style="color:var(--axis-gray)"">{t.hint}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
           <Link href={`/${lang}/`}>
-            <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-orange-500">
+            <div className="rounded-2xl p-6 cursor-pointer transition-all" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3)" onMouseEnter="this.style.borderColor='var(--axis-orange)'" onMouseLeave="this.style.borderColor='rgba(74,74,74,0.3)'">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Home className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 rounded-lg" style="background-color:rgba(255,69,0,0.12) flex items-center justify-center flex-shrink-0">
+                  <Home className="w-6 h-6 style="color:var(--axis-orange)"" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-gray-900 mb-2">{t.home}</h3>
-                  <p className="text-sm text-gray-600">{t.homeDesc}</p>
+                  <h3 className="font-bold style="color:var(--axis-white)" mb-2">{t.home}</h3>
+                  <p className="text-sm style="color:var(--axis-gray)"">{t.homeDesc}</p>
                 </div>
               </div>
             </div>
           </Link>
 
           <Link href={`/${lang}/catalog`}>
-            <div className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-orange-500">
+            <div className="rounded-2xl p-6 cursor-pointer transition-all" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3)" onMouseEnter="this.style.borderColor='var(--axis-orange)'" onMouseLeave="this.style.borderColor='rgba(74,74,74,0.3)'">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Search className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 rounded-lg" style="background-color:rgba(255,69,0,0.12) flex items-center justify-center flex-shrink-0">
+                  <Search className="w-6 h-6 style="color:var(--axis-orange)"" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-gray-900 mb-2">{t.catalog}</h3>
-                  <p className="text-sm text-gray-600">{t.catalogDesc}</p>
+                  <h3 className="font-bold style="color:var(--axis-white)" mb-2">{t.catalog}</h3>
+                  <p className="text-sm style="color:var(--axis-gray)"">{t.catalogDesc}</p>
                 </div>
               </div>
             </div>
           </Link>
         </div>
 
-        <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-8 border-2 border-orange-200">
+        <div className="rounded-2xl p-8" style="background:rgba(255,69,0,0.08);border:1px solid rgba(255,69,0,0.25)">
           <div className="flex items-start gap-4">
-            <MessageCircle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
+            <MessageCircle className="w-6 h-6 style="color:var(--axis-orange)" flex-shrink-0 mt-1" />
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">{t.help}</h3>
-              <p className="text-gray-700 mb-4">{t.helpDesc}</p>
+              <h3 className="font-bold style="color:var(--axis-white)" mb-2">{t.help}</h3>
+              <p className="style="color:var(--axis-gray)" mb-4">{t.helpDesc}</p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <a
                   href="https://t.me/kmotorsshop"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-orange-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-orange-700 transition-colors text-center"
+                  className="inline-block font-bold py-2 px-6 rounded-lg text-white" style="background-color:var(--axis-orange) transition-colors text-center"
                 >
                   {t.telegram}
                 </a>
@@ -133,7 +133,7 @@ export default function NotFound() {
                   href="https://www.instagram.com/kmotors.shop/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-white text-orange-600 font-bold py-2 px-6 rounded-lg border-2 border-orange-600 hover:bg-orange-50 transition-colors text-center"
+                  className="inline-block bg-white style="color:var(--axis-orange)" font-bold py-2 px-6 rounded-lg border-2 border-orange-600 hover:bg-orange-50 transition-colors text-center"
                 >
                   {t.instagram}
                 </a>
@@ -143,18 +143,18 @@ export default function NotFound() {
         </div>
 
         <div className="mt-12 pt-8 border-t-2 border-gray-200">
-          <p className="text-gray-600 text-center mb-6">{t.popular}</p>
+          <p className="style="color:var(--axis-gray)" text-center mb-6">{t.popular}</p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link href={`/${lang}/catalog`} className="px-4 py-2 bg-white border-2 border-orange-500 text-orange-600 font-semibold rounded-lg hover:bg-orange-50 transition-colors">
+            <Link href={`/${lang}/catalog`} className="px-4 py-2 bg-white border-2 border-orange-500 style="color:var(--axis-orange)" font-semibold rounded-lg hover:bg-orange-50 transition-colors">
               {t.catalog}
             </Link>
-            <Link href={`/${lang}/buy`} className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-orange-500 hover:text-orange-600 transition-colors">
+            <Link href={`/${lang}/buy`} className="px-4 py-2 bg-white border-2 border-gray-300 style="color:var(--axis-gray)" font-semibold rounded-lg hover:border-orange-500 hover:style="color:var(--axis-orange)" transition-colors">
               {t.howToBuy}
             </Link>
-            <Link href={`/${lang}/`} className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-orange-500 hover:text-orange-600 transition-colors">
+            <Link href={`/${lang}/`} className="px-4 py-2 bg-white border-2 border-gray-300 style="color:var(--axis-gray)" font-semibold rounded-lg hover:border-orange-500 hover:style="color:var(--axis-orange)" transition-colors">
               {t.about}
             </Link>
-            <Link href={`/${lang}/contact`} className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:border-orange-500 hover:text-orange-600 transition-colors">
+            <Link href={`/${lang}/contact`} className="px-4 py-2 bg-white border-2 border-gray-300 style="color:var(--axis-gray)" font-semibold rounded-lg hover:border-orange-500 hover:style="color:var(--axis-orange)" transition-colors">
               {t.contacts}
             </Link>
           </div>

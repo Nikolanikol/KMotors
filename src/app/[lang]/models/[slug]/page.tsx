@@ -84,10 +84,10 @@ export default async function ModelPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <main className="min-h-screen bg-[#F5F7FA]">
+      <main className="min-h-screen">
 
         {/* Hero */}
-        <section className="bg-gradient-to-br from-[#002C5F] to-[#001f45] py-16 px-4">
+        <section className="glass-effect py-16 px-4">
           <div className="max-w-4xl mx-auto text-center space-y-5">
             <p className="text-orange-400 text-sm font-semibold uppercase tracking-widest">
               {isRu ? "Авто из Кореи" : "Cars from Korea"}
@@ -150,25 +150,25 @@ export default async function ModelPage({ params }: Props) {
 
         {/* Description */}
         <section className="max-w-4xl mx-auto px-4 py-12">
-          <p className="text-gray-600 text-lg leading-relaxed text-center">
+          <p className="style="color:var(--axis-gray)" text-lg leading-relaxed text-center">
             {content.description}
           </p>
         </section>
 
         {/* Benefits */}
-        <section className="bg-white py-12 px-4">
+        <section className="py-12 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
               {isRu ? "Почему покупают в K-Axis" : "Why buy from K-Axis"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {content.benefits.map((b, i) => (
-                <div key={i} className="p-6 rounded-2xl bg-[#F5F7FA] border border-gray-100">
+                <div key={i} className="p-6 rounded-2xl  border ">
                   <div className="w-10 h-10 rounded-full bg-[#BB162B]/10 flex items-center justify-center mb-4">
                     <span className="text-[#BB162B] font-bold">{i + 1}</span>
                   </div>
                   <h3 className="font-bold text-[#002C5F] mb-2">{b.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{b.text}</p>
+                  <p className="style="color:var(--axis-gray)" text-sm leading-relaxed">{b.text}</p>
                 </div>
               ))}
             </div>
@@ -176,7 +176,7 @@ export default async function ModelPage({ params }: Props) {
         </section>
 
         {/* Live cars slider */}
-        <section className="py-12 px-4 bg-[#F5F7FA]">
+        <section className="py-12 px-4 ">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl font-bold text-[#002C5F] mb-2 text-center">
               {isRu
@@ -202,7 +202,7 @@ export default async function ModelPage({ params }: Props) {
         </section>
 
         {/* How to buy */}
-        <section className="bg-white py-12 px-4">
+        <section className="py-12 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
               {isRu ? "Как купить" : "How to buy"}
@@ -230,16 +230,16 @@ export default async function ModelPage({ params }: Props) {
         </section>
 
         {/* FAQ */}
-        <section className="py-12 px-4 bg-[#F5F7FA]">
+        <section className="py-12 px-4 ">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
               {isRu ? "Частые вопросы" : "FAQ"}
             </h2>
             <div className="space-y-4">
               {content.faq.map((item, i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div key={i} className="rounded-2xl p-6" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3) shadow-sm">
                   <h3 className="font-bold text-[#002C5F] mb-3">{item.q}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{item.a}</p>
+                  <p className="style="color:var(--axis-gray)" text-sm leading-relaxed">{item.a}</p>
                 </div>
               ))}
             </div>

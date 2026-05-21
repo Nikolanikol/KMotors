@@ -104,7 +104,7 @@ export default function CustomsCalculator({
   ];
 
   return (
-    <div className="mt-6 bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="mt-0 rounded-2xl overflow-hidden" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3)">
       {/* Header с вкладками */}
       <div className="bg-gradient-to-r from-[#002C5F] to-[#003d7a] px-6 pt-4 pb-0">
         <div className="flex items-start justify-between mb-3">
@@ -121,8 +121,8 @@ export default function CustomsCalculator({
               onClick={() => setCountry(tab.id)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                 country === tab.id
-                  ? "bg-white text-[#002C5F]"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                  ? "text-white" style="background-color:var(--axis-orange)"
+                  : "style="color:var(--axis-gray)""
               }`}
             >
               {tab.flag} {tab.label}
@@ -134,10 +134,10 @@ export default function CustomsCalculator({
       <div className="p-6">
         {loading && (
           <div className="space-y-3 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-48" />
-            <div className="h-10 bg-gray-200 rounded" />
-            <div className="h-4 bg-gray-200 rounded w-32" />
-            <div className="h-4 bg-gray-200 rounded w-40" />
+            <div className="h-4 rounded" style="background-color:var(--axis-graphite) w-48" />
+            <div className="h-10 rounded" style="background-color:var(--axis-graphite)" />
+            <div className="h-4 rounded" style="background-color:var(--axis-graphite) w-32" />
+            <div className="h-4 rounded" style="background-color:var(--axis-graphite) w-40" />
           </div>
         )}
 
@@ -166,7 +166,7 @@ export default function CustomsCalculator({
                 </div>
 
                 {/* Форма ввода л.с. */}
-                <div className="bg-gray-50 rounded-xl px-4 py-4 space-y-3">
+                <div className="rounded-xl" style="background-color:var(--axis-graphite) px-4 py-4 space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Мощность двигателя (л.с.)
@@ -238,7 +238,7 @@ export default function CustomsCalculator({
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-400 bg-gray-50 rounded-lg p-3 leading-relaxed">
+                    <p className="text-xs rounded-lg p-3" style="color:var(--axis-gray);background-color:var(--axis-graphite) leading-relaxed">
                       ⚠️ Расчёт ориентировочный для физических лиц по ставкам ЕАЭС. Не учтены: брокерские услуги, хранение, СБКТС, ЭПТС. Актуальные ставки уточняйте у таможенного брокера.
                     </p>
 
@@ -332,7 +332,7 @@ export default function CustomsCalculator({
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-400 bg-gray-50 rounded-lg p-3 leading-relaxed">
+                    <p className="text-xs rounded-lg p-3" style="color:var(--axis-gray);background-color:var(--axis-graphite) leading-relaxed">
                       ⚠️ Расчёт ориентировочный для физических лиц. Максимальный возраст авто — 7 лет, не ниже Euro-5. Не учтены: брокерские услуги, доставка, регистрация. Уточняйте у таможенного брокера.
                     </p>
 
