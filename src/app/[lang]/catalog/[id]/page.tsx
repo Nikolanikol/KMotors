@@ -205,7 +205,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {/* Car title */}
         <div className="mb-5">
           <h1 className="text-2xl lg:text-3xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
@@ -222,9 +222,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         </div>
 
         {/* Two column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
           {/* Left column */}
-          <div className="space-y-5 car-detail-dark">
+          <div className="space-y-5 car-detail-dark min-w-0 overflow-hidden">
             <CarouselLight photos={data.photos} carName={fullCarName} photoLabel={photoLabel} />
             <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
@@ -232,7 +232,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           </div>
 
           {/* Right sticky column */}
-          <div className="lg:sticky lg:top-[88px] h-fit">
+          <div className="lg:sticky lg:top-[88px] h-fit min-w-0">
             <CarDetailSidebar
               data={data}
               id={id}
