@@ -175,7 +175,7 @@ export default function BlogPage({ initialPosts, initialTotal, initialTotalPages
       <section className="bg-gradient-to-br from-[#002C5F] to-[#001f45] py-16 px-4">
         <div className="max-w-5xl mx-auto space-y-4">
           <Breadcrumb items={[
-            { label: "K-Axis", href: `/${i18n.language}/` },
+            { label: "KMotors", href: `/${i18n.language}/` },
             { label: t("blog.title") },
           ]} />
           <h1 className="text-3xl md:text-4xl font-bold text-white text-center">

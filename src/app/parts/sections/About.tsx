@@ -27,7 +27,7 @@ export function About() {
   }, []);
 
   return (
-    <section id="about" ref={sectionRef} className="py-24 ">
+    <section id="about" ref={sectionRef} className="py-24 bg-white">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Image */}
@@ -39,7 +39,7 @@ export function About() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="/warehouse.jpg"
-                alt="K-Axis warehouse"
+                alt="Kmotors warehouse"
                 className="w-full h-[500px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#002C5F]/60 to-transparent" />
@@ -83,10 +83,10 @@ export function About() {
               <span className="text-[#BB162B]">{t("parts.about.titleHighlight")}</span>
             </h2>
 
-            <p className="text-lg mb-6 leading-relaxed" style={{ color: "var(--axis-gray)" }}>
+            <p className="text-gray-600 text-lg mb-6 leading-relaxed">
               {t("parts.about.para1")}
             </p>
-            <p className="mb-8 leading-relaxed" style={{ color: "var(--axis-gray)" }}>
+            <p className="text-gray-600 mb-8 leading-relaxed">
               {t("parts.about.para2")}
             </p>
 
@@ -121,7 +121,7 @@ export function About() {
                 <h3 className="text-lg font-semibold text-[#002C5F] mb-2 group-hover:text-white transition-colors">
                   {t(`parts.about.${key}title`)}
                 </h3>
-                <p className="text-sm transition-colors" style={{ color: "var(--axis-gray)" }}>
+                <p className="text-sm text-gray-600 group-hover:text-white/80 transition-colors">
                   {t(`parts.about.${key}desc`)}
                 </p>
               </div>

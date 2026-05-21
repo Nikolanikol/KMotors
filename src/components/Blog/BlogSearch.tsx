@@ -41,8 +41,7 @@ export default function BlogSearch({ value, onChange }: BlogSearchProps) {
         value={local}
         onChange={(e) => handleChange(e.target.value)}
         placeholder={t("blog.search")}
-        className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm focus:outline-none transition"
-        style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)", color: "var(--axis-white)" }}
+        className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#BB162B] focus:ring-1 focus:ring-[#BB162B]/30 transition"
       />
       {local && (
         <button

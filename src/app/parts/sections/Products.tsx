@@ -65,7 +65,7 @@ export function Products() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-4">
             {t("parts.products.title")}
           </h2>
-          <p className="max-w-2xl mx-auto" style={{ color: "var(--axis-gray)" }}>
+          <p className="text-gray-600 max-w-2xl mx-auto">
             {t("parts.products.subtitle")}
           </p>
         </div>
@@ -75,13 +75,13 @@ export function Products() {
           {products.map((product, index) => (
             <div
               key={product.id}
-              className={` rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 group ${
+              className={`bg-white rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 group ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               }`}
               style={{ transitionDelay: isVisible ? `${index * 100}ms` : "0ms" }}
             >
               {/* Image */}
-              <div className="relative h-56  overflow-hidden">
+              <div className="relative h-56 bg-gray-50 overflow-hidden">
                 <img
                   src={product.image}
                   alt={product.partNumber}
@@ -133,7 +133,7 @@ export function Products() {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <p className="mb-4" style={{ color: "var(--axis-gray)" }}>{t("parts.products.notFoundText")}</p>
+          <p className="text-gray-600 mb-4">{t("parts.products.notFoundText")}</p>
           <Button
             onClick={scrollToContacts}
             variant="outline"

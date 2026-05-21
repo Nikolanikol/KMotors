@@ -28,7 +28,7 @@ export function Catalog() {
   }, []);
 
   return (
-    <section id="catalog" ref={sectionRef} className="py-24 ">
+    <section id="catalog" ref={sectionRef} className="py-24 bg-white">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -42,7 +42,7 @@ export function Catalog() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-4">
             {t("parts.catalog.title")}
           </h2>
-          <p className="max-w-2xl mx-auto" style={{ color: "var(--axis-gray)" }}>
+          <p className="text-gray-600 max-w-2xl mx-auto">
             {t("parts.catalog.subtitle")}
           </p>
         </div>
@@ -54,7 +54,7 @@ export function Catalog() {
             return (
               <div
                 key={key}
-                className={`group  border border-gray-200 rounded-xl p-6 hover:shadow-card-hover hover:-translate-y-2 transition-all duration-300 cursor-pointer ${
+                className={`group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-card-hover hover:-translate-y-2 transition-all duration-300 cursor-pointer ${
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                 }`}
                 style={{ transitionDelay: isVisible ? `${index * 100}ms` : "0ms" }}
@@ -72,7 +72,7 @@ export function Catalog() {
                   {(["i0", "i1", "i2", "i3"] as const).map((item) => (
                     <span
                       key={item}
-                      className="text-xs px-2 py-1 rounded-full" style={{ color: "var(--axis-gray)" }}
+                      className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full"
                     >
                       {t(`parts.catalog.${key}.${item}`)}
                     </span>

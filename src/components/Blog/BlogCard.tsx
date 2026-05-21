@@ -21,10 +21,10 @@ function formatDate(iso: string, lang: string) {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  news: "bg-blue-500/10 text-blue-400",
-  guide: "bg-green-500/10 text-green-400",
-  review: "bg-purple-500/10 text-purple-400",
-  other: "bg-white/5 text-gray-400",
+  news: "bg-blue-100 text-blue-700",
+  guide: "bg-green-100 text-green-700",
+  review: "bg-purple-100 text-purple-700",
+  other: "bg-gray-100 text-gray-600",
 };
 
 export default function BlogCard({ post }: BlogCardProps) {
@@ -34,9 +34,7 @@ export default function BlogCard({ post }: BlogCardProps) {
 
   return (
     <Link href={`/blog/${post.slug}`} className="group block h-full">
-      <article className="flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-200" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,69,0,0.4)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(255,69,0,0.1)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,74,74,0.3)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
+      <article className="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-200 group-hover:border-[#BB162B] group-hover:shadow-md">
         {/* Cover image */}
         {post.cover_url ? (
           <div className="relative w-full h-48 overflow-hidden flex-shrink-0">
@@ -64,19 +62,19 @@ export default function BlogCard({ post }: BlogCardProps) {
             >
               {t(`blog.${post.category}`, post.category)}
             </span>
-            <time className="text-xs" style={{ color: "var(--axis-gray)" }}>
+            <time className="text-xs text-gray-400">
               {formatDate(post.published_at, lang)}
             </time>
           </div>
 
           {/* Title */}
-          <h2 className="text-base font-semibold leading-snug line-clamp-2 transition-colors" style={{ color: "var(--axis-white)" }}>
+          <h2 className="text-base font-semibold text-[#002C5F] leading-snug line-clamp-2 group-hover:text-[#BB162B] transition-colors">
             {post.title}
           </h2>
 
           {/* Excerpt */}
           {post.excerpt && (
-            <p className="text-sm leading-relaxed line-clamp-3 flex-1" style={{ color: "var(--axis-gray)" }}>
+            <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 flex-1">
               {post.excerpt}
             </p>
           )}
@@ -92,7 +90,7 @@ export default function BlogCard({ post }: BlogCardProps) {
                     e.stopPropagation();
                     router.push(`/${lang}/blog/tag/${encodeURIComponent(tag)}`);
                   }}
-                  className="text-xs px-2 py-0.5 rounded-full transition-colors" style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}
+                  className="text-xs px-2 py-0.5 rounded-full bg-[#002C5F]/5 text-[#002C5F] hover:bg-[#BB162B]/10 hover:text-[#BB162B] transition-colors"
                 >
                   #{tag}
                 </button>
@@ -101,8 +99,8 @@ export default function BlogCard({ post }: BlogCardProps) {
           )}
 
           {/* Read more */}
-          <div className="mt-auto pt-3 border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
-            <span className="text-sm font-medium transition-colors" style={{ color: "var(--axis-orange)" }}>
+          <div className="mt-auto pt-3 border-t border-gray-100">
+            <span className="text-sm font-medium text-[#BB162B] group-hover:text-[#9B1220] transition-colors">
               {t("blog.readMore")} →
             </span>
           </div>
