@@ -233,14 +233,6 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
             <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
             <OptionsRow data={data.options} />
-            <CustomsCalculator
-              priceKRW={data?.advertisement?.price * 10000}
-              yearMonth={data?.category?.yearMonth}
-              engineVolume={data?.spec?.displacement ?? 0}
-              fuelType={data?.spec?.fuelName}
-              carId={id}
-              carName={fullCarName}
-            />
           </div>
 
           {/* Right sticky column */}
@@ -252,6 +244,10 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
               krwToRub={rates.krwToRub}
               krwToUsd={rates.krwToUsd}
               lang={lang}
+              priceKRW={data?.advertisement?.price * 10000}
+              yearMonth={data?.category?.yearMonth}
+              engineVolume={data?.spec?.displacement ?? 0}
+              fuelType={data?.spec?.fuelName}
             />
           </div>
         </div>

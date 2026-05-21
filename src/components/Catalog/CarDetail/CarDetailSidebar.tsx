@@ -4,6 +4,7 @@ import { convertNumber } from "@/utils/splitNumber";
 import { Phone, MapPin, User, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CarRequestForm from "./CarRequestForm";
+import CustomsCalculator from "./CustomsCalculator/CustomsCalculator";
 
 interface Props {
   data: any;
@@ -12,9 +13,13 @@ interface Props {
   krwToRub?: number;
   krwToUsd?: number;
   lang: string;
+  priceKRW?: number;
+  yearMonth?: string;
+  engineVolume?: number;
+  fuelType?: string;
 }
 
-export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd, lang }: Props) {
+export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd, lang, priceKRW, yearMonth, engineVolume, fuelType }: Props) {
   const { t } = useTranslation(["common"]);
 
   const krw = data?.advertisement?.price * 10000;
@@ -84,6 +89,20 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
           </div>
         </div>
       </div>
+
+      {/* Customs Calculator */}
+      {priceKRW && (
+        <div className="car-detail-dark">
+          <CustomsCalculator
+            priceKRW={priceKRW}
+            yearMonth={yearMonth || ""}
+            engineVolume={engineVolume ?? 0}
+            fuelType={fuelType}
+            carId={id}
+            carName={carName}
+          />
+        </div>
+      )}
 
       {/* Encar link */}
       <a
