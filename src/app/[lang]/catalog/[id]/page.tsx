@@ -197,7 +197,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   };
 
   return (
-    <div className="bg-gray-200 py-5 rounded-3xl">
+    <div className="py-6 min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
@@ -206,13 +206,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="container mx-auto">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <Header data={data} />
 
-        {/* Шаг 4: форма заявки сразу под ценой */}
-        <div className="mt-4 bg-orange-50 border-2 border-orange-200 rounded-2xl p-6">
-          <p className="font-bold text-lg mb-1">Хочу эту машину</p>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="mt-5 rounded-2xl p-6" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(255,69,0,0.2)" }}>
+          <p className="font-bold text-lg mb-1" style={{ color: "var(--axis-white)" }}>Хочу эту машину</p>
+          <p className="text-sm mb-4" style={{ color: "var(--axis-gray)" }}>
             Менеджер свяжется в течение 1 часа и расскажет об условиях доставки
           </p>
           <CarRequestForm carId={id} carName={`${carName} ${carData}`} />
@@ -238,14 +237,14 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           carName={`${carName} ${carData}`}
         />
         <div className="flex items-center justify-center mt-6">
-          <Button className="py-3 px-6 text-lg" variant="destructive">
-            <a
-              target="_blank"
-              href={"https://www.encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=" + data?.vehicleId}
-            >
-              Просмотреть подробный отчет
-            </a>
-          </Button>
+          <a
+            target="_blank"
+            href={"https://www.encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=" + data?.vehicleId}
+            className="px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200"
+            style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}
+          >
+            Просмотреть подробный отчет на Encar →
+          </a>
         </div>
         <OptionsRow data={data.options} />
       </div>
