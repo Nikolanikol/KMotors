@@ -26,8 +26,8 @@ const CarSlider = async ({ reqString, title }: CarSliderProps) => {
 
   return (
     <div className="px-4 py-2  min-h-80">
-      <h2 className="text-lg md:ml-20  font-bold mb-2 heading-2">{title}</h2>
-      <div className="flex  overflow-x-scroll py-10 gap-5">
+      <h2 className="font-heading text-3xl md:text-4xl font-bold mb-6 px-2" style={{ color: "var(--axis-white)" }}>{title}</h2>
+      <div className="flex overflow-x-auto scrollbar-hide py-4 gap-5 pb-6">
         <AutoSlider data={data} krwToRub={rates.krwToRub} krwToUsd={rates.krwToUsd} />
       </div>
     </div>
