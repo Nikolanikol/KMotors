@@ -1,16 +1,24 @@
 "use client";
-import {
-  FaInstagram,
-  FaWhatsapp,
-  FaTelegramPlane,
-  FaTiktok,
-} from "react-icons/fa";
+import { FaInstagram, FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
 import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+
+const KAxisLogo = () => (
+  <svg width="28" height="28" viewBox="0 0 36 36" fill="none" className="flex-shrink-0">
+    <defs>
+      <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="36" y2="36">
+        <stop offset="0%" stopColor="#FF4500" />
+        <stop offset="100%" stopColor="#FF8C00" />
+      </linearGradient>
+    </defs>
+    <path d="M4 32L16 4H22L14 20L28 4H32L18 20L28 32H22L12 20L8 32H4Z" fill="url(#footerLogoGrad)" strokeWidth="0.5" />
+    <path d="M20 4L32 4L24 14L20 4Z" fill="#FF6B1A" opacity="0.6" />
+  </svg>
+);
 
 export default function Footer() {
   const { t } = useTranslation();
@@ -19,182 +27,172 @@ export default function Footer() {
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const navLinks = [
+    { href: `/${lang}/`, labelKey: "nav.home" },
+    { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
+    { href: `/${lang}/buy`, labelKey: "nav.buy" },
+    { href: `/${lang}/parts`, labelKey: "nav.parts" },
+    { href: `/${lang}/blog`, labelKey: "nav.blog" },
+    { href: `/${lang}/contact`, labelKey: "nav.contact" },
+  ];
 
   return (
-    <footer className="bg-gradient-to-b from-gray-900 to-black text-white mt-20 relative overflow-hidden">
-      {/* Decorative gradient overlay */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+    <footer
+      className="relative border-t mt-0"
+      style={{ backgroundColor: "var(--axis-charcoal)", borderColor: "rgba(74,74,74,0.3)" }}
+    >
+      {/* Top orange line */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[var(--axis-orange)] to-transparent opacity-40" />
 
-      {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {/* Column 1 - Brand */}
-          <div className="space-y-4">
-            <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-orange-500">K</span>Motors
-            </h3>
-            <p className="text-gray-400 text-sm leading-relaxed">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-14 pb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+
+          {/* Brand */}
+          <div>
+            <Link href={`/${lang}/`} className="flex items-center gap-2.5 mb-4 group">
+              <KAxisLogo />
+              <span className="font-heading text-lg" style={{ color: "var(--axis-white)" }}>
+                K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
+              </span>
+            </Link>
+            <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--axis-gray)" }}>
               {t("footer.tagline")}
             </p>
-            <div className="flex items-center gap-2 text-gray-400 text-xs">
-              <MapPin className="w-4 h-4 text-orange-500" />
+            <div className="flex items-center gap-2 text-xs" style={{ color: "var(--axis-gray)" }}>
+              <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--axis-orange)" }} />
               <span>{t("footer.location")}</span>
             </div>
           </div>
 
-          {/* Column 2 - Quick Links */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-bold text-white mb-4">
+          {/* Navigation */}
+          <div>
+            <h4 className="text-sm font-semibold mb-4 tracking-wide" style={{ color: "var(--axis-white)" }}>
               {t("footer.navigation")}
             </h4>
-            <nav className="space-y-2">
-              <Link
-                href={`/${lang}/`}
-                className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
-              >
-                {t("nav.home")}
-              </Link>
-              <Link
-                href={`/${lang}/catalog`}
-                className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
-              >
-                {t("nav.catalog")}
-              </Link>
-              <Link
-                href={`/${lang}/buy`}
-                className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
-              >
-                {t("nav.buy")}
-              </Link>
-              <Link
-                href={`/${lang}/contact`}
-                className="block text-gray-400 hover:text-orange-500 transition-colors text-sm"
-              >
-                {t("nav.contact")}
-              </Link>
+            <nav className="space-y-2.5">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-sm transition-colors duration-200"
+                  style={{ color: "var(--axis-gray)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                >
+                  {t(link.labelKey)}
+                </Link>
+              ))}
             </nav>
           </div>
 
-          {/* Column 3 - Contacts */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-bold text-white mb-4">
+          {/* Contacts */}
+          <div>
+            <h4 className="text-sm font-semibold mb-4 tracking-wide" style={{ color: "var(--axis-white)" }}>
               {t("footer.contacts")}
             </h4>
             <div className="space-y-3">
               <a
                 href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-                className="flex items-center gap-3 text-gray-400 hover:text-orange-500 transition-colors text-sm group"
+                className="flex items-center gap-3 text-sm transition-colors group"
+                style={{ color: "var(--axis-white)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
               >
-                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
+                  style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}>
                   <Phone className="w-4 h-4" />
                 </div>
-                <span>{process.env.NEXT_PUBLIC_NUMBER_PHONE}</span>
+                {process.env.NEXT_PUBLIC_NUMBER_PHONE}
               </a>
               <a
                 href={`mailto:${process.env.NEXT_PUBLIC_EMAIL}`}
-                className="flex items-center gap-3 text-gray-400 hover:text-orange-500 transition-colors text-sm group"
+                className="flex items-center gap-3 text-sm transition-colors"
+                style={{ color: "var(--axis-gray)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
               >
-                <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-orange)" }}>
                   <Mail className="w-4 h-4" />
                 </div>
-                <span>{process.env.NEXT_PUBLIC_EMAIL}</span>
+                {process.env.NEXT_PUBLIC_EMAIL}
               </a>
             </div>
+          </div>
 
-            {/* Social Links */}
-            {/* <div className="pt-4">
-              <h5 className="text-sm font-semibold text-gray-400 mb-3">
-                {t("footer.socialMedia")}
-              </h5>
-              <div className="flex gap-3">
-                <a
-                  href="https://instagram.com/kmotors_parts"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#d084a8] to-[#c27080] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
-                    shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-                    hover:shadow-[0_12px_24px_rgba(208,132,168,0.3),inset_-2px_-2px_8px_rgba(0,0,0,0.2),inset_2px_2px_8px_rgba(255,255,255,0.2)]
-                    hover:-translate-y-1"
-                  aria-label="Instagram"
-                >
-                  <FaInstagram size={18} />
-                </a>
-
-                <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#88b996] to-[#6fa77a] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
-                    shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-                    hover:shadow-[0_12px_24px_rgba(136,185,150,0.3),inset_-2px_-2px_8px_rgba(0,0,0,0.2),inset_2px_2px_8px_rgba(255,255,255,0.2)]
-                    hover:-translate-y-1"
-                  aria-label="WhatsApp"
-                >
-                  <FaWhatsapp size={18} />
-                </a>
-
-                <a
-                  href="https://t.me/caparts"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#7aa8c7] to-[#5a8fb0] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
-                    shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-                    hover:shadow-[0_12px_24px_rgba(122,168,199,0.3),inset_-2px_-2px_8px_rgba(0,0,0,0.2),inset_2px_2px_8px_rgba(255,255,255,0.2)]
-                    hover:-translate-y-1"
-                  aria-label="Telegram"
-                >
-                  <FaTelegramPlane size={18} />
-                </a>
-
-                <a
-                  href="https://www.tiktok.com/@kmotorrss"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white transition-all duration-300 cursor-pointer
-                    shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-                    hover:shadow-[0_12px_24px_rgba(100,100,100,0.3),inset_-2px_-2px_8px_rgba(0,0,0,0.2),inset_2px_2px_8px_rgba(255,255,255,0.2)]
-                    hover:-translate-y-1"
-                  aria-label="TikTok"
-                >
-                  <FaTiktok size={18} />
-                </a>
-              </div>
-            </div> */}
+          {/* Social */}
+          <div>
+            <h4 className="text-sm font-semibold mb-4 tracking-wide" style={{ color: "var(--axis-white)" }}>
+              {t("footer.socialMedia")}
+            </h4>
+            <div className="flex gap-3">
+              <a
+                href="https://t.me/avto_korea_nikolai"
+                target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.15)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.08)"; }}
+                aria-label="Telegram"
+              >
+                <FaTelegramPlane size={18} />
+              </a>
+              <a
+                href={`https://wa.me/${(process.env.NEXT_PUBLIC_NUMBER_PHONE || "").replace(/\D/g, "")}`}
+                target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.15)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.08)"; }}
+                aria-label="WhatsApp"
+              >
+                <FaWhatsapp size={18} />
+              </a>
+              <a
+                href="https://www.instagram.com/kmotors.shop/"
+                target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.15)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.08)"; }}
+                aria-label="Instagram"
+              >
+                <FaInstagram size={18} />
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-800 pt-6 mt-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-gray-400 text-xs text-center md:text-left">
-              © {new Date().getFullYear()} KMotors. {t("footer.copyright")}.
-              <span className="mx-2">|</span>
-              <Link
-                href="/privacy"
-                className="hover:text-orange-500 transition-colors"
-              >
-                {t("footer.privacy")}
-              </Link>
-            </div>
-
-            {/* Scroll to Top Button */}
-            <button
-              onClick={scrollToTop}
-              className="group flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg transition-all text-sm font-semibold shadow-lg hover:shadow-xl"
-              aria-label={t("footer.scrollToTop")}
+        {/* Bottom bar */}
+        <div
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t"
+          style={{ borderColor: "rgba(74,74,74,0.2)" }}
+        >
+          <p className="text-xs tracking-wide" style={{ color: "var(--axis-gray-dim)" }}>
+            © {new Date().getFullYear()} K-Axis Motors. {t("footer.copyright")}.{" "}
+            <Link
+              href={`/${lang}/privacy`}
+              className="ml-1 transition-colors hover:underline"
+              style={{ color: "var(--axis-gray-dim)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray-dim)"; }}
             >
-              <span>{t("footer.scrollToTop")}</span>
-              <ArrowUp className="w-4 h-4 group-hover:-translate-y-1 transition-transform" />
-            </button>
-          </div>
+              {t("footer.privacy")}
+            </Link>
+          </p>
+
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
+            style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.2)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.1)"; (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+          >
+            {t("footer.scrollToTop")}
+            <ArrowUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+          </button>
         </div>
       </div>
-
-      {/* Background decoration */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
     </footer>
   );
 }
