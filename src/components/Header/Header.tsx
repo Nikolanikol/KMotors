@@ -7,14 +7,22 @@ import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Menu, X, Phone, Mail } from "lucide-react";
-
-export interface NavLink {
-  href: string;
-  labelKey: string;
-}
+import { X, Menu } from "lucide-react";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+
+const KAxisLogo = () => (
+  <svg width="32" height="32" viewBox="0 0 36 36" fill="none" className="transition-transform duration-300 group-hover:scale-110 flex-shrink-0">
+    <defs>
+      <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36">
+        <stop offset="0%" stopColor="#FF4500" />
+        <stop offset="100%" stopColor="#FF8C00" />
+      </linearGradient>
+    </defs>
+    <path d="M4 32L16 4H22L14 20L28 4H32L18 20L28 32H22L12 20L8 32H4Z" fill="url(#logoGrad)" strokeWidth="0.5" />
+    <path d="M20 4L32 4L24 14L20 4Z" fill="#FF6B1A" opacity="0.6" />
+  </svg>
+);
 
 export default function Header() {
   const pathname = usePathname();
@@ -22,176 +30,164 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Extract current lang from URL (e.g. /ru/catalog → "ru")
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
-  const navLinks: NavLink[] = [
+  const navLinks = [
     { href: `/${lang}/`, labelKey: "nav.home" },
     { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
-    { href: `/${lang}/contact`, labelKey: "nav.contact" },
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },
+    { href: `/${lang}/contact`, labelKey: "nav.contact" },
   ];
 
-  // Обработка скролла
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isMobileMenuOpen]);
+
+  const isActive = (href: string) => pathname === href || (href !== `/${lang}/` && pathname.startsWith(href));
 
   return (
     <>
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 w-full ${
-          isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white"
+        className={`fixed top-0 left-0 right-0 z-50 h-[68px] flex items-center transition-all duration-300 ${
+          isScrolled ? "glass-effect border-b border-white/5" : "bg-transparent"
         }`}
       >
-        <div className="container mx-auto px-4">
-          {/* Top bar - Contact info */}
-          <div className="hidden lg:flex items-center justify-end gap-6 py-2 border-b border-gray-100 text-sm text-gray-600">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+
+          {/* Logo */}
+          <Link href={`/${lang}/`} className="flex items-center gap-2.5 group">
+            <KAxisLogo />
+            <span className="font-heading text-xl tracking-tight" style={{ color: "var(--axis-white)" }}>
+              K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
+            </span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium tracking-wide transition-colors duration-200"
+                style={{
+                  color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
+                }}
+                onMouseEnter={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
+                onMouseLeave={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+              >
+                {t(link.labelKey)}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right side */}
+          <div className="hidden lg:flex items-center gap-4">
+            <LanguageSwitcher />
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-              className="flex items-center gap-2 hover:text-orange-500 transition-colors"
+              className="text-sm transition-colors"
+              style={{ color: "var(--axis-gray)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
             >
-              <Phone className="w-4 h-4" />
-              <span>{process.env.NEXT_PUBLIC_NUMBER_PHONE}</span>
+              {process.env.NEXT_PUBLIC_NUMBER_PHONE}
             </a>
-            <a
-              href="mailto:info@kmotors.shop"
-              className="flex items-center gap-2 hover:text-orange-500 transition-colors"
-            >
-              <Mail className="w-4 h-4" />
-              <span>{process.env.NEXT_PUBLIC_EMAIL}</span>
-            </a>
-            <LanguageSwitcher />
+            <ContactForm isVisible={false} />
           </div>
 
-          {/* Main header */}
-          <div className="flex justify-between items-center py-4">
-            {/* Logo */}
-            <Link href={`/${lang}/`} className="group">
-              <h1 className="text-3xl font-bold flex items-center gap-1 transition-transform group-hover:scale-105">
-                <span className="text-orange-500">K</span>
-                <span className="text-gray-900">Motors</span>
-              </h1>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`relative px-4 py-2 font-medium transition-all duration-300 rounded-lg ${
-                    pathname === link.href
-                      ? "text-orange-600 bg-orange-50"
-                      : "text-gray-700 hover:text-orange-600 hover:bg-orange-50"
-                  }`}
-                >
-                  {t(link.labelKey)}
-                  {pathname === link.href && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-orange-500 rounded-full"></span>
-                  )}
-                </Link>
-              ))}
-            </nav>
-
-            {/* CTA Button + Mobile Menu Toggle */}
-            <div className="flex items-center gap-4">
-              <div className="lg:hidden">
-                <LanguageSwitcher />
-              </div>
-              <div className="hidden lg:block">
-                <ContactForm isVisible={false} />
-              </div>
-
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label={t("common.menu")}
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-6 h-6 text-gray-900" />
-                ) : (
-                  <Menu className="w-6 h-6 text-gray-900" />
-                )}
-              </button>
-            </div>
+          {/* Mobile right */}
+          <div className="flex lg:hidden items-center gap-3">
+            <LanguageSwitcher />
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6" style={{ color: "var(--axis-white)" }} />
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Menu Dropdown */}
-        <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 border-t border-gray-100 ${
-            isMobileMenuOpen ? "max-h-96" : "max-h-0"
-          }`}
-        >
-          <nav className="container mx-auto px-4 py-4 space-y-2">
+      {/* Mobile fullscreen overlay */}
+      <div
+        className={`fixed inset-0 z-[60] backdrop-blur-xl transition-transform duration-300 lg:hidden ${
+          isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+        style={{
+          backgroundColor: "rgba(10,10,10,0.97)",
+          transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        <div className="flex flex-col h-full p-6">
+          <div className="flex items-center justify-between">
+            <Link href={`/${lang}/`} className="flex items-center gap-2.5" onClick={() => setIsMobileMenuOpen(false)}>
+              <KAxisLogo />
+              <span className="font-heading text-xl" style={{ color: "var(--axis-white)" }}>
+                K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
+              </span>
+            </Link>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2" aria-label="Close menu">
+              <X className="w-6 h-6" style={{ color: "var(--axis-white)" }} />
+            </button>
+          </div>
+
+          <nav className="flex flex-col items-center justify-center flex-1 gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg font-medium transition-all ${
-                  pathname === link.href
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-50 text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                }`}
+                className="text-2xl font-heading transition-colors"
+                style={{ color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-white)" }}
               >
                 {t(link.labelKey)}
               </Link>
             ))}
-
-            {/* Mobile contact info */}
-            <div className="pt-4 border-t border-gray-200 space-y-2">
-              <a
-                href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:text-orange-600 transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                <span className="text-sm">
-                  {process.env.NEXT_PUBLIC_NUMBER_PHONE}
-                </span>
-              </a>
-              <a
-                href="mailto:info@kmotors.shop"
-                className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:text-orange-600 transition-colors"
-              >
-                <Mail className="w-4 h-4" />
-                <span className="text-sm">{process.env.NEXT_PUBLIC_EMAIL}</span>
-              </a>
-            </div>
           </nav>
-        </div>
-      </header>
 
-      {/* Mobile Bottom Navigation (альтернатива) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg">
-        <ToggleGroup
-          type="single"
-          value={pathname}
-          className="grid grid-cols-5 w-full"
-        >
+          <div className="flex flex-col items-center gap-4 pb-8">
+            <a
+              href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
+              className="text-sm"
+              style={{ color: "var(--axis-gray)" }}
+            >
+              {process.env.NEXT_PUBLIC_NUMBER_PHONE}
+            </a>
+            <ContactForm isVisible={false} />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile bottom nav */}
+      <div
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t"
+        style={{ backgroundColor: "var(--axis-charcoal)", borderColor: "var(--axis-gray-dim)" }}
+      >
+        <ToggleGroup type="single" value={pathname} className="grid grid-cols-6 w-full">
           {navLinks.map((link) => (
             <ToggleGroupItem
               key={link.href}
               value={link.href}
-              className={`py-3 px-2 transition-all border-none rounded-none ${
-                pathname === link.href
-                  ? "bg-orange-500 text-white"
-                  : "text-gray-600 hover:bg-orange-50 hover:text-orange-600"
-              }`}
+              className="py-3 px-1 transition-all border-none rounded-none text-xs font-medium"
+              style={{
+                color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
+                backgroundColor: isActive(link.href) ? "rgba(255,69,0,0.1)" : "transparent",
+              }}
               asChild
             >
-              <Link href={link.href} className="text-xs font-medium">
-                {t(link.labelKey)}
-              </Link>
+              <Link href={link.href}>{t(link.labelKey)}</Link>
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
