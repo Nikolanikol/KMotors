@@ -65,19 +65,11 @@ export default function BlogPostPage({ initialPost }: Props) {
 
   if (loading) {
     return (
-      <main className="min-h-screen">
+      <main className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
         <div className="max-w-3xl mx-auto px-4 py-12 animate-pulse space-y-6">
-          <div className="h-6 w-32 bg-gray-200 rounded" />
-          <div className="h-64 bg-gray-200 rounded-2xl" />
-          <div className="space-y-3">
-            <div className="h-8 bg-gray-200 rounded w-3/4" />
-            <div className="h-4 bg-gray-100 rounded w-1/3" />
-          </div>
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-4 bg-gray-100 rounded" />
-            ))}
-          </div>
+          {[32, 64, 48, 32].map((h, i) => (
+            <div key={i} className={`h-${h} rounded-2xl`} style={{ backgroundColor: "var(--axis-charcoal)" }} />
+          ))}
         </div>
       </main>
     );
@@ -85,13 +77,13 @@ export default function BlogPostPage({ initialPost }: Props) {
 
   if (notFound || !post) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
-        <p className="text-xl style="color:var(--axis-white)" font-semibold">404</p>
-        <p className="style="color:var(--axis-gray)"">{t("blog.notFound", "Статья не найдена")}</p>
-        <Link
-          href={`/${lang}/blog`}
-          className="mt-2 inline-flex items-center gap-2 text-sm style="color:var(--axis-orange)"  font-medium"
-        >
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4"
+        style={{ backgroundColor: "var(--axis-black)" }}>
+        <p className="text-xl font-semibold" style={{ color: "var(--axis-white)" }}>404</p>
+        <p style={{ color: "var(--axis-gray)" }}>{t("blog.notFound", "Статья не найдена")}</p>
+        <Link href={`/${lang}/blog`}
+          className="mt-2 inline-flex items-center gap-2 text-sm font-medium"
+          style={{ color: "var(--axis-orange)" }}>
           <ArrowLeft className="w-4 h-4" />
           {t("blog.backToBlog")}
         </Link>
@@ -100,7 +92,7 @@ export default function BlogPostPage({ initialPost }: Props) {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
       {/* Breadcrumb */}
       <div className="glass-effect px-4 pt-4 pb-3">
         <div className="max-w-3xl mx-auto">
@@ -111,91 +103,82 @@ export default function BlogPostPage({ initialPost }: Props) {
           ]} />
         </div>
       </div>
+
       {/* Cover */}
       {post.cover_url ? (
         <div className="w-full h-64 md:h-80 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.cover_url}
-            alt={post.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={post.cover_url} alt={post.title} className="w-full h-full object-cover" />
         </div>
       ) : (
         <div className="w-full h-16 glass-effect" />
       )}
 
       <div className="max-w-3xl mx-auto px-4 py-10">
-        {/* Back link */}
-        <Link
-          href={`/${lang}/blog`}
-          className="inline-flex items-center gap-1.5 text-sm style="color:var(--axis-orange)"  font-medium mb-6 transition-colors"
-        >
+        <Link href={`/${lang}/blog`}
+          className="inline-flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors"
+          style={{ color: "var(--axis-orange)" }}>
           <ArrowLeft className="w-4 h-4" />
           {t("blog.backToBlog")}
         </Link>
 
-        {/* Article header */}
-        <article className="rounded-2xl overflow-hidden" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3)">
+        <article className="rounded-2xl overflow-hidden"
+          style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
           <div className="p-6 md:p-10 space-y-6">
             {/* Meta */}
-            <div className="flex flex-wrap items-center gap-3 text-sm style="color:var(--axis-gray)"">
+            <div className="flex flex-wrap items-center gap-3 text-sm" style={{ color: "var(--axis-gray)" }}>
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 style="color:var(--axis-orange)"" />
+                <Calendar className="w-4 h-4" style={{ color: "var(--axis-orange)" }} />
                 {formatDate(post.published_at, lang)}
               </span>
-              <span className="px-3 py-0.5 rounded-full bg-[#BB162B]/10 style="color:var(--axis-orange)" font-medium text-xs">
+              <span className="px-3 py-0.5 rounded-full font-medium text-xs"
+                style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}>
                 {t(CATEGORY_LABELS[post.category] || "blog.other")}
               </span>
             </div>
 
-            {/* Title */}
-            <h1 className="text-2xl md:text-3xl font-bold style="color:var(--axis-white)" leading-snug">
+            <h1 className="text-2xl md:text-3xl font-bold leading-snug" style={{ color: "var(--axis-white)" }}>
               {post.title}
             </h1>
 
-            {/* Excerpt */}
             {post.excerpt && (
-              <p className="style="color:var(--axis-gray)" text-base leading-relaxed border-l-4 border-[#BB162B] pl-4 italic">
+              <p className="text-base leading-relaxed pl-4 italic"
+                style={{ color: "var(--axis-gray)", borderLeft: "3px solid var(--axis-orange)" }}>
                 {post.excerpt}
               </p>
             )}
 
-            {/* Divider */}
-            <hr className="style="border-color:rgba(74,74,74,0.2)"" />
+            <hr style={{ borderColor: "rgba(74,74,74,0.3)" }} />
 
-            {/* Markdown content */}
             {post.content ? (
-              <div className="prose prose-slate max-w-none prose-headings:style="color:var(--axis-white)" prose-a:style="color:var(--axis-orange)" prose-a:no-underline hover:prose-a:underline prose-strong:style="color:var(--axis-white)" prose-blockquote:border-l-[#BB162B] prose-blockquote:style="color:var(--axis-gray)"">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {post.content}
-                </ReactMarkdown>
+              <div className="prose prose-invert max-w-none prose-a:text-orange-400 prose-headings:text-white prose-strong:text-white">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
               </div>
             ) : (
-              <p className="style="color:var(--axis-gray-dim)" text-sm italic">
+              <p className="text-sm italic" style={{ color: "var(--axis-gray)" }}>
                 {t("blog.noContent", "Содержимое статьи недоступно")}
               </p>
             )}
 
-            {/* CTA — призыв к действию после статьи */}
-            <div className="mt-2 p-6 rounded-2xl" style="background:rgba(255,69,0,0.08);border:1px solid rgba(255,69,0,0.25)">
-              <h3 className="text-lg font-bold style="color:var(--axis-white)" mb-1">
+            {/* CTA */}
+            <div className="mt-2 p-6 rounded-2xl"
+              style={{ background: "rgba(255,69,0,0.08)", border: "1px solid rgba(255,69,0,0.25)" }}>
+              <h3 className="text-lg font-bold mb-1" style={{ color: "var(--axis-white)" }}>
                 Готовы выбрать автомобиль?
               </h3>
-              <p className="text-sm style="color:var(--axis-gray)" mb-4">
+              <p className="text-sm mb-4" style={{ color: "var(--axis-gray)" }}>
                 Более 10 000 автомобилей из Кореи в каталоге. Бесплатная консультация по подбору и таможне.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href={`/${lang}/catalog`}
-                  className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white" style="background-color:var(--axis-orange) transition-colors"
-                >
+                <Link href={`/${lang}/catalog`}
+                  className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white transition-colors"
+                  style={{ backgroundColor: "var(--axis-orange)" }}>
                   Смотреть каталог
                 </Link>
                 <button
                   onClick={() => setCtaOpen((v) => !v)}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl" style="border:1px solid var(--axis-orange);color:var(--axis-orange) transition-colors"
-                >
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-colors"
+                  style={{ border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
                   Получить консультацию
                   {ctaOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
@@ -209,15 +192,13 @@ export default function BlogPostPage({ initialPost }: Props) {
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
-              <div className="pt-4 border-t style="border-color:rgba(74,74,74,0.2)"">
+              <div className="pt-4 border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Tag className="w-4 h-4 style="color:var(--axis-gray-dim)"" />
+                  <Tag className="w-4 h-4" style={{ color: "var(--axis-gray)" }} />
                   {post.tags.map((tag) => (
-                    <a
-                      key={tag}
-                      href={`/${lang}/blog/tag/${encodeURIComponent(tag)}`}
-                      className="text-xs px-2.5 py-1 rounded-full bg-[#002C5F]/5 style="color:var(--axis-white)" hover:bg-[#BB162B]/10 hover:style="color:var(--axis-orange)" transition-colors"
-                    >
+                    <a key={tag} href={`/${lang}/blog/tag/${encodeURIComponent(tag)}`}
+                      className="text-xs px-2.5 py-1 rounded-full transition-colors"
+                      style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}>
                       #{tag}
                     </a>
                   ))}
@@ -227,12 +208,10 @@ export default function BlogPostPage({ initialPost }: Props) {
           </div>
         </article>
 
-        {/* Back button bottom */}
         <div className="mt-8 text-center">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white" style="background-color:var(--axis-orange) transition-colors"
-          >
+          <button onClick={() => router.back()}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white transition-colors"
+            style={{ backgroundColor: "var(--axis-orange)" }}>
             <ArrowLeft className="w-4 h-4" />
             {t("blog.backToBlog")}
           </button>

@@ -150,7 +150,7 @@ export default async function ModelPage({ params }: Props) {
 
         {/* Description */}
         <section className="max-w-4xl mx-auto px-4 py-12">
-          <p className="style="color:var(--axis-gray)" text-lg leading-relaxed text-center">
+          <p className="text-lg leading-relaxed text-center" style={{ color: "var(--axis-gray)" }}>
             {content.description}
           </p>
         </section>
@@ -168,7 +168,7 @@ export default async function ModelPage({ params }: Props) {
                     <span className="text-[#BB162B] font-bold">{i + 1}</span>
                   </div>
                   <h3 className="font-bold text-[#002C5F] mb-2">{b.title}</h3>
-                  <p className="style="color:var(--axis-gray)" text-sm leading-relaxed">{b.text}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>{b.text}</p>
                 </div>
               ))}
             </div>
@@ -237,9 +237,9 @@ export default async function ModelPage({ params }: Props) {
             </h2>
             <div className="space-y-4">
               {content.faq.map((item, i) => (
-                <div key={i} className="rounded-2xl p-6" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3) shadow-sm">
+                <div key={i} className="rounded-2xl p-6" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
                   <h3 className="font-bold text-[#002C5F] mb-3">{item.q}</h3>
-                  <p className="style="color:var(--axis-gray)" text-sm leading-relaxed">{item.a}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>{item.a}</p>
                 </div>
               ))}
             </div>

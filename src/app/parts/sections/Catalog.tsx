@@ -42,7 +42,7 @@ export function Catalog() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-4">
             {t("parts.catalog.title")}
           </h2>
-          <p className="style="color:var(--axis-gray)" max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto" style={{ color: "var(--axis-gray)" }}>
             {t("parts.catalog.subtitle")}
           </p>
         </div>
@@ -72,7 +72,7 @@ export function Catalog() {
                   {(["i0", "i1", "i2", "i3"] as const).map((item) => (
                     <span
                       key={item}
-                      className="text-xs px-2 py-1  style="color:var(--axis-gray)" rounded-full"
+                      className="text-xs px-2 py-1 rounded-full" style={{ color: "var(--axis-gray)" }}
                     >
                       {t(`parts.catalog.${key}.${item}`)}
                     </span>

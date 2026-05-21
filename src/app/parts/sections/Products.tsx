@@ -65,7 +65,7 @@ export function Products() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-4">
             {t("parts.products.title")}
           </h2>
-          <p className="style="color:var(--axis-gray)" max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto" style={{ color: "var(--axis-gray)" }}>
             {t("parts.products.subtitle")}
           </p>
         </div>
@@ -133,7 +133,7 @@ export function Products() {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <p className="style="color:var(--axis-gray)" mb-4">{t("parts.products.notFoundText")}</p>
+          <p className="mb-4" style={{ color: "var(--axis-gray)" }}>{t("parts.products.notFoundText")}</p>
           <Button
             onClick={scrollToContacts}
             variant="outline"

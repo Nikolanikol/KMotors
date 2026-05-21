@@ -104,9 +104,9 @@ export default function CustomsCalculator({
   ];
 
   return (
-    <div className="mt-0 rounded-2xl overflow-hidden" style="background-color:var(--axis-charcoal);border:1px solid rgba(74,74,74,0.3)">
+    <div className="mt-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
       {/* Header с вкладками */}
-      <div className="bg-gradient-to-r from-[#002C5F] to-[#003d7a] px-6 pt-4 pb-0">
+      <div className="px-6 pt-4 pb-0" style={{ background: "linear-gradient(to right, var(--axis-graphite), #1a1a1a)" }}>
         <div className="flex items-start justify-between mb-3">
           <div>
             <h3 className="text-white text-lg font-semibold">🧮 Калькулятор растаможки</h3>
@@ -119,11 +119,11 @@ export default function CustomsCalculator({
             <button
               key={tab.id}
               onClick={() => setCountry(tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                country === tab.id
-                  ? "text-white" style="background-color:var(--axis-orange)"
-                  : "style="color:var(--axis-gray)""
-              }`}
+              className="px-4 py-2 text-sm font-medium rounded-t-lg transition-colors"
+              style={country === tab.id
+                ? { backgroundColor: "var(--axis-orange)", color: "white" }
+                : { color: "var(--axis-gray)" }
+              }
             >
               {tab.flag} {tab.label}
             </button>
@@ -134,10 +134,10 @@ export default function CustomsCalculator({
       <div className="p-6">
         {loading && (
           <div className="space-y-3 animate-pulse">
-            <div className="h-4 rounded" style="background-color:var(--axis-graphite) w-48" />
-            <div className="h-10 rounded" style="background-color:var(--axis-graphite)" />
-            <div className="h-4 rounded" style="background-color:var(--axis-graphite) w-32" />
-            <div className="h-4 rounded" style="background-color:var(--axis-graphite) w-40" />
+            <div className="h-4 w-48 rounded" style={{ backgroundColor: "var(--axis-graphite)" }} />
+            <div className="h-10 rounded" style={{ backgroundColor: "var(--axis-graphite)" }} />
+            <div className="h-4 w-32 rounded" style={{ backgroundColor: "var(--axis-graphite)" }} />
+            <div className="h-4 w-40 rounded" style={{ backgroundColor: "var(--axis-graphite)" }} />
           </div>
         )}
 
@@ -166,7 +166,7 @@ export default function CustomsCalculator({
                 </div>
 
                 {/* Форма ввода л.с. */}
-                <div className="rounded-xl" style="background-color:var(--axis-graphite) px-4 py-4 space-y-3">
+                <div className="rounded-xl px-4 py-4 space-y-3" style={{ backgroundColor: "var(--axis-graphite)" }}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       Мощность двигателя (л.с.)
@@ -238,7 +238,7 @@ export default function CustomsCalculator({
                       </div>
                     </div>
 
-                    <p className="text-xs rounded-lg p-3" style="color:var(--axis-gray);background-color:var(--axis-graphite) leading-relaxed">
+                    <p className="text-xs rounded-lg p-3 leading-relaxed" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-graphite)" }}>
                       ⚠️ Расчёт ориентировочный для физических лиц по ставкам ЕАЭС. Не учтены: брокерские услуги, хранение, СБКТС, ЭПТС. Актуальные ставки уточняйте у таможенного брокера.
                     </p>
 
@@ -332,7 +332,7 @@ export default function CustomsCalculator({
                       </div>
                     </div>
 
-                    <p className="text-xs rounded-lg p-3" style="color:var(--axis-gray);background-color:var(--axis-graphite) leading-relaxed">
+                    <p className="text-xs rounded-lg p-3 leading-relaxed" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-graphite)" }}>
                       ⚠️ Расчёт ориентировочный для физических лиц. Максимальный возраст авто — 7 лет, не ниже Euro-5. Не учтены: брокерские услуги, доставка, регистрация. Уточняйте у таможенного брокера.
                     </p>
 

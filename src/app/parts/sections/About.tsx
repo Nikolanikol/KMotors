@@ -83,10 +83,10 @@ export function About() {
               <span className="text-[#BB162B]">{t("parts.about.titleHighlight")}</span>
             </h2>
 
-            <p className="style="color:var(--axis-gray)" text-lg mb-6 leading-relaxed">
+            <p className="text-lg mb-6 leading-relaxed" style={{ color: "var(--axis-gray)" }}>
               {t("parts.about.para1")}
             </p>
-            <p className="style="color:var(--axis-gray)" mb-8 leading-relaxed">
+            <p className="mb-8 leading-relaxed" style={{ color: "var(--axis-gray)" }}>
               {t("parts.about.para2")}
             </p>
 
@@ -121,7 +121,7 @@ export function About() {
                 <h3 className="text-lg font-semibold text-[#002C5F] mb-2 group-hover:text-white transition-colors">
                   {t(`parts.about.${key}title`)}
                 </h3>
-                <p className="text-sm style="color:var(--axis-gray)" group-hover:text-white/80 transition-colors">
+                <p className="text-sm transition-colors" style={{ color: "var(--axis-gray)" }}>
                   {t(`parts.about.${key}desc`)}
                 </p>
               </div>

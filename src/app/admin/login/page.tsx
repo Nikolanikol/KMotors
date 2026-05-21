@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 w-full max-w-sm">
         {/* Логотип / заголовок */}
         <div className="text-center mb-8">
-          <div className="text-2xl font-bold font-bold mb-1" style="color:var(--axis-orange)">K-Axis</div>
+          <div className="text-2xl font-bold mb-1" style={{ color: "var(--axis-orange)" }}>K-Axis</div>
           <div className="text-sm text-gray-500">Панель управления</div>
         </div>
 
