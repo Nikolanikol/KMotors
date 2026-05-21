@@ -221,15 +221,11 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           </div>
         </div>
 
-        {/* Gallery full width */}
-        <div className="mb-6">
-          <CarouselLight photos={data.photos} carName={fullCarName} photoLabel={photoLabel} />
-        </div>
-
         {/* Two column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
           {/* Left column */}
           <div className="space-y-5 car-detail-dark">
+            <CarouselLight photos={data.photos} carName={fullCarName} photoLabel={photoLabel} />
             <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
             <OptionsRow data={data.options} />
