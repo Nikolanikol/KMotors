@@ -1,29 +1,10 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./node_modules/tw-animate-css/dist/*.js",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ["Inter", "sans-serif"],
-      },
       colors: {
-        "orange-accent": "#FF4500",
-        axis: {
-          black:        "#0A0A0A",
-          charcoal:     "#141414",
-          graphite:     "#1E1E1E",
-          orange:       "#FF4500",
-          "orange-bright": "#FF6B1A",
-          "orange-deep": "#CC3300",
-          amber:        "#FF8C00",
-          white:        "#F5F0EB",
-          gray:         "#8A8A8A",
-          "gray-dim":   "#4A4A4A",
-          silver:       "#C0C0C0",
-        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -68,9 +49,6 @@ module.exports = {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
-      borderColor: {
-        "orange-accent": "#eb6753",
-      },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
@@ -80,8 +58,6 @@ module.exports = {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        card: "0 2px 8px 0 rgb(0 0 0 / 0.08)",
-        "card-hover": "0 8px 24px 0 rgb(0 0 0 / 0.12)",
       },
       keyframes: {
         "accordion-down": {
@@ -96,23 +72,13 @@ module.exports = {
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
-        "slide-up": {
-          from: { opacity: "0", transform: "translateY(30px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-        "fade-in": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "caret-blink": "caret-blink 1.25s ease-out infinite",
-        "slide-up": "slide-up 0.6s ease-out forwards",
-        "fade-in": "fade-in 0.8s ease-out forwards",
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
-};
+  plugins: [require("tailwindcss-animate")],
+}
