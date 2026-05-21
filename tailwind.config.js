@@ -9,10 +9,23 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Noto Sans"', "sans-serif"],
+        sans: ["Inter", "sans-serif"],
       },
       colors: {
-        "orange-accent": "#eb6753",
+        "orange-accent": "#FF4500",
+        axis: {
+          black:        "#0A0A0A",
+          charcoal:     "#141414",
+          graphite:     "#1E1E1E",
+          orange:       "#FF4500",
+          "orange-bright": "#FF6B1A",
+          "orange-deep": "#CC3300",
+          amber:        "#FF8C00",
+          white:        "#F5F0EB",
+          gray:         "#8A8A8A",
+          "gray-dim":   "#4A4A4A",
+          silver:       "#C0C0C0",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

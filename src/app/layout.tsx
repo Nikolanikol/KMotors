@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { cookies } from "next/headers";
 
+const inter = Inter({ subsets: ["latin", "cyrillic"], display: "swap" });
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#002C5F",
+  themeColor: "#FF4500",
 };
 
 export const metadata: Metadata = {
@@ -35,7 +38,7 @@ export default async function RootLayout({
   const lang = cookieStore.get("kmotors-lang")?.value || "ru";
 
   return (
-    <html lang={lang}>
+    <html lang={lang} className={inter.className}>
       <head>
         <meta name="robots" content="index, follow" />
         <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="ru" />
