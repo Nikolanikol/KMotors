@@ -7,23 +7,23 @@ import { ContactForm } from "@/app/parts/sections/ContactForm";
 
 const PARTS_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Оригинальные запчасти из Кореи — Hyundai, Kia, Genesis | KMotors",
+    title: "Оригинальные запчасти из Кореи — Hyundai, Kia, Genesis | K-Axis",
     description: "Оригинальные запчасти из Южной Кореи с доставкой. Двигатели, подвеска, кузов, тормоза для Hyundai, Kia, Genesis. Гарантия качества, прямые поставки.",
   },
   en: {
-    title: "Original Korean Car Parts — Hyundai, Kia, Genesis | KMotors",
+    title: "Original Korean Car Parts — Hyundai, Kia, Genesis | K-Axis",
     description: "Original spare parts from South Korea with delivery. Engines, suspension, body, brakes for Hyundai, Kia, Genesis. Quality guarantee, direct supply.",
   },
   ko: {
-    title: "한국 정품 자동차 부품 — Hyundai, Kia, Genesis | KMotors",
+    title: "한국 정품 자동차 부품 — Hyundai, Kia, Genesis | K-Axis",
     description: "한국에서 직배송 정품 부품. 엔진, 서스펜션, 차체, 브레이크 (Hyundai, Kia, Genesis). 품질 보증, 직접 공급.",
   },
   ka: {
-    title: "კორეული ორიგინალი სათადარიგო ნაწილები — Hyundai, Kia, Genesis | KMotors",
+    title: "კორეული ორიგინალი სათადარიგო ნაწილები — Hyundai, Kia, Genesis | K-Axis",
     description: "კორეიდან ორიგინალი სათადარიგო ნაწილები მიტანით. ძრავი, საკიდი, კუზოვი, სამუხრუჭო სისტემა Hyundai, Kia, Genesis-ისთვის.",
   },
   ar: {
-    title: "قطع غيار كورية أصلية — Hyundai وKia وGenesis | KMotors",
+    title: "قطع غيار كورية أصلية — Hyundai وKia وGenesis | K-Axis",
     description: "قطع غيار أصلية من كوريا الجنوبية مع التوصيل. محركات، تعليق، هيكل، فرامل لـ Hyundai وKia وGenesis. ضمان الجودة، توريد مباشر.",
   },
 };
@@ -79,7 +79,7 @@ export default async function PartsPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `https://kmotors.shop/${lang}/parts` },
     ],
   };
@@ -92,7 +92,7 @@ export default async function PartsPage({ params }: Props) {
     url: `https://kmotors.shop/${lang}/parts`,
     provider: {
       "@type": "Organization",
-      name: "KMotors",
+      name: "K-Axis",
       url: "https://kmotors.shop/",
     },
     serviceType: "Auto Parts Import",
@@ -106,7 +106,7 @@ export default async function PartsPage({ params }: Props) {
       "@type": "Offer",
       availability: "https://schema.org/InStock",
       priceCurrency: "USD",
-      seller: { "@type": "Organization", name: "KMotors" },
+      seller: { "@type": "Organization", name: "K-Axis" },
     },
   };
 

@@ -9,29 +9,29 @@ import CTASection from "@/components/Home/CTASection";
 
 const LANG_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "KMotors — авто из Кореи | Купить Hyundai, Kia, Genesis в СНГ",
+    title: "K-Axis — авто из Кореи | Купить Hyundai, Kia, Genesis в СНГ",
     description:
-      "KMotors — покупка автомобилей из Южной Кореи с доставкой в Россию, Казахстан, Узбекистан. Большой каталог Hyundai, Kia, Genesis. Честная цена, помощь с растаможкой.",
+      "K-Axis — покупка автомобилей из Южной Кореи с доставкой в Россию, Казахстан, Узбекистан. Большой каталог Hyundai, Kia, Genesis. Честная цена, помощь с растаможкой.",
   },
   en: {
-    title: "KMotors — Korean Cars | Buy Hyundai, Kia, Genesis from Korea",
+    title: "K-Axis — Korean Cars | Buy Hyundai, Kia, Genesis from Korea",
     description:
-      "KMotors — purchase Korean cars from South Korea with delivery to Russia, Kazakhstan, Uzbekistan, Georgia. Wide catalog of Hyundai, Kia, Genesis. Fair prices, customs assistance.",
+      "K-Axis — purchase Korean cars from South Korea with delivery to Russia, Kazakhstan, Uzbekistan, Georgia. Wide catalog of Hyundai, Kia, Genesis. Fair prices, customs assistance.",
   },
   ko: {
-    title: "KMotors — 한국 자동차 | Hyundai, Kia, Genesis 구매",
+    title: "K-Axis — 한국 자동차 | Hyundai, Kia, Genesis 구매",
     description:
-      "KMotors — 한국에서 러시아, 카자흐스탄, 우즈베키스탄으로 자동차 수출. 현대, 기아, 제네시스 대형 카탈로그. 합리적인 가격.",
+      "K-Axis — 한국에서 러시아, 카자흐스탄, 우즈베키스탄으로 자동차 수출. 현대, 기아, 제네시스 대형 카탈로그. 합리적인 가격.",
   },
   ka: {
-    title: "KMotors — კორეული ავტომობილები | Hyundai, Kia, Genesis",
+    title: "K-Axis — კორეული ავტომობილები | Hyundai, Kia, Genesis",
     description:
-      "KMotors — სამხრეთ კორეიდან ავტომობილების შეძენა საქართველოში მიტანით. Hyundai, Kia, Genesis — საუკეთესო ფასები.",
+      "K-Axis — სამხრეთ კორეიდან ავტომობილების შეძენა საქართველოში მიტანით. Hyundai, Kia, Genesis — საუკეთესო ფასები.",
   },
   ar: {
-    title: "KMotors — سيارات كورية | اشتر Hyundai وKia وGenesis",
+    title: "K-Axis — سيارات كورية | اشتر Hyundai وKia وGenesis",
     description:
-      "KMotors — شراء سيارات من كوريا الجنوبية مع التوصيل. كتالوج واسع من Hyundai وKia وGenesis. أسعار عادلة، مساعدة في الجمارك.",
+      "K-Axis — شراء سيارات من كوريا الجنوبية مع التوصيل. كتالوج واسع من Hyundai وKia وGenesis. أسعار عادلة، مساعدة في الجمارك.",
   },
 };
 
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: meta.title,
       description: meta.description,
       url: `https://kmotors.shop/${lang}/`,
-      siteName: "KMotors",
+      siteName: "K-Axis",
       type: "website",
       locale: lang === "ko" ? "ko_KR" : lang === "ar" ? "ar_SA" : lang === "ka" ? "ka_GE" : lang === "en" ? "en_US" : "ru_RU",
       images: [
@@ -89,7 +89,7 @@ export default async function Home({ params }: Props) {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "KMotors",
+    name: "K-Axis",
     url: "https://kmotors.shop/",
     description: meta.description,
     inLanguage: lang,
@@ -107,14 +107,14 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
     ],
   };
 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
-    name: "KMotors",
+    name: "K-Axis",
     url: "https://kmotors.shop",
     logo: "https://kmotors.shop/favicon_io/android-chrome-512x512.png",
     image: "https://kmotors.shop/preview/preview.png",

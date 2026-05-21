@@ -14,11 +14,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "KMotors — авто из Кореи | Hyundai, Kia, Genesis",
-    template: "%s | KMotors",
+    default: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
+    template: "%s | K-Axis",
   },
   description:
-    "KMotors (кмоторс) — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
+    "K-Axis (кмоторс) — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
   keywords: [
     "авто из Кореи", "купить авто из Кореи", "kmotors",
     "Hyundai из Кореи", "Kia из Кореи", "Genesis из Кореи",
@@ -56,7 +56,7 @@ export default async function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": ["LocalBusiness", "AutoDealer"],
-              name: "KMotors",
+              name: "K-Axis",
               url: "https://kmotors.shop/",
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
               image: "https://kmotors.shop/preview/preview.png",

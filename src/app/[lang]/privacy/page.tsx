@@ -248,13 +248,13 @@ export default async function PrivacyPage({ params }: Props) {
       </section>
 
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <article className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-10 space-y-8">
+        <article className="rounded-2xl p-6 md:p-10 space-y-6" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
           {content.sections.map((section) => (
-            <section key={section.title} className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#002C5F]">
+            <section key={section.title} className="space-y-2 pb-6 border-b last:border-0 last:pb-0" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
+              <h2 className="text-base font-semibold" style={{ color: "var(--axis-white)" }}>
                 {section.title}
               </h2>
-              <p className="text-gray-600 leading-relaxed text-sm">
+              <p className="leading-relaxed text-sm" style={{ color: "var(--axis-gray)" }}>
                 {section.text}
               </p>
             </section>

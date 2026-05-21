@@ -3,24 +3,24 @@ import BuyClientPage from "@/app/buy/BuyClientPage";
 
 const BUY_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Как купить авто из Кореи — пошаговая инструкция | KMotors",
-    description: "Пошаговая инструкция по покупке автомобиля из Южной Кореи через KMotors. Выбор, документы, оплата, доставка, таможня.",
+    title: "Как купить авто из Кореи — пошаговая инструкция | K-Axis",
+    description: "Пошаговая инструкция по покупке автомобиля из Южной Кореи через K-Axis. Выбор, документы, оплата, доставка, таможня.",
   },
   en: {
-    title: "How to Buy a Car from Korea — Step by Step | KMotors",
-    description: "Step-by-step guide to buying a car from South Korea through KMotors. Selection, documents, payment, delivery, customs.",
+    title: "How to Buy a Car from Korea — Step by Step | K-Axis",
+    description: "Step-by-step guide to buying a car from South Korea through K-Axis. Selection, documents, payment, delivery, customs.",
   },
   ko: {
-    title: "한국에서 자동차 구매 방법 — 단계별 가이드 | KMotors",
-    description: "KMotors를 통해 한국에서 자동차를 구매하는 단계별 가이드. 선택, 서류, 결제, 배송, 세관.",
+    title: "한국에서 자동차 구매 방법 — 단계별 가이드 | K-Axis",
+    description: "K-Axis를 통해 한국에서 자동차를 구매하는 단계별 가이드. 선택, 서류, 결제, 배송, 세관.",
   },
   ka: {
-    title: "კორეიდან ავტომობილის შეძენა — ნაბიჯ-ნაბიჯ | KMotors",
-    description: "KMotors-ის მეშვეობით კორეიდან ავტომობილის შეძენის სრული ინსტრუქცია. შერჩევა, დოკუმენტები, გადახდა, მიტანა.",
+    title: "კორეიდან ავტომობილის შეძენა — ნაბიჯ-ნაბიჯ | K-Axis",
+    description: "K-Axis-ის მეშვეობით კორეიდან ავტომობილის შეძენის სრული ინსტრუქცია. შერჩევა, დოკუმენტები, გადახდა, მიტანა.",
   },
   ar: {
-    title: "كيفية شراء سيارة من كوريا — خطوة بخطوة | KMotors",
-    description: "دليل خطوة بخطوة لشراء سيارة من كوريا الجنوبية عبر KMotors. الاختيار والوثائق والدفع والتوصيل والجمارك.",
+    title: "كيفية شراء سيارة من كوريا — خطوة بخطوة | K-Axis",
+    description: "دليل خطوة بخطوة لشراء سيارة من كوريا الجنوبية عبر K-Axis. الاختيار والوثائق والدفع والتوصيل والجمارك.",
   },
 };
 
@@ -95,7 +95,7 @@ export default async function BuyPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: BUY_LABEL[lang] || "How to Buy", item: `https://kmotors.shop/${lang}/buy` },
     ],
   };

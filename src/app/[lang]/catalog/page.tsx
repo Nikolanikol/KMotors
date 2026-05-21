@@ -10,28 +10,28 @@ export const revalidate = 300;
 
 const CATALOG_META: Record<string, { default: string; withBrand: string; description: string }> = {
   ru: {
-    default: "Каталог авто из Кореи — Hyundai, Kia, Genesis | KMotors",
-    withBrand: "Купить {brand} из Кореи — каталог авто | KMotors",
+    default: "Каталог авто из Кореи — Hyundai, Kia, Genesis | K-Axis",
+    withBrand: "Купить {brand} из Кореи — каталог авто | K-Axis",
     description: "Каталог корейских автомобилей из Южной Кореи: Hyundai, Kia, Genesis. Актуальные цены, фото, характеристики. Доставка в Россию, Казахстан, Узбекистан, Грузию.",
   },
   en: {
-    default: "Korean Cars Catalog — Hyundai, Kia, Genesis | KMotors",
-    withBrand: "Buy {brand} from Korea — car catalog | KMotors",
+    default: "Korean Cars Catalog — Hyundai, Kia, Genesis | K-Axis",
+    withBrand: "Buy {brand} from Korea — car catalog | K-Axis",
     description: "Catalog of Korean cars from South Korea: Hyundai, Kia, Genesis. Current prices, photos, specs. Delivery to Russia, Kazakhstan, Uzbekistan, Georgia.",
   },
   ko: {
-    default: "한국 자동차 카탈로그 — Hyundai, Kia, Genesis | KMotors",
-    withBrand: "한국에서 {brand} 구매 — 자동차 카탈로그 | KMotors",
+    default: "한국 자동차 카탈로그 — Hyundai, Kia, Genesis | K-Axis",
+    withBrand: "한국에서 {brand} 구매 — 자동차 카탈로그 | K-Axis",
     description: "한국 자동차 카탈로그: Hyundai, Kia, Genesis. 최신 가격, 사진, 사양. 러시아, 카자흐스탄, 우즈베키스탄, 조지아 배송.",
   },
   ka: {
-    default: "კორეული ავტომობილების კატალოგი — Hyundai, Kia, Genesis | KMotors",
-    withBrand: "შეიძინეთ {brand} კორეიდან — კატალოგი | KMotors",
+    default: "კორეული ავტომობილების კატალოგი — Hyundai, Kia, Genesis | K-Axis",
+    withBrand: "შეიძინეთ {brand} კორეიდან — კატალოგი | K-Axis",
     description: "კორეული ავტომობილების კატალოგი: Hyundai, Kia, Genesis. აქტუალური ფასები, ფოტოები, მახასიათებლები. მიტანა საქართველოში.",
   },
   ar: {
-    default: "كتالوج السيارات الكورية — Hyundai وKia وGenesis | KMotors",
-    withBrand: "اشتر {brand} من كوريا — كتالوج السيارات | KMotors",
+    default: "كتالوج السيارات الكورية — Hyundai وKia وGenesis | K-Axis",
+    withBrand: "اشتر {brand} من كوريا — كتالوج السيارات | K-Axis",
     description: "كتالوج السيارات الكورية من كوريا الجنوبية: Hyundai وKia وGenesis. أسعار حالية، صور، مواصفات. التوصيل إلى روسيا وكازاخستان وأوزبكستان.",
   },
 };
@@ -146,7 +146,7 @@ export default async function CatalogPage({ params, searchParams }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
     ],
   };
