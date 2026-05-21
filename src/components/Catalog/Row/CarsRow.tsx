@@ -17,8 +17,8 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   ]);
 
   return (
-    <div className="px-8">
-      <div className=" grid grid-cols-1 md:grid-cols-2   items-start gap-4 min-h-[80vh]">
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-5 min-h-[80vh]">
         {data &&
           data.length > 0 &&
           data.map(
@@ -50,7 +50,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
             )
           )}
       </div>
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2 mt-8 pb-8">
         <Pagination count={count} />
       </div>
     </div>
