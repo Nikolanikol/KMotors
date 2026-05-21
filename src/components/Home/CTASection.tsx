@@ -5,11 +5,13 @@ import { useTranslation } from "react-i18next";
 export default function CTASection() {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone.trim()) return;
+    if (!phone.trim() || loading) return;
+    setLoading(true);
     try {
       await fetch("/api/telegram", {
         method: "POST",
@@ -17,6 +19,7 @@ export default function CTASection() {
         body: JSON.stringify({ name: "CTA форма", phone, source: "header" }),
       });
     } catch {}
+    setLoading(false);
     setSubmitted(true);
     setPhone("");
   };
@@ -56,12 +59,16 @@ export default function CTASection() {
             />
             <button
               type="submit"
-              className="px-8 py-4 font-semibold rounded-full transition-all duration-300 whitespace-nowrap"
+              disabled={loading}
+              className="px-8 py-4 font-semibold rounded-full transition-all duration-300 whitespace-nowrap flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange-bright)"; }}
+              onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange-bright)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)"; }}
             >
-              Отправить
+              {loading && (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {loading ? "Отправка..." : "Отправить"}
             </button>
           </form>
         ) : (
