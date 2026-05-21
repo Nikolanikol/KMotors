@@ -132,52 +132,40 @@ export default function OptionsRow({ data }: OptionsRowProps) {
   const standardGroups = groupOptions(standardOptions);
   const choiceGroups = groupOptions(choiceOptions);
 
-  return (
-    <div className="space-y-6 mt-8">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white shadow-lg">
-        <h2 className="text-3xl font-bold mb-2">{t("car.specs")}</h2>
-        <p className="text-orange-100">
-          {t("car.totalOptions")}: {standardOptions.length + choiceOptions.length}
-        </p>
-      </div>
+  const cardStyle = { backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" };
+  const triggerStyle = { color: "var(--axis-white)" };
 
+  return (
+    <div className="space-y-3">
       {/* Standard Options */}
-      <div className="bg-white rounded-2xl border-2 border-orange-100 shadow-md overflow-hidden">
+      <div className="rounded-2xl overflow-hidden" style={cardStyle}>
         <Accordion type="single" defaultValue="standard-options" collapsible>
           <AccordionItem value="standard-options" className="border-0">
-            <AccordionTrigger className="px-8 py-6 hover:bg-orange-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-xl font-bold text-gray-900">
+            <AccordionTrigger className="px-5 py-4 hover:no-underline" style={triggerStyle}>
+              <div className="flex items-center gap-2">
+                <span className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(to bottom, var(--axis-orange), var(--axis-amber))", display: "inline-block" }} />
+                <span className="text-sm font-semibold" style={{ color: "var(--axis-white)" }}>
                   {t("car.standardOptions")}
                 </span>
-                <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)" }}>
                   {standardOptions.length}
                 </span>
               </div>
             </AccordionTrigger>
 
-            <AccordionContent className="px-8 py-6 bg-gradient-to-b from-green-50 to-white border-t-2 border-green-200">
-              <div className="space-y-6">
+            <AccordionContent className="px-5 pb-4 border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
+              <div className="space-y-4 pt-4">
                 {standardGroups.map(([category, options]) => (
                   <div key={category}>
-                    <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-1 h-5 bg-gradient-to-b from-green-500 to-green-400 rounded-full"></div>
+                    <p className="text-xs font-medium mb-2 uppercase tracking-wider" style={{ color: "var(--axis-gray)" }}>
                       {t(`car.optionCategory.${category}`)}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {options.map((option) => (
-                        <div
-                          key={option.code}
-                          className="flex items-center gap-3 bg-white border-2 border-green-200 rounded-lg p-4 hover:shadow-md hover:border-green-400 transition-all"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                            <FaCheck className="text-green-600 text-sm" />
-                          </div>
-                          <span className="text-gray-900 font-medium flex-1">
-                            {option.translatedValue}
-                          </span>
+                        <div key={option.code} className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                          style={{ backgroundColor: "var(--axis-graphite)" }}>
+                          <FaCheck className="text-xs flex-shrink-0" style={{ color: "#22c55e" }} />
+                          <span className="text-xs" style={{ color: "var(--axis-white)" }}>{option.translatedValue}</span>
                         </div>
                       ))}
                     </div>
@@ -191,41 +179,34 @@ export default function OptionsRow({ data }: OptionsRowProps) {
 
       {/* Choice Options */}
       {choiceOptions.length > 0 && (
-        <div className="bg-white rounded-2xl border-2 border-orange-100 shadow-md overflow-hidden">
+        <div className="rounded-2xl overflow-hidden" style={cardStyle}>
           <Accordion type="single" collapsible>
             <AccordionItem value="choice-options" className="border-0">
-              <AccordionTrigger className="px-8 py-6 hover:bg-orange-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="text-xl font-bold text-gray-900">
+              <AccordionTrigger className="px-5 py-4 hover:no-underline" style={triggerStyle}>
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: "linear-gradient(to bottom, var(--axis-orange), var(--axis-amber))", display: "inline-block" }} />
+                  <span className="text-sm font-semibold" style={{ color: "var(--axis-white)" }}>
                     {t("car.choiceOptions")}
                   </span>
-                  <span className="ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)" }}>
                     {choiceOptions.length}
                   </span>
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-8 py-6 bg-gradient-to-b from-blue-50 to-white border-t-2 border-blue-200">
-                <div className="space-y-6">
+              <AccordionContent className="px-5 pb-4 border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
+                <div className="space-y-4 pt-4">
                   {choiceGroups.map(([category, options]) => (
                     <div key={category}>
-                      <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <div className="w-1 h-5 bg-gradient-to-b from-blue-500 to-blue-400 rounded-full"></div>
+                      <p className="text-xs font-medium mb-2 uppercase tracking-wider" style={{ color: "var(--axis-gray)" }}>
                         {t(`car.optionCategory.${category}`)}
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {options.map((option) => (
-                          <div
-                            key={option.code}
-                            className="flex items-center gap-3 bg-white border-2 border-blue-200 rounded-lg p-4 hover:shadow-md hover:border-blue-400 transition-all"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                              <FaCheck className="text-blue-600 text-sm" />
-                            </div>
-                            <span className="text-gray-900 font-medium flex-1">
-                              {option.translatedValue}
-                            </span>
+                          <div key={option.code} className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                            style={{ backgroundColor: "var(--axis-graphite)" }}>
+                            <FaCheck className="text-xs flex-shrink-0" style={{ color: "var(--axis-orange)" }} />
+                            <span className="text-xs" style={{ color: "var(--axis-white)" }}>{option.translatedValue}</span>
                           </div>
                         ))}
                       </div>
@@ -238,30 +219,6 @@ export default function OptionsRow({ data }: OptionsRowProps) {
         </div>
       )}
 
-      {/* Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-xl p-6 text-center">
-          <p className="text-sm font-semibold text-gray-600 mb-2 uppercase">
-            {t("car.standardEquipment")}
-          </p>
-          <p className="text-4xl font-bold text-green-600">
-            {standardOptions.length}
-          </p>
-          <p className="text-xs text-gray-600 mt-2">{t("car.optionsIncluded")}</p>
-        </div>
-
-        {choiceOptions.length > 0 && (
-          <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-6 text-center">
-            <p className="text-sm font-semibold text-gray-600 mb-2 uppercase">
-              {t("car.additionalOptions")}
-            </p>
-            <p className="text-4xl font-bold text-blue-600">
-              {choiceOptions.length}
-            </p>
-            <p className="text-xs text-gray-600 mt-2">{t("car.optionsAvailable")}</p>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
