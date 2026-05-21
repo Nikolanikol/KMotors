@@ -2,113 +2,63 @@
 import { Copy, Gauge, FileText, Hash } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+
 interface VinMileageSectionProps {
   vin: string;
   vehicleNo: string;
   mileage: number;
 }
 
-function VinMileageSection({
-  vin,
-  vehicleNo,
-  mileage,
-}: VinMileageSectionProps) {
+function VinMileageSection({ vin, vehicleNo, mileage }: VinMileageSectionProps) {
   const [copiedVin, setCopiedVin] = useState(false);
   const [copiedNo, setCopiedNo] = useState(false);
   const { t } = useTranslation("common");
 
-  const copyToClipboard = (text: string, isVin: boolean) => {
+  const copy = (text: string, isVin: boolean) => {
     navigator.clipboard.writeText(text);
-    if (isVin) {
-      setCopiedVin(true);
-      setTimeout(() => setCopiedVin(false), 2000);
-    } else {
-      setCopiedNo(true);
-      setTimeout(() => setCopiedNo(false), 2000);
-    }
+    if (isVin) { setCopiedVin(true); setTimeout(() => setCopiedVin(false), 2000); }
+    else { setCopiedNo(true); setTimeout(() => setCopiedNo(false), 2000); }
   };
 
+  const Card = ({ icon: Icon, label, value, onCopy, copied }: { icon: any; label: string; value: string; onCopy?: () => void; copied?: boolean }) => (
+    <div className="rounded-xl p-4 group" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}>
+          <Icon className="w-4 h-4" />
+        </div>
+        <span className="text-xs font-medium" style={{ color: "var(--axis-gray)" }}>{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <code className="font-mono text-sm font-semibold flex-1 break-all" style={{ color: "var(--axis-white)" }}>
+          {value || t("common.notSpecified")}
+        </code>
+        {onCopy && (
+          <button onClick={onCopy} className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: "rgba(255,69,0,0.1)" }}>
+            <Copy className="w-3.5 h-3.5" style={{ color: copied ? "#22c55e" : "var(--axis-orange)" }} />
+          </button>
+        )}
+      </div>
+      {copied && <p className="text-xs mt-1" style={{ color: "#22c55e" }}>{t("common.copied")}</p>}
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-      {/* VIN */}
-      <div className="bg-white rounded-2xl p-5 border-2 border-orange-100 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-            <FileText className="w-5 h-5 text-orange-600" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <Card icon={FileText} label={t("car.vinCode")} value={vin} onCopy={() => copy(vin || "", true)} copied={copiedVin} />
+      <Card icon={Hash} label={t("car.vehicleNumber")} value={vehicleNo} onCopy={() => copy(vehicleNo || "", false)} copied={copiedNo} />
+      <div className="rounded-xl p-4" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))" }}>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+            <Gauge className="w-4 h-4 text-white" />
           </div>
-          <h3 className="font-bold text-gray-900 text-sm">{t("car.vinCode")}</h3>
+          <span className="text-xs font-medium text-white/80">{t("car.mileage")}</span>
         </div>
-        <div className="flex items-center gap-2 group">
-          <code className="font-mono text-gray-800 font-semibold tracking-wider text-sm break-all flex-1">
-            {vin || t("common.notSpecified")}
-          </code>
-          <button
-            onClick={() => copyToClipboard(vin || "", true)}
-            className="p-2 hover:bg-orange-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-            title={t("car.vinCode")}
-          >
-            <Copy
-              className={`w-4 h-4 transition-colors ${
-                copiedVin ? "text-green-500" : "text-orange-600"
-              }`}
-            />
-          </button>
+        <div className="flex items-baseline gap-1">
+          <p className="text-2xl font-bold text-white">{mileage?.toLocaleString()}</p>
+          <p className="text-white/70 text-sm">{t("common.km")}</p>
         </div>
-        {copiedVin && (
-          <p className="text-xs text-green-600 mt-2 font-medium">
-            {t("common.copied")}
-          </p>
-        )}
-      </div>
-
-      {/* Vehicle Number */}
-      <div className="bg-white rounded-2xl p-5 border-2 border-orange-100 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-            <Hash className="w-5 h-5 text-orange-600" />
-          </div>
-          <h3 className="font-bold text-gray-900 text-sm">{t("car.vehicleNumber")}</h3>
-        </div>
-        <div className="flex items-center gap-2 group">
-          <code className="font-mono text-gray-800 font-semibold tracking-wider text-sm flex-1">
-            {vehicleNo || t("common.notSpecified")}
-          </code>
-          <button
-            onClick={() => copyToClipboard(vehicleNo || "", false)}
-            className="p-2 hover:bg-orange-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-            title={t("car.vehicleNumber")}
-          >
-            <Copy
-              className={`w-4 h-4 transition-colors ${
-                copiedNo ? "text-green-500" : "text-orange-600"
-              }`}
-            />
-          </button>
-        </div>
-        {copiedNo && (
-          <p className="text-xs text-green-600 mt-2 font-medium">
-            {t("common.copied")}
-          </p>
-        )}
-      </div>
-
-      {/* Mileage */}
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-            <Gauge className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="font-bold text-white text-sm">{t("car.mileage")}</h3>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-bold text-white">
-            {mileage.toLocaleString()}
-          </p>
-          <p className="text-white/80 font-medium">{t("common.km")}</p>
-        </div>
-        <p className="text-white/70 text-xs mt-3">
-          {t("car.mileageNote")}
-        </p>
+        <p className="text-white/60 text-xs mt-1">{t("car.mileageNote")}</p>
       </div>
     </div>
   );

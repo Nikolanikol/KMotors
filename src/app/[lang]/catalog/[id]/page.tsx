@@ -1,16 +1,16 @@
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import DetailInfo from "@/components/Catalog/CarDetail/DetailInfo";
-import Header from "@/components/Catalog/CarDetail/Header";
 import OptionsRow from "@/components/Catalog/CarDetail/OptionsRow/OptionsRow";
 import CustomsCalculator from "@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator";
-import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
 import StickyMobileCTA from "@/components/Catalog/CarDetail/StickyMobileCTA";
 import CarViewTracker from "@/components/Catalog/CarDetail/CarViewTracker";
-import { Button } from "@/components/ui/button";
+import CarDetailSidebar from "@/components/Catalog/CarDetail/CarDetailSidebar";
 import { FC } from "react";
 import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { translateGenerationRow } from "@/utils/translateGenerationRow";
 
 interface PageProps {
   params: Promise<{ lang: string; id: string }>;
@@ -124,6 +124,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     data.category.gradeEnglishName,
   ].join(" ");
   const carData = formatDate(data?.category?.yearMonth);
+  const rates = await getCurrencyRates();
   const mainPhoto = data?.photos?.[0]?.location
     ? `https://ci.encar.com${data.photos[0].location}`
     : "/noimage.png";
@@ -196,62 +197,68 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     },
   };
 
+  const fullCarName = `${carName} ${carData}`;
+  const photoLabel = ({ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<string, string>)[lang] || "photo";
+
   return (
-    <div className="pb-6 pt-8 min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <Header data={data} />
+    <div className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-        <div className="mt-5 rounded-2xl p-6" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(255,69,0,0.2)" }}>
-          <p className="font-bold text-lg mb-1" style={{ color: "var(--axis-white)" }}>Хочу эту машину</p>
-          <p className="text-sm mb-4" style={{ color: "var(--axis-gray)" }}>
-            Менеджер свяжется в течение 1 часа и расскажет об условиях доставки
-          </p>
-          <CarRequestForm carId={id} carName={`${carName} ${carData}`} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Car title */}
+        <div className="mb-5">
+          <h1 className="text-2xl lg:text-3xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
+            {data.category.manufacturerName}{" "}
+            <span style={{ color: "var(--axis-orange)" }}>{data.category.modelName}</span>{" "}
+            {data.category.gradeName}
+          </h1>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}>
+              {carData}
+            </span>
+            <span className="text-xs" style={{ color: "var(--axis-gray)" }}>ID: {id}</span>
+          </div>
         </div>
 
-        <VinMileageSection
-          vin={data.vin}
-          vehicleNo={data.vehicleNo}
-          mileage={data.spec.mileage}
-        />
-        <CarouselLight
-          photos={data.photos}
-          carName={`${carName} ${carData}`}
-          photoLabel={{ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" }[lang] || "photo"}
-        />
-        <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
-        <CustomsCalculator
-          priceKRW={data?.advertisement?.price * 10000}
-          yearMonth={data?.category?.yearMonth}
-          engineVolume={data?.spec?.displacement ?? 0}
-          fuelType={data?.spec?.fuelName}
-          carId={id}
-          carName={`${carName} ${carData}`}
-        />
-        <div className="flex items-center justify-center mt-6">
-          <a
-            target="_blank"
-            href={"https://www.encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=" + data?.vehicleId}
-            className="px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200"
-            style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}
-          >
-            Просмотреть подробный отчет на Encar →
-          </a>
+        {/* Gallery full width */}
+        <div className="mb-6">
+          <CarouselLight photos={data.photos} carName={fullCarName} photoLabel={photoLabel} />
         </div>
-        <OptionsRow data={data.options} />
+
+        {/* Two column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+          {/* Left column */}
+          <div className="space-y-5 car-detail-dark">
+            <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
+            <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
+            <OptionsRow data={data.options} />
+            <CustomsCalculator
+              priceKRW={data?.advertisement?.price * 10000}
+              yearMonth={data?.category?.yearMonth}
+              engineVolume={data?.spec?.displacement ?? 0}
+              fuelType={data?.spec?.fuelName}
+              carId={id}
+              carName={fullCarName}
+            />
+          </div>
+
+          {/* Right sticky column */}
+          <div className="lg:sticky lg:top-[88px] h-fit">
+            <CarDetailSidebar
+              data={data}
+              id={id}
+              carName={fullCarName}
+              krwToRub={rates.krwToRub}
+              krwToUsd={rates.krwToUsd}
+              lang={lang}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Шаг 5: sticky CTA на мобильном */}
-      <StickyMobileCTA carId={id} carName={`${carName} ${carData}`} />
-      <CarViewTracker carId={id} carName={`${carName} ${carData}`} />
+      <StickyMobileCTA carId={id} carName={fullCarName} />
+      <CarViewTracker carId={id} carName={fullCarName} />
     </div>
   );
 };

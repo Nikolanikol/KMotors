@@ -208,3 +208,76 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Car detail dark overrides ───────────────────────────── */
+.car-detail-dark .bg-white,
+.car-detail-dark [class*="bg-white"] {
+  background-color: var(--axis-charcoal) !important;
+}
+.car-detail-dark [class*="bg-gradient-to-br from-orange"],
+.car-detail-dark [class*="bg-gradient-to-br from-blue"],
+.car-detail-dark [class*="bg-gradient-to-br from-purple"],
+.car-detail-dark [class*="bg-gradient-to-br from-pink"],
+.car-detail-dark [class*="bg-gradient-to-br from-green"],
+.car-detail-dark [class*="bg-gradient-to-br from-red"],
+.car-detail-dark [class*="bg-gradient-to-br from-indigo"] {
+  background: var(--axis-graphite) !important;
+}
+.car-detail-dark [class*="text-gray-900"],
+.car-detail-dark [class*="text-gray-800"] {
+  color: var(--axis-white) !important;
+}
+.car-detail-dark [class*="text-gray-600"],
+.car-detail-dark [class*="text-gray-500"] {
+  color: var(--axis-gray) !important;
+}
+.car-detail-dark [class*="border-orange"],
+.car-detail-dark [class*="border-blue"],
+.car-detail-dark [class*="border-purple"],
+.car-detail-dark [class*="border-pink"],
+.car-detail-dark [class*="border-green"],
+.car-detail-dark [class*="border-red"],
+.car-detail-dark [class*="border-gray"] {
+  border-color: rgba(74,74,74,0.3) !important;
+}
+.car-detail-dark [class*="text-orange-600"],
+.car-detail-dark [class*="text-orange-700"] {
+  color: var(--axis-orange) !important;
+}
+.car-detail-dark [class*="bg-orange-100"],
+.car-detail-dark [class*="bg-orange-50"],
+.car-detail-dark [class*="bg-blue-50"],
+.car-detail-dark [class*="bg-blue-100"],
+.car-detail-dark [class*="bg-green-50"],
+.car-detail-dark [class*="bg-gray-100"] {
+  background-color: rgba(255,69,0,0.1) !important;
+}
+.car-detail-dark [class*="bg-red-50"],
+.car-detail-dark [class*="border-red-300"] {
+  background-color: rgba(255,69,0,0.08) !important;
+  border-color: rgba(255,69,0,0.3) !important;
+}
+.car-detail-dark [class*="bg-green-50"],
+.car-detail-dark [class*="border-green-300"] {
+  background-color: rgba(34,197,94,0.08) !important;
+  border-color: rgba(34,197,94,0.3) !important;
+}
+.car-detail-dark [class*="text-red-600"],
+.car-detail-dark [class*="text-red-700"] {
+  color: var(--axis-orange) !important;
+}
+.car-detail-dark [class*="text-green-600"],
+.car-detail-dark [class*="text-green-700"] {
+  color: #22c55e !important;
+}
+.car-detail-dark table {
+  background-color: transparent !important;
+}
+.car-detail-dark th {
+  background-color: var(--axis-graphite) !important;
+  color: var(--axis-gray) !important;
+}
+.car-detail-dark td {
+  color: var(--axis-white) !important;
+  border-color: rgba(74,74,74,0.2) !important;
+}
