@@ -29,7 +29,7 @@ const Main = () => {
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-[68px]">
       <PaintSplashCanvas />
 
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">

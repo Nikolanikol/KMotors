@@ -197,7 +197,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   };
 
   return (
-    <div className="py-6 min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
+    <div className="pb-6 pt-8 min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}

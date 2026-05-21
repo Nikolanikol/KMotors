@@ -191,8 +191,8 @@ export default async function CatalogPage({ params, searchParams }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      <div className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="min-h-screen pt-8" style={{ backgroundColor: "var(--axis-black)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="col-span-1 lg:col-span-3">
               <Suspense fallback={
