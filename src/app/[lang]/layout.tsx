@@ -21,7 +21,7 @@ export default async function LangLayout({ children, params }: Props) {
   return (
     <I18nProvider lang={lang}>
       <Header />
-      <main className="flex-grow min-h-[70vh]">{children}</main>
+      <main className="flex-grow min-h-[70vh] pt-[68px]">{children}</main>
       <Footer />
       <MessengerButtons />
     </I18nProvider>
