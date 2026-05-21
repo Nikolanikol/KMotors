@@ -71,7 +71,7 @@ export default function BlogTagClientPage({
       <section className="bg-gradient-to-br from-[#002C5F] to-[#001f45] py-12 px-4">
         <div className="max-w-5xl mx-auto space-y-4">
           <Breadcrumb items={[
-            { label: "KMotors", href: `/${lang}/` },
+            { label: "K-Axis", href: `/${lang}/` },
             { label: t("blog.title"), href: `/${lang}/blog` },
             { label: `#${tag}` },
           ]} />

@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       // Ответ клиенту
       const clientMsg = carId
         ? `👋 Здравствуйте!\n\nВаш запрос по автомобилю принят. Николай свяжется с вами в ближайшее время.\n\n⏱ Время ответа: в течение 1 часа`
-        : `👋 Здравствуйте!\n\nДобро пожаловать в KMotors — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
+        : `👋 Здравствуйте!\n\nДобро пожаловать в K-Axis — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
 
       await sendMessage(chatId, clientMsg);
 
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
-          `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на KMotors</a>`
+          `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на K-Axis</a>`
         : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
 
     if (text === "/help") {
       await sendMessage(chatId,
-        `🤖 <b>KMotors Blog Bot</b>\n\n` +
+        `🤖 <b>K-Axis Blog Bot</b>\n\n` +
         `/generate — сгенерировать следующую статью\n` +
         `/topics — список ближайших тем\n` +
         `/status — статистика блога\n` +

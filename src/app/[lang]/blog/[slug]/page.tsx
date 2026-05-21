@@ -61,10 +61,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { lang, slug } = await params;
   const post = await fetchPost(slug, lang);
 
-  if (!post) return { title: "Post not found | KMotors" };
+  if (!post) return { title: "Post not found | K-Axis" };
 
   return {
-    title: `${post.title} | KMotors`,
+    title: `${post.title} | K-Axis`,
     description: post.excerpt || post.title,
     openGraph: {
       title: post.title,
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         : [{ url: "https://kmotors.shop/preview/preview.png" }],
       type: "article",
       publishedTime: post.published_at,
-      siteName: "KMotors",
+      siteName: "K-Axis",
     },
     twitter: {
       card: "summary_large_image",
@@ -109,7 +109,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: BLOG_LABEL[lang] || "Blog", item: `https://kmotors.shop/${lang}/blog` },
       { "@type": "ListItem", position: 3, name: post.title, item: `https://kmotors.shop/${lang}/blog/${slug}` },
     ],
@@ -122,10 +122,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     image: post.cover_url || "https://kmotors.shop/preview/preview.png",
     datePublished: post.published_at,
     dateModified: post.published_at,
-    author: { "@type": "Organization", name: "KMotors", url: "https://kmotors.shop/" },
+    author: { "@type": "Organization", name: "K-Axis", url: "https://kmotors.shop/" },
     publisher: {
       "@type": "Organization",
-      name: "KMotors",
+      name: "K-Axis",
       logo: { "@type": "ImageObject", url: "https://kmotors.shop/favicon_io/android-chrome-192x192.png" },
     },
     description: post.excerpt || post.title,

@@ -21,7 +21,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   const data = await fetchData(params?.id);
 
   if (!data || data === undefined)
-    return { title: "Автомобиль | KMotors", description: "" };
+    return { title: "Автомобиль | K-Axis", description: "" };
   const carName = [
     data.category.manufacturerEnglishName,
     data.category.modelGroupEnglishName,
@@ -36,10 +36,10 @@ export async function generateMetadata({ params }): Promise<Metadata> {
     ? (data.advertisement.price * 10000).toLocaleString()
     : "не указана";
 
-  const description = `${carName} ${carData} — VIN: ${vin}, пробег: ${mileage} км, цена: ${price} KRW. Автомобиль из Южной Кореи, доступен на Kmotors.shop.`;
+  const description = `${carName} ${carData} — VIN: ${vin}, пробег: ${mileage} км, цена: ${price} KRW. Автомобиль из Южной Кореи, доступен на K-Axis.`;
 
   return {
-    title: `${carName} ${carData} — VIN: ${vin} | KMotors`,
+    title: `${carName} ${carData} — VIN: ${vin} | K-Axis`,
     description,
     openGraph: {
       title: `${carName} ${carData} — VIN: ${vin}`,
@@ -110,7 +110,7 @@ const Page: FC<PageProps> = async ({ params }) => {
       data.category.gradeEnglishName,
     ].join(" "),
     image: [mainPhoto],
-    description: `${carName} ${carData} — ${data?.category.gradeEnglishName}, ${data?.spec.mileage} км. Автомобиль из Южной Кореи, доступен на сайте Kmotors.`,
+    description: `${carName} ${carData} — ${data?.category.gradeEnglishName}, ${data?.spec.mileage} км. Автомобиль из Южной Кореи, доступен на сайте K-Axis.`,
 
     brand: {
       "@type": "Brand",

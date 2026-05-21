@@ -31,7 +31,7 @@ export async function fetchRssFeed(
 ): Promise<string> {
   const res = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; KMotors/1.0; +https://kmotors.ru)",
+      "User-Agent": "Mozilla/5.0 (compatible; K-Axis/1.0; +https://kmotors.ru)",
     },
     next: { revalidate: 0 }, // always fresh
   });

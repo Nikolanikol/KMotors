@@ -105,7 +105,7 @@ export default function BlogPostPage({ initialPost }: Props) {
       <div className="bg-gradient-to-br from-[#002C5F] to-[#001f45] px-4 pt-4 pb-3">
         <div className="max-w-3xl mx-auto">
           <Breadcrumb items={[
-            { label: "KMotors", href: `/${lang}/` },
+            { label: "K-Axis", href: `/${lang}/` },
             { label: t("blog.backToBlog"), href: `/${lang}/blog` },
             { label: post.title },
           ]} />

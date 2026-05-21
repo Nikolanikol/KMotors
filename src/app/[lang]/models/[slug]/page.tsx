@@ -21,7 +21,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
   const model = getModelBySlug(slug);
-  if (!model) return { title: "Not found | KMotors" };
+  if (!model) return { title: "Not found | K-Axis" };
 
   const content = model.content[lang as "ru" | "en"] ?? model.content.ru;
 
@@ -66,7 +66,7 @@ export default async function ModelPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: isRu ? "Каталог" : "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
       { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelKo}`, item: `https://kmotors.shop/${lang}/models/${slug}` },
     ],
@@ -159,7 +159,7 @@ export default async function ModelPage({ params }: Props) {
         <section className="bg-white py-12 px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
-              {isRu ? "Почему покупают в KMotors" : "Why buy from KMotors"}
+              {isRu ? "Почему покупают в K-Axis" : "Why buy from K-Axis"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {content.benefits.map((b, i) => (

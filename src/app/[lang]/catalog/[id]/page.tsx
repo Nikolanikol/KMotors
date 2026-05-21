@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { lang, id } = await params;
   const data = await fetchData(id);
 
-  if (!data) return { title: "Car | KMotors", description: "" };
+  if (!data) return { title: "Car | K-Axis", description: "" };
 
   const carName = [
     data.category.manufacturerEnglishName,
@@ -62,19 +62,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const rubPrice = krwPrice ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU") : null;
 
   const TITLE: Record<string, string> = {
-    ru: `${carName} ${year} из Кореи — цена, доставка | KMotors`,
-    en: `${carName} ${year} from Korea — price, delivery | KMotors`,
-    ko: `한국산 ${carName} ${year} — 가격, 배송 | KMotors`,
-    ka: `${carName} ${year} კორეიდან — ფასი, მიტანა | KMotors`,
-    ar: `${carName} ${year} من كوريا — السعر والتوصيل | KMotors`,
+    ru: `${carName} ${year} из Кореи — цена, доставка | K-Axis`,
+    en: `${carName} ${year} from Korea — price, delivery | K-Axis`,
+    ko: `한국산 ${carName} ${year} — 가격, 배송 | K-Axis`,
+    ka: `${carName} ${year} კორეიდან — ფასი, მიტანა | K-Axis`,
+    ar: `${carName} ${year} من كوريا — السعر والتوصيل | K-Axis`,
   };
 
   const DESCRIPTION: Record<string, string> = {
-    ru: `Купить ${carName} ${year} из Кореи${rubPrice ? ` — от ${rubPrice} ₽ под ключ` : ""}. Пробег ${mileage} км. Личный осмотр в Сувоне, доставка 3–6 недель. KMotors.`,
-    en: `Buy ${carName} ${year} from South Korea. Mileage ${mileage} km. Personal inspection in Suwon, delivery in 3–6 weeks. KMotors.`,
-    ko: `${carName} ${year} 한국에서 구매. 주행거리 ${mileage} km. 수원 현지 직접 검사, 3–6주 배송. KMotors.`,
-    ka: `${carName} ${year} კორეიდან შეძენა. გარბენი ${mileage} კმ. პირადი დათვალიერება სუვონში, მიტანა 3–6 კვირა. KMotors.`,
-    ar: `شراء ${carName} ${year} من كوريا الجنوبية. المسافة ${mileage} كم. فحص شخصي في سوون، التوصيل 3–6 أسابيع. KMotors.`,
+    ru: `Купить ${carName} ${year} из Кореи${rubPrice ? ` — от ${rubPrice} ₽ под ключ` : ""}. Пробег ${mileage} км. Личный осмотр в Сувоне, доставка 3–6 недель. K-Axis.`,
+    en: `Buy ${carName} ${year} from South Korea. Mileage ${mileage} km. Personal inspection in Suwon, delivery in 3–6 weeks. K-Axis.`,
+    ko: `${carName} ${year} 한국에서 구매. 주행거리 ${mileage} km. 수원 현지 직접 검사, 3–6주 배송. K-Axis.`,
+    ka: `${carName} ${year} კორეიდან შეძენა. გარბენი ${mileage} კმ. პირადი დათვალიერება სუვონში, მიტანა 3–6 კვირა. K-Axis.`,
+    ar: `شراء ${carName} ${year} من كوريا الجنوبية. المسافة ${mileage} كم. فحص شخصي في سوون، التوصيل 3–6 أسابيع. K-Axis.`,
   };
 
   const title = TITLE[lang] ?? TITLE.ru;
@@ -137,7 +137,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "KMotors", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
       { "@type": "ListItem", position: 3, name: carName, item: `https://kmotors.shop/${lang}/catalog/${id}` },
     ],
@@ -148,7 +148,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     "@type": "Product",
     name: carName,
     image: [mainPhoto],
-    description: `${carName} ${carData} — ${data?.spec.mileage} km. South Korean car on Kmotors.`,
+    description: `${carName} ${carData} — ${data?.spec.mileage} km. South Korean car on K-Axis.`,
     brand: { "@type": "Brand", name: data.category.manufacturerEnglishName || "Unknown" },
     offers: {
       "@type": "Offer",

@@ -28,12 +28,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: "Статья не найдена | KMotors",
+      title: "Статья не найдена | K-Axis",
     };
   }
 
   return {
-    title: `${post.title_ru} | KMotors`,
+    title: `${post.title_ru} | K-Axis`,
     description: post.excerpt_ru || post.title_ru,
     openGraph: {
       title: post.title_ru,
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         : [{ url: "https://kmotors.shop/preview/preview.png" }],
       type: "article",
       publishedTime: post.published_at,
-      siteName: "KMotors",
+      siteName: "K-Axis",
     },
     twitter: {
       card: "summary_large_image",
@@ -80,12 +80,12 @@ export default async function BlogPostPage({ params }: PageProps) {
         dateModified: post.published_at,
         author: {
           "@type": "Organization",
-          name: "KMotors",
+          name: "K-Axis",
           url: "https://kmotors.shop/",
         },
         publisher: {
           "@type": "Organization",
-          name: "KMotors",
+          name: "K-Axis",
           logo: {
             "@type": "ImageObject",
             url: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",

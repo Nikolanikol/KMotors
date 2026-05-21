@@ -2,24 +2,24 @@ import type { Metadata } from "next";
 
 const PRIVACY_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Политика конфиденциальности | KMotors",
-    description: "Политика конфиденциальности KMotors — как мы собираем, используем и защищаем ваши данные.",
+    title: "Политика конфиденциальности | K-Axis",
+    description: "Политика конфиденциальности K-Axis — как мы собираем, используем и защищаем ваши данные.",
   },
   en: {
-    title: "Privacy Policy | KMotors",
-    description: "KMotors Privacy Policy — how we collect, use and protect your data.",
+    title: "Privacy Policy | K-Axis",
+    description: "K-Axis Privacy Policy — how we collect, use and protect your data.",
   },
   ko: {
-    title: "개인정보 처리방침 | KMotors",
-    description: "KMotors 개인정보 처리방침 — 데이터 수집, 사용 및 보호 방법.",
+    title: "개인정보 처리방침 | K-Axis",
+    description: "K-Axis 개인정보 처리방침 — 데이터 수집, 사용 및 보호 방법.",
   },
   ka: {
-    title: "კონფიდენციალურობის პოლიტიკა | KMotors",
-    description: "KMotors კონფიდენციალურობის პოლიტიკა — როგორ ვაგროვებთ, ვიყენებთ და ვიცავთ თქვენს მონაცემებს.",
+    title: "კონფიდენციალურობის პოლიტიკა | K-Axis",
+    description: "K-Axis კონფიდენციალურობის პოლიტიკა — როგორ ვაგროვებთ, ვიყენებთ და ვიცავთ თქვენს მონაცემებს.",
   },
   ar: {
-    title: "سياسة الخصوصية | KMotors",
-    description: "سياسة خصوصية KMotors — كيف نجمع بياناتك ونستخدمها ونحميها.",
+    title: "سياسة الخصوصية | K-Axis",
+    description: "سياسة خصوصية K-Axis — كيف نجمع بياناتك ونستخدمها ونحميها.",
   },
 };
 
@@ -56,7 +56,7 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "7. Контакты",
-        text: "По вопросам конфиденциальности: Telegram @kmotorsshop, телефон +82 10-7732-4344. KMotors, 경기도 수원시 권선구 권선로 308-5 103호 1층, Южная Корея.",
+        text: "По вопросам конфиденциальности: Telegram @kmotorsshop, телефон +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, Южная Корея.",
       },
     ],
   },
@@ -89,7 +89,7 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "7. Contact",
-        text: "For privacy inquiries: Telegram @kmotorsshop, phone +82 10-7732-4344. KMotors, 경기도 수원시 권선구 권선로 308-5 103호 1층, South Korea.",
+        text: "For privacy inquiries: Telegram @kmotorsshop, phone +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, South Korea.",
       },
     ],
   },
@@ -122,7 +122,7 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "7. 연락처",
-        text: "개인정보 문의: 텔레그램 @kmotorsshop, 전화 +82 10-7732-4344. KMotors, 경기도 수원시 권선구 권선로 308-5 103호 1층, 대한민국.",
+        text: "개인정보 문의: 텔레그램 @kmotorsshop, 전화 +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, 대한민국.",
       },
     ],
   },
@@ -155,7 +155,7 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "7. კონტაქტი",
-        text: "კონფიდენციალურობის საკითხებზე: Telegram @kmotorsshop, ტელეფონი +82 10-7732-4344. KMotors, 경기도 수원시 권선구 권선로 308-5 103호 1층, სამხრეთ კორეა.",
+        text: "კონფიდენციალურობის საკითხებზე: Telegram @kmotorsshop, ტელეფონი +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, სამხრეთ კორეა.",
       },
     ],
   },
@@ -188,7 +188,7 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "7. التواصل",
-        text: "لاستفسارات الخصوصية: تيليغرام @kmotorsshop، هاتف +82 10-7732-4344. KMotors، 경기도 수원시 권선구 권선로 308-5 103호 1층، كوريا الجنوبية.",
+        text: "لاستفسارات الخصوصية: تيليغرام @kmotorsshop، هاتف +82 10-7732-4344. K-Axis، 경기도 수원시 권선구 권선로 308-5 103호 1층، كوريا الجنوبية.",
       },
     ],
   },

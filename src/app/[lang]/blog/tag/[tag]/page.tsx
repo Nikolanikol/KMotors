@@ -44,23 +44,23 @@ interface Props {
 
 const TAG_META: Record<string, (tag: string) => { title: string; description: string }> = {
   ru: (tag) => ({
-    title: `${tag} — статьи и обзоры | KMotors`,
+    title: `${tag} — статьи и обзоры | K-Axis`,
     description: `Все статьи по теме «${tag}»: сравнения, обзоры, гайды по корейским автомобилям.`,
   }),
   en: (tag) => ({
-    title: `${tag} — Articles & Reviews | KMotors`,
+    title: `${tag} — Articles & Reviews | K-Axis`,
     description: `All articles on "${tag}": comparisons, reviews, guides on Korean cars.`,
   }),
   ko: (tag) => ({
-    title: `${tag} — 기사 및 리뷰 | KMotors`,
+    title: `${tag} — 기사 및 리뷰 | K-Axis`,
     description: `"${tag}" 관련 모든 기사: 비교, 리뷰, 한국 자동차 가이드.`,
   }),
   ka: (tag) => ({
-    title: `${tag} — სტატიები და მიმოხილვები | KMotors`,
+    title: `${tag} — სტატიები და მიმოხილვები | K-Axis`,
     description: `ყველა სტატია თემაზე "${tag}": შედარებები, მიმოხილვები, კორეული ავტომობილების გზამკვლევები.`,
   }),
   ar: (tag) => ({
-    title: `${tag} — مقالات ومراجعات | KMotors`,
+    title: `${tag} — مقالات ومراجعات | K-Axis`,
     description: `جميع المقالات حول "${tag}": مقارنات، مراجعات، أدلة حول السيارات الكورية.`,
   }),
 };
