@@ -39,7 +39,7 @@ export function About() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="/warehouse.jpg"
-                alt="Kmotors warehouse"
+                alt="K-Axis warehouse"
                 className="w-full h-[500px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#002C5F]/60 to-transparent" />
