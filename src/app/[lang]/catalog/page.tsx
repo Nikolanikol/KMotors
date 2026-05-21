@@ -191,15 +191,19 @@ export default async function CatalogPage({ params, searchParams }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      <div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-2 h-full m-0 mx-auto">
-          <div className="col-span-1 lg:col-span-4 h-full px-1 py-2">
-            <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-xl h-96" />}>
-              <Filter />
-            </Suspense>
-          </div>
-          <div className="col-span-1 lg:col-span-8 h-full">
-            <CarsRow searchParams={searchParams} />
+      <div className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="col-span-1 lg:col-span-3">
+              <Suspense fallback={
+                <div className="animate-pulse rounded-2xl h-96" style={{ backgroundColor: "var(--axis-charcoal)" }} />
+              }>
+                <Filter />
+              </Suspense>
+            </div>
+            <div className="col-span-1 lg:col-span-9">
+              <CarsRow searchParams={searchParams} />
+            </div>
           </div>
         </div>
       </div>

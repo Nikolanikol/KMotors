@@ -71,8 +71,8 @@ const Filter = ({}) => {
   });
 
   return (
-    <div className="flex flex-col gap-2">
-      <h2>{t("filter.manufacturer")}</h2>
+    <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+      <h2 className="text-sm font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("filter.manufacturer")}</h2>
 
       <Select
         value={manufactureAction}
@@ -113,8 +113,11 @@ const Filter = ({}) => {
       {/* ///////////////////////////// */}
       <Button onClick={() => handleAction(action)}>{t("filter.show")}</Button>
       {isPending && (
-        <div className="top-0 left-0   bottom-0 right-0 z-20 absolute bg-gray-300 opacity-30 border-2 border-black">
-          {t("filter.updating")}
+        <div className="absolute inset-0 z-20 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.6)", backdropFilter: "blur(4px)" }}>
+          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--axis-orange)" }}>
+            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            {t("filter.updating")}
+          </div>
         </div>
       )}
     </div>
@@ -150,7 +153,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
 
   return (
     <div>
-      <h2>{t("filter.model")}</h2>
+      <h2 className="text-sm font-semibold tracking-wide mt-1" style={{ color: "var(--axis-gray)" }}>{t("filter.model")}</h2>
       {/* {action} */}
       <Select
         disabled={action == null}
@@ -206,7 +209,7 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
 
   return (
     <div>
-      <h2>{t("filter.generation")}</h2>
+      <h2 className="text-sm font-semibold tracking-wide mt-1" style={{ color: "var(--axis-gray)" }}>{t("filter.generation")}</h2>
 
       <Select
         value={GenerationAction}
