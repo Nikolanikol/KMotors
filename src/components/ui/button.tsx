@@ -72,18 +72,16 @@ const SlidingButton: React.FC<SlidingButtonProps> = ({
   return (
     <button
       className={clsx(
-        "relative cursor-pointer overflow-hidden group w-40  h-12 rounded-md text-white font-semibold",
+        "relative cursor-pointer overflow-hidden group px-6 h-10 rounded-full text-white font-semibold text-sm transition-all duration-300",
         className
       )}
-      {...props} // ← здесь передаются все остальные пропсы
+      style={{ backgroundColor: "var(--axis-orange)" }}
+      {...props}
     >
-      {/* Нижний слой */}
-      <div className="absolute inset-0 bg-orange-700" />
-
-      {/* Верхний слой */}
-      <div className="absolute inset-0 bg-orange-500 transition-transform duration-300 ease-in-out group-hover:translate-x-full" />
-
-      {/* Текст поверх слоёв */}
+      <div
+        className="absolute inset-0 rounded-full transition-transform duration-300 ease-in-out group-hover:translate-x-full"
+        style={{ backgroundColor: "var(--axis-orange-bright)" }}
+      />
       <div className="relative z-10">{children}</div>
     </button>
   );
