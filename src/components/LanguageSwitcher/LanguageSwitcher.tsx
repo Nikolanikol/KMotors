@@ -85,8 +85,8 @@ export default function LanguageSwitcher() {
   if (!mounted) {
     return (
       <div className="relative">
-        <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
-          <Globe className="w-5 h-5 text-gray-600" />
+        <button className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors" style={{ borderColor: "var(--axis-gray-dim)", backgroundColor: "transparent", color: "var(--axis-gray)" }}>
+          <Globe className="w-4 h-4" />
           <span className="text-sm font-medium">RU</span>
         </button>
       </div>
@@ -98,7 +98,8 @@ export default function LanguageSwitcher() {
       <button
         ref={buttonRef}
         onClick={handleOpen}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors focus:outline-none"
+        style={{ borderColor: "var(--axis-gray-dim)", backgroundColor: "transparent", color: "var(--axis-gray)" }}
         aria-label="Выбрать язык"
       >
         <span className="text-lg">{currentLanguage.flag}</span>
@@ -123,24 +124,26 @@ export default function LanguageSwitcher() {
             aria-hidden="true"
           />
           <div
-            className="fixed w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-y-auto"
+            className="fixed w-48 rounded-lg shadow-lg z-[9999] overflow-y-auto border"
+            style={{ backgroundColor: "var(--axis-charcoal)", borderColor: "var(--axis-gray-dim)" }}
             style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
           >
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => changeLanguage(lang.code)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 transition-colors ${
-                  currentLanguage.code === lang.code
-                    ? 'bg-orange-100 text-orange-700 font-semibold'
-                    : 'text-gray-700'
-                }`}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                style={{
+                  backgroundColor: currentLanguage.code === lang.code ? "rgba(255,69,0,0.12)" : "transparent",
+                  color: currentLanguage.code === lang.code ? "var(--axis-orange)" : "var(--axis-gray)",
+                }}
               >
                 <span className="text-xl">{lang.flag}</span>
                 <span className="text-sm">{lang.name}</span>
                 {currentLanguage.code === lang.code && (
                   <svg
-                    className="w-4 h-4 ml-auto text-orange-600"
+                    className="w-4 h-4 ml-auto"
+                    style={{ color: "var(--axis-orange)" }}
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
