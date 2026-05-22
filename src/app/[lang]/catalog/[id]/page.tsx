@@ -218,9 +218,10 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         {/* Car title */}
         <div className="mb-5">
           <h1 className="text-2xl lg:text-3xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
-            {data.category.manufacturerName}{" "}
-            <span style={{ color: "var(--axis-orange)" }}>{data.category.modelName}</span>{" "}
-            {data.category.gradeName}
+            {data.category.manufacturerEnglishName}{" "}
+            <span style={{ color: "var(--axis-orange)" }}>{data.category.modelGroupEnglishName}</span>{" "}
+            {data.category.gradeEnglishName}
+            {data.category.gradeDetailEnglishName ? ` ${data.category.gradeDetailEnglishName}` : ""}
           </h1>
           <div className="flex items-center gap-3 mt-2">
             <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}>
