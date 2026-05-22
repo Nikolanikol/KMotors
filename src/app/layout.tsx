@@ -25,14 +25,6 @@ export const metadata: Metadata = {
     "Korean cars", "buy car from Korea", "Korean car dealer",
     "한국 중고차", "კორეული მანქანები", "سيارات كورية",
   ],
-  icons: {
-    icon: [
-      { url: "/favicon_io/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/favicon_io/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
-    ],
-    shortcut: "/favicon_io/android-chrome-192x192.png",
-    apple: "/favicon_io/android-chrome-192x192.png",
-  },
   other: {
     "yandex-verification": "f71551035d1c4fbb",
   },
