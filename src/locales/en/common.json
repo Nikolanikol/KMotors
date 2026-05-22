@@ -206,6 +206,52 @@
     "copyright": "All rights reserved",
     "privacy": "Privacy Policy"
   },
+  "home": {
+    "why": {
+      "title": "Why K-Axis",
+      "f1title": "Auction Verification",
+      "f1desc": "Every car undergoes thorough inspection at Korean auctions: Encar, KCar and Manheim.",
+      "f2title": "Full History",
+      "f2desc": "Report on accidents, number of owners, mileage and technical condition of every car.",
+      "f3title": "Turnkey Delivery",
+      "f3desc": "From auction purchase to delivery in your city — we handle everything."
+    },
+    "reviews": {
+      "title": "Client Reviews",
+      "t1quote": "Bought a KIA K5 through K-Axis Motors. The process took 3 weeks — from auction selection to delivery. The car is in perfect condition, all documents in order.",
+      "t1author": "Alexei Morozov",
+      "t1car": "KIA K5 2023",
+      "t2quote": "Second time using this service. First time I got a Tucson for my wife, now Genesis G80 for myself. Excellent service, transparent, fair prices. Recommended!",
+      "t2author": "Dmitry Volkov",
+      "t2car": "Genesis G80 2024",
+      "t3quote": "I was choosing between local dealers and Korean auctions. I chose K-Axis and don't regret it. Saved almost a million rubles compared to the official dealer.",
+      "t3author": "Ekaterina Sokolova",
+      "t3car": "Hyundai Tucson 2024",
+      "bought": "bought"
+    },
+    "stage": {
+      "title": "Buying Process",
+      "s1title": "Book a Free Consultation",
+      "s1d1": "Discuss your preferences and budget",
+      "s1d2": "Help you choose the right model",
+      "s1d3": "Answer all questions without complex terms",
+      "s2title": "Sign the Agreement",
+      "s2d1": "Official contract securing our obligations",
+      "s2d2": "Transparent payment system with no hidden fees",
+      "s2d3": "Official bank transfer payment",
+      "s3title": "Find & Purchase the Car",
+      "s3d1": "Selection through verified Encar, KCar auctions",
+      "s3d2": "Photo and video reports on car condition",
+      "s3d3": "If no match found — full refund guaranteed",
+      "s4title": "Delivery & Customs Clearance",
+      "s4d1": "Delivery from 15 days through official customs",
+      "s4d2": "Full documentation processing",
+      "s4d3": "Insurance at all stages of transportation",
+      "s5title": "Vehicle Handover",
+      "s5d1": "Pick up at delivery point",
+      "s5d2": "Car ready for registration"
+    }
+  },
   "cta": {
     "title": "Ready to find your car?",
     "subtitle": "Leave your number — we'll find the best options from Korea for your budget.",

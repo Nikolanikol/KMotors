@@ -206,6 +206,16 @@
     "copyright": "جميع الحقوق محفوظة",
     "privacy": "سياسة الخصوصية"
   },
+  "home": {
+    "hero": {
+      "title": "Find the Car of Your Dreams",
+      "subtitle": "From Korea to Anywhere in the World!",
+      "catalogButton": "Catalog"
+    },
+    "brands": {
+      "title": "Brands"
+    }
+  },
   "cta": {
     "title": "هل أنت مستعد للعثور على سيارتك؟",
     "subtitle": "اترك رقمك — سنجد أفضل الخيارات من كوريا ضمن ميزانيتك.",
