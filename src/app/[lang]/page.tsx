@@ -149,7 +149,7 @@ export default async function Home({ params }: Props) {
       </div>
       <Brands />
       <WhyChooseUs />
-      {lang === "ru" && <Stage />}
+      <Stage />
       <Testimonials />
       <CTASection />
     </div>

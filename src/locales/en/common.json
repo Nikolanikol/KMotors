@@ -206,6 +206,14 @@
     "copyright": "All rights reserved",
     "privacy": "Privacy Policy"
   },
+  "cta": {
+    "title": "Ready to find your car?",
+    "subtitle": "Leave your number — we'll find the best options from Korea for your budget.",
+    "placeholder": "+1 (999) 999-9999",
+    "submit": "Send",
+    "submitting": "Sending...",
+    "thanks": "Thank you! We'll contact you shortly."
+  },
   "buy": {
     "title": "How to Buy a Car from Korea",
     "subtitle": "Complete guide through the buying process. We'll walk you through all 8 steps",
