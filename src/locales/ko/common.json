@@ -206,16 +206,6 @@
     "copyright": "모든 권리 보유",
     "privacy": "개인정보 보호정책"
   },
-  "home": {
-    "hero": {
-      "title": "Find the Car of Your Dreams",
-      "subtitle": "From Korea to Anywhere in the World!",
-      "catalogButton": "Catalog"
-    },
-    "brands": {
-      "title": "Brands"
-    }
-  },
   "cta": {
     "title": "자동차를 찾을 준비가 되셨나요?",
     "subtitle": "번호를 남겨주시면 예산에 맞는 최고의 한국 차량을 찾아드리겠습니다.",
