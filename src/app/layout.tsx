@@ -81,13 +81,13 @@ export default async function RootLayout({
               }],
               contactPoint: [
                 { "@type": "ContactPoint", telephone: "+821077324344", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
-                { "@type": "ContactPoint", url: "https://t.me/kmotorsshop", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
+                { "@type": "ContactPoint", url: "https://t.me/avto_korea_nikolai", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
               ],
               currenciesAccepted: "USD",
               paymentAccepted: "Bank Transfer",
               priceRange: "$$",
               areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
-              sameAs: ["https://t.me/kmotorsshop", "https://www.instagram.com/kmotors.shop/"],
+              sameAs: ["https://t.me/avto_korea_nikolai", "https://www.instagram.com/kmotors.shop/"],
             }),
           }}
         />
