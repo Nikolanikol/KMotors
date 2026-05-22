@@ -200,12 +200,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   const fullCarName = `${carName} ${carData}`;
   const photoLabel = ({ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<string, string>)[lang] || "photo";
 
-  // Exterior first — interior keywords in Korean/English
-  const INTERIOR = ["실내", "계기판", "선루프", "트렁크", "시트", "핸들", "interior", "inside"];
+  // Sort: OUTER first, then OPTION, then INNER
+  const TYPE_ORDER: Record<string, number> = { OUTER: 0, OPTION: 1, INNER: 2 };
   const sortedPhotos = [...(data.photos || [])].sort((a: any, b: any) => {
-    const aInt = INTERIOR.some(k => (a.desc || "").toLowerCase().includes(k));
-    const bInt = INTERIOR.some(k => (b.desc || "").toLowerCase().includes(k));
-    return aInt === bInt ? 0 : aInt ? 1 : -1;
+    const aOrder = TYPE_ORDER[a.type] ?? 1;
+    const bOrder = TYPE_ORDER[b.type] ?? 1;
+    return aOrder - bOrder;
   });
 
   return (
