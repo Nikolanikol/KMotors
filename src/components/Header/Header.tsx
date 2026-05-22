@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { X, Menu } from "lucide-react";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -170,28 +169,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile bottom nav */}
-      <div
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t"
-        style={{ backgroundColor: "var(--axis-charcoal)", borderColor: "var(--axis-gray-dim)" }}
-      >
-        <ToggleGroup type="single" value={pathname} className="grid grid-cols-6 w-full">
-          {navLinks.map((link) => (
-            <ToggleGroupItem
-              key={link.href}
-              value={link.href}
-              className="py-3 px-1 transition-all border-none rounded-none text-xs font-medium"
-              style={{
-                color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
-                backgroundColor: isActive(link.href) ? "rgba(255,69,0,0.1)" : "transparent",
-              }}
-              asChild
-            >
-              <Link href={link.href}>{t(link.labelKey)}</Link>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
     </>
   );
 }
