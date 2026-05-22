@@ -25,6 +25,15 @@ export const metadata: Metadata = {
     "Korean cars", "buy car from Korea", "Korean car dealer",
     "한국 중고차", "კორეული მანქანები", "سيارات كورية",
   ],
+  icons: {
+    icon: [
+      { url: "/favicon_io/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon_io/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon_io/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/favicon_io/apple-touch-icon.png",
+    shortcut: "/favicon_io/favicon-32x32.png",
+  },
   other: {
     "yandex-verification": "f71551035d1c4fbb",
   },
@@ -47,7 +56,7 @@ export default async function RootLayout({
         <link rel="alternate" href="https://kmotors.shop/ka/" hrefLang="ka" />
         <link rel="alternate" href="https://kmotors.shop/ar/" hrefLang="ar" />
         <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="x-default" />
-        <link rel="icon" type="image/png" href="/favicon_io/android-chrome-192x192.png" />
+        <link rel="manifest" href="/favicon_io/site.webmanifest" />
 
         {/* LocalBusiness + AutoDealer JSON-LD — нативный script, не Next.js Script */}
         <script
