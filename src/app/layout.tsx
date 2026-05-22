@@ -49,7 +49,7 @@ export default async function RootLayout({
         <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="x-default" />
         <link rel="manifest" href="/favicon_io/site.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-        <link rel="icon" type="image/png" href="/favicon_io/android-chrome-192x192.png" sizes="192x192" />
+        <link rel="icon" type="image/png" href="/apple-touch-icon.png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
         {/* LocalBusiness + AutoDealer JSON-LD — нативный script, не Next.js Script */}
