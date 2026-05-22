@@ -1,5 +1,6 @@
 "use client";
 import { FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
+import { FaTiktok } from "react-icons/fa6";
 import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -147,6 +148,17 @@ export default function Footer() {
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp size={18} />
+              </a>
+              <a
+                href="https://www.tiktok.com/@kmotors121"
+                target="_blank" rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.15)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.08)"; }}
+                aria-label="TikTok"
+              >
+                <FaTiktok size={18} />
               </a>
             </div>
           </div>
