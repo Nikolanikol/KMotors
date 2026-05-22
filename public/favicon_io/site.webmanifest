@@ -1,6 +1,6 @@
 {
-  "name": "KMotors — Корейские автомобили",
-  "short_name": "KMotors",
+  "name": "K-Axis — Автомобили из Кореи",
+  "short_name": "K-Axis",
   "description": "Каталог корейских автомобилей Hyundai, Kia, Genesis из Южной Кореи",
   "start_url": "/",
   "scope": "/",
@@ -16,7 +16,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#002C5F",
-  "background_color": "#ffffff",
+  "theme_color": "#FF4500",
+  "background_color": "#0A0A0A",
   "display": "standalone"
 }
