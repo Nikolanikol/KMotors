@@ -200,6 +200,14 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   const fullCarName = `${carName} ${carData}`;
   const photoLabel = ({ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<string, string>)[lang] || "photo";
 
+  // Exterior first — interior keywords in Korean/English
+  const INTERIOR = ["실내", "계기판", "선루프", "트렁크", "시트", "핸들", "interior", "inside"];
+  const sortedPhotos = [...(data.photos || [])].sort((a: any, b: any) => {
+    const aInt = INTERIOR.some(k => (a.desc || "").toLowerCase().includes(k));
+    const bInt = INTERIOR.some(k => (b.desc || "").toLowerCase().includes(k));
+    return aInt === bInt ? 0 : aInt ? 1 : -1;
+  });
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
@@ -225,7 +233,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
           {/* Left column */}
           <div className="space-y-5 car-detail-dark min-w-0 overflow-hidden">
-            <CarouselLight photos={data.photos} carName={fullCarName} photoLabel={photoLabel} />
+            <CarouselLight photos={sortedPhotos} carName={fullCarName} photoLabel={photoLabel} />
             <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
             <OptionsRow data={data.options} />
