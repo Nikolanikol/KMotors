@@ -82,7 +82,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
   const [data, setData] = useState<VehicleCatalog>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const { t } = useTranslation("common");
+  const { t } = useTranslation(["common", "cars"]);
 
   useEffect(() => {
     fetch(`https://api.encar.com/v1/readside/record/vehicle/${id}/open?vehicleNo=${carnumber}`)
@@ -133,7 +133,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
           <Row label={t("car.bodyType")} value={translateGenerationRow(data.carShape, t)} />
           <Row label={t("car.fuel")} value={translateGenerationRow(data.fuel, t)} />
           <Row label={t("car.engineVolume")} value={`${data.displacement} cc`} />
-          <Row label={t("car.transmission")} value={data.transmission || t("common.notSpecified")} />
+          <Row label={t("car.transmission")} value={translateGenerationRow(data.transmission, t) || t("common.notSpecified")} />
           <Row label={t("car.registrationDate")} value={new Date(data.regDate).toLocaleDateString()} />
         </div>
       </div>
