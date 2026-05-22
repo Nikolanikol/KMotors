@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
@@ -116,17 +117,22 @@ export default function LanguageSwitcher() {
         </svg>
       </button>
 
-      {isOpen && (
+      {isOpen && typeof document !== 'undefined' && createPortal(
         <>
           <div
-            className="fixed inset-0 z-[9998]"
+            className="fixed inset-0 z-[99998]"
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
           <div
-            className="fixed w-48 rounded-lg shadow-lg z-[9999] overflow-y-auto border"
-            style={{ backgroundColor: "var(--axis-charcoal)", borderColor: "var(--axis-gray-dim)" }}
-            style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
+            className="fixed w-48 rounded-lg shadow-lg z-[99999] overflow-y-auto border"
+            style={{
+              top: dropdownPos.top,
+              right: dropdownPos.right,
+              maxHeight: dropdownPos.maxHeight,
+              backgroundColor: "var(--axis-charcoal)",
+              borderColor: "var(--axis-gray-dim)",
+            }}
           >
             {languages.map((lang) => (
               <button
@@ -141,23 +147,15 @@ export default function LanguageSwitcher() {
                 <span className="text-xl">{lang.flag}</span>
                 <span className="text-sm">{lang.name}</span>
                 {currentLanguage.code === lang.code && (
-                  <svg
-                    className="w-4 h-4 ml-auto"
-                    style={{ color: "var(--axis-orange)" }}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
+                  <svg className="w-4 h-4 ml-auto" style={{ color: "var(--axis-orange)" }} fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
