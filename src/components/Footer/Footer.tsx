@@ -1,5 +1,5 @@
 "use client";
-import { FaInstagram, FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
+import { FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
 import { Mail, Phone, MapPin, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -147,17 +147,6 @@ export default function Footer() {
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp size={18} />
-              </a>
-              <a
-                href="https://www.instagram.com/kmotors.shop/"
-                target="_blank" rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
-                style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.15)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,69,0,0.08)"; }}
-                aria-label="Instagram"
-              >
-                <FaInstagram size={18} />
               </a>
             </div>
           </div>
