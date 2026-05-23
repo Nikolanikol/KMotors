@@ -73,6 +73,7 @@ const CarouselLight = ({
                 : `photo ${index + 1}`
             }
             fill
+            unoptimized
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 1024px) 100vw, 60vw"
             priority={index === 0}
@@ -160,6 +161,7 @@ const CarouselLight = ({
                 src={getUrl(photo, true)}
                 alt={`thumb ${i + 1}`}
                 fill
+                unoptimized
                 className="object-cover"
                 sizes="72px"
               />

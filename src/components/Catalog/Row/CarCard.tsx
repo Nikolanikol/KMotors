@@ -98,6 +98,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
       <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: "var(--axis-graphite)" }}>
         <Image
           fill
+          unoptimized
           src={`https://ci.encar.com${photo}`}
           alt={`${manufacture} ${model} ${year} — ${BUY_FROM_KOREA[lang] ?? BUY_FROM_KOREA.ru}`}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
