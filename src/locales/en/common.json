@@ -5,7 +5,8 @@
     "buy": "How to Buy",
     "contact": "Contact",
     "parts": "Parts",
-    "blog": "Blog"
+    "blog": "Blog",
+    "calculator": "Calculator"
   },
   "catalog": {
     "title": "Korean Cars Catalog",
@@ -269,6 +270,12 @@
     },
     "brands": {
       "title": "Brands"
+    },
+    "calculatorBanner": {
+      "badge": "Online Tool",
+      "title": "Calculate customs duties in advance",
+      "subtitle": "Find out the full import cost to Russia, Kazakhstan or Uzbekistan — duties, VAT, recycling fee in 30 seconds.",
+      "button": "Calculate cost"
     }
   },
   "blog": {

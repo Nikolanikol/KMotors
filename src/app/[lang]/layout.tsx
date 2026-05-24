@@ -3,6 +3,7 @@ import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import MessengerButtons from "@/components/MessengerButtons";
+import CookieBanner from "@/components/CookieBanner";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -24,6 +25,7 @@ export default async function LangLayout({ children, params }: Props) {
       <main className="flex-grow min-h-[70vh] pt-[68px]">{children}</main>
       <Footer />
       <MessengerButtons />
+      <CookieBanner />
     </I18nProvider>
   );
 }

@@ -15,6 +15,7 @@ const PAGES: PageConfig[] = [
   { path: "catalog", priority: 0.9, changefreq: "weekly"  },
   { path: "blog",    priority: 0.8, changefreq: "daily"   },
   { path: "parts",   priority: 0.8, changefreq: "weekly"  },
+  { path: "calculator", priority: 0.85, changefreq: "monthly" },
   { path: "buy",     priority: 0.7, changefreq: "monthly" },
   { path: "contact", priority: 0.6, changefreq: "monthly" },
 ];

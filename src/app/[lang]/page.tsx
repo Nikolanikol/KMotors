@@ -6,6 +6,7 @@ import Stage from "@/components/Home/Stage";
 import WhyChooseUs from "@/components/Home/WhyChooseUs";
 import Testimonials from "@/components/Home/Testimonials";
 import CTASection from "@/components/Home/CTASection";
+import CalculatorBanner from "@/components/Home/CalculatorBanner";
 
 const LANG_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -151,6 +152,7 @@ export default async function Home({ params }: Props) {
       <WhyChooseUs />
       <Stage />
       <Testimonials />
+      <CalculatorBanner />
       <CTASection />
     </div>
     </>

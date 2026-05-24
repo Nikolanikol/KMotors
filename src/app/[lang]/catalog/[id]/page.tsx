@@ -143,13 +143,51 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     ],
   };
 
-  const jsonLd = {
+  // Map Korean fuel names → schema.org vocabulary
+  const fuelMap: Record<string, string> = {
+    "가솔린": "https://schema.org/Gasoline",
+    "디젤":   "https://schema.org/Diesel",
+    "전기":   "https://schema.org/Electric",
+    "LPG":    "https://schema.org/LPG",
+    "lpg":    "https://schema.org/LPG",
+    "하이브리드":     "https://schema.org/Hybrid",
+    "플러그인하이브리드": "https://schema.org/Hybrid",
+    "수소":   "https://schema.org/Hydrogen",
+  };
+  const rawFuel: string = data?.spec?.fuelName ?? "";
+  const schemaFuel = Object.entries(fuelMap).find(([k]) => rawFuel.includes(k))?.[1];
+
+  // vehicleModelDate: "YYYY-MM" from yearMonth "YYYYMM"
+  const ym: string = data?.category?.yearMonth ?? "";
+  const vehicleModelDate = ym.length >= 6 ? `${ym.slice(0, 4)}-${ym.slice(4, 6)}` : undefined;
+
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org/",
-    "@type": "Product",
+    "@type": "Car",
     name: carName,
     image: [mainPhoto],
-    description: `${carName} ${carData} — ${data?.spec.mileage} km. South Korean car on K-Axis.`,
+    description: `${carName} ${carData} — ${data?.spec?.mileage?.toLocaleString("en-US")} km. South Korean car on K-Axis.`,
     brand: { "@type": "Brand", name: data.category.manufacturerEnglishName || "Unknown" },
+    ...(data?.vin              && { vehicleIdentificationNumber: data.vin }),
+    ...(vehicleModelDate       && { vehicleModelDate }),
+    ...(data?.spec?.mileage    && {
+      mileageFromOdometer: {
+        "@type": "QuantitativeValue",
+        value: data.spec.mileage,
+        unitCode: "KMT",
+      },
+    }),
+    ...(data?.spec?.displacement && {
+      vehicleEngine: {
+        "@type": "EngineSpecification",
+        engineDisplacement: {
+          "@type": "QuantitativeValue",
+          value: data.spec.displacement,
+          unitCode: "CMQ",
+        },
+        ...(schemaFuel && { fuelType: schemaFuel }),
+      },
+    }),
     offers: {
       "@type": "Offer",
       url: `https://kmotors.shop/${lang}/catalog/${data?.vehicleId}`,
@@ -157,12 +195,17 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       price: data?.advertisement?.price * 10000,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/UsedCondition",
+      seller: {
+        "@type": "Organization",
+        name: "K-Axis",
+        url: "https://kmotors.shop",
+      },
       shippingDetails: {
         "@type": "OfferShippingDetails",
         shippingRate: {
           "@type": "MonetaryAmount",
           currency: "USD",
-          value: "0",
+          value: "1500",
         },
         shippingDestination: {
           "@type": "DefinedRegion",
@@ -173,12 +216,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           handlingTime: {
             "@type": "QuantitativeValue",
             minValue: 7,
-            maxValue: 30,
+            maxValue: 14,
             unitCode: "DAY",
           },
           transitTime: {
             "@type": "QuantitativeValue",
-            minValue: 7,
+            minValue: 14,
             maxValue: 30,
             unitCode: "DAY",
           },
@@ -189,11 +232,6 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         applicableCountry: "RU",
         returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
       },
-    },
-    vin: data?.vin,
-    vehicleEngine: {
-      "@type": "EngineSpecification",
-      fuelType: data?.fuelType || "",
     },
   };
 
