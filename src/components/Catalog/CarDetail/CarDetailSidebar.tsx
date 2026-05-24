@@ -90,20 +90,6 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         </div>
       </div>
 
-      {/* Customs Calculator */}
-      {priceKRW && (
-        <div className="car-detail-dark">
-          <CustomsCalculator
-            priceKRW={priceKRW}
-            yearMonth={yearMonth || ""}
-            engineVolume={engineVolume ?? 0}
-            fuelType={fuelType}
-            carId={id}
-            carName={carName}
-          />
-        </div>
-      )}
-
       {/* Encar link */}
       <a
         target="_blank"

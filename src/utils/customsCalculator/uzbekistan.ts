@@ -1,131 +1,161 @@
 /**
- * Калькулятор таможенных пошлин Узбекистана для физических лиц
- * Актуально: 2025–2026
+ * Калькулятор таможенных платежей Узбекистан (УЗ) для физических лиц
  *
- * Формулы:
- * - Пошлина: max(стоимость × %, объём × $ставка_за_куб.см)
- *   — до 3 лет: 15% / $0.40 за куб.см
- *   — 3–7 лет:  40% / $3.00 за куб.см
- * - НДС: 12% от (стоимость + пошлина + утилсбор)
- * - Утилсбор: по объёму двигателя в БРВ (не зависит от мощности)
- * - Таможенный сбор: 1% от стоимости (мин. 1 БРВ, макс. 25 БРВ)
- * - Акциз: 0% (отменён с 01.08.2024)
+ * Нормативная база (2026 год):
+ *  БРВ 2026:              412 000 сум (актуальная базовая расчётная величина)
  *
- * Ограничения для физлиц:
- * - Максимальный возраст авто: 7 лет
- * - Экостандарт: не ниже Euro-5
- * - Праворульные авто: запрещены
- * - Корейские авто: льготных ставок СТ-1 нет
+ *  Таможенный сбор:       прогрессивная шкала по ПКМ №700 (7 ступеней от 1 БРВ до 25 БРВ)
+ *
+ *  Пошлина:               15% от ТС + фиксированная доплата в USD/см³ по 5 скобкам
+ *                          (с 01.01.2026 льгота для малолитражек отменена)
+ *                          Электромобили: 0%
+ *
+ *  НДС:                   (ТС + Пошлина) × 12%
+ *                          Утильсбор и сбор за оформление в базу НДС НЕ входят
+ *
+ *  Утилизационный сбор:   БРВ × коэффициент по объёму (30/120/180/240/300)
+ *                          Электромобили: 0 сум
+ *
+ *  Акциз:                 0% (отменён для импортных легковых авто)
+ *
+ *  Доставка:              НЕ включена в расчёт (обсуждается отдельно)
+ *
+ *  Возраст:               >1 года — заградительные ставки, ввоз нецелесообразен
+ *                          (расчёт выполняется, но UI выводит предупреждение)
  */
+
+// БРВ (базовая расчётная величина) — 2026
+const BRV = 412_000; // сум
 
 export interface CustomsInputUZ {
   priceKRW: number;     // цена авто в вонах (KRW)
   yearMonth: string;    // "202301" — год и месяц выпуска
-  engineVolume: number; // объём двигателя, куб.см
-  fuelType?: string;    // тип топлива (для электромобилей)
-  usdRate: number;      // курс KRW/USD (сколько USD за 1 KRW = KRW_RUB / USD_RUB)
-  uzsPerUsd: number;    // курс UZS/USD (сколько UZS за 1 USD)
+  engineVolume: number; // объём двигателя, см³
+  fuelType?: string;    // тип топлива
+  krwUsdRate: number;   // курс KRW→USD (USD за 1 KRW)
+  uzsPerUsd: number;    // курс UZS/USD (сколько сум за 1 USD)
 }
 
 export interface CustomsResultUZ {
-  dutyUSD: number;         // таможенная пошлина, USD
-  vatUSD: number;          // НДС 12%, USD
-  customsFeeUSD: number;   // таможенный сбор за оформление, USD
-  recyclingFeeUSD: number; // утилизационный сбор, USD
-  totalUSD: number;        // итого, USD
-  totalUZS: number;        // итого, узбекских сумов
-  priceUSD: number;        // цена авто в USD
-  carAgeYears: number;     // возраст авто, лет
-  isOverLimit: boolean;    // true — авто старше 7 лет (ввоз запрещён)
+  priceUSD: number;          // цена авто в USD
+  priceUZS: number;          // цена авто в сумах
+  customsFeeUZS: number;     // таможенный сбор (прогрессивная шкала, БРВ)
+  dutyUSD: number;           // пошлина в USD (15% + объём × $/см³)
+  dutyUZS: number;           // пошлина в сумах
+  vatUZS: number;            // НДС 12%
+  recyclingFeeUZS: number;   // утилизационный сбор
+  totalUZS: number;          // итого таможенных платежей в сумах
+  totalUSD: number;          // итого в USD (для справки)
+  carAgeYears: number;       // возраст авто (лет)
+  isUsedCar: boolean;        // >1 года — нецелесообразно к ввозу
+  isElectric: boolean;
 }
-
-// БРВ (базовая расчётная величина) — с 01.08.2025: 412 000 сум
-const BRV_UZS = 412_000;
 
 /** Возраст авто в годах на текущую дату */
 function getCarAgeYears(yearMonth: string): number {
-  const year = parseInt(yearMonth.slice(0, 4), 10);
+  const year  = parseInt(yearMonth.slice(0, 4), 10);
   const month = parseInt(yearMonth.slice(4, 6), 10) - 1;
   const carDate = new Date(year, month, 1);
   const now = new Date();
-  const diffMs = now.getTime() - carDate.getTime();
-  return diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  return (now.getTime() - carDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
 }
 
-/** Таможенная пошлина — комбинированная ставка max(% от стоимости, $N/куб.см) */
-function calcDuty(priceUSD: number, cc: number, ageYears: number, isElectric: boolean): number {
-  // Электромобили — нулевая ставка (предварительно, требует уточнения у брокера)
+function isElectricFuel(fuelType?: string): boolean {
+  if (!fuelType) return false;
+  const f = fuelType.toLowerCase();
+  return f.includes("전기") || f.includes("electric") || f.includes("ev");
+}
+
+/**
+ * Таможенный сбор за оформление ГТД — ПКМ №700
+ * Прогрессивная шкала по таможенной стоимости в сумах
+ */
+function calcCustomsFee(tsUZS: number): number {
+  if (tsUZS <= 10_000_000)    return 1  * BRV; //   412 000 сум
+  if (tsUZS <= 30_000_000)    return 2  * BRV; //   824 000 сум
+  if (tsUZS <= 100_000_000)   return 3  * BRV; // 1 236 000 сум
+  if (tsUZS <= 300_000_000)   return 5  * BRV; // 2 060 000 сум
+  if (tsUZS <= 1_000_000_000) return 9  * BRV; // 3 708 000 сум
+  if (tsUZS <= 3_000_000_000) return 15 * BRV; // 6 180 000 сум
+  return 25 * BRV;                              // 10 300 000 сум (потолок)
+}
+
+/**
+ * Таможенная пошлина — 15% от ТС (USD) + фиксированная доплата в USD/см³
+ * С 01.01.2026 льгота для малолитражек отменена — все скобки платят 15%
+ * Электромобили: 0%
+ */
+function calcDuty(tsUSD: number, cc: number, isElectric: boolean): number {
   if (isElectric) return 0;
 
-  if (ageYears < 3) {
-    // Новые: 15% или $0.40/куб.см
-    return Math.max(priceUSD * 0.15, cc * 0.40);
-  }
-  // 3–7 лет: 40% или $3.00/куб.см
-  return Math.max(priceUSD * 0.40, cc * 3.00);
+  const pctPart = tsUSD * 0.15;
+
+  let ratePerCc: number;
+  if      (cc <= 1_000) ratePerCc = 0.40;
+  else if (cc <= 1_200) ratePerCc = 0.60;
+  else if (cc <= 1_800) ratePerCc = 1.20;
+  else                  ratePerCc = 1.25; // 1801+ и >3000 одинаковые
+
+  return pctPart + cc * ratePerCc;
 }
 
-/** Утилизационный сбор — по объёму двигателя, в БРВ (одинаков для новых и б/у) */
-function calcRecyclingFee(cc: number, uzsPerUsd: number, isElectric: boolean): number {
-  let brvCount: number;
+/**
+ * Утилизационный сбор — привязан к БРВ по объёму двигателя
+ * Электромобили: 0 сум
+ */
+function calcRecyclingFee(cc: number, isElectric: boolean): number {
+  if (isElectric) return 0;
 
-  if (isElectric) {
-    // Электромобили имеют отдельную систему утилсбора (с 01.05.2025 резко выросла)
-    // Новые до 3 лет: 120 БРВ; б/у: 210 БРВ — используем 120 как приближение
-    brvCount = 120;
-  } else if (cc <= 1_000)      brvCount = 4;
-  else if (cc <= 1_500)        brvCount = 7;
-  else if (cc <= 2_000)        brvCount = 15;
-  else if (cc <= 2_500)        brvCount = 25;
-  else if (cc <= 3_000)        brvCount = 40;
-  else                         brvCount = 60;
+  let coeff: number;
+  if      (cc <= 1_000) coeff = 30;
+  else if (cc <= 2_000) coeff = 120;
+  else if (cc <= 3_000) coeff = 180;
+  else if (cc <= 3_500) coeff = 240;
+  else                  coeff = 300;
 
-  const feeUZS = brvCount * BRV_UZS;
-  return feeUZS / uzsPerUsd; // конвертируем в USD
-}
-
-/** Таможенный сбор за оформление — 1% от стоимости (мин. 1 БРВ, макс. 25 БРВ) */
-function calcCustomsFee(priceUSD: number, uzsPerUsd: number): number {
-  const minUSD = BRV_UZS / uzsPerUsd;       // 1 БРВ в USD
-  const maxUSD = 25 * BRV_UZS / uzsPerUsd;  // 25 БРВ в USD
-  const fee = priceUSD * 0.01;
-  return Math.min(Math.max(fee, minUSD), maxUSD);
+  return coeff * BRV;
 }
 
 /** Главная функция расчёта */
 export function calcCustomsUZ(input: CustomsInputUZ): CustomsResultUZ {
-  const { priceKRW, yearMonth, engineVolume, fuelType, usdRate, uzsPerUsd } = input;
+  const { priceKRW, yearMonth, engineVolume, fuelType, krwUsdRate, uzsPerUsd } = input;
 
   const ageYears = getCarAgeYears(yearMonth);
-  const isElectric = !!(fuelType && (
-    fuelType.includes("전기") ||
-    fuelType.toLowerCase().includes("electric") ||
-    fuelType.toLowerCase().includes("ev")
-  ));
+  const electric = isElectricFuel(fuelType);
 
-  const priceUSD = priceKRW * usdRate;
-  const cc = engineVolume;
+  // 1. Таможенная стоимость (без доставки)
+  const priceUSD = priceKRW * krwUsdRate;
+  const priceUZS = priceUSD * uzsPerUsd;
 
-  const dutyUSD = calcDuty(priceUSD, cc, ageYears, isElectric);
-  const recyclingFeeUSD = calcRecyclingFee(cc, uzsPerUsd, isElectric);
-  const customsFeeUSD = calcCustomsFee(priceUSD, uzsPerUsd);
+  // 2. Таможенный сбор (прогрессивная шкала по TS в сумах)
+  const customsFeeUZS = calcCustomsFee(priceUZS);
 
-  // НДС: 12% от (стоимость + пошлина + утилсбор)
-  const vatBase = priceUSD + dutyUSD + recyclingFeeUSD;
-  const vatUSD = vatBase * 0.12;
+  // 3. Пошлина
+  const dutyUSD = calcDuty(priceUSD, engineVolume, electric);
+  const dutyUZS = dutyUSD * uzsPerUsd;
 
-  const totalUSD = dutyUSD + recyclingFeeUSD + customsFeeUSD + vatUSD;
-  const totalUZS = totalUSD * uzsPerUsd;
+  // 4. НДС 12% — база: ТС + Пошлина (утильсбор и сбор за оформление НЕ входят)
+  const vatUZS = Math.round((priceUZS + dutyUZS) * 0.12);
+
+  // 5. Утилизационный сбор
+  const recyclingFeeUZS = calcRecyclingFee(engineVolume, electric);
+
+  // 6. Итого
+  const totalUZS = Math.round(customsFeeUZS + dutyUZS + vatUZS + recyclingFeeUZS);
+  const totalUSD = Math.round(totalUZS / uzsPerUsd);
 
   return {
-    dutyUSD: Math.round(dutyUSD * 100) / 100,
-    vatUSD: Math.round(vatUSD * 100) / 100,
-    customsFeeUSD: Math.round(customsFeeUSD * 100) / 100,
-    recyclingFeeUSD: Math.round(recyclingFeeUSD * 100) / 100,
-    totalUSD: Math.round(totalUSD * 100) / 100,
-    totalUZS: Math.round(totalUZS),
-    priceUSD: Math.round(priceUSD * 100) / 100,
-    carAgeYears: Math.floor(ageYears),
-    isOverLimit: ageYears > 7,
+    priceUSD:         Math.round(priceUSD),
+    priceUZS:         Math.round(priceUZS),
+    customsFeeUZS,
+    dutyUSD:          Math.round(dutyUSD),
+    dutyUZS:          Math.round(dutyUZS),
+    vatUZS,
+    recyclingFeeUZS,
+    totalUZS,
+    totalUSD,
+    carAgeYears:      Math.floor(ageYears),
+    isUsedCar:        ageYears > 1,
+    isElectric:       electric,
   };
 }

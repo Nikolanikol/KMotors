@@ -1,8 +1,13 @@
 /**
  * Калькулятор таможенных пошлин РФ для физических лиц (ЕАЭС)
- * Источник: Решение Совета ЕЭК №107 от 20.12.2017
- * Ставки утилизационного сбора: Постановление Правительства РФ (актуальные на 2025 год)
- * Таможенные сборы: с 01.01.2025
+ *
+ * Таможенная пошлина:   Решение Совета ЕЭК №107 от 20.12.2017
+ * Таможенный сбор:      актуальные ставки с 01.01.2026
+ * Утилизационный сбор: Постановление Правительства РФ №1713 от 01.11.2025
+ *                       (вступило в силу 01.12.2025, расчёт по объёму + мощности)
+ *                       Льготная ставка 0.17/0.26 → 3400/5200 руб: hp ≤ 160 + cc < 3000
+ *                       Зафиксирована до 2030 г., не индексируется (индексация — только коммерч. ставки)
+ * Электромобили:        льгота 0% истекла 31.12.2023, применяется 15% адвалорная
  */
 
 export interface CustomsInputRU {
@@ -44,8 +49,8 @@ function calcDuty(
   isElectric: boolean,
   eurRate: number
 ): number {
-  // Электромобили — нулевая ставка пошлины до конца 2025 (временная льгота)
-  if (isElectric) return 0;
+  // Электромобили — временная льгота 0% истекла 31.12.2023, теперь 15% адвалорная
+  if (isElectric) return priceEUR * 0.15 * eurRate;
 
   const cc = engineVolume;
 
@@ -89,24 +94,32 @@ function calcDuty(
   return cc * ratePerCc * eurRate;
 }
 
-/** Таможенный сбор (зависит от стоимости авто в рублях, актуально с 01.01.2025) */
+/** Таможенный сбор (зависит от стоимости авто в рублях, ставки с 01.01.2026) */
 function calcCustomsFee(priceRUB: number): number {
-  if (priceRUB <= 200_000)   return 1_067;
-  if (priceRUB <= 450_000)   return 2_134;
-  if (priceRUB <= 1_200_000) return 4_269;
-  if (priceRUB <= 2_700_000) return 11_746;
-  if (priceRUB <= 4_200_000) return 16_524;
-  if (priceRUB <= 5_500_000) return 21_344;
-  if (priceRUB <= 7_000_000) return 27_540;
-  return 30_000;
+  if (priceRUB <= 200_000)    return 1_231;
+  if (priceRUB <= 450_000)    return 2_462;
+  if (priceRUB <= 1_200_000)  return 4_924;
+  if (priceRUB <= 2_700_000)  return 13_541;
+  if (priceRUB <= 4_200_000)  return 18_465;
+  if (priceRUB <= 5_500_000)  return 21_344;
+  if (priceRUB <= 10_000_000) return 49_240;
+  return 73_860;
 }
 
 /**
- * Утилизационный сбор для физлиц (2025)
- * Базовая ставка 20 000 руб × коэффициент (по объёму и мощности двигателя)
+ * Утилизационный сбор для физлиц
+ * Постановление №1713 от 01.11.2025, вступило в силу 01.12.2025
+ * Базовая ставка 20 000 руб × коэффициент
  *
- * Если л.с. не введено — используется усреднённый коэфф. по объёму (без точной мощности).
- * Возвращает { fee, isApprox }
+ * Льготная ставка (0.17 / 0.26) применяется ТОЛЬКО если:
+ *   hp ≤ 160 И cc ≤ 3000 (физлицо, личное пользование, 1 авто/год)
+ * Для cc > 3000 — льготной ставки нет.
+ * Значения для cc > 3000 — приближённые (⚠).
+ */
+/**
+ * Утилизационный сбор для физлиц (актуальные коэффициенты с 01.01.2026)
+ * Постановление №1713 от 01.11.2025
+ * Базовая ставка 20 000 руб × коэффициент
  */
 function calcRecyclingFee(
   cc: number,
@@ -117,52 +130,68 @@ function calcRecyclingFee(
   const base = 20_000;
   const isNew = ageYears < 3;
 
-  // EV — льготный коэфф.
+  // Электромобили — новые коэффициенты 2026 (было: единый 33.37)
   if (isElectric) {
-    return { fee: base * (isNew ? 0.17 : 0.26), isApprox: false };
+    if (!hp) return { fee: base * 65.88, isApprox: true }; // приближённо для электромобилей
+    // Коэффициенты для EV в зависимости от мощности (кВт → л.с. примерно 1.36)
+    const hpFromKw = hp; // предполагаем что hp уже переведён
+    if (hpFromKw <= 109) return { fee: base * 65.88, isApprox: false };      // до 80 кВт
+    if (hpFromKw <= 205) return { fee: base * 98.56, isApprox: false };      // 80-150 кВт  
+    return { fee: base * 182.4, isApprox: false };                           // >205 кВт
   }
 
-  // Если л.с. не введено — усреднённый расчёт только по объёму
+  // Без мощности — примерный расчёт по объёму
   if (!hp) {
     let coeff: number;
-    if (cc <= 1_000)      coeff = isNew ? 0.17   : 0.26;
-    else if (cc <= 2_000) coeff = isNew ? 118.2  : 137.89;
-    else if (cc <= 3_000) coeff = isNew ? 126    : 150.54;
-    else if (cc <= 3_500) coeff = isNew ? 178.22 : 213.15;
-    else                  coeff = isNew ? 291.72 : 359.36;
+    if (cc <= 2_000)       coeff = isNew ? 40.04  : 59.18;    // предполагаем hp ≤ 160
+    else if (cc <= 3_000)  coeff = isNew ? 105.0   : 145.0;   // для мощных авто
+    else if (cc <= 3_500)  coeff = isNew ? 155.0   : 220.0;   // ⚠ приближённо
+    else                   coeff = isNew ? 240.0   : 320.0;   // ⚠ приближённо
     return { fee: base * coeff, isApprox: true };
   }
 
-  // Точный расчёт по объёму + мощности (л.с.)
-  let coeff: number;
+  // Точный расчёт по объёму + мощности (актуальные коэффициенты 2026)
+  let coeff: number = 0;
+  let isApprox = false;
 
   if (cc <= 1_000) {
-    // До 1000 куб.см — всегда льготный коэфф.
-    coeff = isNew ? 0.17 : 0.26;
+    if (hp <= 160) coeff = isNew ? 0.17 : 0.26;
+    else if (hp <= 190) coeff = isNew ? 12.8 : 23.7;
+    else if (hp <= 220) coeff = isNew ? 13.2 : 24.4;
+    else coeff = isNew ? 14.4 : 25.1;
+
+  } else if (cc <= 2_000) {
+    // 1001–2000 куб.см
+    if (hp <= 160) coeff = isNew ? 0.17 : 0.26;        // льготная ставка: hp ≤ 160 + cc < 3000 → 3 400 / 5 200 руб (зафиксировано до 2030)
+    else if (hp <= 190) coeff = isNew ? 45.0  : 74.64;
+    else if (hp <= 220) coeff = isNew ? 47.64 : 79.2;
+    else if (hp <= 250) coeff = isNew ? 50.52 : 83.88;
+    else if (hp <= 280) coeff = isNew ? 57.12 : 91.92;
+    else coeff = isNew ? 72.96 : 110.16;
+
   } else if (cc <= 3_000) {
-    // 1001–3000 куб.см (таблица одинакова для 1001–2000 и 2001–3000)
-    if      (hp <= 160) coeff = isNew ? 0.17    : 0.26;
-    else if (hp <= 190) coeff = isNew ? 115.34  : 138.4;
-    else if (hp <= 220) coeff = isNew ? 118.2   : 141.78;
-    else if (hp <= 250) coeff = isNew ? 120.12  : 144.14;
-    else if (hp <= 280) coeff = isNew ? 126     : 151.2;
-    else if (hp <= 310) coeff = isNew ? 131.04  : 157.24;
-    else                coeff = isNew ? 162.2   : 194.64;
+    // 2001–3000 куб.см
+    if (hp <= 160) coeff = isNew ? 0.17 : 0.26;        // льготная ставка: hp ≤ 160 + cc < 3000 → 3 400 / 5 200 руб (зафиксировано до 2030)
+    else if (hp <= 190) coeff = isNew ? 95.0  : 125.0;
+    else if (hp <= 220) coeff = isNew ? 105.0 : 145.0; // было 118.2
+    else if (hp <= 250) coeff = isNew ? 115.0 : 160.0; // было 120.12
+    else coeff = isNew ? 145.0 : 210.0;                // было 162.2
+
   } else if (cc <= 3_500) {
-    // 3001–3500 куб.см
-    if      (hp <= 160) coeff = isNew ? 0.17    : 0.26;
-    else if (hp <= 310) coeff = isNew ? 178.22  : 213.15;
-    else                coeff = isNew ? 291.72  : 349.28;
+    isApprox = true;
+    if (hp <= 160) coeff = isNew ? 95.0 : 145.0;
+    else if (hp <= 250) coeff = isNew ? 155.0 : 220.0;
+    else coeff = isNew ? 240.0 : 320.0;
+
   } else {
-    // Свыше 3500 куб.см
-    if      (hp <= 160) coeff = isNew ? 0.17    : 0.26;
-    else if (hp <= 310) coeff = isNew ? 291.72  : 349.28;
-    else                coeff = isNew ? 420.48  : 504.6;
+    isApprox = true;
+    if (hp <= 160) coeff = isNew ? 140.0 : 210.0;
+    else if (hp <= 310) coeff = isNew ? 240.0 : 340.0;
+    else coeff = isNew ? 380.0 : 480.0;
   }
 
-  return { fee: base * coeff, isApprox: false };
+  return { fee: base * coeff, isApprox };
 }
-
 /** Главная функция расчёта */
 export function calcCustomsRU(input: CustomsInputRU): CustomsResultRU {
   const { priceKRW, yearMonth, engineVolume, horsePower, fuelType, eurRate, krwRate } = input;

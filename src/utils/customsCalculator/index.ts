@@ -3,3 +3,6 @@ export type { CustomsInputRU, CustomsResultRU } from "./russia";
 
 export { calcCustomsUZ } from "./uzbekistan";
 export type { CustomsInputUZ, CustomsResultUZ } from "./uzbekistan";
+
+export { calcCustomsKZ } from "./kazakhstan";
+export type { CustomsInputKZ, CustomsResultKZ } from "./kazakhstan";

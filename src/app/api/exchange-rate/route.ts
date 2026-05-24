@@ -25,7 +25,25 @@ const FALLBACK_RATES = {
   USD: 88,
   KRW: 0.065,
   UZS: 12700, // сколько UZS за 1 USD
+  KZT: 505,   // сколько KZT за 1 USD (приблизительный курс)
 };
+
+/** Курс USD/KZT от бесплатного CDN-провайдера (fawazahmed currency API) */
+async function fetchKZTRate(): Promise<number> {
+  try {
+    const res = await fetch(
+      "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) throw new Error(`Currency API error: ${res.status}`);
+    const data = await res.json();
+    const kzt = Number(data?.usd?.kzt);
+    if (!kzt || isNaN(kzt) || kzt <= 0) throw new Error("Invalid KZT rate");
+    return Math.round(kzt * 100) / 100;
+  } catch {
+    return FALLBACK_RATES.KZT;
+  }
+}
 
 async function fetchUZSRate(): Promise<number> {
   try {
@@ -46,11 +64,12 @@ async function fetchUZSRate(): Promise<number> {
 
 export async function GET() {
   try {
-    const [cbrRes, uzsPerUsd] = await Promise.all([
+    const [cbrRes, uzsPerUsd, kztPerUsd] = await Promise.all([
       fetch("https://www.cbr-xml-daily.ru/daily_json.js", {
         next: { revalidate: 3600 }, // кешируем на 1 час
       }),
       fetchUZSRate(),
+      fetchKZTRate(),
     ]);
 
     if (!cbrRes.ok) {
@@ -69,12 +88,17 @@ export async function GET() {
     // KRW/USD: сколько USD за 1 KRW
     const krwPerUsd = krw / usd;
 
+    // EUR/KZT: производный курс через USD
+    const eurKzt = Math.round(kztPerUsd * (eur / usd) * 100) / 100;
+
     return NextResponse.json({
       EUR: Math.round(eur * 100) / 100,
       USD: Math.round(usd * 100) / 100,
       KRW: Math.round(krw * 10000) / 10000,
       KRW_USD: Math.round(krwPerUsd * 100000) / 100000, // KRW → USD коэффициент
       UZS: Math.round(uzsPerUsd), // сколько UZS за 1 USD
+      KZT: kztPerUsd,             // сколько KZT за 1 USD
+      EUR_KZT: eurKzt,            // сколько KZT за 1 EUR
       source: "cbr",
       updatedAt: new Date().toISOString(),
     });
@@ -84,10 +108,13 @@ export async function GET() {
     const uzsPerUsd = await fetchUZSRate();
 
     // Возвращаем fallback с пометкой
+    const fallbackEurKzt = Math.round(FALLBACK_RATES.KZT * (FALLBACK_RATES.EUR / FALLBACK_RATES.USD) * 100) / 100;
+
     return NextResponse.json({
       ...FALLBACK_RATES,
       KRW_USD: FALLBACK_RATES.KRW / FALLBACK_RATES.USD,
       UZS: uzsPerUsd,
+      EUR_KZT: fallbackEurKzt,
       source: "fallback",
       updatedAt: new Date().toISOString(),
     });

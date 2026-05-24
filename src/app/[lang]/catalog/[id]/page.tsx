@@ -214,35 +214,48 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        {/* Car title */}
-        <div className="mb-5">
-          <h1 className="text-2xl lg:text-3xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
-            {data.category.manufacturerEnglishName}{" "}
-            <span style={{ color: "var(--axis-orange)" }}>{data.category.modelGroupEnglishName}</span>{" "}
-            {data.category.gradeEnglishName}
-            {data.category.gradeDetailEnglishName ? ` ${data.category.gradeDetailEnglishName}` : ""}
-          </h1>
-          <div className="flex items-center gap-3 mt-2">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}>
-              {carData}
-            </span>
-            <span className="text-xs" style={{ color: "var(--axis-gray)" }}>ID: {id}</span>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Three column layout: [calculator] | [photos + specs] | [price + form + seller] */}
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_300px] gap-5">
 
-        {/* Two column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-          {/* Left column */}
-          <div className="space-y-5 car-detail-dark min-w-0 overflow-hidden">
+          {/* Col 1 — Калькулятор (sticky) */}
+          {data?.advertisement?.price && (
+            <div className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 car-detail-dark order-2 lg:order-1" style={{ scrollbarWidth: "none" }}>
+              <CustomsCalculator
+                priceKRW={data.advertisement.price * 10000}
+                yearMonth={data?.category?.yearMonth || ""}
+                engineVolume={data?.spec?.displacement ?? 0}
+                fuelType={data?.spec?.fuelName}
+                carId={id}
+                carName={fullCarName}
+              />
+            </div>
+          )}
+
+          {/* Col 2 — Заголовок + Фото, VIN, спеки, опции */}
+          <div className="space-y-5 car-detail-dark min-w-0 overflow-hidden order-1 lg:order-2">
+            {/* Car title — над фото, в центральной колонке */}
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
+                {data.category.manufacturerEnglishName}{" "}
+                <span style={{ color: "var(--axis-orange)" }}>{data.category.modelGroupEnglishName}</span>{" "}
+                {data.category.gradeEnglishName}
+                {data.category.gradeDetailEnglishName ? ` ${data.category.gradeDetailEnglishName}` : ""}
+              </h1>
+              <div className="flex items-center gap-3 mt-2">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}>
+                  {carData}
+                </span>
+              </div>
+            </div>
             <CarouselLight photos={sortedPhotos} carName={fullCarName} photoLabel={photoLabel} />
             <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
             <OptionsRow data={data.options} />
           </div>
 
-          {/* Right sticky column */}
-          <div className="lg:sticky lg:top-[88px] h-fit min-w-0">
+          {/* Col 3 — Цена, форма, продавец (sticky) */}
+          <div className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 order-3" style={{ scrollbarWidth: "none" }}>
             <CarDetailSidebar
               data={data}
               id={id}

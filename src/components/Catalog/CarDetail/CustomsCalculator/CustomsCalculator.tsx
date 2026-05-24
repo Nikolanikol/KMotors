@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { calcCustomsRU, calcCustomsUZ } from "@/utils/customsCalculator";
-import type { CustomsResultRU, CustomsResultUZ } from "@/utils/customsCalculator";
+import { calcCustomsRU, calcCustomsUZ, calcCustomsKZ } from "@/utils/customsCalculator";
+import type { CustomsResultRU, CustomsResultUZ, CustomsResultKZ } from "@/utils/customsCalculator";
 import CarRequestForm from "../CarRequestForm";
 
 interface Props {
@@ -20,10 +20,12 @@ interface Rates {
   KRW: number;
   KRW_USD: number;
   UZS: number;
+  KZT: number;
+  EUR_KZT: number;
   source: "cbr" | "fallback";
 }
 
-type Country = "ru" | "uz";
+type Country = "ru" | "kz" | "uz";
 
 function fmtRUB(n: number) {
   return n.toLocaleString("ru-RU") + " ₽";
@@ -33,6 +35,9 @@ function fmtUSD(n: number) {
 }
 function fmtUZS(n: number) {
   return n.toLocaleString("ru-RU") + " сум";
+}
+function fmtKZT(n: number) {
+  return n.toLocaleString("ru-RU") + " ₸";
 }
 
 export default function CustomsCalculator({
@@ -56,6 +61,9 @@ export default function CustomsCalculator({
   // UZ state
   const [resultUZ, setResultUZ] = useState<CustomsResultUZ | null>(null);
 
+  // KZ state
+  const [resultKZ, setResultKZ] = useState<CustomsResultKZ | null>(null);
+
   useEffect(() => {
     fetch("/api/exchange-rate")
       .then((r) => r.json())
@@ -72,10 +80,25 @@ export default function CustomsCalculator({
       yearMonth,
       engineVolume,
       fuelType,
-      usdRate: rates.KRW_USD,
+      krwUsdRate: rates.KRW_USD,
       uzsPerUsd: rates.UZS,
     });
     setResultUZ(res);
+  }, [rates, country, priceKRW, yearMonth, engineVolume, fuelType]);
+
+  // Автоматический расчёт KZ при смене вкладки или загрузке курсов
+  useEffect(() => {
+    if (!rates || country !== "kz") return;
+    const res = calcCustomsKZ({
+      priceKRW,
+      yearMonth,
+      engineVolume,
+      fuelType,
+      usdKztRate: rates.KZT,
+      eurKztRate: rates.EUR_KZT,
+      krwUsdRate: rates.KRW_USD,
+    });
+    setResultKZ(res);
   }, [rates, country, priceKRW, yearMonth, engineVolume, fuelType]);
 
   function handleCalculateRU() {
@@ -100,6 +123,7 @@ export default function CustomsCalculator({
 
   const tabs: { id: Country; label: string; flag: string }[] = [
     { id: "ru", label: "Россия", flag: "🇷🇺" },
+    { id: "kz", label: "Казахстан", flag: "🇰🇿" },
     { id: "uz", label: "Узбекистан", flag: "🇺🇿" },
   ];
 
@@ -219,7 +243,14 @@ export default function CustomsCalculator({
                         <span className="font-medium">{fmtRUB(resultRU.customsFeeRUB)}</span>
                       </div>
                       <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Утилизационный сбор</span>
+                        <div>
+                          <span className="text-gray-600">Утилизационный сбор</span>
+                          {parseInt(horsePower) > 160 && (
+                            <div className="text-xs text-orange-500 mt-0.5">
+                              {horsePower} л.с. &gt; 160 — коммерческая ставка
+                            </div>
+                          )}
+                        </div>
                         <span className="font-medium">{fmtRUB(resultRU.recyclingFeeRUB)}</span>
                       </div>
                       <div className="flex justify-between text-sm py-2 font-semibold">
@@ -229,13 +260,20 @@ export default function CustomsCalculator({
                     </div>
 
                     <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4">
-                      <div className="text-sm text-gray-500 mb-1">Итоговая стоимость авто в Россия</div>
+                      <div className="text-sm text-gray-500 mb-1">Итоговая стоимость авто в России</div>
                       <div className="text-2xl font-bold text-green-700">
-                        {fmtUSD(Math.round((resultRU.priceRUB + resultRU.totalRUB) / rates.USD))}
+                        {fmtRUB(resultRU.priceRUB + resultRU.totalRUB)}
+                      </div>
+                      <div className="text-sm text-green-600 font-medium mt-0.5">
+                        ≈ {fmtUSD(Math.round((resultRU.priceRUB + resultRU.totalRUB) / (rates.KRW / rates.KRW_USD)))}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
-                        Авто {fmtUSD(Math.round(resultRU.priceRUB / rates.USD))} + Таможня {fmtUSD(Math.round(resultRU.totalRUB / rates.USD))}
+                        Авто {fmtRUB(resultRU.priceRUB)} + Таможня {fmtRUB(resultRU.totalRUB)}
                       </div>
+                    </div>
+
+                    <div className="text-xs text-blue-400 font-medium">
+                      🚢 Доставка не включена в расчёт — обсуждается отдельно
                     </div>
 
                     <p className="text-xs rounded-lg p-3 leading-relaxed" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-graphite)" }}>
@@ -260,40 +298,57 @@ export default function CustomsCalculator({
               </div>
             )}
 
-            {/* ===== УЗБЕКИСТАН ===== */}
-            {country === "uz" && (
+            {/* ===== КАЗАХСТАН ===== */}
+            {country === "kz" && (
               <div className="space-y-5">
                 {/* Курс */}
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${rates.source === "cbr" ? "bg-green-500" : "bg-yellow-500"}`} />
                   <span>
-                    1 USD = <strong className="text-gray-700">{rates.UZS.toLocaleString("ru-RU")} сум</strong>
-                    {" · "}1 KRW ≈ <strong className="text-gray-700">${(rates.KRW_USD).toFixed(5)}</strong>
+                    1 USD = <strong className="text-gray-700">{rates.KZT.toLocaleString("ru-RU")} ₸</strong>
+                    {" · "}1 EUR ≈ <strong className="text-gray-700">{rates.EUR_KZT.toLocaleString("ru-RU")} ₸</strong>
+                    {rates.source === "fallback" && (
+                      <span className="text-yellow-600 ml-1">(приблизительный)</span>
+                    )}
                   </span>
                 </div>
 
-                {/* Предупреждение о запрете */}
-                {resultUZ?.isOverLimit && (
-                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                    <p className="text-sm text-red-700 font-medium">
-                      🚫 Возраст автомобиля превышает 7 лет — ввоз в Узбекистан для физических лиц запрещён
-                    </p>
-                  </div>
-                )}
-
-                {resultUZ && !resultUZ.isOverLimit && (
+                {resultKZ && (
                   <>
+                    {/* Предупреждение: авто > 7 лет */}
+                    {resultKZ.isOldCar && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                        <p className="text-sm text-red-700 font-medium">
+                          ⚠️ Автомобиль старше 7 лет — пошлина по минимальной специфической ставке (€/см³), ввоз нецелесообразен
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Предупреждение: регистрация >36 месяцев дорогая */}
+                    {!resultKZ.isOldCar && resultKZ.carAgeMonths > 36 && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
+                        <p className="text-sm text-yellow-800">
+                          ⚠️ Возраст авто {resultKZ.carAgeMonths} мес. — сбор за первичную регистрацию 500 МРП ({fmtKZT(resultKZ.registrationFeeKZT)})
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Предупреждение: акциз роскошь */}
+                    {resultKZ.isLuxury && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+                        <p className="text-sm text-orange-800">
+                          💎 Таможенная стоимость превышает 18 000 МРП ({fmtKZT(77_850_000)}) — применяется акциз на роскошь +10%
+                        </p>
+                      </div>
+                    )}
+
                     {/* Итог */}
                     <div className="bg-blue-50 rounded-xl px-5 py-4">
                       <div className="text-sm text-gray-500 mb-1">Итого к оплате на таможне</div>
-                      <div className="text-3xl font-bold text-[#002C5F]">{fmtUSD(resultUZ.totalUSD)}</div>
-                      <div className="text-sm text-gray-500 mt-1 font-medium">
-                        ≈ {fmtUZS(resultUZ.totalUZS)}
-                      </div>
+                      <div className="text-3xl font-bold text-[#002C5F]">{fmtKZT(resultKZ.totalKZT)}</div>
                       <div className="text-sm text-gray-400 mt-1">
-                        Цена авто ≈ {fmtUSD(resultUZ.priceUSD)}
-                        {" · "}Возраст: {resultUZ.carAgeYears}{" "}
-                        {resultUZ.carAgeYears === 1 ? "год" : resultUZ.carAgeYears < 5 ? "года" : "лет"}
+                        Цена авто ≈ {fmtUSD(resultKZ.priceUSD)}
+                        {" · "}Возраст: {resultKZ.carAgeMonths} мес.
                       </div>
                     </div>
 
@@ -301,42 +356,81 @@ export default function CustomsCalculator({
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-gray-600 mb-2">Расшифровка:</div>
                       <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Таможенная пошлина</span>
-                        <span className="font-medium">{fmtUSD(resultUZ.dutyUSD)}</span>
+                        <span className="text-gray-600">Таможенная стоимость</span>
+                        <span className="font-medium text-gray-500">{fmtKZT(resultKZ.customsValueKZT)}</span>
                       </div>
                       <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600">НДС (12%)</span>
-                        <span className="font-medium">{fmtUSD(resultUZ.vatUSD)}</span>
+                        <span className="text-gray-600">Таможенный сбор (6 МРП)</span>
+                        <span className="font-medium">{fmtKZT(resultKZ.customsFeeKZT)}</span>
                       </div>
                       <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Утилизационный сбор</span>
-                        <span className="font-medium">{fmtUSD(resultUZ.recyclingFeeUSD)}</span>
+                        <span className="text-gray-600">
+                          Таможенная пошлина
+                          {resultKZ.isElectric && <span className="text-green-600 ml-1">(0% — электро)</span>}
+                        </span>
+                        <span className="font-medium">{fmtKZT(resultKZ.dutyKZT)}</span>
+                      </div>
+                      {resultKZ.exciseEngineKZT > 0 && (
+                        <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Акциз (объём &gt;3 000 см³)</span>
+                          <span className="font-medium">{fmtKZT(resultKZ.exciseEngineKZT)}</span>
+                        </div>
+                      )}
+                      {resultKZ.exciseLuxuryKZT > 0 && (
+                        <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Акциз на роскошь (10%)</span>
+                          <span className="font-medium">{fmtKZT(resultKZ.exciseLuxuryKZT)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">НДС 16%</span>
+                        <span className="font-medium">{fmtKZT(resultKZ.vatKZT)}</span>
                       </div>
                       <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Таможенный сбор</span>
-                        <span className="font-medium">{fmtUSD(resultUZ.customsFeeUSD)}</span>
+                        <span className="text-gray-600">
+                          Первичная регистрация (ЦОН)
+                        </span>
+                        <span className="font-medium">{fmtKZT(resultKZ.registrationFeeKZT)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">
+                          Утилизационный сбор
+                          {resultKZ.isElectric && <span className="text-green-600 ml-1">(0 ₸ — электро)</span>}
+                        </span>
+                        <span className="font-medium">{fmtKZT(resultKZ.recyclingFeeKZT)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Доп. расходы (СБКТС, ЭВАК, брокер, СВХ)</span>
+                        <span className="font-medium">≈ {fmtKZT(resultKZ.additionalKZT)}</span>
                       </div>
                       <div className="flex justify-between text-sm py-2 font-semibold">
                         <span>Итого</span>
-                        <span className="text-[#002C5F]">{fmtUSD(resultUZ.totalUSD)}</span>
+                        <span className="text-[#002C5F]">{fmtKZT(resultKZ.totalKZT)}</span>
                       </div>
                     </div>
 
                     <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4">
-                      <div className="text-sm text-gray-500 mb-1">Итоговая стоимость авто в Узбекистане</div>
+                      <div className="text-sm text-gray-500 mb-1">Итоговая стоимость авто в Казахстане</div>
                       <div className="text-2xl font-bold text-green-700">
-                        {fmtUSD(Math.round(resultUZ.priceUSD + resultUZ.totalUSD))}
+                        {fmtKZT(resultKZ.customsValueKZT + resultKZ.totalKZT)}
+                      </div>
+                      <div className="text-sm text-green-600 font-medium mt-0.5">
+                        ≈ {fmtUSD(Math.round((resultKZ.customsValueKZT + resultKZ.totalKZT) / rates.KZT))}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
-                        Авто {fmtUSD(Math.round(resultUZ.priceUSD))} + Таможня {fmtUSD(Math.round(resultUZ.totalUSD))}
+                        Авто {fmtKZT(resultKZ.customsValueKZT)} + Таможня {fmtKZT(resultKZ.totalKZT)}
                       </div>
                     </div>
 
+                    <div className="text-xs text-blue-400 font-medium">
+                      🚢 Доставка не включена в расчёт — обсуждается отдельно
+                    </div>
+
                     <p className="text-xs rounded-lg p-3 leading-relaxed" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-graphite)" }}>
-                      ⚠️ Расчёт ориентировочный для физических лиц. Максимальный возраст авто — 7 лет, не ниже Euro-5. Не учтены: брокерские услуги, доставка, регистрация. Уточняйте у таможенного брокера.
+                      ⚠️ Расчёт ориентировочный для физических лиц. Ставки МРП 2026, НДС 16% (новый НК РК с 01.01.2026). Доп. расходы (~400 000 ₸) — оценочные. Актуальные ставки уточняйте у таможенного брокера.
                     </p>
 
-                    {/* Шаг 6: CTA после результата UZ */}
+                    {/* CTA */}
                     {carId && carName && (
                       <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
                         <p className="text-sm font-semibold text-blue-900 mb-2">
@@ -352,7 +446,129 @@ export default function CustomsCalculator({
                   </>
                 )}
 
-                {/* Подсказка */}
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  💡 Дату производства уточняйте у продавца или на индивидуальном просчёте — от этих данных зависит итоговая сумма
+                </p>
+              </div>
+            )}
+
+            {/* ===== УЗБЕКИСТАН ===== */}
+            {country === "uz" && (
+              <div className="space-y-5">
+                {/* Курс */}
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${rates.source === "cbr" ? "bg-green-500" : "bg-yellow-500"}`} />
+                  <span>
+                    1 USD = <strong className="text-gray-700">{rates.UZS.toLocaleString("ru-RU")} сум</strong>
+                    {" · "}1 KRW ≈ <strong className="text-gray-700">${rates.KRW_USD.toFixed(5)}</strong>
+                  </span>
+                </div>
+
+                {/* Предупреждение: авто > 1 года */}
+                {resultUZ?.isUsedCar && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      ⚠️ Автомобиль старше 1 года — в Узбекистане применяются заградительные пошлины, ввоз нецелесообразен
+                    </p>
+                  </div>
+                )}
+
+                {/* Бонус для электро */}
+                {resultUZ?.isElectric && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                    <p className="text-sm text-green-700">
+                      ⚡ Электромобиль: пошлина 0%, утилизационный сбор 0 сум
+                    </p>
+                  </div>
+                )}
+
+                {resultUZ && (
+                  <>
+                    {/* Итог */}
+                    <div className="bg-blue-50 rounded-xl px-5 py-4">
+                      <div className="text-sm text-gray-500 mb-1">Итого к оплате на таможне</div>
+                      <div className="text-3xl font-bold text-[#002C5F]">{fmtUZS(resultUZ.totalUZS)}</div>
+                      <div className="text-sm text-gray-500 mt-1 font-medium">
+                        ≈ {fmtUSD(resultUZ.totalUSD)}
+                      </div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        Цена авто ≈ {fmtUSD(resultUZ.priceUSD)}
+                        {" · "}Возраст: {resultUZ.carAgeYears}{" "}
+                        {resultUZ.carAgeYears === 1 ? "год" : resultUZ.carAgeYears < 5 ? "года" : "лет"}
+                      </div>
+                    </div>
+
+                    {/* Расшифровка */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-gray-600 mb-2">Расшифровка:</div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Таможенная стоимость</span>
+                        <span className="font-medium text-gray-500">{fmtUZS(resultUZ.priceUZS)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Таможенный сбор (ПКМ №700)</span>
+                        <span className="font-medium">{fmtUZS(resultUZ.customsFeeUZS)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">
+                          Таможенная пошлина
+                          {resultUZ.isElectric && <span className="text-green-600 ml-1">(0% — электро)</span>}
+                        </span>
+                        <span className="font-medium">{fmtUZS(resultUZ.dutyUZS)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">НДС 12%</span>
+                        <span className="font-medium">{fmtUZS(resultUZ.vatUZS)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                        <span className="text-gray-600">
+                          Утилизационный сбор
+                          {resultUZ.isElectric && <span className="text-green-600 ml-1">(0 сум — электро)</span>}
+                        </span>
+                        <span className="font-medium">{fmtUZS(resultUZ.recyclingFeeUZS)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm py-2 font-semibold">
+                        <span>Итого</span>
+                        <span className="text-[#002C5F]">{fmtUZS(resultUZ.totalUZS)}</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4">
+                      <div className="text-sm text-gray-500 mb-1">Итоговая стоимость авто в Узбекистане</div>
+                      <div className="text-2xl font-bold text-green-700">
+                        {fmtUZS(resultUZ.priceUZS + resultUZ.totalUZS)}
+                      </div>
+                      <div className="text-sm text-green-600 font-medium mt-0.5">
+                        ≈ {fmtUSD(resultUZ.priceUSD + resultUZ.totalUSD)}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Авто {fmtUZS(resultUZ.priceUZS)} + Таможня {fmtUZS(resultUZ.totalUZS)}
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-blue-400 font-medium">
+                      🚢 Доставка не включена в расчёт — обсуждается отдельно
+                    </div>
+
+                    <p className="text-xs rounded-lg p-3 leading-relaxed" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-graphite)" }}>
+                      ⚠️ Расчёт ориентировочный для физических лиц. Авто до 1 года, не ниже Euro-5, левый руль. С 01.01.2026 льготы на малолитражки отменены. Уточняйте у таможенного брокера.
+                    </p>
+
+                    {carId && carName && (
+                      <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p className="text-sm font-semibold text-blue-900 mb-2">
+                          Хотите точный расчёт с учётом доставки и брокерских услуг?
+                        </p>
+                        <CarRequestForm
+                          carId={carId}
+                          carName={carName}
+                          source="car_calculator"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
                 <p className="text-xs text-gray-400 leading-relaxed">
                   💡 Дату производства уточняйте у продавца или на индивидуальном просчёте — от этих данных зависит итоговая сумма
                 </p>
