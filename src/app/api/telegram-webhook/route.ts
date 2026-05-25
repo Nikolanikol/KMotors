@@ -5,6 +5,12 @@ const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOK
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
+// Все администраторы — могут получать уведомления и запускать команды
+const ADMIN_IDS = [ALLOWED_CHAT_ID, WORK_CHAT_ID].filter(Boolean) as string[];
+function isAdmin(chatId: number) {
+  return ADMIN_IDS.some(id => String(chatId) === String(id));
+}
+
 function ok() {
   return NextResponse.json({ ok: true }, { status: 200 });
 }
@@ -125,8 +131,8 @@ export async function POST(req: NextRequest) {
       return ok();
     }
 
-    // Защита — только для владельца бота
-    if (ALLOWED_CHAT_ID && String(chatId) !== String(ALLOWED_CHAT_ID)) {
+    // Защита — только для администраторов
+    if (ADMIN_IDS.length > 0 && !isAdmin(chatId)) {
       return ok();
     }
 
