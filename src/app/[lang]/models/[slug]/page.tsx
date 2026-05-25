@@ -76,8 +76,8 @@ export default async function ModelPage({ params }: Props) {
   const TG_URL = "https://t.me/axiskorea";
   const WA_URL = `https://wa.me/821058654344?text=${encodeURIComponent(
     isRu
-      ? `Здравствуйте! Интересует ${model.manufacturerEn} из Кореи. Бюджет: `
-      : `Hello! I'm interested in ${model.manufacturerEn} from Korea. Budget: `
+      ? `Здравствуйте! Интересует ${model.manufacturerEn} ${model.modelEn} из Кореи. Бюджет: `
+      : `Hello! I'm interested in ${model.manufacturerEn} ${model.modelEn} from Korea. Budget: `
   )}`;
 
   return (
@@ -195,8 +195,8 @@ export default async function ModelPage({ params }: Props) {
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-2 text-center">
               {isRu
-                ? `${model.manufacturerEn} в наличии прямо сейчас`
-                : `${model.manufacturerEn} available right now`}
+                ? `${model.manufacturerEn} ${model.modelEn} в наличии прямо сейчас`
+                : `${model.manufacturerEn} ${model.modelEn} available right now`}
             </h2>
             <p className="text-center text-sm mb-6" style={{ color: "var(--axis-gray)" }}>
               {isRu ? "Реальные автомобили с корейского рынка" : "Real cars from the Korean market"}
@@ -212,8 +212,8 @@ export default async function ModelPage({ params }: Props) {
                 style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
               >
                 {isRu
-                  ? `Все ${model.manufacturerEn} в каталоге →`
-                  : `All ${model.manufacturerEn} in catalog →`}
+                  ? `Все ${model.manufacturerEn} ${model.modelEn} в каталоге →`
+                  : `All ${model.manufacturerEn} ${model.modelEn} in catalog →`}
               </Link>
             </div>
           </div>
@@ -269,8 +269,8 @@ export default async function ModelPage({ params }: Props) {
           <div className="max-w-2xl mx-auto text-center space-y-4">
             <h2 className="text-2xl font-bold text-white">
               {isRu
-                ? `Хотите ${model.manufacturerEn} из Кореи?`
-                : `Want a ${model.manufacturerEn} from Korea?`}
+                ? `Хотите ${model.manufacturerEn} ${model.modelEn} из Кореи?`
+                : `Want a ${model.manufacturerEn} ${model.modelEn} from Korea?`}
             </h2>
             <p className="text-white/60">
               {isRu
