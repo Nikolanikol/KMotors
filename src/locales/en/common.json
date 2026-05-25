@@ -448,7 +448,8 @@
         "part": "Specific part",
         "used": "Used from Korea",
         "other": "Other"
-      }
+      },
+      "errorRequired": "Required field"
     }
   }
 }

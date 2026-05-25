@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MessengerSelector } from "@/components/ui/MessengerSelector";
-import { Send, Phone, User, MessageSquare, Hash } from "lucide-react";
+import { Send, Phone, User, MessageSquare, Hash, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 const PART_TYPES = [
   { key: "vin",  emoji: "🔍" },
@@ -22,6 +23,7 @@ export function ContactForm() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
   const [messenger, setMessenger] = useState("whatsapp");
   const [tgUsername, setTgUsername] = useState("");
@@ -29,6 +31,20 @@ export function ContactForm() {
   const [partType, setPartType] = useState("");
 
   const [formData, setFormData] = useState({ name: "", vin: "", message: "" });
+
+  // Computed validation — errors only show after first submit attempt
+  const errors = {
+    name:     attempted && !formData.name.trim(),
+    phone:    attempted && !phone,
+    partType: attempted && !partType,
+    message:  attempted && !formData.message.trim(),
+  };
+
+  const isValid =
+    !!formData.name.trim() &&
+    !!phone &&
+    !!partType &&
+    !!formData.message.trim();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -51,9 +67,12 @@ export function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAttempted(true);
+
+    if (!isValid) return; // errors are now visible — stop here
+
     setIsSubmitting(true);
     try {
-      // Prepend part type to message so Nikolay sees it in Telegram
       const partTypeLabel = partType
         ? `${PART_TYPES.find(p => p.key === partType)?.emoji} ${t(`parts.contact.partType.${partType}`)}`
         : "";
@@ -80,12 +99,21 @@ export function ContactForm() {
       setPhone(undefined);
       setTgUsername("");
       setPartType("");
+      setAttempted(false);
     } catch {
       toast.error(t("parts.contact.errorMsg"));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const errorHint = (show: boolean) =>
+    show ? (
+      <p className="flex items-center gap-1 text-xs text-red-500 mt-1">
+        <AlertCircle className="w-3 h-3 flex-shrink-0" />
+        {t("parts.contact.errorRequired")}
+      </p>
+    ) : null;
 
   return (
     <section
@@ -160,10 +188,10 @@ export function ContactForm() {
 
             {/* Right side - Form */}
             <div className="md:col-span-3 p-8 flex flex-col justify-center">
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
                 {/* Name */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="name" className="text-gray-700">
                     {t("parts.contact.nameLabel")} <span className="text-[#BB162B]">*</span>
                   </Label>
@@ -175,14 +203,17 @@ export function ContactForm() {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder={t("parts.contact.namePlaceholder")}
-                      className="pl-10 text-gray-900 placeholder:text-gray-400"
-                      required
+                      className={cn(
+                        "pl-10 text-gray-900 placeholder:text-gray-400",
+                        errors.name && "border-red-500 focus-visible:ring-red-500"
+                      )}
                     />
                   </div>
+                  {errorHint(errors.name)}
                 </div>
 
                 {/* Phone */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-gray-700">
                     {t("parts.contact.phoneLabel")} <span className="text-[#BB162B]">*</span>
                   </Label>
@@ -190,12 +221,13 @@ export function ContactForm() {
                     value={phone}
                     onChange={setPhone}
                     placeholder={t("parts.contact.phonePlaceholder")}
-                    required
+                    error={errors.phone}
                   />
+                  {errorHint(errors.phone)}
                 </div>
 
                 {/* VIN */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="vin" className="text-gray-700">
                     {t("parts.contact.vinLabel")}
                   </Label>
@@ -214,7 +246,7 @@ export function ContactForm() {
                 </div>
 
                 {/* Part type chips — required */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-gray-700">
                     {t("parts.contact.partTypeLabel")} <span className="text-[#BB162B]">*</span>
                   </Label>
@@ -230,7 +262,9 @@ export function ContactForm() {
                           style={
                             active
                               ? { borderColor: "#BB162B", color: "#BB162B", backgroundColor: "#BB162B12" }
-                              : { borderColor: "#e5e7eb", color: "#6b7280" }
+                              : errors.partType
+                                ? { borderColor: "#ef4444", color: "#6b7280" }
+                                : { borderColor: "#e5e7eb", color: "#6b7280" }
                           }
                         >
                           <span>{emoji}</span>
@@ -239,6 +273,7 @@ export function ContactForm() {
                       );
                     })}
                   </div>
+                  {errorHint(errors.partType)}
                 </div>
 
                 {/* Messenger */}
@@ -251,10 +286,10 @@ export function ContactForm() {
                   usernamePlaceholder={t("contact.tgUsernamePlaceholder")}
                 />
 
-                {/* Comment / Part description */}
-                <div className="space-y-2">
+                {/* Part description — required */}
+                <div className="space-y-1">
                   <Label htmlFor="message" className="text-gray-700">
-                    {t("parts.contact.messageLabel")}
+                    {t("parts.contact.messageLabel")} <span className="text-[#BB162B]">*</span>
                   </Label>
                   <div className="relative">
                     <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -264,14 +299,18 @@ export function ContactForm() {
                       value={formData.message}
                       onChange={handleChange}
                       placeholder={t("parts.contact.messagePlaceholder")}
-                      className="pl-10 text-gray-900 placeholder:text-gray-400"
+                      className={cn(
+                        "pl-10 text-gray-900 placeholder:text-gray-400",
+                        errors.message && "border-red-500 focus-visible:ring-red-500"
+                      )}
                     />
                   </div>
+                  {errorHint(errors.message)}
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !phone || !formData.name || !partType}
+                  disabled={isSubmitting}
                   className="w-full bg-[#BB162B] hover:bg-[#9B1220] text-white py-6 text-base font-semibold"
                 >
                   {isSubmitting ? (

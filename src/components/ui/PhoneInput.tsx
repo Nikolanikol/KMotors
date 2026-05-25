@@ -10,9 +10,10 @@ interface PhoneInputProps {
   disabled?: boolean;
   required?: boolean;
   className?: string;
+  error?: boolean;
 }
 
-export function PhoneInput({ value, onChange, placeholder, disabled, required, className }: PhoneInputProps) {
+export function PhoneInput({ value, onChange, placeholder, disabled, required, className, error }: PhoneInputProps) {
   return (
     <ReactPhoneInput
       international
@@ -28,7 +29,12 @@ export function PhoneInput({ value, onChange, placeholder, disabled, required, c
           className
         ),
       }}
-      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring gap-2 [&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-none [&_.PhoneInputCountrySelect]:outline-none [&_.PhoneInputCountrySelect]:text-sm [&_.PhoneInputCountrySelectArrow]:opacity-50"
+      className={cn(
+        "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 gap-2 [&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-none [&_.PhoneInputCountrySelect]:outline-none [&_.PhoneInputCountrySelect]:text-sm [&_.PhoneInputCountrySelectArrow]:opacity-50",
+        error
+          ? "border-red-500 focus-within:ring-red-500"
+          : "border-input focus-within:ring-ring"
+      )}
     />
   );
 }
