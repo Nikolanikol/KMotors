@@ -143,13 +143,15 @@ export default function PopularModels() {
             640:  { slidesPerView: 2.1 },
             1024: { slidesPerView: 3 },
           }}
-          className="popular-models-swiper !pb-10"
+          className="popular-models-swiper !pb-12"
+          style={{ overflow: "visible" }}
         >
           {MODELS.map((m) => (
-            <SwiperSlide key={m.slug}>
+            <SwiperSlide key={m.slug} style={{ height: "auto" }}>
               <Link
                 href={`/${lang}/models/${m.slug}`}
-                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 h-full"
+                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                style={{ height: "100%" }}
                 style={{
                   backgroundColor: "var(--axis-charcoal)",
                   border: "1px solid rgba(74,74,74,0.3)",
@@ -212,27 +214,40 @@ export default function PopularModels() {
       </div>
 
       <style>{`
+        .popular-models-swiper {
+          overflow: hidden !important;
+        }
+        .popular-models-swiper .swiper-wrapper {
+          align-items: stretch;
+        }
+        .popular-models-swiper .swiper-slide {
+          height: auto !important;
+        }
         .popular-models-swiper .swiper-button-next,
         .popular-models-swiper .swiper-button-prev {
           color: var(--axis-orange);
-          background: rgba(0,0,0,0.5);
-          width: 36px;
-          height: 36px;
+          background: rgba(15,15,15,0.85);
+          border: 1px solid rgba(255,69,0,0.3);
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
-          backdrop-filter: blur(4px);
+          backdrop-filter: blur(6px);
+          top: auto;
+          bottom: 0px;
+        }
+        .popular-models-swiper .swiper-button-prev {
+          left: calc(50% - 52px);
+        }
+        .popular-models-swiper .swiper-button-next {
+          right: calc(50% - 52px);
         }
         .popular-models-swiper .swiper-button-next::after,
         .popular-models-swiper .swiper-button-prev::after {
-          font-size: 14px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 800;
         }
-        .popular-models-swiper .swiper-pagination-bullet {
-          background: var(--axis-gray);
-          opacity: 0.5;
-        }
-        .popular-models-swiper .swiper-pagination-bullet-active {
-          background: var(--axis-orange);
-          opacity: 1;
+        .popular-models-swiper .swiper-pagination {
+          display: none;
         }
       `}</style>
     </section>
