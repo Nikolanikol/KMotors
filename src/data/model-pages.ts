@@ -274,6 +274,7 @@ export const MODEL_PAGES: ModelData[] = [
     catalogFilter: ".Sportage",
     coverImage: "/models/kia-sportage/1.webp",
     gallery: ["/models/kia-sportage/1.webp", "/models/kia-sportage/2.webp", "/models/kia-sportage/3.webp", "/models/kia-sportage/4.webp", "/models/kia-sportage/5.webp", "/models/kia-sportage/6.webp"],
+    sliderUrl: "https://api.encar.com/search/car/list/general?count=true&q=(And.Hidden.N._.(C.CarType.Y._.(C.Manufacturer.%EA%B8%B0%EC%95%84._.(C.ModelGroup.%EC%8A%A4%ED%8F%AC%ED%8B%B0%EC%A7%80._.Model.%EB%8D%94%20%EB%89%B4%20%EC%8A%A4%ED%8F%AC%ED%8B%B0%EC%A7%80%205%EC%84%B8%EB%8C%80.))))&sr=%7CModifiedDate%7C%7C20",
     priceFrom: 1500,
     priceTo: 3200,
     years: "2019–2024",
