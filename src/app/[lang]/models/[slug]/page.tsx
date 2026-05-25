@@ -158,16 +158,16 @@ export default async function ModelPage({ params }: Props) {
         {/* Benefits */}
         <section className="py-12 px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
+            <h2 className="text-2xl font-bold text-white text-center mb-8">
               {isRu ? "Почему покупают в K-Axis" : "Why buy from K-Axis"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {content.benefits.map((b, i) => (
                 <div key={i} className="p-6 rounded-2xl  border ">
-                  <div className="w-10 h-10 rounded-full bg-[#BB162B]/10 flex items-center justify-center mb-4">
+                  <div className="w-10 h-10 rounded-full bg-[var(--axis-orange)]/10 flex items-center justify-center mb-4">
                     <span className="text-[#BB162B] font-bold">{i + 1}</span>
                   </div>
-                  <h3 className="font-bold text-[#002C5F] mb-2">{b.title}</h3>
+                  <h3 className="font-bold text-white mb-2">{b.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>{b.text}</p>
                 </div>
               ))}
@@ -178,7 +178,7 @@ export default async function ModelPage({ params }: Props) {
         {/* Live cars slider */}
         <section className="py-12 px-4 ">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-[#002C5F] mb-2 text-center">
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">
               {isRu
                 ? `${model.manufacturerEn} в наличии прямо сейчас`
                 : `${model.manufacturerEn} available right now`}
@@ -193,7 +193,7 @@ export default async function ModelPage({ params }: Props) {
             <div className="text-center mt-4">
               <Link
                 href={`/${lang}/catalog`}
-                className="inline-flex items-center gap-2 text-[#BB162B] hover:text-[#9B1220] font-semibold text-sm"
+                className="inline-flex items-center gap-2 text-[var(--axis-orange)] hover:text-[var(--axis-orange-bright)] font-semibold text-sm"
               >
                 {isRu ? "Все автомобили в каталоге →" : "All cars in catalog →"}
               </Link>
@@ -204,16 +204,16 @@ export default async function ModelPage({ params }: Props) {
         {/* How to buy */}
         <section className="py-12 px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
+            <h2 className="text-2xl font-bold text-white text-center mb-8">
               {isRu ? "Как купить" : "How to buy"}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {content.steps.map((step, i) => (
                 <div key={i} className="text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[#002C5F] text-white font-bold text-lg flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-full bg-[var(--axis-orange)] text-white font-bold text-lg flex items-center justify-center mx-auto">
                     {i + 1}
                   </div>
-                  <h3 className="font-bold text-[#002C5F] text-sm">{step.title}</h3>
+                  <h3 className="font-bold text-white text-sm">{step.title}</h3>
                   <p className="text-gray-500 text-xs leading-relaxed">{step.text}</p>
                 </div>
               ))}
@@ -221,7 +221,7 @@ export default async function ModelPage({ params }: Props) {
             <div className="text-center mt-8">
               <Link
                 href={`/${lang}/buy`}
-                className="inline-flex items-center gap-2 text-[#BB162B] hover:text-[#9B1220] font-semibold text-sm transition-colors"
+                className="inline-flex items-center gap-2 text-[var(--axis-orange)] hover:text-[var(--axis-orange-bright)] font-semibold text-sm transition-colors"
               >
                 {isRu ? "Подробная инструкция →" : "Detailed guide →"}
               </Link>
@@ -232,13 +232,13 @@ export default async function ModelPage({ params }: Props) {
         {/* FAQ */}
         <section className="py-12 px-4 ">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold text-[#002C5F] text-center mb-8">
+            <h2 className="text-2xl font-bold text-white text-center mb-8">
               {isRu ? "Частые вопросы" : "FAQ"}
             </h2>
             <div className="space-y-4">
               {content.faq.map((item, i) => (
                 <div key={i} className="rounded-2xl p-6" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
-                  <h3 className="font-bold text-[#002C5F] mb-3">{item.q}</h3>
+                  <h3 className="font-bold text-white mb-3">{item.q}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>{item.a}</p>
                 </div>
               ))}
@@ -247,7 +247,7 @@ export default async function ModelPage({ params }: Props) {
         </section>
 
         {/* Final CTA */}
-        <section className="py-12 px-4 bg-gradient-to-r from-[#002C5F] to-[#001f45]">
+        <section className="py-12 px-4 bg-gradient-to-r from-[var(--axis-charcoal)] to-[var(--axis-black)]">
           <div className="max-w-2xl mx-auto text-center space-y-4">
             <h2 className="text-2xl font-bold text-white">
               {isRu

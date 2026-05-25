@@ -1,5 +1,6 @@
 // app/sitemap-main.xml/route.ts
 import { NextResponse } from "next/server";
+import { MODEL_PAGES } from "@/data/model-pages";
 
 const BASE = "https://kmotors.shop";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -46,6 +47,17 @@ export async function GET() {
       const loc = buildUrl(lang, page.path);
       urlBlocks.push(
         `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n${alternates(page.path)}\n  </url>`
+      );
+    }
+  }
+
+  // Model pages
+  for (const model of MODEL_PAGES) {
+    const modelPath = `models/${model.slug}`;
+    for (const lang of LANGS) {
+      const loc = buildUrl(lang, modelPath);
+      urlBlocks.push(
+        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n${alternates(modelPath)}\n  </url>`
       );
     }
   }
