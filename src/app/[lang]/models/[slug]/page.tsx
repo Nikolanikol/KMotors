@@ -73,7 +73,7 @@ export default async function ModelPage({ params }: Props) {
     ],
   };
 
-  const TG_URL = "https://t.me/KMOTORS_form_bot?start=model_" + slug;
+  const TG_URL = "https://t.me/axiskorea";
   const WA_URL = `https://wa.me/821058654344?text=${encodeURIComponent(
     isRu
       ? `Здравствуйте! Интересует ${model.manufacturerEn} из Кореи. Бюджет: `
