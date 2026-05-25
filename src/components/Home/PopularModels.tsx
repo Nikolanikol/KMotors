@@ -5,9 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
+import { Pagination } from "swiper/modules";
 import "swiper/css";
-import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 const MODELS = [
@@ -134,9 +133,8 @@ export default function PopularModels() {
 
         {/* Slider */}
         <Swiper
-          modules={[Navigation, Pagination]}
+          modules={[Pagination]}
           spaceBetween={20}
-          navigation
           pagination={{ clickable: true }}
           breakpoints={{
             320:  { slidesPerView: 1.2 },
@@ -150,7 +148,7 @@ export default function PopularModels() {
             <SwiperSlide key={m.slug} style={{ height: "auto" }}>
               <Link
                 href={`/${lang}/models/${m.slug}`}
-                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300"
                 style={{ height: "100%" }}
                 style={{
                   backgroundColor: "var(--axis-charcoal)",
@@ -214,40 +212,19 @@ export default function PopularModels() {
       </div>
 
       <style>{`
-        .popular-models-swiper {
-          overflow: hidden !important;
-        }
         .popular-models-swiper .swiper-wrapper {
           align-items: stretch;
         }
         .popular-models-swiper .swiper-slide {
           height: auto !important;
         }
-        .popular-models-swiper .swiper-button-next,
-        .popular-models-swiper .swiper-button-prev {
-          color: var(--axis-orange);
-          background: rgba(15,15,15,0.85);
-          border: 1px solid rgba(255,69,0,0.3);
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          backdrop-filter: blur(6px);
-          top: auto;
-          bottom: 0px;
+        .popular-models-swiper .swiper-pagination-bullet {
+          background: var(--axis-gray);
+          opacity: 0.4;
         }
-        .popular-models-swiper .swiper-button-prev {
-          left: calc(50% - 52px);
-        }
-        .popular-models-swiper .swiper-button-next {
-          right: calc(50% - 52px);
-        }
-        .popular-models-swiper .swiper-button-next::after,
-        .popular-models-swiper .swiper-button-prev::after {
-          font-size: 13px;
-          font-weight: 800;
-        }
-        .popular-models-swiper .swiper-pagination {
-          display: none;
+        .popular-models-swiper .swiper-pagination-bullet-active {
+          background: var(--axis-orange);
+          opacity: 1;
         }
       `}</style>
     </section>
