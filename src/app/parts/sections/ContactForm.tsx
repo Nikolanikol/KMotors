@@ -10,6 +10,13 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
 
+const PART_TYPES = [
+  { key: "vin",  emoji: "🔍" },
+  { key: "part", emoji: "🔧" },
+  { key: "used", emoji: "📦" },
+  { key: "other",emoji: "✏️" },
+] as const;
+
 export function ContactForm() {
   const { t } = useTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -19,6 +26,7 @@ export function ContactForm() {
   const [messenger, setMessenger] = useState("whatsapp");
   const [tgUsername, setTgUsername] = useState("");
   const [phone, setPhone] = useState<Value | undefined>();
+  const [partType, setPartType] = useState("");
 
   const [formData, setFormData] = useState({ name: "", vin: "", message: "" });
 
@@ -45,11 +53,21 @@ export function ContactForm() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Prepend part type to message so Nikolay sees it in Telegram
+      const partTypeLabel = partType
+        ? `${PART_TYPES.find(p => p.key === partType)?.emoji} ${t(`parts.contact.partType.${partType}`)}`
+        : "";
+      const fullMessage = [
+        partTypeLabel ? `[${partTypeLabel}]` : "",
+        formData.message,
+      ].filter(Boolean).join("\n");
+
       const response = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          message: fullMessage || undefined,
           phone: phone ?? "",
           messenger,
           tg_username: tgUsername || undefined,
@@ -61,6 +79,7 @@ export function ContactForm() {
       setFormData({ name: "", vin: "", message: "" });
       setPhone(undefined);
       setTgUsername("");
+      setPartType("");
     } catch {
       toast.error(t("parts.contact.errorMsg"));
     } finally {
@@ -142,6 +161,8 @@ export function ContactForm() {
             {/* Right side - Form */}
             <div className="md:col-span-3 p-8 flex flex-col justify-center">
               <form onSubmit={handleSubmit} className="space-y-5">
+
+                {/* Name */}
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-gray-700">
                     {t("parts.contact.nameLabel")} <span className="text-[#BB162B]">*</span>
@@ -154,12 +175,13 @@ export function ContactForm() {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder={t("parts.contact.namePlaceholder")}
-                      className="pl-10"
+                      className="pl-10 text-gray-900 placeholder:text-gray-400"
                       required
                     />
                   </div>
                 </div>
 
+                {/* Phone */}
                 <div className="space-y-2">
                   <Label className="text-gray-700">
                     {t("parts.contact.phoneLabel")} <span className="text-[#BB162B]">*</span>
@@ -172,6 +194,7 @@ export function ContactForm() {
                   />
                 </div>
 
+                {/* VIN */}
                 <div className="space-y-2">
                   <Label htmlFor="vin" className="text-gray-700">
                     {t("parts.contact.vinLabel")}
@@ -184,12 +207,41 @@ export function ContactForm() {
                       value={formData.vin}
                       onChange={handleChange}
                       placeholder={t("parts.contact.vinPlaceholder")}
-                      className="pl-10 uppercase"
+                      className="pl-10 uppercase text-gray-900 placeholder:text-gray-400"
                       maxLength={17}
                     />
                   </div>
                 </div>
 
+                {/* Part type chips — required */}
+                <div className="space-y-2">
+                  <Label className="text-gray-700">
+                    {t("parts.contact.partTypeLabel")} <span className="text-[#BB162B]">*</span>
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PART_TYPES.map(({ key, emoji }) => {
+                      const active = partType === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setPartType(key)}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left"
+                          style={
+                            active
+                              ? { borderColor: "#BB162B", color: "#BB162B", backgroundColor: "#BB162B12" }
+                              : { borderColor: "#e5e7eb", color: "#6b7280" }
+                          }
+                        >
+                          <span>{emoji}</span>
+                          <span>{t(`parts.contact.partType.${key}`)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Messenger */}
                 <MessengerSelector
                   messenger={messenger}
                   onMessengerChange={setMessenger}
@@ -199,6 +251,7 @@ export function ContactForm() {
                   usernamePlaceholder={t("contact.tgUsernamePlaceholder")}
                 />
 
+                {/* Comment / Part description */}
                 <div className="space-y-2">
                   <Label htmlFor="message" className="text-gray-700">
                     {t("parts.contact.messageLabel")}
@@ -211,14 +264,14 @@ export function ContactForm() {
                       value={formData.message}
                       onChange={handleChange}
                       placeholder={t("parts.contact.messagePlaceholder")}
-                      className="pl-10"
+                      className="pl-10 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !phone || !formData.name}
+                  disabled={isSubmitting || !phone || !formData.name || !partType}
                   className="w-full bg-[#BB162B] hover:bg-[#9B1220] text-white py-6 text-base font-semibold"
                 >
                   {isSubmitting ? (

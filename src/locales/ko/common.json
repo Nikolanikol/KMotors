@@ -434,13 +434,21 @@
       "nameLabel": "이름",
       "namePlaceholder": "성함을 입력해 주세요",
       "phonePlaceholder": "+82 10-0000-0000",
-      "messageLabel": "메모",
-      "messagePlaceholder": "부품, 차종, 질문...",
+      "messageLabel": "부품 설명",
+      "messagePlaceholder": "예: 현대 싼타페 2021 냉각 라디에이터",
       "submitBtn": "문의 보내기",
       "submittingBtn": "전송 중...",
       "privacy": "버튼을 클릭하면 개인정보 처리에 동의하는 것입니다",
       "successMsg": "문의가 접수되었습니다! 한 시간 내에 연락드리겠습니다",
-      "errorMsg": "문의 전송에 실패했습니다. 나중에 다시 시도하거나 전화해 주세요"
+      "errorMsg": "문의 전송에 실패했습니다. 나중에 다시 시도하거나 전화해 주세요",
+      "partTypeLabel": "요청 유형",
+      "partTypeRequired": "요청 유형을 선택해 주세요",
+      "partType": {
+        "vin": "VIN으로 검색",
+        "part": "특정 부품",
+        "used": "한국 중고 부품",
+        "other": "기타"
+      }
     }
   }
 }

@@ -67,7 +67,7 @@ export function MessengerSelector({
           value={tgUsername}
           onChange={(e) => onTgUsernameChange(e.target.value)}
           placeholder={usernamePlaceholder}
-          className="text-sm"
+          className="text-sm text-gray-900 placeholder:text-gray-400"
           required
         />
       )}

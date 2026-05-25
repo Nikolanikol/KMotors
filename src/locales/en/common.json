@@ -434,13 +434,21 @@
       "nameLabel": "Name",
       "namePlaceholder": "Your name",
       "phonePlaceholder": "+1 (999) 999-9999",
-      "messageLabel": "Comment",
-      "messagePlaceholder": "Part, car make, question...",
+      "messageLabel": "Describe the part",
+      "messagePlaceholder": "e.g. cooling radiator Hyundai Santa Fe 2021",
       "submitBtn": "Send Request",
       "submittingBtn": "Sending...",
       "privacy": "By clicking the button, you agree to the processing of personal data",
       "successMsg": "Request sent! We'll contact you within an hour",
-      "errorMsg": "Failed to send request. Please try again or call us"
+      "errorMsg": "Failed to send request. Please try again or call us",
+      "partTypeLabel": "Request type",
+      "partTypeRequired": "Please select request type",
+      "partType": {
+        "vin": "Find by VIN",
+        "part": "Specific part",
+        "used": "Used from Korea",
+        "other": "Other"
+      }
     }
   }
 }

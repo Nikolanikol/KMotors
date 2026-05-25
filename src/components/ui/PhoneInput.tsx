@@ -24,7 +24,7 @@ export function PhoneInput({ value, onChange, placeholder, disabled, required, c
       numberInputProps={{
         required,
         className: cn(
-          "flex-1 min-w-0 bg-transparent outline-none text-sm placeholder:text-muted-foreground",
+          "flex-1 min-w-0 bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-400",
           className
         ),
       }}

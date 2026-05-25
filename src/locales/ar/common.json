@@ -434,13 +434,21 @@
       "nameLabel": "الاسم",
       "namePlaceholder": "اسمك",
       "phonePlaceholder": "+966 50 000 0000",
-      "messageLabel": "ملاحظة",
-      "messagePlaceholder": "القطعة، نوع السيارة، سؤال...",
+      "messageLabel": "حدد القطعة",
+      "messagePlaceholder": "مثال: مبرد تبريد Hyundai Santa Fe 2021",
       "submitBtn": "إرسال الطلب",
       "submittingBtn": "جارٍ الإرسال...",
       "privacy": "بالنقر على الزر فأنت توافق على معالجة بياناتك الشخصية",
       "successMsg": "تم إرسال طلبك! سنتواصل معك خلال ساعة",
-      "errorMsg": "فشل إرسال الطلب. حاول مرة أخرى أو اتصل بنا"
+      "errorMsg": "فشل إرسال الطلب. حاول مرة أخرى أو اتصل بنا",
+      "partTypeLabel": "نوع الطلب",
+      "partTypeRequired": "يرجى اختيار نوع الطلب",
+      "partType": {
+        "vin": "البحث بـ VIN",
+        "part": "قطعة محددة",
+        "used": "مستعمل من كوريا",
+        "other": "أخرى"
+      }
     }
   }
 }
