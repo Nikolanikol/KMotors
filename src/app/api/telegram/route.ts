@@ -32,11 +32,14 @@ export async function POST(req: NextRequest) {
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
+    const workChatId = process.env.TELEGRAM_WORK_CHAT_ID;
 
     if (!botToken || !chatId) {
       console.error("Missing env vars. BOT_TOKEN exists:", !!botToken, "CHAT_ID exists:", !!chatId);
       return NextResponse.json({ error: "Ошибка конфигурации сервера" }, { status: 500 });
     }
+
+    const notifyTargets = [chatId, workChatId].filter(Boolean) as string[];
 
     const sourceLabel: Record<string, string> = {
       header: "Шапка сайта",
@@ -67,17 +70,17 @@ export async function POST(req: NextRequest) {
 👤 Имя: ${name}
 📞 Телефон: ${phone}${messengerLine}${vin ? `\n🔑 VIN: ${vin.toUpperCase()}` : ""}${carName ? `\n🚗 Авто: ${carName}` : ""}${carId ? `\n🔗 encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}` : ""}${message ? `\n💬 Комментарий: ${message}` : ""}`;
 
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text }),
-      }
+    const results = await Promise.all(
+      notifyTargets.map(id =>
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: id, text }),
+        }).then(r => r.json())
+      )
     );
 
-    const data = await telegramResponse.json();
-
+    const data = results[0];
     if (!data.ok) {
       console.error("Telegram API error:", JSON.stringify(data));
       return NextResponse.json(
