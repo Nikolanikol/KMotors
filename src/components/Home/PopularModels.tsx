@@ -4,6 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 const MODELS = [
   {
@@ -13,6 +18,7 @@ const MODELS = [
     image: "/models/sorento.avif",
     priceFrom: { ru: "от 2 200 000 ₽", en: "from $24,000" },
     years: "2020–2024",
+    desc: { ru: "7-местный кроссовер", en: "7-seat crossover" },
   },
   {
     slug: "kia-sportage",
@@ -21,6 +27,7 @@ const MODELS = [
     image: "/models/sportage.avif",
     priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
     years: "2019–2024",
+    desc: { ru: "Компактный кроссовер", en: "Compact crossover" },
   },
   {
     slug: "kia-carnival",
@@ -29,6 +36,7 @@ const MODELS = [
     image: "/models/carnival.avif",
     priceFrom: { ru: "от 3 000 000 ₽", en: "from $33,000" },
     years: "2020–2024",
+    desc: { ru: "Премиальный минивэн 7–9 мест", en: "Premium 7–9 seat minivan" },
   },
   {
     slug: "hyundai-tucson",
@@ -37,6 +45,7 @@ const MODELS = [
     image: "/models/tucson.avif",
     priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
     years: "2019–2024",
+    desc: { ru: "Лучшее соотношение цены и качества", en: "Best price-to-quality ratio" },
   },
   {
     slug: "hyundai-palisade",
@@ -45,6 +54,7 @@ const MODELS = [
     image: "/models/palisade.avif",
     priceFrom: { ru: "от 3 500 000 ₽", en: "from $38,000" },
     years: "2019–2024",
+    desc: { ru: "Флагманский полноразмерный кроссовер", en: "Flagship full-size crossover" },
   },
 ];
 
@@ -57,11 +67,11 @@ const TITLE: Record<string, string> = {
 };
 
 const SUBTITLE: Record<string, string> = {
-  ru: "Страницы с ценами, характеристиками и живыми авто из каталога",
-  en: "Pages with prices, specs and live cars from our catalog",
-  ko: "가격, 사양 및 카탈로그 실시간 차량이 있는 페이지",
-  ka: "გვერდები ფასებით, სპეციფიკაციებით და კატალოგის მანქანებით",
-  ar: "صفحات بالأسعار والمواصفات والسيارات المتاحة من كتالوجنا",
+  ru: "Цены, характеристики и живые авто в наличии",
+  en: "Prices, specs and live cars in stock",
+  ko: "가격, 사양 및 재고 차량",
+  ka: "ფასები, სპეციფიკაციები და მარაგში მყოფი მანქანები",
+  ar: "الأسعار والمواصفات والسيارات المتوفرة",
 };
 
 const ALL_LINK: Record<string, string> = {
@@ -96,79 +106,24 @@ export default function PopularModels() {
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : i18n.language || "ru";
-
   const isRu = lang === "ru";
 
   return (
-    <section className="py-16 px-4" style={{ backgroundColor: "var(--axis-black)" }}>
-      <div className="max-w-6xl mx-auto">
+    <section className="py-16" style={{ backgroundColor: "var(--axis-black)" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="font-heading text-2xl md:text-3xl mb-3" style={{ color: "var(--axis-white)" }}>
-            {TITLE[lang] || TITLE.ru}
-          </h2>
-          <p className="text-sm" style={{ color: "var(--axis-gray)" }}>
-            {SUBTITLE[lang] || SUBTITLE.ru}
-          </p>
-        </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          {MODELS.map((m) => (
-            <Link
-              key={m.slug}
-              href={`/${lang}/models/${m.slug}`}
-              className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-              style={{
-                backgroundColor: "var(--axis-charcoal)",
-                border: "1px solid rgba(74,74,74,0.3)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "var(--axis-orange)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,74,74,0.3)";
-              }}
-            >
-              {/* Photo */}
-              <div className="relative w-full h-32 overflow-hidden">
-                <Image
-                  src={m.image}
-                  alt={`${m.brand} ${m.model}`}
-                  fill
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              {/* Content */}
-              <div className="p-4 flex flex-col flex-1">
-              <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--axis-orange)" }}>
-                {m.brand}
-              </p>
-              <p className="font-bold text-sm mb-1" style={{ color: "var(--axis-white)" }}>
-                {m.model}
-              </p>
-              <p className="text-xs mb-2" style={{ color: "var(--axis-gray)" }}>
-                {m.years}
-              </p>
-              <p className="text-xs mt-auto" style={{ color: "var(--axis-gray)" }}>
-                {PRICE_LABEL[lang] || PRICE_LABEL.ru}:{" "}
-                <span style={{ color: "var(--axis-white)" }}>
-                  {isRu ? m.priceFrom.ru : m.priceFrom.en}
-                </span>
-              </p>
-              <p className="text-xs mt-2 font-semibold group-hover:underline" style={{ color: "var(--axis-orange)" }}>
-                {DETAILS_LABEL[lang] || DETAILS_LABEL.ru}
-              </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* All catalog link */}
-        <div className="text-center">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <h2 className="font-heading text-2xl md:text-3xl mb-1" style={{ color: "var(--axis-white)" }}>
+              {TITLE[lang] || TITLE.ru}
+            </h2>
+            <p className="text-sm" style={{ color: "var(--axis-gray)" }}>
+              {SUBTITLE[lang] || SUBTITLE.ru}
+            </p>
+          </div>
           <Link
             href={`/${lang}/catalog`}
-            className="inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+            className="hidden sm:inline-flex text-sm font-semibold transition-colors whitespace-nowrap"
             style={{ color: "var(--axis-gray)" }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
@@ -176,7 +131,110 @@ export default function PopularModels() {
             {ALL_LINK[lang] || ALL_LINK.ru}
           </Link>
         </div>
+
+        {/* Slider */}
+        <Swiper
+          modules={[Navigation, Pagination]}
+          spaceBetween={20}
+          navigation
+          pagination={{ clickable: true }}
+          breakpoints={{
+            320:  { slidesPerView: 1.2 },
+            640:  { slidesPerView: 2.1 },
+            1024: { slidesPerView: 3 },
+          }}
+          className="popular-models-swiper !pb-10"
+        >
+          {MODELS.map((m) => (
+            <SwiperSlide key={m.slug}>
+              <Link
+                href={`/${lang}/models/${m.slug}`}
+                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 h-full"
+                style={{
+                  backgroundColor: "var(--axis-charcoal)",
+                  border: "1px solid rgba(74,74,74,0.3)",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--axis-orange)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,74,74,0.3)"; }}
+              >
+                {/* Photo */}
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                  <Image
+                    src={m.image}
+                    alt={`${m.brand} ${m.model}`}
+                    fill
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="p-5 flex flex-col flex-1">
+                  <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "var(--axis-orange)" }}>
+                    {m.brand}
+                  </p>
+                  <p className="font-heading text-xl font-bold mb-1" style={{ color: "var(--axis-white)" }}>
+                    {m.model}
+                  </p>
+                  <p className="text-sm mb-3" style={{ color: "var(--axis-gray)" }}>
+                    {isRu ? m.desc.ru : m.desc.en}
+                  </p>
+
+                  <div className="mt-auto pt-3 flex items-end justify-between" style={{ borderTop: "1px solid rgba(74,74,74,0.3)" }}>
+                    <div>
+                      <p className="text-xs mb-0.5" style={{ color: "var(--axis-gray)" }}>
+                        {PRICE_LABEL[lang] || PRICE_LABEL.ru}
+                      </p>
+                      <p className="text-sm font-bold" style={{ color: "var(--axis-white)" }}>
+                        {isRu ? m.priceFrom.ru : m.priceFrom.en}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold group-hover:underline" style={{ color: "var(--axis-orange)" }}>
+                      {DETAILS_LABEL[lang] || DETAILS_LABEL.ru}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+
+        {/* Mobile catalog link */}
+        <div className="text-center mt-2 sm:hidden">
+          <Link
+            href={`/${lang}/catalog`}
+            className="text-sm font-semibold"
+            style={{ color: "var(--axis-gray)" }}
+          >
+            {ALL_LINK[lang] || ALL_LINK.ru}
+          </Link>
+        </div>
       </div>
+
+      <style>{`
+        .popular-models-swiper .swiper-button-next,
+        .popular-models-swiper .swiper-button-prev {
+          color: var(--axis-orange);
+          background: rgba(0,0,0,0.5);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          backdrop-filter: blur(4px);
+        }
+        .popular-models-swiper .swiper-button-next::after,
+        .popular-models-swiper .swiper-button-prev::after {
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .popular-models-swiper .swiper-pagination-bullet {
+          background: var(--axis-gray);
+          opacity: 0.5;
+        }
+        .popular-models-swiper .swiper-pagination-bullet-active {
+          background: var(--axis-orange);
+          opacity: 1;
+        }
+      `}</style>
     </section>
   );
 }
