@@ -9,6 +9,7 @@ export interface ModelData {
   manufacturerEn: string;      // Hyundai / KIA
   modelKo: string;             // корейское название для API
   catalogFilter: string;       // параметр для ссылки на каталог
+  coverImage: string;          // путь к обложке в /public/models/
   priceFrom: number;           // от, тыс. руб.
   priceTo: number;             // до, тыс. руб.
   years: string;               // диапазон годов
@@ -40,6 +41,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "KIA",
     modelKo: "쏘렌토",
     catalogFilter: ".Sorento",
+    coverImage: "/models/sorento.avif",
     priceFrom: 2200,
     priceTo: 5500,
     years: "2020–2024",
@@ -95,6 +97,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "Hyundai",
     modelKo: "투싼",
     catalogFilter: ".Tucson",
+    coverImage: "/models/tucson.avif",
     priceFrom: 1500,
     priceTo: 3500,
     years: "2019–2024",
@@ -150,6 +153,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "KIA",
     modelKo: "카니발",
     catalogFilter: ".Carnival",
+    coverImage: "/models/carnival.avif",
     priceFrom: 3000,
     priceTo: 7000,
     years: "2020–2024",
@@ -205,6 +209,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "Hyundai",
     modelKo: "팰리세이드",
     catalogFilter: ".Palisade",
+    coverImage: "/models/palisade.avif",
     priceFrom: 3500,
     priceTo: 6500,
     years: "2019–2024",
@@ -260,6 +265,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "KIA",
     modelKo: "스포티지",
     catalogFilter: ".Sportage",
+    coverImage: "/models/sportage.avif",
     priceFrom: 1500,
     priceTo: 3200,
     years: "2019–2024",

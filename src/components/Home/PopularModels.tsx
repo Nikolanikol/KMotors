@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
@@ -9,7 +10,7 @@ const MODELS = [
     slug: "kia-sorento",
     brand: "KIA",
     model: "Sorento",
-    emoji: "🚙",
+    image: "/models/sorento.avif",
     priceFrom: { ru: "от 2 200 000 ₽", en: "from $24,000" },
     years: "2020–2024",
   },
@@ -17,7 +18,7 @@ const MODELS = [
     slug: "kia-sportage",
     brand: "KIA",
     model: "Sportage",
-    emoji: "🚗",
+    image: "/models/sportage.avif",
     priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
     years: "2019–2024",
   },
@@ -25,7 +26,7 @@ const MODELS = [
     slug: "kia-carnival",
     brand: "KIA",
     model: "Carnival",
-    emoji: "🚐",
+    image: "/models/carnival.avif",
     priceFrom: { ru: "от 3 000 000 ₽", en: "from $33,000" },
     years: "2020–2024",
   },
@@ -33,7 +34,7 @@ const MODELS = [
     slug: "hyundai-tucson",
     brand: "Hyundai",
     model: "Tucson",
-    emoji: "🚘",
+    image: "/models/tucson.avif",
     priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
     years: "2019–2024",
   },
@@ -41,7 +42,7 @@ const MODELS = [
     slug: "hyundai-palisade",
     brand: "Hyundai",
     model: "Palisade",
-    emoji: "🛻",
+    image: "/models/palisade.avif",
     priceFrom: { ru: "от 3 500 000 ₽", en: "from $38,000" },
     years: "2019–2024",
   },
@@ -117,7 +118,7 @@ export default function PopularModels() {
             <Link
               key={m.slug}
               href={`/${lang}/models/${m.slug}`}
-              className="group flex flex-col rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1"
+              className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
               style={{
                 backgroundColor: "var(--axis-charcoal)",
                 border: "1px solid rgba(74,74,74,0.3)",
@@ -129,7 +130,17 @@ export default function PopularModels() {
                 (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,74,74,0.3)";
               }}
             >
-              <span className="text-2xl mb-3">{m.emoji}</span>
+              {/* Photo */}
+              <div className="relative w-full h-32 overflow-hidden">
+                <Image
+                  src={m.image}
+                  alt={`${m.brand} ${m.model}`}
+                  fill
+                  className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              {/* Content */}
+              <div className="p-4 flex flex-col flex-1">
               <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--axis-orange)" }}>
                 {m.brand}
               </p>
@@ -148,6 +159,7 @@ export default function PopularModels() {
               <p className="text-xs mt-2 font-semibold group-hover:underline" style={{ color: "var(--axis-orange)" }}>
                 {DETAILS_LABEL[lang] || DETAILS_LABEL.ru}
               </p>
+              </div>
             </Link>
           ))}
         </div>

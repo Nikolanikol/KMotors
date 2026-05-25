@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: content.title,
       description: content.subtitle,
       url: `https://kmotors.shop/${lang}/models/${slug}`,
-      images: [{ url: "https://kmotors.shop/preview/preview.png" }],
+      images: [{ url: `https://kmotors.shop${model.coverImage}`, alt: content.title }],
       type: "website",
     },
     alternates: {
@@ -87,8 +88,19 @@ export default async function ModelPage({ params }: Props) {
       <main className="min-h-screen">
 
         {/* Hero */}
-        <section className="glass-effect py-16 px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-5">
+        <section className="relative py-20 px-4 overflow-hidden">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={model.coverImage}
+              alt={`${model.manufacturerEn} ${model.modelKo}`}
+              fill
+              className="object-cover object-center"
+              priority
+            />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.75) 100%)" }} />
+          </div>
+          <div className="relative z-10 max-w-4xl mx-auto text-center space-y-5">
             <p className="text-orange-400 text-sm font-semibold uppercase tracking-widest">
               {isRu ? "Авто из Кореи" : "Cars from Korea"}
             </p>
