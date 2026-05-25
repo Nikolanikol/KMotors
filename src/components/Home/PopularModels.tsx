@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination } from "swiper/modules";
+import { Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
@@ -133,16 +133,17 @@ export default function PopularModels() {
 
         {/* Slider */}
         <Swiper
-          modules={[Pagination]}
+          modules={[Pagination, Autoplay]}
           spaceBetween={20}
           pagination={{ clickable: true }}
+          autoplay={{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+          loop
           breakpoints={{
-            320:  { slidesPerView: 1.2 },
-            640:  { slidesPerView: 2.1 },
+            320:  { slidesPerView: 1 },
+            640:  { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
           }}
-          className="popular-models-swiper !pb-12"
-          style={{ overflow: "visible" }}
+          className="popular-models-swiper !pb-10"
         >
           {MODELS.map((m) => (
             <SwiperSlide key={m.slug} style={{ height: "auto" }}>
@@ -212,6 +213,9 @@ export default function PopularModels() {
       </div>
 
       <style>{`
+        .popular-models-swiper {
+          overflow: hidden !important;
+        }
         .popular-models-swiper .swiper-wrapper {
           align-items: stretch;
         }
