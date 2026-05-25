@@ -215,7 +215,7 @@ export default async function ModelPage({ params }: Props) {
               {isRu ? "Реальные автомобили с корейского рынка" : "Real cars from the Korean market"}
             </p>
             <CarSlider
-              reqString={`https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.${encodeURIComponent(model.manufacturer)}.))&sr=%7CModifiedDate%7C0%7C20`}
+              reqString={model.sliderUrl ?? `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.${encodeURIComponent(model.manufacturer)}.))&sr=%7CModifiedDate%7C0%7C20`}
               title=""
             />
             <div className="text-center mt-6">

@@ -4,10 +4,15 @@ import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 const getCars = async (reqString: string) => {
   try {
-    const res = await fetch(reqString, { cache: "force-cache" });
+    const res = await fetch(reqString, { next: { revalidate: 3600 } });
     if (!res.ok) return [];
     const data: ICarResponce = await res.json();
-    return data.SearchResults ?? [];
+    // Normalize: direct Encar API returns numbers, proxy returns strings
+    return (data.SearchResults ?? []).map((car) => ({
+      ...car,
+      Mileage: String(car.Mileage ?? ""),
+      Price: String(car.Price ?? ""),
+    }));
   } catch {
     return [];
   }

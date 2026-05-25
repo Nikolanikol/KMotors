@@ -14,7 +14,8 @@ export interface ModelData {
   priceFrom: number;           // от, тыс. руб.
   priceTo: number;             // до, тыс. руб.
   years: string;               // диапазон годов
-  encarQuery: string;          // готовый query для Encar API
+  encarQuery: string;          // готовый query для Encar API (прокси)
+  sliderUrl?: string;          // прямой URL к Encar API (если прокси не работает)
   content: {
     ru: {
       title: string;
@@ -44,6 +45,7 @@ export const MODEL_PAGES: ModelData[] = [
     catalogFilter: ".Sorento",
     coverImage: "/models/kia-sorento/1.webp",
     gallery: ["/models/kia-sorento/1.webp", "/models/kia-sorento/2.webp", "/models/kia-sorento/3.webp", "/models/kia-sorento/4.webp"],
+    sliderUrl: "https://api.encar.com/search/car/list/premium?count=true&q=(And.Hidden.N._.(C.CarType.Y._.(C.Manufacturer.%EA%B8%B0%EC%95%84._.ModelGroup.%EC%8F%98%EB%A0%8C%ED%86%A0.))_.Mileage.range(..50000).)&sr=%7CModifiedDate%7C%7C20",
     priceFrom: 2200,
     priceTo: 5500,
     years: "2020–2024",
