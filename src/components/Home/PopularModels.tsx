@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -195,14 +194,13 @@ export default function PopularModels() {
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,74,74,0.3)"; }}
               >
                 {/* Photo */}
-                <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                  <Image
+                <div className="w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={m.image}
                     alt={`${m.brand} ${m.model}`}
-                    fill
-                    unoptimized
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
+                    className="group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
 
