@@ -7,6 +7,7 @@ import { SlidingButton } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MessengerSelector } from "@/components/ui/MessengerSelector";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/utils/gtag";
 
 export default function ContactForm() {
   const { t } = useTranslation();
@@ -45,6 +46,7 @@ export default function ContactForm() {
         setForm({ name: "", message: "" });
         setPhone(undefined);
         setTgUsername("");
+        trackEvent("generate_lead", { source: "contact" });
       } else {
         alert(t("contact.error"));
       }

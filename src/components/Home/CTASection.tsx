@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from "@/utils/gtag";
 
 export default function CTASection() {
   const { t } = useTranslation();
@@ -22,6 +23,7 @@ export default function CTASection() {
     setLoading(false);
     setSubmitted(true);
     setPhone("");
+    trackEvent("generate_lead", { source: "cta_main" });
   };
 
   return (

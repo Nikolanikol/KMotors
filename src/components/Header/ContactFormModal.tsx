@@ -17,6 +17,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import SocialRow from "../ui/SocialRow";
+import { trackEvent } from "@/utils/gtag";
 
 export default function ContactForm({ isVisible }: { isVisible: boolean }) {
   const { t } = useTranslation("common");
@@ -92,6 +93,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
         setPhone(undefined);
         setTgUsername("");
         setTimeout(() => setVisible(false), 2000);
+        trackEvent("generate_lead", { source: "header_modal" });
       } else {
         alert(t("contact.errorSend"));
       }

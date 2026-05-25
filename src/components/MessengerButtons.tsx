@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from "@/utils/gtag";
 
 const WA_PHONE = "821058654344";
 
@@ -47,12 +48,14 @@ function FloatButton({
   icon,
   color,
   hoverColor,
+  method,
 }: {
   href: string;
   label: string;
   icon: React.ReactNode;
   color: string;
   hoverColor: string;
+  method: string;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -62,6 +65,7 @@ function FloatButton({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
+      onClick={() => trackEvent("contact", { method })}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`flex items-center gap-3 ${color} ${hoverColor} text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
@@ -94,6 +98,7 @@ export default function MessengerButtons() {
         icon={WA_SVG}
         color="bg-[#25D366]"
         hoverColor="hover:bg-[#1db954]"
+        method="whatsapp"
       />
       <FloatButton
         href={tgUrl}
@@ -101,6 +106,7 @@ export default function MessengerButtons() {
         icon={TG_SVG}
         color="bg-[#229ED9]"
         hoverColor="hover:bg-[#1a8bc2]"
+        method="telegram"
       />
     </div>
   );
