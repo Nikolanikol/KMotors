@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
+import ModelGallery from "@/components/ModelGallery";
 
 export const revalidate = 86400;
 
@@ -187,27 +188,45 @@ export default async function ModelPage({ params }: Props) {
           </div>
         </section>
 
+        {/* Gallery */}
+        {model.gallery.length > 0 && (
+          <section className="py-12 px-4">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-2xl font-bold text-white text-center mb-6">
+                {isRu ? "Фотогалерея" : "Photo Gallery"}
+              </h2>
+              <ModelGallery
+                images={model.gallery}
+                alt={`${model.manufacturerEn} ${model.modelKo}`}
+              />
+            </div>
+          </section>
+        )}
+
         {/* Live cars slider */}
-        <section className="py-12 px-4 ">
+        <section className="py-12 px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-2 text-center">
               {isRu
                 ? `${model.manufacturerEn} в наличии прямо сейчас`
                 : `${model.manufacturerEn} available right now`}
             </h2>
-            <p className="text-gray-500 text-center text-sm mb-6">
+            <p className="text-center text-sm mb-6" style={{ color: "var(--axis-gray)" }}>
               {isRu ? "Реальные автомобили с корейского рынка" : "Real cars from the Korean market"}
             </p>
             <CarSlider
-              reqString={`https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${model.encarQuery}&sr=%7CModifiedDate%7C0%7C20`}
+              reqString={`https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.${encodeURIComponent(model.manufacturer)}.))&sr=%7CModifiedDate%7C0%7C20`}
               title=""
             />
-            <div className="text-center mt-4">
+            <div className="text-center mt-6">
               <Link
-                href={`/${lang}/catalog`}
-                className="inline-flex items-center gap-2 text-[var(--axis-orange)] hover:text-[var(--axis-orange-bright)] font-semibold text-sm"
+                href={`/${lang}/catalog?manufacture=${encodeURIComponent(model.manufacturerEn)}`}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm transition-all"
+                style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
               >
-                {isRu ? "Все автомобили в каталоге →" : "All cars in catalog →"}
+                {isRu
+                  ? `Все ${model.manufacturerEn} в каталоге →`
+                  : `All ${model.manufacturerEn} in catalog →`}
               </Link>
             </div>
           </div>

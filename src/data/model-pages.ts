@@ -10,6 +10,7 @@ export interface ModelData {
   modelKo: string;             // корейское название для API
   catalogFilter: string;       // параметр для ссылки на каталог
   coverImage: string;          // путь к обложке в /public/models/
+  gallery: string[];           // массив путей к фото галереи
   priceFrom: number;           // от, тыс. руб.
   priceTo: number;             // до, тыс. руб.
   years: string;               // диапазон годов
@@ -41,7 +42,8 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "KIA",
     modelKo: "쏘렌토",
     catalogFilter: ".Sorento",
-    coverImage: "/models/sorento.avif",
+    coverImage: "/models/kia-sorento/1.webp",
+    gallery: ["/models/kia-sorento/1.webp", "/models/kia-sorento/2.webp", "/models/kia-sorento/3.webp", "/models/kia-sorento/4.webp"],
     priceFrom: 2200,
     priceTo: 5500,
     years: "2020–2024",
@@ -98,6 +100,7 @@ export const MODEL_PAGES: ModelData[] = [
     modelKo: "투싼",
     catalogFilter: ".Tucson",
     coverImage: "/models/tucson.avif",
+    gallery: [],
     priceFrom: 1500,
     priceTo: 3500,
     years: "2019–2024",
@@ -154,6 +157,7 @@ export const MODEL_PAGES: ModelData[] = [
     modelKo: "카니발",
     catalogFilter: ".Carnival",
     coverImage: "/models/carnival.avif",
+    gallery: [],
     priceFrom: 3000,
     priceTo: 7000,
     years: "2020–2024",
@@ -210,6 +214,7 @@ export const MODEL_PAGES: ModelData[] = [
     modelKo: "팰리세이드",
     catalogFilter: ".Palisade",
     coverImage: "/models/palisade.avif",
+    gallery: [],
     priceFrom: 3500,
     priceTo: 6500,
     years: "2019–2024",
@@ -265,7 +270,8 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturerEn: "KIA",
     modelKo: "스포티지",
     catalogFilter: ".Sportage",
-    coverImage: "/models/sportage.avif",
+    coverImage: "/models/kia-sportage/1.webp",
+    gallery: ["/models/kia-sportage/1.webp", "/models/kia-sportage/2.webp", "/models/kia-sportage/3.webp", "/models/kia-sportage/4.webp", "/models/kia-sportage/5.webp", "/models/kia-sportage/6.webp"],
     priceFrom: 1500,
     priceTo: 3200,
     years: "2019–2024",
