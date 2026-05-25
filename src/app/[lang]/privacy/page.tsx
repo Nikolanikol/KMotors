@@ -52,11 +52,11 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "6. Ваши права",
-        text: "Вы вправе запросить доступ к своим данным, потребовать их исправления или удаления. Для этого свяжитесь с нами через Telegram: @avto_korea_nikolai или по телефону +82 10-7732-4344.",
+        text: "Вы вправе запросить доступ к своим данным, потребовать их исправления или удаления. Для этого свяжитесь с нами через Telegram: @avto_korea_nikolai или по телефону +82 10-5865-4344.",
       },
       {
         title: "7. Контакты",
-        text: "По вопросам конфиденциальности: Telegram @avto_korea_nikolai, телефон +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, Южная Корея.",
+        text: "По вопросам конфиденциальности: Telegram @avto_korea_nikolai, телефон +82 10-5865-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, Южная Корея.",
       },
     ],
   },
@@ -85,11 +85,11 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "6. Your rights",
-        text: "You have the right to request access to your data, request its correction or deletion. To do so, contact us via Telegram: @avto_korea_nikolai or by phone +82 10-7732-4344.",
+        text: "You have the right to request access to your data, request its correction or deletion. To do so, contact us via Telegram: @avto_korea_nikolai or by phone +82 10-5865-4344.",
       },
       {
         title: "7. Contact",
-        text: "For privacy inquiries: Telegram @avto_korea_nikolai, phone +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, South Korea.",
+        text: "For privacy inquiries: Telegram @avto_korea_nikolai, phone +82 10-5865-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, South Korea.",
       },
     ],
   },
@@ -118,11 +118,11 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "6. 귀하의 권리",
-        text: "데이터 접근, 수정 또는 삭제를 요청할 권리가 있습니다. 텔레그램 @avto_korea_nikolai 또는 전화 +82 10-7732-4344로 문의하세요.",
+        text: "데이터 접근, 수정 또는 삭제를 요청할 권리가 있습니다. 텔레그램 @avto_korea_nikolai 또는 전화 +82 10-5865-4344로 문의하세요.",
       },
       {
         title: "7. 연락처",
-        text: "개인정보 문의: 텔레그램 @avto_korea_nikolai, 전화 +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, 대한민국.",
+        text: "개인정보 문의: 텔레그램 @avto_korea_nikolai, 전화 +82 10-5865-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, 대한민국.",
       },
     ],
   },
@@ -151,11 +151,11 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "6. თქვენი უფლებები",
-        text: "გაქვთ უფლება მოითხოვოთ მონაცემებზე წვდომა, მათი შესწორება ან წაშლა. დაგვიკავშირდით Telegram-ზე: @avto_korea_nikolai ან ტელეფონით +82 10-7732-4344.",
+        text: "გაქვთ უფლება მოითხოვოთ მონაცემებზე წვდომა, მათი შესწორება ან წაშლა. დაგვიკავშირდით Telegram-ზე: @avto_korea_nikolai ან ტელეფონით +82 10-5865-4344.",
       },
       {
         title: "7. კონტაქტი",
-        text: "კონფიდენციალურობის საკითხებზე: Telegram @avto_korea_nikolai, ტელეფონი +82 10-7732-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, სამხრეთ კორეა.",
+        text: "კონფიდენციალურობის საკითხებზე: Telegram @avto_korea_nikolai, ტელეფონი +82 10-5865-4344. K-Axis, 경기도 수원시 권선구 권선로 308-5 103호 1층, სამხრეთ კორეა.",
       },
     ],
   },
@@ -184,11 +184,11 @@ const PRIVACY_CONTENT: Record<string, {
       },
       {
         title: "6. حقوقك",
-        text: "يحق لك طلب الوصول إلى بياناتك أو تصحيحها أو حذفها. تواصل معنا عبر تيليغرام: @avto_korea_nikolai أو هاتف +82 10-7732-4344.",
+        text: "يحق لك طلب الوصول إلى بياناتك أو تصحيحها أو حذفها. تواصل معنا عبر تيليغرام: @avto_korea_nikolai أو هاتف +82 10-5865-4344.",
       },
       {
         title: "7. التواصل",
-        text: "لاستفسارات الخصوصية: تيليغرام @avto_korea_nikolai، هاتف +82 10-7732-4344. K-Axis، 경기도 수원시 권선구 권선로 308-5 103호 1층، كوريا الجنوبية.",
+        text: "لاستفسارات الخصوصية: تيليغرام @avto_korea_nikolai، هاتف +82 10-5865-4344. K-Axis، 경기도 수원시 권선구 권선로 308-5 103호 1층، كوريا الجنوبية.",
       },
     ],
   },

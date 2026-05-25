@@ -120,7 +120,7 @@ export default async function Home({ params }: Props) {
     url: "https://kmotors.shop",
     logo: "https://kmotors.shop/favicon_io/android-chrome-512x512.png",
     image: "https://kmotors.shop/preview/preview.png",
-    telephone: "+821077324344",
+    telephone: "+821058654344",
     address: {
       "@type": "PostalAddress",
       streetAddress: "권선로 308-5 103호 1층",

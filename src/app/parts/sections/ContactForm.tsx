@@ -157,8 +157,8 @@ export function ContactForm() {
                   </div>
                   <div>
                     <div className="text-sm text-white/60 mb-1">{t("parts.contact.phoneLabel")}</div>
-                    <a href="tel:+821077324344" className="font-medium hover:text-[#BB162B] transition-colors">
-                      +8210 7732 4344
+                    <a href="tel:+821058654344" className="font-medium hover:text-[#BB162B] transition-colors">
+                      +8210 5865 4344
                     </a>
                   </div>
                 </div>

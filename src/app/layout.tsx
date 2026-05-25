@@ -64,7 +64,7 @@ export default async function RootLayout({
               logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
               image: "https://kmotors.shop/preview/preview.png",
               description: "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
-              telephone: "+821077324344",
+              telephone: "+821058654344",
               address: {
                 "@type": "PostalAddress",
                 streetAddress: "권선로 308-5 103호 1층",
@@ -80,7 +80,7 @@ export default async function RootLayout({
                 closes: "18:00",
               }],
               contactPoint: [
-                { "@type": "ContactPoint", telephone: "+821077324344", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
+                { "@type": "ContactPoint", telephone: "+821058654344", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
                 { "@type": "ContactPoint", url: "https://t.me/avto_korea_nikolai", contactType: "customer service", availableLanguage: ["Russian", "Korean", "English"] },
               ],
               currenciesAccepted: "USD",
