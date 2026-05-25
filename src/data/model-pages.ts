@@ -8,6 +8,7 @@ export interface ModelData {
   manufacturer: string;        // для CarSlider фильтра (на корейском)
   manufacturerEn: string;      // Hyundai / KIA
   modelKo: string;             // корейское название для API
+  modelEn: string;             // английское название модели
   catalogFilter: string;       // параметр для ссылки на каталог
   coverImage: string;          // путь к обложке в /public/models/
   gallery: string[];           // массив путей к фото галереи
@@ -42,6 +43,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturer: "기아",
     manufacturerEn: "KIA",
     modelKo: "쏘렌토",
+    modelEn: "Sorento",
     catalogFilter: ".Sorento",
     coverImage: "/models/kia-sorento/1.webp",
     gallery: ["/models/kia-sorento/1.webp", "/models/kia-sorento/2.webp", "/models/kia-sorento/3.webp", "/models/kia-sorento/4.webp"],
@@ -100,6 +102,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturer: "현대",
     manufacturerEn: "Hyundai",
     modelKo: "투싼",
+    modelEn: "Tucson",
     catalogFilter: ".Tucson",
     coverImage: "/models/tucson.avif",
     gallery: [],
@@ -158,6 +161,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturer: "기아",
     manufacturerEn: "KIA",
     modelKo: "카니발",
+    modelEn: "Carnival",
     catalogFilter: ".Carnival",
     coverImage: "/models/carnival.avif",
     gallery: [],
@@ -216,6 +220,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturer: "현대",
     manufacturerEn: "Hyundai",
     modelKo: "팰리세이드",
+    modelEn: "Palisade",
     catalogFilter: ".Palisade",
     coverImage: "/models/palisade.avif",
     gallery: [],
@@ -274,6 +279,7 @@ export const MODEL_PAGES: ModelData[] = [
     manufacturer: "기아",
     manufacturerEn: "KIA",
     modelKo: "스포티지",
+    modelEn: "Sportage",
     catalogFilter: ".Sportage",
     coverImage: "/models/kia-sportage/1.webp",
     gallery: ["/models/kia-sportage/1.webp", "/models/kia-sportage/2.webp", "/models/kia-sportage/3.webp", "/models/kia-sportage/4.webp", "/models/kia-sportage/5.webp", "/models/kia-sportage/6.webp"],

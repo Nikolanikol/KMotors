@@ -105,7 +105,10 @@ export default async function ModelPage({ params }: Props) {
               {isRu ? "Авто из Кореи" : "Cars from Korea"}
             </p>
             <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
-              {model.manufacturerEn} {model.modelKo.replace(/[가-힣]+/g, "")} {content.title.split("—")[0].split("из")[0].split("from")[0].trim().split(" ").slice(2).join(" ")}
+              {model.manufacturerEn} {model.modelEn}{" "}
+              <span style={{ color: "var(--axis-orange)" }}>
+                {isRu ? "из Кореи" : "from Korea"}
+              </span>
             </h1>
             <p className="text-white/70 text-lg max-w-2xl mx-auto">
               {content.subtitle}
