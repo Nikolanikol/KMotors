@@ -200,6 +200,7 @@ export default function PopularModels() {
                     src={m.image}
                     alt={`${m.brand} ${m.model}`}
                     fill
+                    unoptimized
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw"
                   />
