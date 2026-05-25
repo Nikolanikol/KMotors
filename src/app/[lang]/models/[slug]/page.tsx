@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
-import ModelGallery from "@/components/ModelGallery";
 
 export const revalidate = 86400;
 
@@ -187,21 +186,6 @@ export default async function ModelPage({ params }: Props) {
             </div>
           </div>
         </section>
-
-        {/* Gallery */}
-        {model.gallery.length > 0 && (
-          <section className="py-12 px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold text-white text-center mb-6">
-                {isRu ? "Фотогалерея" : "Photo Gallery"}
-              </h2>
-              <ModelGallery
-                images={model.gallery}
-                alt={`${model.manufacturerEn} ${model.modelKo}`}
-              />
-            </div>
-          </section>
-        )}
 
         {/* Live cars slider */}
         <section className="py-12 px-4">
