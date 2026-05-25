@@ -1,0 +1,50 @@
+UTM-ссылки K-Axis
+==================
+
+TELEGRAM КАНАЛ
+--------------
+Главная:
+https://kmotors.shop/ru?utm_source=telegram&utm_medium=social&utm_campaign=organic
+
+Каталог:
+https://kmotors.shop/ru/catalog?utm_source=telegram&utm_medium=social&utm_campaign=cars
+
+Калькулятор (посты про растаможку):
+https://kmotors.shop/ru/calculator?utm_source=telegram&utm_medium=social&utm_campaign=calculator
+
+Конкретная машина (подставить ID):
+https://kmotors.shop/ru/catalog/ID?utm_source=telegram&utm_medium=social&utm_campaign=cars&utm_content=НАЗВАНИЕ_АВТО
+
+
+TIKTOK (@kmotors121)
+--------------------
+Bio ссылка:
+https://kmotors.shop/ru?utm_source=tiktok&utm_medium=video&utm_campaign=bio
+
+
+WHATSAPP
+--------
+Рассылки / статус:
+https://kmotors.shop/ru?utm_source=whatsapp&utm_medium=messenger&utm_campaign=organic
+
+
+GOOGLE BUSINESS PROFILE
+------------------------
+Поле "Сайт":
+https://kmotors.shop/ru?utm_source=google_business&utm_medium=organic&utm_campaign=gbp
+
+
+ФОРУМЫ
+------
+drom.ru:
+https://kmotors.shop/ru?utm_source=drom&utm_medium=forum&utm_campaign=organic
+
+drive2.ru:
+https://kmotors.shop/ru?utm_source=drive2&utm_medium=forum&utm_campaign=organic
+
+
+ПРИМЕЧАНИЕ
+----------
+В Telegram и на форумах ссылки вставляются как гиперссылки в тексте —
+пользователь видит только текст, URL скрыт.
+Пример: [Каталог авто из Кореи](https://kmotors.shop/ru/catalog?utm_source=...)

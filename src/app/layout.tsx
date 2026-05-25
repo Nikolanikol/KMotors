@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | K-Axis",
   },
   description:
-    "K-Axis (кмоторс) — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
+    "K-Axis — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
   keywords: [
     "авто из Кореи", "купить авто из Кореи", "kmotors",
     "Hyundai из Кореи", "Kia из Кореи", "Genesis из Кореи",
@@ -87,7 +87,7 @@ export default async function RootLayout({
               paymentAccepted: "Bank Transfer",
               priceRange: "$$",
               areaServed: ["RU", "KZ", "UZ", "GE", "AE", "SA"],
-              sameAs: ["https://t.me/avto_korea_nikolai", "https://www.instagram.com/kmotors.shop/"],
+              sameAs: ["https://t.me/avto_korea_nikolai"],
             }),
           }}
         />

@@ -38,9 +38,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     alternates: {
       canonical: `https://kmotors.shop/${lang}/models/${slug}`,
-      languages: Object.fromEntries(
-        LANGS.map((l) => [l, `https://kmotors.shop/${l}/models/${slug}`])
-      ),
+      languages: {
+        ...Object.fromEntries(
+          LANGS.map((l) => [l, `https://kmotors.shop/${l}/models/${slug}`])
+        ),
+        "x-default": `https://kmotors.shop/ru/models/${slug}`,
+      },
     },
   };
 }
@@ -69,7 +72,7 @@ export default async function ModelPage({ params }: Props) {
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
       { "@type": "ListItem", position: 2, name: isRu ? "Каталог" : "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
-      { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelKo}`, item: `https://kmotors.shop/${lang}/models/${slug}` },
+      { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelEn}`, item: `https://kmotors.shop/${lang}/models/${slug}` },
     ],
   };
 
@@ -93,7 +96,7 @@ export default async function ModelPage({ params }: Props) {
           <div className="absolute inset-0 z-0">
             <Image
               src={model.coverImage}
-              alt={`${model.manufacturerEn} ${model.modelKo}`}
+              alt={`${model.manufacturerEn} ${model.modelEn} ${isRu ? "из Кореи — фото" : "from Korea — photo"}`}
               fill
               className="object-cover object-center"
               priority

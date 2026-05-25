@@ -55,6 +55,42 @@ const MODELS = [
     years: "2019–2024",
     desc: { ru: "Флагманский полноразмерный кроссовер", en: "Flagship full-size crossover" },
   },
+  {
+    slug: "hyundai-santa-fe",
+    brand: "Hyundai",
+    model: "Santa Fe",
+    image: "/models/santafe.jpg",
+    priceFrom: { ru: "от 2 000 000 ₽", en: "from $22,000" },
+    years: "2019–2024",
+    desc: { ru: "Семейный 5–7-местный кроссовер", en: "Family 5–7 seat crossover" },
+  },
+  {
+    slug: "genesis-gv80",
+    brand: "Genesis",
+    model: "GV80",
+    image: "/models/genesis-gv80.avif",
+    priceFrom: { ru: "от 4 500 000 ₽", en: "from $49,000" },
+    years: "2020–2024",
+    desc: { ru: "Люксовый кроссовер — конкурент BMW X5", en: "Luxury crossover — BMW X5 rival" },
+  },
+  {
+    slug: "kia-k5",
+    brand: "KIA",
+    model: "K5",
+    image: "/models/k5.avif",
+    priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
+    years: "2019–2024",
+    desc: { ru: "Спортивный седан бизнес-класса", en: "Sporty business-class sedan" },
+  },
+  {
+    slug: "hyundai-sonata",
+    brand: "Hyundai",
+    model: "Sonata",
+    image: "/models/sonata.jpg",
+    priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
+    years: "2019–2024",
+    desc: { ru: "Комфортный седан — простор и надёжность", en: "Comfort sedan — space and reliability" },
+  },
 ];
 
 const TITLE: Record<string, string> = {
@@ -150,8 +186,8 @@ export default function PopularModels() {
               <Link
                 href={`/${lang}/models/${m.slug}`}
                 className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300"
-                style={{ height: "100%" }}
                 style={{
+                  height: "100%",
                   backgroundColor: "var(--axis-charcoal)",
                   border: "1px solid rgba(74,74,74,0.3)",
                 }}
