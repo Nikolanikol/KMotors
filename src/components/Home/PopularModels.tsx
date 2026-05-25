@@ -14,7 +14,7 @@ const MODELS = [
     slug: "kia-sorento",
     brand: "KIA",
     model: "Sorento",
-    image: "/models/sorento.avif",
+    image: "/models/kia-sorento/1.webp",
     priceFrom: { ru: "от 2 200 000 ₽", en: "from $24,000" },
     years: "2020–2024",
     desc: { ru: "7-местный кроссовер", en: "7-seat crossover" },
