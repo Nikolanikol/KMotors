@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
-          `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}">Открыть на K-Axis</a>`
+          `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=lead">Открыть на K-Axis</a>`
         : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +
