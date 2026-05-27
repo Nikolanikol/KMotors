@@ -805,49 +805,51 @@ function ProductCard({
       )}
       style={{ transitionDelay: delay }}
     >
-      <div className="relative h-44 bg-gray-50 flex items-center justify-center overflow-hidden">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={productName}
-            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-1.5 text-gray-300">
-            <Wrench className="w-10 h-10" />
-            <span className="text-xs">{t("parts.catalog.noPhoto")}</span>
-          </div>
-        )}
+      {/* Image — taller than content, fills ~60% of card */}
+      <div className="relative bg-gray-50 overflow-hidden" style={{ paddingBottom: "62%" }}>
+        <div className="absolute inset-0 flex items-center justify-center">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={productName}
+              className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-1.5 text-gray-300">
+              <Wrench className="w-8 h-8" />
+              <span className="text-xs">{t("parts.catalog.noPhoto")}</span>
+            </div>
+          )}
+        </div>
         {product.is_new && (
-          <div className="absolute top-3 left-3 bg-[#BB162B] text-white text-xs px-2 py-1 rounded-full font-medium">
+          <div className="absolute top-2 left-2 bg-[#BB162B] text-white text-xs px-2 py-0.5 rounded-full font-medium">
             {t("parts.catalog.newBadge")}
           </div>
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-1">
-        <div className="text-xs text-gray-400 font-mono mb-1">{product.part_number}</div>
-        {/* Fixed-height name block so all Order buttons align */}
-        <h3 className="text-sm font-semibold text-[#002C5F] mb-2 line-clamp-2 min-h-[2.5rem]">
+      {/* Content — compact */}
+      <div className="p-3 flex flex-col gap-1.5">
+        <div className="text-[11px] text-gray-400 font-mono leading-none">{product.part_number}</div>
+        <h3 className="text-sm font-semibold text-[#002C5F] line-clamp-2 leading-snug min-h-[2.625rem]">
           {productName}
         </h3>
-        {/* Fits row with Car icon */}
-        <div className="flex items-center gap-1 text-xs text-gray-400 mb-3 min-h-[1rem] line-clamp-1">
+        {/* Fits row */}
+        <div className="flex items-center gap-1 text-[11px] text-gray-400 min-h-[1rem]">
           {compatibleText ? (
             <>
-              <Car className="w-3 h-3 flex-shrink-0 text-gray-400" />
+              <Car className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{compatibleText}</span>
             </>
-          ) : (
-            <span className="invisible">–</span>
-          )}
+          ) : <span className="invisible">–</span>}
         </div>
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
-          <span className="text-lg font-bold text-[#BB162B]">{formatKrw(product.price_krw)}</span>
+        {/* Price + button */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-base font-bold text-[#BB162B]">{formatKrw(product.price_krw)}</span>
           <Button
             size="sm"
             onClick={onOrder}
-            className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8"
+            className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-7 px-3"
           >
             {t("parts.catalog.orderBtn")}
           </Button>
