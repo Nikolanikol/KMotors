@@ -115,16 +115,6 @@ export function PartsCatalogClient({
   // ── Infinite scroll ─────────────────────────────────────────────────────────
   const [page, setPage] = useState(1);
   const loaderRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = loaderRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setPage((p) => p + 1); },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Reset page when filters change
   const brandSlug = searchParams.get("brand") ?? "";
@@ -288,6 +278,25 @@ export function PartsCatalogClient({
     [filteredProducts, page]
   );
   const hasMore = visibleProducts.length < filteredProducts.length;
+
+  // Re-attach observer every time visible slice changes so it reliably
+  // fires for the next batch. Disconnect after first fire to avoid rapid
+  // repeated increments while the DOM is still updating.
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el || !hasMore) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          setPage((p) => p + 1);
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, visibleProducts.length]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const getLocalName = useCallback(
