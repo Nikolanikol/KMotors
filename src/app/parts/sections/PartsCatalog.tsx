@@ -24,7 +24,7 @@ async function fetchCatalogData() {
     supabase
       .from("parts_products")
       .select(
-        "id, name_ru, name_en, part_number, price_krw, category_id, subcategory_id, image_url, is_new"
+        "id, name_ru, name_en, name_ko, part_number, price_krw, category_id, subcategory_id, image_url, is_new"
       )
       .order("name_ru"),
 

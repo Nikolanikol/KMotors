@@ -33,6 +33,7 @@ export type Product = {
   id: number;
   name_ru: string;
   name_en: string;
+  name_ko: string | null;
   part_number: string;
   price_krw: number;
   category_id: number | null;
@@ -262,8 +263,11 @@ export function PartsCatalogClient({
     [i18n.language]
   );
 
-  const getProductName = (p: Product) =>
-    i18n.language === "ru" ? p.name_ru : (p.name_en || p.name_ru);
+  const getProductName = (p: Product) => {
+    if (i18n.language === "ru") return p.name_ru;
+    if (i18n.language === "ko") return p.name_ko || p.name_en || p.name_ru;
+    return p.name_en || p.name_ru;
+  };
 
   const hasFilters = !!(
     brandSlug || modelId || catSlug || subSlug ||
@@ -359,7 +363,7 @@ export function PartsCatalogClient({
                 <option value="">{t("parts.catalog.filterModelPlaceholder")}</option>
                 {brandModels.map((m) => (
                   <option key={m.id} value={String(m.id)}>
-                    {m.name_en}
+                    {i18n.language === "ko" ? (m.name_ko || m.name_en) : m.name_en}
                   </option>
                 ))}
               </select>
@@ -682,6 +686,7 @@ function ProductCard({
   const extra = compatibleModels.length - shown.length;
   const compatibleText =
     shown.map((m) => m.name_en).join(", ") + (extra > 0 ? ` +${extra}` : "");
+  // model names for selected model tag use name_en (international car names)
 
   const delay = `${Math.min(index * 30, 600)}ms`;
 
