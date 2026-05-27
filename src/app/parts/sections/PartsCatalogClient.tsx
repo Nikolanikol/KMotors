@@ -19,6 +19,9 @@ import {
   X,
 } from "lucide-react";
 
+const PAGE_SIZE = 24;
+const BRAND_ORDER: Record<string, number> = { hyundai: 0, kia: 1, genesis: 2 };
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type Brand = { id: number; name: string; slug: string };
@@ -109,8 +112,23 @@ export function PartsCatalogClient({
     return () => observer.disconnect();
   }, []);
 
-  // ── URL params ──────────────────────────────────────────────────────────────
+  // ── Infinite scroll ─────────────────────────────────────────────────────────
+  const [page, setPage] = useState(1);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setPage((p) => p + 1); },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Reset page when filters change
   const brandSlug = searchParams.get("brand") ?? "";
+  useEffect(() => { setPage(1); }, [brandSlug, searchParams]);
   const modelId = searchParams.get("model") ?? "";   // vehicle_model id as string
   const catSlug = searchParams.get("cat") ?? "";
   const subSlug = searchParams.get("sub") ?? "";
@@ -155,6 +173,13 @@ export function PartsCatalogClient({
   const [view, setView] = useState<"grid" | "list">("grid");
 
   // ── Derived selections ──────────────────────────────────────────────────────
+
+  // Sort brands: Hyundai → Kia → Genesis
+  const sortedBrands = useMemo(
+    () => [...brands].sort((a, b) => (BRAND_ORDER[a.slug] ?? 99) - (BRAND_ORDER[b.slug] ?? 99)),
+    [brands]
+  );
+
   const selectedBrand = useMemo(
     () => brands.find((b) => b.slug === brandSlug),
     [brands, brandSlug]
@@ -257,6 +282,13 @@ export function PartsCatalogClient({
     return result;
   }, [baseProducts, selectedCat, selectedSub, priceMin, priceMax, searchQ, sort, i18n.language]);
 
+  // ── Visible slice (infinite scroll) ────────────────────────────────────────
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice(0, page * PAGE_SIZE),
+    [filteredProducts, page]
+  );
+  const hasMore = visibleProducts.length < filteredProducts.length;
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const getLocalName = useCallback(
     (ru: string, en: string) => (i18n.language === "ru" ? ru : en || ru),
@@ -320,7 +352,7 @@ export function PartsCatalogClient({
           {/* Row 1: brand chips + search */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
             <div className="flex flex-wrap gap-2">
-              {brands.map((brand) => (
+              {sortedBrands.map((brand) => (
                 <button
                   key={brand.id}
                   type="button"
@@ -377,10 +409,12 @@ export function PartsCatalogClient({
                 const Icon = getCatIcon(cat.slug);
                 const active = catSlug === cat.slug;
                 const count = catCounts[cat.id] ?? 0;
+                const empty = count === 0 && !active;
                 return (
                   <button
                     key={cat.id}
                     type="button"
+                    disabled={empty}
                     onClick={() =>
                       updateParams({
                         cat: catSlug === cat.slug ? undefined : cat.slug,
@@ -389,7 +423,9 @@ export function PartsCatalogClient({
                     }
                     className={cn(
                       "flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 text-xs font-medium transition-all",
-                      active
+                      empty
+                        ? "border-gray-100 text-gray-300 cursor-not-allowed opacity-50"
+                        : active
                         ? "border-[#BB162B] bg-[#BB162B]/5 text-[#BB162B]"
                         : "border-gray-200 text-gray-500 hover:border-[#002C5F]/30 hover:text-[#002C5F]"
                     )}
@@ -401,7 +437,7 @@ export function PartsCatalogClient({
                     <span
                       className={cn(
                         "text-xs font-bold tabular-nums",
-                        active ? "text-[#BB162B]" : "text-gray-400"
+                        active ? "text-[#BB162B]" : empty ? "text-gray-300" : "text-gray-400"
                       )}
                     >
                       {count}
@@ -586,30 +622,47 @@ export function PartsCatalogClient({
         {filteredProducts.length === 0 ? (
           <EmptyState onReset={resetAll} t={t} />
         ) : (
-          <div
-            className={cn(
-              view === "grid"
-                ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-                : "grid grid-cols-1 gap-3"
+          <>
+            <div
+              className={cn(
+                view === "grid"
+                  ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+                  : "grid grid-cols-1 gap-3"
+              )}
+            >
+              {visibleProducts.map((product, index) => {
+                const compatibleModels = productModelsMap[String(product.id)] ?? [];
+                return (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    compatibleModels={compatibleModels}
+                    productName={getProductName(product)}
+                    view={view}
+                    isVisible={isVisible}
+                    index={index}
+                    onOrder={() => scrollToContact(getProductName(product), product.part_number)}
+                    t={t}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Infinite scroll trigger */}
+            {hasMore && (
+              <div ref={loaderRef} className="flex justify-center py-8">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-[#002C5F]/30 animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
-          >
-            {filteredProducts.map((product, index) => {
-              const compatibleModels = productModelsMap[String(product.id)] ?? [];
-              return (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  compatibleModels={compatibleModels}
-                  productName={getProductName(product)}
-                  view={view}
-                  isVisible={isVisible}
-                  index={index}
-                  onOrder={() => scrollToContact(getProductName(product), product.part_number)}
-                  t={t}
-                />
-              );
-            })}
-          </div>
+          </>
         )}
       </div>
     </section>
@@ -714,10 +767,10 @@ function ProductCard({
           <div className="text-xs text-gray-400 font-mono mb-0.5">{product.part_number}</div>
           <h3 className="text-sm font-semibold text-[#002C5F] truncate">{productName}</h3>
           {compatibleText && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
-              <span className="text-gray-500">{t("parts.catalog.compatibleWith")} </span>
-              {compatibleText}
-            </p>
+            <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+              <Car className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{compatibleText}</span>
+            </div>
           )}
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
@@ -765,16 +818,22 @@ function ProductCard({
 
       <div className="p-4 flex flex-col flex-1">
         <div className="text-xs text-gray-400 font-mono mb-1">{product.part_number}</div>
-        <h3 className="text-sm font-semibold text-[#002C5F] mb-1 line-clamp-2 flex-1">
+        {/* Fixed-height name block so all Order buttons align */}
+        <h3 className="text-sm font-semibold text-[#002C5F] mb-2 line-clamp-2 min-h-[2.5rem]">
           {productName}
         </h3>
-        {compatibleText && (
-          <p className="text-xs text-gray-400 mb-2 line-clamp-1">
-            <span className="text-gray-500">{t("parts.catalog.compatibleWith")} </span>
-            {compatibleText}
-          </p>
-        )}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-auto">
+        {/* Fits row with Car icon */}
+        <div className="flex items-center gap-1 text-xs text-gray-400 mb-3 min-h-[1rem] line-clamp-1">
+          {compatibleText ? (
+            <>
+              <Car className="w-3 h-3 flex-shrink-0 text-gray-400" />
+              <span className="truncate">{compatibleText}</span>
+            </>
+          ) : (
+            <span className="invisible">–</span>
+          )}
+        </div>
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
           <span className="text-lg font-bold text-[#BB162B]">{formatKrw(product.price_krw)}</span>
           <Button
             size="sm"
