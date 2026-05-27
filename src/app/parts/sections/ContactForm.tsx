@@ -32,6 +32,15 @@ export function ContactForm() {
 
   const [formData, setFormData] = useState({ name: "", vin: "", message: "" });
 
+  // Prefill from catalog "Order" button
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("prefillMessage");
+    if (prefill) {
+      setFormData((prev) => ({ ...prev, message: prefill }));
+      sessionStorage.removeItem("prefillMessage");
+    }
+  }, []);
+
   // Computed validation — errors only show after first submit attempt
   const errors = {
     name:     attempted && !formData.name.trim(),

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Hero } from "@/app/parts/sections/Hero";
-import { Catalog } from "@/app/parts/sections/Catalog";
-import { Products } from "@/app/parts/sections/Products";
+import { PartsCatalog } from "@/app/parts/sections/PartsCatalog";
 import { About } from "@/app/parts/sections/About";
 import { ContactForm } from "@/app/parts/sections/ContactForm";
 
@@ -116,8 +115,7 @@ export default async function PartsPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
       <div>
         <Hero />
-        <Catalog />
-        <Products />
+        <PartsCatalog />
         <About />
         <ContactForm />
       </div>
