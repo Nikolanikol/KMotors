@@ -1,5 +1,7 @@
 import { MetadataRoute } from "next";
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kmotors.shop";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -9,12 +11,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/admin/", "/api/"],
       },
     ],
-    sitemap: [
-      "https://kmotors.shop/sitemap.xml",
-      "https://kmotors.shop/sitemap-main.xml",
-      "https://kmotors.shop/sitemap-blog.xml",
-      "https://kmotors.shop/sitemap-parts.xml",
-      "https://kmotors.shop/sitemap-catalog/1",
-    ],
+    // sitemap.xml is the master index — it includes all sub-sitemaps
+    sitemap: [`${BASE}/sitemap.xml`],
   };
 }

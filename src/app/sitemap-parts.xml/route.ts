@@ -1,64 +1,32 @@
-// app/sitemap-parts.xml/route.ts
+// sitemap-parts.xml — sitemap index pointing to paginated parts sitemaps
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
-const BASE = "https://kmotors.shop";
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+export const revalidate = 86400; // refresh daily
 
-// Пересобирается только при деплое — данные статичны
-export const revalidate = false;
-
-function alternates(id: number) {
-  return [
-    ...LANGS.map(
-      (lang) =>
-        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}/parts/${id}"/>`
-    ),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/parts/${id}"/>`,
-  ].join("\n");
-}
-
-const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
+const BASE      = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kmotors.shop";
+const PAGE_SIZE = 5_000;
 
 export async function GET() {
   try {
     const supabase = createServerClient();
-    const { data: products } = await supabase
+    const { count } = await supabase
       .from("parts_products")
-      .select("id, scraped_at")
-      .order("id");
+      .select("*", { count: "exact", head: true });
 
-    if (!products || products.length === 0) {
-      return new NextResponse(EMPTY_XML, {
-        headers: { "Content-Type": "application/xml" },
-      });
-    }
+    const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
 
-    const fallbackDate = new Date().toISOString().slice(0, 10);
-    const urlBlocks: string[] = [];
-
-    for (const product of products) {
-      const lastmod = product.scraped_at
-        ? new Date(product.scraped_at).toISOString().slice(0, 10)
-        : fallbackDate;
-
-      for (const lang of LANGS) {
-        urlBlocks.push(`  <url>
-    <loc>${BASE}/${lang}/parts/${product.id}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-${alternates(product.id)}
-  </url>`);
-      }
-    }
+    const sitemaps = Array.from(
+      { length: totalPages },
+      (_, i) => `  <sitemap>
+    <loc>${BASE}/sitemap-parts/${i + 1}</loc>
+  </sitemap>`
+    );
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${urlBlocks.join("\n")}
-</urlset>`;
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemaps.join("\n")}
+</sitemapindex>`;
 
     return new NextResponse(xml, {
       headers: {
@@ -67,8 +35,9 @@ ${urlBlocks.join("\n")}
       },
     });
   } catch {
-    return new NextResponse(EMPTY_XML, {
-      headers: { "Content-Type": "application/xml" },
-    });
+    return new NextResponse(
+      `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></sitemapindex>`,
+      { headers: { "Content-Type": "application/xml" } }
+    );
   }
 }
