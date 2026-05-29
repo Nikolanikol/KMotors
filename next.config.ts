@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
         // Запчасти: Supabase Storage
         protocol: 'https',
         hostname: 'dyadajdrxnvzkrmuoaku.supabase.co',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/**',
       },
     ],
   },
