@@ -471,6 +471,45 @@
         "other": "სხვა"
       },
       "errorRequired": "სავალდებულო ველი"
+    },
+    "detail": {
+      "backToCatalog": "კატალოგში დაბრუნება",
+      "manufacturer": "მწარმოებელი",
+      "partNumber": "ნომერი",
+      "officialName": "ოფიციალური სახელი",
+      "category": "კატეგორია",
+      "subcategory": "ქვეკატეგორია",
+      "fitsTitle": "თავსებადი მოდელები",
+      "orderBtn": "ნაწილის შეკვეთა",
+      "noPhoto": "ფოტო არ არის",
+      "newBadge": "ახალი",
+      "viewOnMobis": "Mobis-ზე ნახვა",
+      "priceLabel": "ფასი",
+      "notFound": "ნაწილი ვერ მოიძებნა",
+      "notFoundDesc": "ამ ნომრის მქონე ნაწილი კატალოგში ვერ მოიძებნა",
+      "breadcrumbHome": "მთავარი",
+      "breadcrumbParts": "სათადარიგო ნაწილები",
+      "copySuccess": "დაკოპირდა!",
+      "viewAll": "ყველა ნახვა"
+    },
+    "order": {
+      "partNumber": "არტიკული",
+      "orderingPart": "ნაწილი",
+      "nameLabel": "სახელი",
+      "namePlaceholder": "გიორგი გიგაური",
+      "nameRequired": "გთხოვთ შეიყვანოთ სახელი",
+      "phoneLabel": "ტელეფონი",
+      "phonePlaceholder": "+995 500 00-00-00",
+      "phoneRequired": "გთხოვთ შეიყვანოთ ტელეფონის ნომერი",
+      "messengerLabel": "კავშირის საშუალება",
+      "tgRequired": "შეიყვანეთ Telegram @username",
+      "vinLabel": "მანქანის VIN კოდი",
+      "optional": "არასავალდებულო",
+      "submitBtn": "განაცხადის გაგზავნა",
+      "sending": "გაგზავნა…",
+      "successTitle": "განაცხადი მიღებულია!",
+      "successDesc": "მალე დაგიკავშირდებით.",
+      "closeBtn": "დახურვა"
     }
   }
 }

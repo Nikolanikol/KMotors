@@ -471,6 +471,45 @@
         "other": "أخرى"
       },
       "errorRequired": "حقل مطلوب"
+    },
+    "detail": {
+      "backToCatalog": "العودة إلى الكتالوج",
+      "manufacturer": "الصانع",
+      "partNumber": "رقم القطعة",
+      "officialName": "الاسم الرسمي",
+      "category": "الفئة",
+      "subcategory": "الفئة الفرعية",
+      "fitsTitle": "الموديلات المتوافقة",
+      "orderBtn": "طلب هذه القطعة",
+      "noPhoto": "لا توجد صورة",
+      "newBadge": "جديد",
+      "viewOnMobis": "عرض على موبيس",
+      "priceLabel": "السعر",
+      "notFound": "القطعة غير موجودة",
+      "notFoundDesc": "لم يتم العثور على قطعة بهذا الرقم في الكتالوج",
+      "breadcrumbHome": "الرئيسية",
+      "breadcrumbParts": "قطع الغيار",
+      "copySuccess": "تم النسخ!",
+      "viewAll": "عرض الكل"
+    },
+    "order": {
+      "partNumber": "رقم القطعة",
+      "orderingPart": "القطعة",
+      "nameLabel": "الاسم",
+      "namePlaceholder": "محمد أحمد",
+      "nameRequired": "الرجاء إدخال اسمك",
+      "phoneLabel": "الهاتف",
+      "phonePlaceholder": "+966 50 000-0000",
+      "phoneRequired": "الرجاء إدخال رقم الهاتف",
+      "messengerLabel": "كيف نتواصل معك؟",
+      "tgRequired": "أدخل @username على Telegram",
+      "vinLabel": "رقم VIN للسيارة",
+      "optional": "اختياري",
+      "submitBtn": "إرسال الطلب",
+      "sending": "جارٍ الإرسال…",
+      "successTitle": "تم استلام الطلب!",
+      "successDesc": "سنتواصل معك قريبًا.",
+      "closeBtn": "إغلاق"
     }
   }
 }

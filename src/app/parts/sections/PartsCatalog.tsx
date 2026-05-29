@@ -1,68 +1,123 @@
 import { Suspense } from "react";
 import { createServerClient } from "@/lib/supabase";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { PartsCatalogClient } from "./PartsCatalogClient";
-import type { Brand, Category, Product, VehicleModel, Fitment } from "./PartsCatalogClient";
+import type { Brand, Category, VehicleModel, ModelChip } from "./PartsCatalogClient";
+
+type Fitment = { product_id: number; vehicle_model_id: number };
+
+// ─── Parallel batch fetching ──────────────────────────────────────────────────
+async function fetchAllRows<T>(
+  queryFactory: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+  totalCount: number
+): Promise<T[]> {
+  if (totalCount === 0) return [];
+  const BATCH = 1000;
+  const batches = Math.ceil(totalCount / BATCH);
+  const results = await Promise.all(
+    Array.from({ length: batches }, (_, i) =>
+      queryFactory(i * BATCH, (i + 1) * BATCH - 1)
+    )
+  );
+  return results.flatMap((r) => r.data ?? []);
+}
 
 async function fetchCatalogData() {
   const supabase = createServerClient();
 
-  const [
-    { data: brands },
-    { data: categories },
-    { data: products },
-    { data: fitment },
-    { data: models },
-  ] = await Promise.all([
-    supabase.from("parts_brands").select("id, name, slug").order("name"),
+  // Step 1: small tables + model count + exchange rate — all in parallel
+  // Products are NO LONGER fetched here — the API route handles that per request.
+  const [brands, categories, fitment, modelCount, { krwToUsd }] = await Promise.all([
+    supabase.from("parts_brands").select("id, name, slug").order("name")
+      .then((r) => (r.data ?? []) as Brand[]),
 
     supabase
       .from("parts_categories")
       .select("id, name_ru, name_en, slug, parent_id")
       .order("sort_order", { nullsFirst: false })
-      .order("id"),
+      .order("id")
+      .then((r) => (r.data ?? []) as Category[]),
 
-    supabase
-      .from("parts_products")
-      .select(
-        "id, name_ru, name_en, name_ko, part_number, price_krw, category_id, subcategory_id, image_url, is_new"
-      )
-      .order("name_ru"),
-
+    // 945 rows — fits in one request, no pagination needed
     supabase
       .from("parts_fitment")
-      .select("product_id, vehicle_model_id"),
+      .select("product_id, vehicle_model_id")
+      .then((r) => (r.data ?? []) as Fitment[]),
 
     supabase
       .from("parts_vehicle_models")
-      .select("id, brand_id, name_en, name_ko")
-      .order("name_en"),
+      .select("*", { count: "exact", head: true })
+      .then((r) => r.count ?? 0),
+
+    getCurrencyRates(),
   ]);
 
-  // Build product → compatible models map
-  const productModelsMap: Record<string, VehicleModel[]> = {};
-  if (fitment && models) {
-    const modelById: Record<number, VehicleModel> = {};
-    (models as VehicleModel[]).forEach((m) => {
-      modelById[m.id] = m;
-    });
-    (fitment as Fitment[]).forEach((f) => {
-      const key = String(f.product_id);
-      if (!productModelsMap[key]) productModelsMap[key] = [];
-      const m = modelById[f.vehicle_model_id];
-      if (m && !productModelsMap[key].find((x) => x.id === m.id)) {
-        productModelsMap[key].push(m);
-      }
-    });
-  }
+  // Step 2: all vehicle models + brand_id for fitment-linked products only (~230 rows)
+  // Previously we loaded 50 000 full product rows just for chip computation.
+  // Now we load only the ~230 products that appear in fitment — 200× smaller.
+  const fitmentProductIds = [...new Set(fitment.map((f) => f.product_id))];
 
-  return {
-    brands: (brands as Brand[]) ?? [],
-    categories: (categories as Category[]) ?? [],
-    products: (products as Product[]) ?? [],
-    models: (models as VehicleModel[]) ?? [],
-    fitment: (fitment as Fitment[]) ?? [],
-    productModelsMap,
-  };
+  const [models, fitmentProductBrands] = await Promise.all([
+    fetchAllRows<VehicleModel>(
+      (from, to) =>
+        supabase
+          .from("parts_vehicle_models")
+          .select("id, brand_id, name_en, name_ko")
+          .order("name_en")
+          .range(from, to),
+      modelCount
+    ),
+
+    fitmentProductIds.length > 0
+      ? supabase
+          .from("parts_products")
+          .select("id, brand_id")
+          .in("id", fitmentProductIds)
+          .then((r) => (r.data ?? []) as { id: number; brand_id: number | null }[])
+      : Promise.resolve([] as { id: number; brand_id: number | null }[]),
+  ]);
+
+  // ── Server-side pre-computation: brandModelChipsMap ───────────────────────
+  // Build fitment index: model_id → Set<product_id>
+  const fitmentByModelId = new Map<number, Set<number>>();
+  fitment.forEach((f) => {
+    if (!fitmentByModelId.has(f.vehicle_model_id))
+      fitmentByModelId.set(f.vehicle_model_id, new Set());
+    fitmentByModelId.get(f.vehicle_model_id)!.add(f.product_id);
+  });
+
+  const brandModelChipsMap: Record<string, ModelChip[]> = {};
+
+  brands.forEach((brand) => {
+    const bProductIds = new Set(
+      fitmentProductBrands
+        .filter((p) => p.brand_id === brand.id)
+        .map((p) => p.id)
+    );
+
+    const bModels = models.filter((m) => m.brand_id === brand.id);
+    const nameToIds = new Map<string, number[]>();
+    bModels.forEach((m) => {
+      if (!nameToIds.has(m.name_en)) nameToIds.set(m.name_en, []);
+      nameToIds.get(m.name_en)!.push(m.id);
+    });
+
+    const chips: ModelChip[] = [];
+    nameToIds.forEach((ids, name) => {
+      const pids = new Set<number>();
+      ids.forEach((id) =>
+        fitmentByModelId.get(id)?.forEach((pid) => pids.add(pid))
+      );
+      const inBrand = [...pids].filter((pid) => bProductIds.has(pid));
+      if (inBrand.length > 0) chips.push({ name, count: inBrand.length });
+    });
+    brandModelChipsMap[brand.slug] = chips.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  });
+
+  // Only 4 fields sent to client: brands (~200B), categories (~2KB), chips (~3KB), rate
+  return { brands, categories, brandModelChipsMap, krwToUsd };
 }
 
 export async function PartsCatalog() {

@@ -72,15 +72,20 @@ const LEAD_SOURCE_LABELS: Record<string, string> = {
   unknown: "Неизвестно",
 };
 
+const TZ = "Asia/Seoul";
+
 function fmtDate(str: string): string {
   return new Date(str).toLocaleString("ru-RU", {
     day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    timeZone: TZ,
   });
 }
 
 function fmtShortDate(str: string): string {
-  const d = new Date(str);
-  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+  return new Date(str).toLocaleDateString("ru-RU", {
+    day: "numeric", month: "short",
+    timeZone: TZ,
+  });
 }
 
 // ─── Страница ────────────────────────────────────────────────────────────────
@@ -121,8 +126,8 @@ export default async function AdminPage() {
     supabase.rpc("get_top_pages", { since_date: days7ago, limit_count: 10 }),
     // Источники через RPC
     supabase.rpc("get_traffic_sources", { since_date: days30ago }),
-    // График по дням через RPC
-    supabase.rpc("get_daily_stats", { since_date: days14ago }),
+    // График по дням — прямой запрос, агрегация в JS
+    supabase.from("page_views").select("created_at").gte("created_at", days14ago).limit(50000),
     // Страны
     supabase.from("page_views").select("country").gte("created_at", days30ago).not("country", "is", null).limit(5000),
     // Устройства
@@ -166,14 +171,18 @@ export default async function AdminPage() {
   });
   const maxHour = Math.max(...Object.values(hourMap), 1);
 
-  // График по дням — заполняем пропуски нулями
+  // График по дням — заполняем пропуски нулями, агрегируем из сырых строк
+  // Ключи дней в Seoul-таймзоне чтобы совпадало с отображаемым временем
+  const toSeoulDate = (d: Date) =>
+    d.toLocaleDateString("sv-SE", { timeZone: TZ }); // "YYYY-MM-DD"
   const dayMap: Record<string, number> = {};
   for (let i = 13; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 86400000);
-    dayMap[d.toISOString().slice(0, 10)] = 0;
+    dayMap[toSeoulDate(d)] = 0;
   }
-  (dailyData || []).forEach((r: { date: string; count: number }) => {
-    if (r.date in dayMap) dayMap[r.date] = Number(r.count);
+  (dailyData || []).forEach((r: { created_at: string }) => {
+    const dateKey = toSeoulDate(new Date(r.created_at));
+    if (dateKey in dayMap) dayMap[dateKey] = (dayMap[dateKey] || 0) + 1;
   });
   const dayStats = Object.entries(dayMap);
   const maxDay = Math.max(...dayStats.map((d) => d[1]), 1);
@@ -236,20 +245,26 @@ export default async function AdminPage() {
         {/* ── График по дням ── */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="text-sm font-semibold text-gray-700 mb-4">Динамика визитов — последние 14 дней</div>
-          <div className="flex items-end gap-1 h-32">
-            {dayStats.map(([date, count]) => (
-              <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
-                <div
-                  className="w-full bg-[#002C5F] rounded-t hover:bg-orange-500 transition-colors"
-                  style={{ height: `${Math.max((count / maxDay) * 100, count > 0 ? 4 : 1)}%` }}
-                />
-                {/* Тултип */}
-                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
-                  {count} визитов
+          {dayStats.every(([, count]) => count === 0) ? (
+            <div className="h-32 flex items-center justify-center text-sm text-gray-400">
+              Данных за последние 14 дней пока нет
+            </div>
+          ) : (
+            <div className="flex items-end gap-1 h-32">
+              {dayStats.map(([date, count]) => (
+                <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
+                  <div
+                    className="w-full bg-[#002C5F] rounded-t hover:bg-orange-500 transition-colors"
+                    style={{ height: `${Math.max((count / maxDay) * 100, count > 0 ? 4 : 1)}%` }}
+                  />
+                  {/* Тултип */}
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                    {count} визитов
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           {/* Даты */}
           <div className="flex gap-1 mt-2">
             {dayStats.map(([date], i) => (

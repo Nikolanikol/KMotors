@@ -4,6 +4,17 @@ import { PartsCatalog } from "@/app/parts/sections/PartsCatalog";
 import { About } from "@/app/parts/sections/About";
 import { ContactForm } from "@/app/parts/sections/ContactForm";
 
+const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
+
+// Полностью статично — пересобирается только при следующем деплое
+export const revalidate = false;
+
+// Pre-generate все 5 языковых вариантов при сборке
+export function generateStaticParams() {
+  return LANGS.map((lang) => ({ lang }));
+}
+
 const PARTS_META: Record<string, { title: string; description: string }> = {
   ru: {
     title: "Оригинальные запчасти из Кореи — Hyundai, Kia, Genesis | K-Axis",
@@ -29,22 +40,30 @@ const PARTS_META: Record<string, { title: string; description: string }> = {
 
 interface Props {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { lang } = await params;
+  const sp = await searchParams;
   const meta = PARTS_META[lang] || PARTS_META.ru;
+
+  const cleanUrl = `${BASE}/${lang}/parts`;
+
+  // Если в URL есть любые фильтры — не индексируем, canonical на чистый URL
+  const hasFilters = Object.keys(sp).length > 0;
 
   return {
     title: meta.title,
     description: meta.description,
+    ...(hasFilters && { robots: { index: false, follow: true } }),
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://kmotors.shop/${lang}/parts`,
+      url: cleanUrl,
       images: [
         {
-          url: "https://kmotors.shop/preview/preview.png",
+          url: `${BASE}/preview/preview.png`,
           width: 1200,
           height: 630,
           alt: meta.title,
@@ -53,14 +72,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/parts`,
+      canonical: cleanUrl,
       languages: {
-        ru: "https://kmotors.shop/ru/parts",
-        en: "https://kmotors.shop/en/parts",
-        ko: "https://kmotors.shop/ko/parts",
-        ka: "https://kmotors.shop/ka/parts",
-        ar: "https://kmotors.shop/ar/parts",
-        "x-default": "https://kmotors.shop/ru/parts",
+        ru: `${BASE}/ru/parts`,
+        en: `${BASE}/en/parts`,
+        ko: `${BASE}/ko/parts`,
+        ka: `${BASE}/ka/parts`,
+        ar: `${BASE}/ar/parts`,
+        "x-default": `${BASE}/ru/parts`,
       },
     },
   };
@@ -78,8 +97,8 @@ export default async function PartsPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `https://kmotors.shop/${lang}/parts` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${BASE}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `${BASE}/${lang}/parts` },
     ],
   };
 
@@ -88,11 +107,11 @@ export default async function PartsPage({ params }: Props) {
     "@type": "Service",
     name: meta.title,
     description: meta.description,
-    url: `https://kmotors.shop/${lang}/parts`,
+    url: `${BASE}/${lang}/parts`,
     provider: {
       "@type": "Organization",
       name: "K-Axis",
-      url: "https://kmotors.shop/",
+      url: `${BASE}/`,
     },
     serviceType: "Auto Parts Import",
     areaServed: [

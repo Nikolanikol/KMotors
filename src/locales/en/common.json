@@ -471,6 +471,45 @@
         "other": "Other"
       },
       "errorRequired": "Required field"
+    },
+    "detail": {
+      "backToCatalog": "Back to catalog",
+      "manufacturer": "Manufacturer",
+      "partNumber": "Part number",
+      "officialName": "Official name",
+      "category": "Category",
+      "subcategory": "Subcategory",
+      "fitsTitle": "Compatible models",
+      "orderBtn": "Order this part",
+      "noPhoto": "No photo",
+      "newBadge": "NEW",
+      "viewOnMobis": "View on Mobis",
+      "priceLabel": "Price",
+      "notFound": "Part not found",
+      "notFoundDesc": "The part with this number was not found in the catalog",
+      "breadcrumbHome": "Home",
+      "breadcrumbParts": "Parts",
+      "copySuccess": "Copied!",
+      "viewAll": "View all"
+    },
+    "order": {
+      "partNumber": "Part number",
+      "orderingPart": "Part",
+      "nameLabel": "Your name",
+      "namePlaceholder": "John Smith",
+      "nameRequired": "Please enter your name",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "+1 000 000-0000",
+      "phoneRequired": "Please enter your phone number",
+      "messengerLabel": "How should we reach you?",
+      "tgRequired": "Please enter Telegram @username",
+      "vinLabel": "Vehicle VIN",
+      "optional": "optional",
+      "submitBtn": "Submit request",
+      "sending": "Sending…",
+      "successTitle": "Request received!",
+      "successDesc": "We will contact you shortly.",
+      "closeBtn": "Close"
     }
   }
 }

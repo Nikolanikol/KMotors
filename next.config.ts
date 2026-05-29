@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        // Запчасти: изображения из Supabase Storage и внешних CDN (Mobis и др.)
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
   eslint: {

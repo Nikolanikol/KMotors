@@ -1,9 +1,18 @@
 "use client";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   Cog,
@@ -12,12 +21,32 @@ import {
   Car,
   Sofa,
   Wrench,
-  Hash,
   Search,
   LayoutGrid,
   List,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+const BRAND_CHIP_COLORS: Record<string, { active: string; inactive: string }> = {
+  hyundai: {
+    active:   "border-[#002C5F] bg-[#002C5F] text-white shadow-[#002C5F]/20",
+    inactive: "border-[#002C5F]/30 text-[#002C5F] hover:bg-[#002C5F]/5 hover:border-[#002C5F]",
+  },
+  kia: {
+    active:   "border-[#BB162B] bg-[#BB162B] text-white shadow-[#BB162B]/20",
+    inactive: "border-[#BB162B]/30 text-[#BB162B] hover:bg-[#BB162B]/5 hover:border-[#BB162B]",
+  },
+  genesis: {
+    active:   "border-[#8B6914] bg-[#8B6914] text-white shadow-[#8B6914]/20",
+    inactive: "border-[#8B6914]/30 text-[#8B6914] hover:bg-[#8B6914]/5 hover:border-[#8B6914]",
+  },
+  __default: {
+    active:   "border-[#002C5F] bg-[#002C5F] text-white",
+    inactive: "border-gray-300 text-gray-600 hover:border-[#002C5F] hover:text-[#002C5F]",
+  },
+};
 
 const PAGE_SIZE = 24;
 const BRAND_ORDER: Record<string, number> = { hyundai: 0, kia: 1, genesis: 2 };
@@ -39,6 +68,7 @@ export type Product = {
   name_ko: string | null;
   part_number: string;
   price_krw: number;
+  brand_id: number | null;
   category_id: number | null;
   subcategory_id: number | null;
   image_url: string | null;
@@ -50,15 +80,13 @@ export type VehicleModel = {
   name_en: string;
   name_ko: string;
 };
-export type Fitment = { product_id: number; vehicle_model_id: number };
+export type ModelChip = { name: string; count: number };
 
 interface Props {
   brands: Brand[];
   categories: Category[];
-  products: Product[];
-  models: VehicleModel[];
-  fitment: Fitment[];
-  productModelsMap: Record<string, VehicleModel[]>;
+  brandModelChipsMap: Record<string, ModelChip[]>;
+  krwToUsd: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -71,62 +99,103 @@ const CAT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   body: Car,
   interior: Sofa,
 };
-
 function getCatIcon(slug: string) {
   return CAT_ICONS[slug] ?? Wrench;
 }
 
-function formatKrw(price: number) {
-  return "₩" + new Intl.NumberFormat("ko-KR").format(price);
+const usdFormatter = new Intl.NumberFormat("en-US");
+function formatUsd(priceKrw: number, krwToUsd: number): string {
+  return "$" + usdFormatter.format(Math.ceil(priceKrw * krwToUsd * 1.23));
+}
+
+// Returns page numbers with "…" for ellipsis gaps
+function getPageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const show = new Set<number>([1, total, current]);
+  if (current > 1) show.add(current - 1);
+  if (current < total) show.add(current + 1);
+  if (current > 2) show.add(current - 2);
+  if (current < total - 1) show.add(current + 2);
+
+  const sorted = Array.from(show).sort((a, b) => a - b);
+  const result: (number | "…")[] = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (p - prev > 1) result.push("…");
+    result.push(p);
+    prev = p;
+  }
+  return result;
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function ProductSkeleton({ view }: { view: "grid" | "list" }) {
+  if (view === "list") {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 animate-pulse">
+        <div className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded-lg" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 bg-gray-200 rounded w-1/3" />
+          <div className="h-4 bg-gray-200 rounded w-2/3" />
+        </div>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="h-5 bg-gray-200 rounded w-20" />
+          <div className="h-8 bg-gray-200 rounded w-16" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
+      <div className="bg-gray-200" style={{ paddingBottom: "62%" }} />
+      <div className="p-3 space-y-2">
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="h-4 bg-gray-200 rounded" />
+        <div className="h-8 bg-gray-200 rounded mt-2" />
+      </div>
+    </div>
+  );
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export function PartsCatalogClient({
-  brands,
-  categories,
-  products,
-  models,
-  fitment,
-  productModelsMap,
-}: Props) {
+export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krwToUsd }: Props) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Intersection observer for fade-in
+  const lang = pathname.split("/")[1] || "ru";
+
+  // ── Fade-in observer ────────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
       { threshold: 0.05 }
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
-  // ── Infinite scroll ─────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1);
-  const loaderRef = useRef<HTMLDivElement>(null);
-
-  // Reset page when filters change
+  // ── URL params ───────────────────────────────────────────────────────────────
   const brandSlug = searchParams.get("brand") ?? "";
-  useEffect(() => { setPage(1); }, [brandSlug, searchParams]);
-  const modelId = searchParams.get("model") ?? "";   // vehicle_model id as string
-  const catSlug = searchParams.get("cat") ?? "";
-  const subSlug = searchParams.get("sub") ?? "";
-  const urlMin = searchParams.get("min");
-  const urlMax = searchParams.get("max");
-  const priceMin = urlMin ? Number(urlMin) : undefined;
-  const priceMax = urlMax ? Number(urlMax) : undefined;
+  const modelName = searchParams.get("model") ?? "";
+  const catSlug   = searchParams.get("cat")   ?? "";
+  const subSlug   = searchParams.get("sub")   ?? "";
+  const urlMin    = searchParams.get("min");
+  const urlMax    = searchParams.get("max");
+  const priceMin  = urlMin ? Number(urlMin) : undefined;
+  const priceMax  = urlMax ? Number(urlMax) : undefined;
+  const sort      = searchParams.get("sort") ?? "default";
+  // Page lives in the URL — preserved on refresh and shareable
+  const apiPage   = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
+  // Base URL updater
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -140,13 +209,32 @@ export function PartsCatalogClient({
     [searchParams, router, pathname]
   );
 
-  // ── Search (debounced) ──────────────────────────────────────────────────────
+  // Filter updater — always resets to page 1 when filters change
+  const updateFilters = useCallback(
+    (updates: Record<string, string | undefined>) => {
+      updateParams({ ...updates, page: undefined });
+    },
+    [updateParams]
+  );
+
+  // Page change — updates URL and scrolls up to results area
+  const goToPage = useCallback(
+    (newPage: number) => {
+      updateParams({ page: newPage <= 1 ? undefined : String(newPage) });
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    },
+    [updateParams]
+  );
+
+  // ── Search (debounced 300ms) ─────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
-  const [searchQ, setSearchQ] = useState(searchParams.get("q") ?? "");
+  const [searchQ, setSearchQ]         = useState(searchParams.get("q") ?? "");
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQ(searchInput);
-      updateParams({ q: searchInput || undefined });
+      updateFilters({ q: searchInput || undefined });
     }, 300);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,154 +244,80 @@ export function PartsCatalogClient({
   const [priceMinInput, setPriceMinInput] = useState(urlMin ?? "");
   const [priceMaxInput, setPriceMaxInput] = useState(urlMax ?? "");
   const applyPrice = () =>
-    updateParams({ min: priceMinInput || undefined, max: priceMaxInput || undefined });
+    updateFilters({ min: priceMinInput || undefined, max: priceMaxInput || undefined });
 
-  // ── Sort & view ─────────────────────────────────────────────────────────────
-  const [sort, setSort] = useState("default");
+  // ── View toggle ──────────────────────────────────────────────────────────────
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  // ── Derived selections ──────────────────────────────────────────────────────
+  // ── Server-fetched products state ────────────────────────────────────────────
+  const [products, setProducts]   = useState<Product[]>([]);
+  const [total, setTotal]         = useState(0);
+  const [catCounts, setCatCounts] = useState<Record<number, number>>({});
+  const [subCounts, setSubCounts] = useState<Record<number, number>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sort brands: Hyundai → Kia → Genesis
+  // Fetch whenever any filter or page changes
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    const params = new URLSearchParams();
+    if (brandSlug)              params.set("brand",  brandSlug);
+    if (catSlug)                params.set("cat",    catSlug);
+    if (subSlug)                params.set("sub",    subSlug);
+    if (modelName)              params.set("model",  modelName);
+    if (searchQ)                params.set("q",      searchQ);
+    // URL хранит цену в USD → конвертируем в KRW для API
+    if (priceMin !== undefined) params.set("min", String(Math.round(priceMin / (krwToUsd * 1.23))));
+    if (priceMax !== undefined) params.set("max", String(Math.round(priceMax / (krwToUsd * 1.23))));
+    if (sort !== "default")     params.set("sort",   sort);
+    params.set("page", String(apiPage));
+
+    fetch(`/api/parts/products?${params}`, { signal: controller.signal })
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(({ products: newProds, total: newTotal, catCounts: newCat, subCounts: newSub }) => {
+        setProducts(newProds ?? []);
+        setTotal(newTotal ?? 0);
+        setCatCounts(newCat ?? {});
+        setSubCounts(newSub ?? {});
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error("[PartsCatalog]", err);
+          setIsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brandSlug, catSlug, subSlug, modelName, searchQ, priceMin, priceMax, sort, apiPage]);
+
+  // ── Derived UI state ─────────────────────────────────────────────────────────
   const sortedBrands = useMemo(
     () => [...brands].sort((a, b) => (BRAND_ORDER[a.slug] ?? 99) - (BRAND_ORDER[b.slug] ?? 99)),
     [brands]
   );
-
-  const selectedBrand = useMemo(
-    () => brands.find((b) => b.slug === brandSlug),
-    [brands, brandSlug]
-  );
-  const selectedModelObj = useMemo(
-    () => (modelId ? models.find((m) => m.id === Number(modelId)) : undefined),
-    [models, modelId]
-  );
-  const parentCats = useMemo(() => categories.filter((c) => c.parent_id === null), [categories]);
-  const allSubs = useMemo(() => categories.filter((c) => c.parent_id !== null), [categories]);
-  const selectedCat = useMemo(() => parentCats.find((c) => c.slug === catSlug), [parentCats, catSlug]);
-  const selectedSub = useMemo(() => allSubs.find((s) => s.slug === subSlug), [allSubs, subSlug]);
-
-  // Brand → models mapping
-  const brandModels = useMemo(
-    () => (selectedBrand ? models.filter((m) => m.brand_id === selectedBrand.id) : []),
-    [models, selectedBrand]
-  );
-
-  // Category → subcategories
-  const catSubs = useMemo(
-    () => (selectedCat ? allSubs.filter((s) => s.parent_id === selectedCat.id) : []),
+  const selectedBrand = useMemo(() => brands.find((b) => b.slug === brandSlug), [brands, brandSlug]);
+  const parentCats    = useMemo(() => categories.filter((c) => c.parent_id === null), [categories]);
+  const allSubs       = useMemo(() => categories.filter((c) => c.parent_id !== null), [categories]);
+  const selectedCat   = useMemo(() => parentCats.find((c) => c.slug === catSlug), [parentCats, catSlug]);
+  const selectedSub   = useMemo(() => allSubs.find((s) => s.slug === subSlug), [allSubs, subSlug]);
+  const catSubs       = useMemo(
+    () => selectedCat ? allSubs.filter((s) => s.parent_id === selectedCat.id) : [],
     [allSubs, selectedCat]
   );
+  const brandModelChips = brandModelChipsMap[brandSlug] ?? [];
 
-  // ── Brand filter via fitment ────────────────────────────────────────────────
-  // product has no brand_id — derive via fitment → vehicle_model → brand
-  const brandProductIds = useMemo(() => {
-    if (!selectedBrand) return null;
-    const brandModelIds = new Set(
-      models.filter((m) => m.brand_id === selectedBrand.id).map((m) => m.id)
-    );
-    return new Set(
-      fitment
-        .filter((f) => brandModelIds.has(f.vehicle_model_id))
-        .map((f) => f.product_id)
-    );
-  }, [fitment, models, selectedBrand]);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pageStart  = total > 0 ? (apiPage - 1) * PAGE_SIZE + 1 : 0;
+  const pageEnd    = Math.min(apiPage * PAGE_SIZE, total);
 
-  // ── Model filter ────────────────────────────────────────────────────────────
-  const modelProductIds = useMemo(() => {
-    if (!selectedModelObj) return null;
-    return new Set(
-      fitment
-        .filter((f) => f.vehicle_model_id === selectedModelObj.id)
-        .map((f) => f.product_id)
-    );
-  }, [fitment, selectedModelObj]);
-
-  // ── Base products (brand + model applied, used for counts) ─────────────────
-  const baseProducts = useMemo(() => {
-    let result = products;
-    if (brandProductIds) result = result.filter((p) => brandProductIds.has(p.id));
-    if (modelProductIds) result = result.filter((p) => modelProductIds.has(p.id));
-    return result;
-  }, [products, brandProductIds, modelProductIds]);
-
-  // ── Category counts (based on base, not final filter) ──────────────────────
-  const catCounts = useMemo(() => {
-    const map: Record<number, number> = {};
-    parentCats.forEach((c) => {
-      map[c.id] = baseProducts.filter((p) => p.category_id === c.id).length;
-    });
-    return map;
-  }, [baseProducts, parentCats]);
-
-  // ── Subcategory counts ──────────────────────────────────────────────────────
-  const subCounts = useMemo(() => {
-    const baseCat = selectedCat
-      ? baseProducts.filter((p) => p.category_id === selectedCat.id)
-      : baseProducts;
-    const map: Record<number, number> = {};
-    catSubs.forEach((s) => {
-      map[s.id] = baseCat.filter((p) => p.subcategory_id === s.id).length;
-    });
-    return map;
-  }, [baseProducts, selectedCat, catSubs]);
-
-  // ── Filtered products ───────────────────────────────────────────────────────
-  const filteredProducts = useMemo(() => {
-    let result = baseProducts;
-    if (selectedCat) result = result.filter((p) => p.category_id === selectedCat.id);
-    if (selectedSub) result = result.filter((p) => p.subcategory_id === selectedSub.id);
-    if (priceMin !== undefined) result = result.filter((p) => p.price_krw >= priceMin);
-    if (priceMax !== undefined) result = result.filter((p) => p.price_krw <= priceMax);
-    if (searchQ) {
-      const q = searchQ.toLowerCase();
-      result = result.filter((p) => p.part_number.toLowerCase().includes(q));
-    }
-    if (sort === "price_asc") return [...result].sort((a, b) => a.price_krw - b.price_krw);
-    if (sort === "price_desc") return [...result].sort((a, b) => b.price_krw - a.price_krw);
-    if (sort === "name_asc") {
-      const lang = i18n.language;
-      return [...result].sort((a, b) => {
-        const na = lang === "ru" ? a.name_ru : (a.name_en || a.name_ru);
-        const nb = lang === "ru" ? b.name_ru : (b.name_en || b.name_ru);
-        return na.localeCompare(nb);
-      });
-    }
-    return result;
-  }, [baseProducts, selectedCat, selectedSub, priceMin, priceMax, searchQ, sort, i18n.language]);
-
-  // ── Visible slice (infinite scroll) ────────────────────────────────────────
-  const visibleProducts = useMemo(
-    () => filteredProducts.slice(0, page * PAGE_SIZE),
-    [filteredProducts, page]
-  );
-  const hasMore = visibleProducts.length < filteredProducts.length;
-
-  // Re-attach observer every time visible slice changes so it reliably
-  // fires for the next batch. Disconnect after first fire to avoid rapid
-  // repeated increments while the DOM is still updating.
-  useEffect(() => {
-    const el = loaderRef.current;
-    if (!el || !hasMore) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          observer.disconnect();
-          setPage((p) => p + 1);
-        }
-      },
-      { rootMargin: "300px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasMore, visibleProducts.length]);
-
-  // ── Helpers ─────────────────────────────────────────────────────────────────
+  // ── Misc helpers ─────────────────────────────────────────────────────────────
   const getLocalName = useCallback(
     (ru: string, en: string) => (i18n.language === "ru" ? ru : en || ru),
     [i18n.language]
   );
-
   const getProductName = (p: Product) => {
     if (i18n.language === "ru") return p.name_ru;
     if (i18n.language === "ko") return p.name_ko || p.name_en || p.name_ru;
@@ -311,7 +325,7 @@ export function PartsCatalogClient({
   };
 
   const hasFilters = !!(
-    brandSlug || modelId || catSlug || subSlug ||
+    brandSlug || modelName || catSlug || subSlug ||
     priceMin !== undefined || priceMax !== undefined || searchQ
   );
 
@@ -328,17 +342,13 @@ export function PartsCatalogClient({
     document.getElementById("contacts")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <section id="catalog" ref={sectionRef} className="py-24 bg-[#F5F7FA]">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
 
-        {/* Section header */}
-        <div
-          className={`text-center mb-12 transition-all duration-700 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
-        >
+        {/* Header */}
+        <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="h-px w-12 bg-[#BB162B]" />
             <span className="text-[#BB162B] text-sm font-medium tracking-wider uppercase">
@@ -353,61 +363,72 @@ export function PartsCatalogClient({
         </div>
 
         {/* Filter panel */}
-        <div
-          className={`bg-white rounded-2xl shadow-sm p-5 mb-8 transition-all duration-700 delay-100 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
-        >
-          {/* Row 1: brand chips + search */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-            <div className="flex flex-wrap gap-2">
-              {sortedBrands.map((brand) => (
+        <div className={`bg-white rounded-2xl shadow-sm p-5 mb-8 transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+
+          {/* Row 1: part number / VIN search — main search tool */}
+          <div className="relative mb-6">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#002C5F]/50 pointer-events-none" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t("parts.catalog.filterSearchPlaceholder")}
+              className="pl-12 h-13 text-base text-gray-900 placeholder:text-gray-400 border-2 border-[#002C5F]/20 focus-visible:border-[#002C5F] focus-visible:ring-[#002C5F]/20 focus-visible:ring-2 rounded-xl bg-[#002C5F]/[0.02] shadow-none"
+              style={{ height: "52px" }}
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => { setSearchInput(""); setSearchQ(""); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: brand chips — centered, brand colors */}
+          <div className="flex flex-wrap justify-center gap-3 mb-5">
+            {sortedBrands.map((brand) => {
+              const active = brandSlug === brand.slug;
+              const colors = BRAND_CHIP_COLORS[brand.slug] ?? BRAND_CHIP_COLORS.__default;
+              return (
                 <button
                   key={brand.id}
                   type="button"
-                  onClick={() =>
-                    updateParams({
-                      brand: brandSlug === brand.slug ? undefined : brand.slug,
-                      model: undefined,
-                    })
-                  }
+                  onClick={() => updateFilters({ brand: active ? undefined : brand.slug, model: undefined })}
                   className={cn(
-                    "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all",
-                    brandSlug === brand.slug
-                      ? "border-[#002C5F] bg-[#002C5F] text-white"
-                      : "border-gray-200 text-gray-600 hover:border-[#002C5F] hover:text-[#002C5F]"
+                    "px-7 py-2.5 rounded-full border-2 text-sm font-semibold tracking-wide transition-all shadow-sm",
+                    active ? colors.active : colors.inactive
                   )}
                 >
                   {brand.name}
                 </button>
-              ))}
-            </div>
-            <div className="relative w-full sm:w-64">
-              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <Input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t("parts.catalog.filterSearchPlaceholder")}
-                className="pl-9 text-gray-900 placeholder:text-gray-400 text-sm"
-              />
-            </div>
+              );
+            })}
           </div>
 
-          {/* Row 2: model dropdown (only when brand selected and has models) */}
-          {selectedBrand && brandModels.length > 0 && (
-            <div className="mb-5">
-              <select
-                value={modelId}
-                onChange={(e) => updateParams({ model: e.target.value || undefined })}
-                className="h-9 w-full sm:w-72 rounded-md border border-input bg-white px-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="">{t("parts.catalog.filterModelPlaceholder")}</option>
-                {brandModels.map((m) => (
-                  <option key={m.id} value={String(m.id)}>
-                    {i18n.language === "ko" ? (m.name_ko || m.name_en) : m.name_en}
-                  </option>
-                ))}
-              </select>
+          {/* Row 2: model chips */}
+          {selectedBrand && brandModelChips.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-5 pb-1">
+              {brandModelChips.map(({ name, count }) => {
+                const active = modelName === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => updateFilters({ model: modelName === name ? undefined : name })}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
+                      active
+                        ? "bg-[#BB162B] text-white border-[#BB162B]"
+                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"
+                    )}
+                  >
+                    {name}
+                    <span className={active ? "opacity-60" : "opacity-50"}>{count}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -415,21 +436,16 @@ export function PartsCatalogClient({
           {parentCats.length > 0 && (
             <div className="grid grid-cols-5 gap-3 mb-1">
               {parentCats.map((cat) => {
-                const Icon = getCatIcon(cat.slug);
+                const Icon  = getCatIcon(cat.slug);
                 const active = catSlug === cat.slug;
-                const count = catCounts[cat.id] ?? 0;
-                const empty = count === 0 && !active;
+                const count  = catCounts[cat.id];
+                const empty  = count !== undefined && count === 0 && !active;
                 return (
                   <button
                     key={cat.id}
                     type="button"
                     disabled={empty}
-                    onClick={() =>
-                      updateParams({
-                        cat: catSlug === cat.slug ? undefined : cat.slug,
-                        sub: undefined,
-                      })
-                    }
+                    onClick={() => updateFilters({ cat: catSlug === cat.slug ? undefined : cat.slug, sub: undefined })}
                     className={cn(
                       "flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 text-xs font-medium transition-all",
                       empty
@@ -443,14 +459,11 @@ export function PartsCatalogClient({
                     <span className="text-center leading-tight hidden sm:block">
                       {getLocalName(cat.name_ru, cat.name_en)}
                     </span>
-                    <span
-                      className={cn(
-                        "text-xs font-bold tabular-nums",
-                        active ? "text-[#BB162B]" : empty ? "text-gray-300" : "text-gray-400"
-                      )}
-                    >
-                      {count}
-                    </span>
+                    {count !== undefined && (
+                      <span className={cn("text-xs font-bold tabular-nums", active ? "text-[#BB162B]" : empty ? "text-gray-300" : "text-gray-400")}>
+                        {count}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -462,165 +475,109 @@ export function PartsCatalogClient({
             <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
               {catSubs.map((sub) => {
                 const active = subSlug === sub.slug;
-                const count = subCounts[sub.id] ?? 0;
+                const count  = subCounts[sub.id];
+                const empty  = count !== undefined && count === 0 && !active;
                 return (
                   <button
                     key={sub.id}
                     type="button"
-                    onClick={() =>
-                      updateParams({ sub: subSlug === sub.slug ? undefined : sub.slug })
-                    }
+                    disabled={empty}
+                    onClick={() => updateFilters({ sub: subSlug === sub.slug ? undefined : sub.slug })}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
-                      active
+                      empty
+                        ? "bg-gray-50 text-gray-300 border-transparent cursor-not-allowed opacity-50"
+                        : active
                         ? "bg-[#002C5F] text-white border-[#002C5F]"
                         : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"
                     )}
                   >
                     {getLocalName(sub.name_ru, sub.name_en)}
-                    <span className={active ? "opacity-60" : "opacity-50"}>{count}</span>
+                    {count !== undefined && (
+                      <span className={active ? "opacity-60" : "opacity-50"}>{count}</span>
+                    )}
                   </button>
                 );
               })}
             </div>
           )}
 
-          {/* Row 5: price range (₩) */}
+          {/* Row 5: price range */}
           <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-            <span className="text-sm text-gray-500 whitespace-nowrap">
-              {t("parts.catalog.filterPrice")}:
-            </span>
+            <span className="text-sm text-gray-500 whitespace-nowrap">{t("parts.catalog.filterPrice")}:</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">{t("parts.catalog.priceFrom")}</span>
-              <Input
-                type="number"
-                min={0}
-                value={priceMinInput}
+              <span className="text-xs text-gray-400">$</span>
+              <Input type="number" min={0} value={priceMinInput}
                 onChange={(e) => setPriceMinInput(e.target.value)}
-                onBlur={applyPrice}
-                onKeyDown={(e) => e.key === "Enter" && applyPrice()}
-                placeholder="0"
-                className="w-24 h-8 text-sm text-center text-gray-900 placeholder:text-gray-400"
+                onBlur={applyPrice} onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+                placeholder="0" className="w-24 h-8 text-sm text-center text-gray-900 placeholder:text-gray-400"
               />
               <span className="text-gray-400">—</span>
-              <span className="text-xs text-gray-400">{t("parts.catalog.priceTo")}</span>
-              <Input
-                type="number"
-                min={0}
-                value={priceMaxInput}
+              <span className="text-xs text-gray-400">$</span>
+              <Input type="number" min={0} value={priceMaxInput}
                 onChange={(e) => setPriceMaxInput(e.target.value)}
-                onBlur={applyPrice}
-                onKeyDown={(e) => e.key === "Enter" && applyPrice()}
-                placeholder="∞"
-                className="w-24 h-8 text-sm text-center text-gray-900 placeholder:text-gray-400"
+                onBlur={applyPrice} onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+                placeholder="∞" className="w-24 h-8 text-sm text-center text-gray-900 placeholder:text-gray-400"
               />
-              <span className="text-xs text-gray-400">₩</span>
             </div>
           </div>
 
           {/* Active filter tags */}
           {hasFilters && (
             <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-              {selectedBrand && (
-                <FilterTag
-                  label={selectedBrand.name}
-                  onRemove={() => updateParams({ brand: undefined, model: undefined })}
-                />
-              )}
-              {selectedModelObj && (
-                <FilterTag
-                  label={selectedModelObj.name_en}
-                  onRemove={() => updateParams({ model: undefined })}
-                />
-              )}
-              {selectedCat && (
-                <FilterTag
-                  label={getLocalName(selectedCat.name_ru, selectedCat.name_en)}
-                  onRemove={() => updateParams({ cat: undefined, sub: undefined })}
-                />
-              )}
-              {selectedSub && (
-                <FilterTag
-                  label={getLocalName(selectedSub.name_ru, selectedSub.name_en)}
-                  onRemove={() => updateParams({ sub: undefined })}
-                />
-              )}
+              {selectedBrand && <FilterTag label={selectedBrand.name} onRemove={() => updateFilters({ brand: undefined, model: undefined })} />}
+              {modelName && <FilterTag label={modelName} onRemove={() => updateFilters({ model: undefined })} />}
+              {selectedCat && <FilterTag label={getLocalName(selectedCat.name_ru, selectedCat.name_en)} onRemove={() => updateFilters({ cat: undefined, sub: undefined })} />}
+              {selectedSub && <FilterTag label={getLocalName(selectedSub.name_ru, selectedSub.name_en)} onRemove={() => updateFilters({ sub: undefined })} />}
               {(priceMin !== undefined || priceMax !== undefined) && (
                 <FilterTag
-                  label={`${priceMin ? formatKrw(priceMin) : "₩0"} — ${priceMax ? formatKrw(priceMax) : "∞"}`}
-                  onRemove={() => {
-                    setPriceMinInput("");
-                    setPriceMaxInput("");
-                    updateParams({ min: undefined, max: undefined });
-                  }}
+                  label={`$${priceMin ?? 0} — ${priceMax ? "$" + priceMax : "∞"}`}
+                  onRemove={() => { setPriceMinInput(""); setPriceMaxInput(""); updateFilters({ min: undefined, max: undefined }); }}
                 />
               )}
               {searchQ && (
-                <FilterTag
-                  label={`"${searchQ}"`}
-                  onRemove={() => {
-                    setSearchInput("");
-                    setSearchQ("");
-                    updateParams({ q: undefined });
-                  }}
-                />
+                <FilterTag label={`"${searchQ}"`} onRemove={() => { setSearchInput(""); setSearchQ(""); updateFilters({ q: undefined }); }} />
               )}
-              <button
-                onClick={resetAll}
-                className="text-xs text-[#BB162B] underline ml-1 hover:text-[#9B1220] transition-colors"
-              >
+              <button onClick={resetAll} className="text-xs text-[#BB162B] underline ml-1 hover:text-[#9B1220] transition-colors">
                 {t("parts.catalog.resetFilters")}
               </button>
             </div>
           )}
         </div>
 
-        {/* Results bar */}
+        {/* Results bar — anchor for scroll-to-top on page change */}
         <div
-          className={`flex items-center justify-between mb-6 transition-all duration-700 delay-200 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          ref={resultsRef}
+          className={`flex items-center justify-between mb-6 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
           <span className="text-sm text-gray-500">
-            {t("parts.catalog.resultsShown", {
-              shown: filteredProducts.length,
-              total: products.length,
-            })}
+            {isLoading && products.length === 0
+              ? "…"
+              : total === 0
+              ? t("parts.catalog.noResults")
+              : t("parts.catalog.resultsShown", { shown: `${pageStart}–${pageEnd}`, total })
+            }
           </span>
           <div className="flex items-center gap-3">
-            <select
+            <Select
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="h-9 rounded-md border border-input bg-white px-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              onValueChange={(val) => updateFilters({ sort: val === "default" ? undefined : val })}
             >
-              <option value="default">{t("parts.catalog.sortDefault")}</option>
-              <option value="price_asc">{t("parts.catalog.sortPriceAsc")}</option>
-              <option value="price_desc">{t("parts.catalog.sortPriceDesc")}</option>
-              <option value="name_asc">{t("parts.catalog.sortNameAsc")}</option>
-            </select>
+              <SelectTrigger className="h-9 w-44 bg-white text-gray-700 border-gray-300 text-sm shadow-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-white text-gray-900 border-gray-200">
+                <SelectItem value="default">{t("parts.catalog.sortDefault")}</SelectItem>
+                <SelectItem value="price_asc">{t("parts.catalog.sortPriceAsc")}</SelectItem>
+                <SelectItem value="price_desc">{t("parts.catalog.sortPriceDesc")}</SelectItem>
+                <SelectItem value="name_asc">{t("parts.catalog.sortNameAsc")}</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setView("grid")}
-                className={cn(
-                  "p-2 transition-colors",
-                  view === "grid"
-                    ? "bg-[#002C5F] text-white"
-                    : "bg-white text-gray-400 hover:text-[#002C5F]"
-                )}
-                title={t("parts.catalog.gridView")}
-              >
+              <button onClick={() => setView("grid")} className={cn("p-2 transition-colors", view === "grid" ? "bg-[#002C5F] text-white" : "bg-white text-gray-400 hover:text-[#002C5F]")} title={t("parts.catalog.gridView")}>
                 <LayoutGrid className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => setView("list")}
-                className={cn(
-                  "p-2 transition-colors",
-                  view === "list"
-                    ? "bg-[#002C5F] text-white"
-                    : "bg-white text-gray-400 hover:text-[#002C5F]"
-                )}
-                title={t("parts.catalog.listView")}
-              >
+              <button onClick={() => setView("list")} className={cn("p-2 transition-colors", view === "list" ? "bg-[#002C5F] text-white" : "bg-white text-gray-400 hover:text-[#002C5F]")} title={t("parts.catalog.listView")}>
                 <List className="w-4 h-4" />
               </button>
             </div>
@@ -628,53 +585,107 @@ export function PartsCatalogClient({
         </div>
 
         {/* Products */}
-        {filteredProducts.length === 0 ? (
+        {isLoading ? (
+          <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
+          </div>
+        ) : products.length === 0 ? (
           <EmptyState onReset={resetAll} t={t} />
         ) : (
-          <>
-            <div
-              className={cn(
-                view === "grid"
-                  ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-                  : "grid grid-cols-1 gap-3"
-              )}
-            >
-              {visibleProducts.map((product, index) => {
-                const compatibleModels = productModelsMap[String(product.id)] ?? [];
-                return (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    compatibleModels={compatibleModels}
-                    productName={getProductName(product)}
-                    view={view}
-                    isVisible={isVisible}
-                    index={index}
-                    onOrder={() => scrollToContact(getProductName(product), product.part_number)}
-                    t={t}
-                  />
-                );
-              })}
-            </div>
-
-            {/* Infinite scroll trigger */}
-            {hasMore && (
-              <div ref={loaderRef} className="flex justify-center py-8">
-                <div className="flex gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="w-2 h-2 rounded-full bg-[#002C5F]/30 animate-bounce"
-                      style={{ animationDelay: `${i * 150}ms` }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+          <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+            {products.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                productName={getProductName(product)}
+                view={view}
+                isVisible={isVisible}
+                index={index}
+                href={`/${lang}/parts/${product.id}`}
+                onOrder={() => scrollToContact(getProductName(product), product.part_number)}
+                onNavigate={() => sessionStorage.setItem("parts:filters", window.location.search)}
+                t={t}
+                krwToUsd={krwToUsd}
+              />
+            ))}
+          </div>
         )}
+
+        {/* Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} />
+        )}
+
       </div>
     </section>
+  );
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+function Pagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const pages = getPageNumbers(page, totalPages);
+
+  return (
+    <nav className="flex items-center justify-center gap-1 mt-10" aria-label="Pagination">
+      {/* Prev */}
+      <button
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        className={cn(
+          "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
+          page === 1
+            ? "text-gray-300 cursor-not-allowed"
+            : "text-gray-600 hover:bg-white hover:shadow-sm"
+        )}
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+
+      {/* Page numbers */}
+      {pages.map((p, i) =>
+        p === "…" ? (
+          <span key={`e${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onPageChange(p as number)}
+            className={cn(
+              "w-9 h-9 rounded-lg text-sm font-medium transition-all",
+              p === page
+                ? "bg-[#002C5F] text-white shadow-sm"
+                : "text-gray-600 hover:bg-white hover:shadow-sm"
+            )}
+          >
+            {p}
+          </button>
+        )
+      )}
+
+      {/* Next */}
+      <button
+        onClick={() => onPageChange(page + 1)}
+        disabled={page === totalPages}
+        className={cn(
+          "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
+          page === totalPages
+            ? "text-gray-300 cursor-not-allowed"
+            : "text-gray-600 hover:bg-white hover:shadow-sm"
+        )}
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </nav>
   );
 }
 
@@ -684,11 +695,7 @@ function FilterTag({ label, onRemove }: { label: string; onRemove: () => void })
   return (
     <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#002C5F]/10 text-[#002C5F] text-xs font-medium">
       {label}
-      <button
-        onClick={onRemove}
-        className="ml-0.5 hover:text-[#BB162B] transition-colors"
-        aria-label="Remove filter"
-      >
+      <button onClick={onRemove} className="ml-0.5 hover:text-[#BB162B] transition-colors" aria-label="Remove filter">
         <X className="w-3 h-3" />
       </button>
     </span>
@@ -697,13 +704,7 @@ function FilterTag({ label, onRemove }: { label: string; onRemove: () => void })
 
 // ─── EmptyState ───────────────────────────────────────────────────────────────
 
-function EmptyState({
-  onReset,
-  t,
-}: {
-  onReset: () => void;
-  t: (key: string) => string;
-}) {
+function EmptyState({ onReset, t }: { onReset: () => void; t: (key: string) => string }) {
   return (
     <div className="text-center py-24">
       <div className="w-16 h-16 rounded-full bg-[#002C5F]/5 flex items-center justify-center mx-auto mb-4">
@@ -711,10 +712,7 @@ function EmptyState({
       </div>
       <p className="text-gray-600 font-medium mb-1">{t("parts.catalog.noResults")}</p>
       <p className="text-sm text-gray-400 mb-4">{t("parts.catalog.noResultsHint")}</p>
-      <button
-        onClick={onReset}
-        className="text-sm text-[#BB162B] underline hover:text-[#9B1220] transition-colors"
-      >
+      <button onClick={onReset} className="text-sm text-[#BB162B] underline hover:text-[#9B1220] transition-colors">
         {t("parts.catalog.resetFilters")}
       </button>
     </div>
@@ -725,70 +723,38 @@ function EmptyState({
 
 interface ProductCardProps {
   product: Product;
-  compatibleModels: VehicleModel[];
   productName: string;
   view: "grid" | "list";
   isVisible: boolean;
   index: number;
+  href: string;
   onOrder: () => void;
+  onNavigate: () => void;
   t: (key: string) => string;
+  krwToUsd: number;
 }
 
-function ProductCard({
-  product,
-  compatibleModels,
-  productName,
-  view,
-  isVisible,
-  index,
-  onOrder,
-  t,
-}: ProductCardProps) {
-  const shown = compatibleModels.slice(0, 3);
-  const extra = compatibleModels.length - shown.length;
-  const compatibleText =
-    shown.map((m) => m.name_en).join(", ") + (extra > 0 ? ` +${extra}` : "");
-  // model names for selected model tag use name_en (international car names)
-
-  const delay = `${Math.min(index * 30, 600)}ms`;
+function ProductCard({ product, productName, view, isVisible, index, href, onOrder, onNavigate, t, krwToUsd }: ProductCardProps) {
+  const delay = `${Math.min(index * 20, 400)}ms`;
 
   if (view === "list") {
     return (
       <div
-        className={cn(
-          "bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-4 p-4",
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-        )}
+        className={cn("bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-4 p-4", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
         style={{ transitionDelay: delay }}
       >
-        <div className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={productName}
-              className="w-full h-full object-contain p-2"
-            />
-          ) : (
-            <Wrench className="w-7 h-7 text-gray-300" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
+        <Link href={href} onClick={onNavigate} className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden relative">
+          {product.image_url
+            ? <Image src={product.image_url} alt={productName} width={80} height={80} className="object-contain p-2" sizes="80px" />
+            : <Wrench className="w-7 h-7 text-gray-300" />}
+        </Link>
+        <Link href={href} onClick={onNavigate} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
           <div className="text-xs text-gray-400 font-mono mb-0.5">{product.part_number}</div>
           <h3 className="text-sm font-semibold text-[#002C5F] truncate">{productName}</h3>
-          {compatibleText && (
-            <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-              <Car className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{compatibleText}</span>
-            </div>
-          )}
-        </div>
+        </Link>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="text-lg font-bold text-[#BB162B]">{formatKrw(product.price_krw)}</span>
-          <Button
-            size="sm"
-            onClick={onOrder}
-            className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8"
-          >
+          <span className="text-lg font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
+          <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8">
             {t("parts.catalog.orderBtn")}
           </Button>
         </div>
@@ -796,61 +762,33 @@ function ProductCard({
     );
   }
 
-  // Grid view
   return (
     <div
-      className={cn(
-        "bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col",
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-      )}
+      className={cn("bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group flex flex-col", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
       style={{ transitionDelay: delay }}
     >
-      {/* Image — taller than content, fills ~60% of card */}
-      <div className="relative bg-gray-50 overflow-hidden" style={{ paddingBottom: "62%" }}>
+      <Link href={href} onClick={onNavigate} className="block relative bg-gray-50 overflow-hidden" style={{ paddingBottom: "62%" }}>
         <div className="absolute inset-0 flex items-center justify-center">
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={productName}
-              className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-1.5 text-gray-300">
-              <Wrench className="w-8 h-8" />
-              <span className="text-xs">{t("parts.catalog.noPhoto")}</span>
-            </div>
-          )}
+          {product.image_url
+            ? <Image src={product.image_url} alt={productName} fill className="object-contain p-3 group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
+            : <div className="flex flex-col items-center gap-1.5 text-gray-300"><Wrench className="w-8 h-8" /><span className="text-xs">{t("parts.catalog.noPhoto")}</span></div>}
         </div>
         {product.is_new && (
           <div className="absolute top-2 left-2 bg-[#BB162B] text-white text-xs px-2 py-0.5 rounded-full font-medium">
             {t("parts.catalog.newBadge")}
           </div>
         )}
-      </div>
-
-      {/* Content — compact */}
-      <div className="p-3 flex flex-col gap-1.5">
-        <div className="text-[11px] text-gray-400 font-mono leading-none">{product.part_number}</div>
-        <h3 className="text-sm font-semibold text-[#002C5F] line-clamp-2 leading-snug min-h-[2.625rem]">
-          {productName}
-        </h3>
-        {/* Fits row */}
-        <div className="flex items-center gap-1 text-[11px] text-gray-400 min-h-[1rem]">
-          {compatibleText ? (
-            <>
-              <Car className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{compatibleText}</span>
-            </>
-          ) : <span className="invisible">–</span>}
-        </div>
-        {/* Price + button */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-base font-bold text-[#BB162B]">{formatKrw(product.price_krw)}</span>
-          <Button
-            size="sm"
-            onClick={onOrder}
-            className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-7 px-3"
-          >
+      </Link>
+      <div className="p-3 flex flex-col gap-1.5 flex-1">
+        <Link href={href} onClick={onNavigate} className="block">
+          <div className="text-[11px] text-gray-400 font-mono leading-none mb-1">{product.part_number}</div>
+          <h3 className="text-sm font-semibold text-[#002C5F] line-clamp-2 leading-snug min-h-[2.625rem] hover:text-[#002C5F]/80 transition-colors">
+            {productName}
+          </h3>
+        </Link>
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
+          <span className="text-base font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
+          <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-7 px-3">
             {t("parts.catalog.orderBtn")}
           </Button>
         </div>

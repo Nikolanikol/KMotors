@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
       "https://kmotors.shop/sitemap.xml",
       "https://kmotors.shop/sitemap-main.xml",
       "https://kmotors.shop/sitemap-blog.xml",
+      "https://kmotors.shop/sitemap-parts.xml",
       "https://kmotors.shop/sitemap-catalog/1",
     ],
   };

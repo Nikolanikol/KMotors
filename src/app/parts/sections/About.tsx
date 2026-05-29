@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Check, Truck, Shield, Clock, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -36,11 +37,13 @@ export function About() {
               isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"
             }`}
           >
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <img
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[500px]">
+              <Image
                 src="/warehouse.jpg"
                 alt="K-Axis warehouse"
-                className="w-full h-[500px] object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#002C5F]/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-8">

@@ -475,6 +475,45 @@
         "other": "Другое"
       },
       "errorRequired": "Обязательное поле"
+    },
+    "detail": {
+      "backToCatalog": "Вернуться в каталог",
+      "manufacturer": "Производитель",
+      "partNumber": "Артикул",
+      "officialName": "Официальное название",
+      "category": "Категория",
+      "subcategory": "Подкатегория",
+      "fitsTitle": "Совместимые модели",
+      "orderBtn": "Заказать деталь",
+      "noPhoto": "Нет фото",
+      "newBadge": "НОВИНКА",
+      "viewOnMobis": "Смотреть на Mobis",
+      "priceLabel": "Цена",
+      "notFound": "Товар не найден",
+      "notFoundDesc": "Запчасть с таким номером не найдена в каталоге",
+      "breadcrumbHome": "Главная",
+      "breadcrumbParts": "Запчасти",
+      "copySuccess": "Скопировано!",
+      "viewAll": "Смотреть все"
+    },
+    "order": {
+      "partNumber": "Артикул",
+      "orderingPart": "Деталь",
+      "nameLabel": "Ваше имя",
+      "namePlaceholder": "Иван Иванов",
+      "nameRequired": "Введите ваше имя",
+      "phoneLabel": "Телефон",
+      "phonePlaceholder": "+7 900 000-00-00",
+      "phoneRequired": "Введите номер телефона",
+      "messengerLabel": "Как вам ответить?",
+      "tgRequired": "Укажите Telegram @username",
+      "vinLabel": "VIN-номер автомобиля",
+      "optional": "необязательно",
+      "submitBtn": "Отправить заявку",
+      "sending": "Отправка…",
+      "successTitle": "Заявка принята!",
+      "successDesc": "Мы свяжемся с вами в ближайшее время.",
+      "closeBtn": "Закрыть"
     }
   }
 }

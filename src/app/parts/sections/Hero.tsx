@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -38,17 +39,20 @@ export function Hero() {
     >
       {/* Parallax Background */}
       <div className="parallax-bg absolute inset-0 w-full h-[120%] -top-[10%]">
-        <img
+        <Image
           src="/hero-bg.jpg"
           alt="Auto parts warehouse"
-          className="w-full h-full object-cover"
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[#002C5F]/95 via-[#002C5F]/90 to-[#002C5F]/80" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-3xl">
           {/* Left Column - Text */}
           <div className="space-y-8 animate-slide-up">
             <div className="flex items-center gap-4">
@@ -105,33 +109,6 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column - Brand Logos */}
-          <div className="hidden lg:flex flex-col items-center justify-center space-y-8 animate-fade-in">
-            <div className="relative">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-6 transform hover:scale-105 transition-transform duration-300">
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-white italic tracking-tight">
-                    HYUNDAI
-                  </div>
-                  <div className="text-sm text-white/60 mt-2">
-                    New Thinking. New Possibilities.
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 transform hover:scale-105 transition-transform duration-300">
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-white tracking-wider">
-                    KIA
-                  </div>
-                  <div className="text-sm text-white/60 mt-2">
-                    Movement that inspires
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -top-4 -right-4 w-24 h-24 border-2 border-[#BB162B]/30 rounded-full" />
-              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-[#BB162B]/20 rounded-full" />
-            </div>
-          </div>
         </div>
       </div>
 
