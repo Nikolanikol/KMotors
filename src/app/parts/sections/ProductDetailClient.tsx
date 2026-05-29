@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/utils/gtag";
 import { OrderModal } from "./OrderModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -68,6 +69,13 @@ export function ProductDetailClient({
   useEffect(() => {
     const saved = sessionStorage.getItem("parts:filters");
     if (saved) setBackSearch(saved);
+    // Track product view
+    trackEvent("view_item", {
+      item_id: String(product.id),
+      item_name: product.name_en || product.name_ru,
+      part_number: product.part_number,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Localised product name

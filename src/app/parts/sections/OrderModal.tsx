@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { type Value } from "react-phone-number-input";
 import { X, Package, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from "@/utils/gtag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,6 +98,7 @@ export function OrderModal({
         }),
       });
       if (!res.ok) throw new Error("Send error");
+      trackEvent("generate_lead", { source: "parts_product", part_number: partNumber });
       setSuccess(true);
     } catch {
       // keep modal open so user can retry

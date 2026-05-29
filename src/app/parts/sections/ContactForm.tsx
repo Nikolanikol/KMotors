@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/utils/gtag";
 
 const PART_TYPES = [
   { key: "vin",  emoji: "🔍" },
@@ -103,6 +104,7 @@ export function ContactForm() {
         }),
       });
       if (!response.ok) throw new Error("Send error");
+      trackEvent("generate_lead", { source: "parts_contact" });
       toast.success(t("parts.contact.successMsg"));
       setFormData({ name: "", vin: "", message: "" });
       setPhone(undefined);
