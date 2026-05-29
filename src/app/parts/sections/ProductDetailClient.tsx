@@ -178,10 +178,10 @@ export function ProductDetailClient({
                 src={product.image_url}
                 alt={productName}
                 fill
+                unoptimized
                 priority
                 onError={() => setImgError(true)}
                 className="object-contain p-8"
-                sizes="(max-width: 1024px) 100vw, 50vw"
               />
             ) : (
               <div className="flex flex-col items-center gap-4 text-gray-300 py-16">
