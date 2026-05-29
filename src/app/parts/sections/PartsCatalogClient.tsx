@@ -745,7 +745,7 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
       >
         <Link href={href} onClick={onNavigate} className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden relative">
           {product.image_url
-            ? <Image src={product.image_url} alt={productName} width={80} height={80} unoptimized className="object-contain p-2" />
+            ? <Image src={product.image_url} alt={productName} width={80} height={80} className="object-contain p-2" sizes="80px" />
             : <Wrench className="w-7 h-7 text-gray-300" />}
         </Link>
         <Link href={href} onClick={onNavigate} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
@@ -770,7 +770,7 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
       <Link href={href} onClick={onNavigate} className="block relative bg-gray-50 overflow-hidden" style={{ paddingBottom: "62%" }}>
         <div className="absolute inset-0 flex items-center justify-center">
           {product.image_url
-            ? <Image src={product.image_url} alt={productName} fill unoptimized className="object-contain p-3 group-hover:scale-105 transition-transform duration-300" />
+            ? <Image src={product.image_url} alt={productName} fill className="object-contain p-3 group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
             : <div className="flex flex-col items-center gap-1.5 text-gray-300"><Wrench className="w-8 h-8" /><span className="text-xs">{t("parts.catalog.noPhoto")}</span></div>}
         </div>
         {product.is_new && (

@@ -4,15 +4,16 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        // Автокаталог (encar.com)
         protocol: 'https',
         hostname: 'ci.encar.com',
-        port: '',
         pathname: '/**',
       },
       {
-        // Запчасти: изображения из Supabase Storage и внешних CDN (Mobis и др.)
+        // Запчасти: Supabase Storage
         protocol: 'https',
-        hostname: '**',
+        hostname: 'dyadajdrxnvzkrmuoaku.supabase.co',
+        pathname: '/storage/v1/object/public/**',
       },
     ],
   },
