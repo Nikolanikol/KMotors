@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 const TABS = [
-  { id: "overview",  label: "📊 Обзор"   },
-  { id: "yandex",   label: "🔴 Яндекс"  },
-  { id: "ga4",      label: "🟠 GA4"     },
-  { id: "leads",    label: "📋 Заявки"  },
-  { id: "search",   label: "🔍 Поиск"   },
+  { id: "overview", label: "📊 Обзор"  },
+  { id: "yandex",  label: "🔴 Яндекс" },
+  { id: "ga4",     label: "🟠 GA4"    },
+  { id: "leads",   label: "📋 Заявки" },
+  { id: "search",  label: "🔍 Поиск"  },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -27,7 +27,7 @@ export default function AdminTabs({ overview, yandex, ga4, leads, search }: Prop
 
   return (
     <div>
-      {/* Таб-бар */}
+      {/* Таб-бар — залипает сверху */}
       <div className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200 px-4">
         <div className="max-w-6xl mx-auto flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {TABS.map((tab) => (
@@ -36,9 +36,9 @@ export default function AdminTabs({ overview, yandex, ga4, leads, search }: Prop
               onClick={() => setActive(tab.id)}
               className="flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2"
               style={{
-                borderColor:  active === tab.id ? "#002C5F" : "transparent",
-                color:        active === tab.id ? "#002C5F" : "#6b7280",
-                background:   "transparent",
+                borderColor: active === tab.id ? "#002C5F" : "transparent",
+                color:       active === tab.id ? "#002C5F" : "#6b7280",
+                background:  "transparent",
               }}
             >
               {tab.label}
@@ -47,10 +47,16 @@ export default function AdminTabs({ overview, yandex, ga4, leads, search }: Prop
         </div>
       </div>
 
-      {/* Контент активного таба */}
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {content[active]}
-      </div>
+      {/* Все табы в DOM, активный видим — избегаем hydration mismatch */}
+      {TABS.map((tab) => (
+        <div
+          key={tab.id}
+          className="max-w-6xl mx-auto px-4 py-6 space-y-6"
+          style={{ display: active === tab.id ? "block" : "none" }}
+        >
+          {content[tab.id]}
+        </div>
+      ))}
     </div>
   );
 }
