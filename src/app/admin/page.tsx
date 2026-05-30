@@ -1,6 +1,14 @@
 import { createServerClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  getYandexSummary,
+  getYandexGeo,
+  getYandexDaily,
+  getYandexSources,
+  getYandexDevices,
+  getYandexHours,
+} from "@/lib/analytics/yandex";
 
 // ─── Хелперы ────────────────────────────────────────────────────────────────
 
@@ -104,6 +112,23 @@ export default async function AdminPage() {
   const days14ago = new Date(now.getTime() - 14 * 86400000).toISOString();
 
   // ── Все запросы параллельно ──────────────────────────────────────────────
+  // ── Яндекс.Метрика — параллельно ────────────────────────────────────────
+  const [
+    yaSummary,
+    yaGeo,
+    yaDaily,
+    yaSources,
+    yaDevices,
+    yaHours,
+  ] = await Promise.all([
+    getYandexSummary(30),
+    getYandexGeo(30),
+    getYandexDaily(14),
+    getYandexSources(30),
+    getYandexDevices(30),
+    getYandexHours(7),
+  ]);
+
   const [
     { count: total7 },
     { count: total30 },
@@ -417,6 +442,201 @@ export default async function AdminPage() {
               <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
             </div>
           </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* ── ЯНДЕКС.МЕТРИКА — чистые данные без ботов ── */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div className="border-t-2 border-orange-100 pt-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">Я</span>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">Яндекс.Метрика — чистые данные</h2>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">без ботов</span>
+          </div>
+
+          {!yaSummary ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
+              ⚠️ Добавьте YANDEX_METRIKA_TOKEN в переменные окружения Vercel
+            </div>
+          ) : (
+            <div className="space-y-4">
+
+              {/* Метрики Яндекса */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {[
+                  { label: "Визиты (30 дн.)",    value: yaSummary.visits.toLocaleString("ru"),   color: "text-red-500" },
+                  { label: "Пользователи",        value: yaSummary.users.toLocaleString("ru"),    color: "text-red-500" },
+                  { label: "Bounce Rate",         value: `${yaSummary.bounceRate}%`,              color: "text-orange-500" },
+                  { label: "Ср. время (сек)",     value: `${yaSummary.avgDuration}с`,             color: "text-blue-500" },
+                  { label: "Глубина просмотра",   value: `${yaSummary.pageDepth} стр.`,          color: "text-green-600" },
+                ].map((m) => (
+                  <div key={m.label} className="bg-white rounded-xl border border-gray-200 p-4">
+                    <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+                    <div className="text-xs text-gray-500 mt-1">{m.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* График по дням Яндекс */}
+              {yaDaily.length > 0 && (() => {
+                const maxYaDay = Math.max(...yaDaily.map(d => d.visits), 1);
+                return (
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="text-sm font-semibold text-gray-700 mb-4">Динамика визитов — 14 дней (Яндекс)</div>
+                    <div className="flex items-end gap-1 h-28">
+                      {yaDaily.map((d) => (
+                        <div key={d.date} className="flex-1 flex flex-col items-center group relative">
+                          <div
+                            className="w-full bg-red-400 rounded-t hover:bg-red-500 transition-colors"
+                            style={{ height: `${Math.max((d.visits / maxYaDay) * 100, d.visits > 0 ? 4 : 1)}%` }}
+                          />
+                          <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                            {d.date}: {d.visits} визитов
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>{yaDaily[0]?.date}</span>
+                      <span>{yaDaily[yaDaily.length - 1]?.date}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Гео + Источники */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* География Яндекс */}
+                {yaGeo.length > 0 && (() => {
+                  const maxGeo = Math.max(...yaGeo.map(g => g.visits), 1);
+                  const totalGeoVisits = yaGeo.reduce((a, g) => a + g.visits, 0) || 1;
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">🌍 География (Яндекс, без ботов)</div>
+                      <div className="space-y-2">
+                        {yaGeo.map((g) => (
+                          <div key={g.country} className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-700 truncate max-w-[60%]">{g.country}</span>
+                              <span className="text-gray-500 flex-shrink-0">
+                                {Math.round((g.visits / totalGeoVisits) * 100)}% · {g.visits}
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-red-400 h-1.5 rounded-full" style={{ width: `${(g.visits / maxGeo) * 100}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Источники Яндекс */}
+                {yaSources.length > 0 && (() => {
+                  const maxSrc = Math.max(...yaSources.map(s => s.visits), 1);
+                  const totalSrc = yaSources.reduce((a, s) => a + s.visits, 0) || 1;
+                  const srcColors: Record<string, string> = {
+                    "Переходы из поисковых систем": "#4285F4",
+                    "Прямые заходы": "#6B7280",
+                    "Переходы из социальных сетей": "#E1306C",
+                    "Переходы по рекламе": "#FF9800",
+                    "Переходы с других сайтов": "#9C27B0",
+                  };
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">🔗 Источники трафика (Яндекс)</div>
+                      <div className="space-y-2">
+                        {yaSources.map((s) => {
+                          const pct = Math.round((s.visits / totalSrc) * 100);
+                          const color = srcColors[s.source] || "#6B7280";
+                          return (
+                            <div key={s.source} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-700 truncate max-w-[65%]">{s.source}</span>
+                                <span className="text-gray-500 flex-shrink-0">{pct}% · {s.visits}</span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                <div className="h-1.5 rounded-full" style={{ width: `${(s.visits / maxSrc) * 100}%`, backgroundColor: color }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Устройства + Часы */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* Устройства Яндекс */}
+                {yaDevices.length > 0 && (() => {
+                  const totalDev = yaDevices.reduce((a, d) => a + d.visits, 0) || 1;
+                  const devColors: Record<string, string> = { desktop: "bg-[#002C5F]", mobile: "bg-orange-400", tablet: "bg-blue-300" };
+                  const devLabels: Record<string, string> = { desktop: "💻 Десктоп", mobile: "📱 Мобильный", tablet: "📟 Планшет" };
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">📱 Устройства (Яндекс)</div>
+                      <div className="space-y-3">
+                        {yaDevices.map((d) => {
+                          const key = d.device.toLowerCase().includes("mobile") ? "mobile"
+                            : d.device.toLowerCase().includes("tablet") ? "tablet" : "desktop";
+                          const pct = Math.round((d.visits / totalDev) * 100);
+                          return (
+                            <div key={d.device} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-700">{devLabels[key] || d.device}</span>
+                                <span className="text-gray-500">{pct}% · {d.visits}</span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-2">
+                                <div className={`${devColors[key] || "bg-gray-400"} h-2 rounded-full`} style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Часы активности Яндекс */}
+                {yaHours.length > 0 && (() => {
+                  const maxYaHour = Math.max(...yaHours.map(h => h.visits), 1);
+                  const peakHour = yaHours.reduce((a, b) => b.visits > a.visits ? b : a, yaHours[0]);
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-1">🕐 Часы активности (Яндекс, 7 дней)</div>
+                      {peakHour && (
+                        <div className="text-xs text-orange-600 mb-3">Пик: {peakHour.hour}:00 — {peakHour.visits} визитов</div>
+                      )}
+                      <div className="flex items-end gap-px h-20">
+                        {yaHours.map((h) => (
+                          <div key={h.hour} className="flex-1 flex flex-col items-center group relative">
+                            <div
+                              className="w-full bg-red-400 rounded-t hover:bg-red-500 transition-colors"
+                              style={{ height: `${Math.max((h.visits / maxYaHour) * 100, h.visits > 0 ? 4 : 1)}%` }}
+                            />
+                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                              {h.hour}:00 — {h.visits}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+            </div>
+          )}
         </div>
 
         {/* ── Топ машин ── */}
