@@ -167,17 +167,21 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  // Диагностика переменных окружения на проде
-  console.log("[ADMIN ENV CHECK]", {
-    hasYandexToken:    !!process.env.YANDEX_METRIKA_TOKEN,
-    hasGA4ClientId:    !!process.env.GA4_CLIENT_ID,
-    hasGA4Secret:      !!process.env.GA4_CLIENT_SECRET,
-    hasGA4Refresh:     !!process.env.GA4_REFRESH_TOKEN,
-    hasGA4PropertyId:  !!process.env.GA4_PROPERTY_ID,
-    hasGA4Credentials: !!process.env.GA4_CREDENTIALS,
-    hasSupabaseUrl:    !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasServiceRole:    !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  });
+  // Детальная диагностика — показываем первые 6 символов каждой переменной
+  const envVars = [
+    "GA4_CLIENT_ID", "GA4_CLIENT_SECRET", "GA4_REFRESH_TOKEN",
+    "GA4_PROPERTY_ID", "GA4_CREDENTIALS", "YANDEX_METRIKA_TOKEN",
+    "SUPABASE_SERVICE_ROLE_KEY", "NEXT_PUBLIC_SUPABASE_URL",
+  ];
+  const envCheck: Record<string, string> = {};
+  for (const key of envVars) {
+    const val = process.env[key];
+    envCheck[key] = val ? `✅ ${val.slice(0, 6)}...` : "❌ MISSING";
+  }
+  // Проверяем все ключи окружения содержащие GA4
+  const allGA4Keys = Object.keys(process.env).filter(k => k.includes("GA4") || k.includes("YANDEX"));
+  console.log("[ENV KEYS with GA4/YANDEX]", allGA4Keys);
+  console.log("[ENV VALUES]", envCheck);
 
   const supabase = createServerClient();
   const now = new Date();
