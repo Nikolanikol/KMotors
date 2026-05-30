@@ -5,6 +5,9 @@ import { isbot } from "isbot";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 const DEFAULT_LANG = "ru";
 
+// IP адреса которые не трекаем (разработчики, владельцы)
+const EXCLUDED_IPS = ["14.5.115.104"];
+
 function shouldTrack(request: NextRequest): boolean {
   // Пропускаем RSC-запросы Next.js (React Server Component payload)
   const accept = request.headers.get("accept") || "";
@@ -18,9 +21,18 @@ function shouldTrack(request: NextRequest): boolean {
   const ua = request.headers.get("user-agent") || "";
   if (!ua || isbot(ua)) return false;
 
-  // Пропускаем владельца сайта (залогинен в админку)
+  // Пропускаем владельца сайта по IP и по cookie админки
   const adminSession = request.cookies.get("admin_session");
   if (adminSession?.value) return false;
+  const ip =
+    request.headers.get("x-vercel-forwarded-for") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "";
+  if (EXCLUDED_IPS.includes(ip)) return false;
+
+  // Пропускаем localhost (разработка)
+  const hostname = request.nextUrl.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return false;
 
   // Пропускаем саморефералы (переходы внутри сайта)
   const referer = request.headers.get("referer") || "";
