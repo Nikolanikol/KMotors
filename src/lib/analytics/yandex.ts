@@ -3,16 +3,26 @@ const BASE_URL = "https://api-metrika.yandex.net/stat/v1/data";
 
 async function yandexFetch(params: Record<string, string>) {
   const token = process.env.YANDEX_METRIKA_TOKEN;
-  if (!token) return null;
+  if (!token) {
+    console.log("[Yandex] ❌ YANDEX_METRIKA_TOKEN не найден в .env");
+    return null;
+  }
 
   const url = new URL(BASE_URL);
   url.searchParams.set("ids", COUNTER_ID);
-  url.searchParams.set("oauth_token", token);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
   try {
-    const res = await fetch(url.toString(), { next: { revalidate: 3600 } });
-    if (!res.ok) return null;
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `OAuth ${token}` },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.log("[Yandex] ❌ API ошибка:", res.status, err.slice(0, 200));
+      return null;
+    }
+    console.log("[Yandex] ✅ Данные получены");
     return res.json();
   } catch {
     return null;
@@ -141,11 +151,11 @@ export async function getYandexDevices(days = 30): Promise<YandexDeviceRow[]> {
 
 export async function getYandexHours(days = 7): Promise<YandexHourRow[]> {
   const data = await yandexFetch({
-    dimensions: "ym:s:hourOfDay",
+    dimensions: "ym:s:hour",
     metrics: "ym:s:visits",
     date1: `${days}daysAgo`,
     date2: "today",
-    sort: "ym:s:hourOfDay",
+    sort: "ym:s:hour",
     limit: "24",
   });
   const hourMap: Record<number, number> = {};
@@ -153,8 +163,10 @@ export async function getYandexHours(days = 7): Promise<YandexHourRow[]> {
   if (data?.data) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data.data.forEach((row: any) => {
-      const h = parseInt(row.dimensions[0]?.name ?? "0");
-      hourMap[h] = Math.round(row.metrics[0]);
+      // name приходит как "00:00", "01:00" и т.д.
+      const raw = row.dimensions[0]?.name ?? "0";
+      const h = parseInt(raw.split(":")[0]);
+      if (!isNaN(h)) hourMap[h] = Math.round(row.metrics[0]);
     });
   }
   return Array.from({ length: 24 }, (_, h) => ({ hour: h, visits: hourMap[h] }));

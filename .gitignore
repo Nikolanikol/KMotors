@@ -43,3 +43,10 @@ next-env.d.ts
 
 # Claude Code worktrees (служебные папки, не коммитить)
 .claude/worktrees/
+
+# Секретные ключи Google
+*.json
+!package.json
+!package-lock.json
+!tsconfig*.json
+!next.config*.json

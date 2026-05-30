@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
+import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { OrderModal } from "./OrderModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ export function ProductDetailClient({
   const [imgError, setImgError] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [backSearch, setBackSearch] = useState("");
+  useScrollDepth(`part_${product.partNumber}`);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("parts:filters");

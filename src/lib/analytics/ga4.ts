@@ -1,43 +1,45 @@
-import { SignJWT, importPKCS8 } from "jose";
-
 const PROPERTY_ID = process.env.GA4_PROPERTY_ID || "504496694";
 const BASE_URL = `https://analyticsdata.googleapis.com/v1beta/properties/${PROPERTY_ID}:runReport`;
 
 async function getAccessToken(): Promise<string | null> {
-  const raw = process.env.GA4_CREDENTIALS;
-  if (!raw) return null;
-  try {
-    const creds = JSON.parse(raw);
-    const privateKey = await importPKCS8(creds.private_key, "RS256");
-    const now = Math.floor(Date.now() / 1000);
-    const jwt = await new SignJWT({
-      scope: "https://www.googleapis.com/auth/analytics.readonly",
-    })
-      .setProtectedHeader({ alg: "RS256" })
-      .setIssuedAt(now)
-      .setExpirationTime(now + 3600)
-      .setIssuer(creds.client_email)
-      .setAudience("https://oauth2.googleapis.com/token")
-      .sign(privateKey);
+  const clientId     = process.env.GA4_CLIENT_ID;
+  const clientSecret = process.env.GA4_CLIENT_SECRET;
+  const refreshToken = process.env.GA4_REFRESH_TOKEN;
 
+  if (!clientId || !clientSecret || !refreshToken) {
+    console.log("[GA4] ❌ GA4_CLIENT_ID / GA4_CLIENT_SECRET / GA4_REFRESH_TOKEN не найдены в .env");
+    return null;
+  }
+  try {
     const res = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        assertion: jwt,
+        client_id:     clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type:    "refresh_token",
       }),
     });
     const data = await res.json();
+    if (data.access_token) {
+      console.log("[GA4] ✅ Access token получен успешно");
+    } else {
+      console.log("[GA4] ❌ Токен не получен:", JSON.stringify(data));
+    }
     return data.access_token ?? null;
-  } catch {
+  } catch (e) {
+    console.log("[GA4] ❌ Ошибка получения токена:", e);
     return null;
   }
 }
 
 async function ga4Fetch(body: object) {
   const token = await getAccessToken();
-  if (!token) return null;
+  if (!token) {
+    console.log("[GA4] ❌ Нет токена, запрос отменён");
+    return null;
+  }
   try {
     const res = await fetch(BASE_URL, {
       method: "POST",
@@ -45,7 +47,12 @@ async function ga4Fetch(body: object) {
       body: JSON.stringify(body),
       next: { revalidate: 3600 },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const err = await res.text();
+      console.log("[GA4] ❌ API ошибка:", res.status, err);
+      return null;
+    }
+    console.log("[GA4] ✅ Данные получены успешно");
     return res.json();
   } catch {
     return null;
@@ -109,7 +116,8 @@ export async function getGA4Daily(days = 14): Promise<GA4DayRow[]> {
     metrics: [{ name: "activeUsers" }, { name: "sessions" }],
     orderBys: [{ dimension: { dimensionName: "date" } }],
   });
-  if (!data?.rows) return [];
+  if (!data?.rows) { console.log("[GA4] Daily: нет строк данных"); return []; }
+  console.log("[GA4] Daily rows sample:", JSON.stringify(data.rows[0]));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.rows.map((r: any) => ({
     date:     r.dimensionValues[0].value, // YYYYMMDD

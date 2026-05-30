@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { trackEvent } from "@/utils/gtag";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -235,6 +236,9 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     const timer = setTimeout(() => {
       setSearchQ(searchInput);
       updateFilters({ q: searchInput || undefined });
+      if (searchInput.length > 2) {
+        trackEvent("search", { search_term: searchInput, section: "parts" });
+      }
     }, 300);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,3 +1,5 @@
+import AnalyticsChart from "@/components/analytics/AnalyticsChart";
+import HoursChart from "@/components/analytics/HoursChart";
 import { createServerClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -17,6 +19,11 @@ import {
   getGA4Devices,
   getGA4TopPages,
 } from "@/lib/analytics/ga4";
+import {
+  getTopQueries,
+  getTopPages as getGSCTopPages,
+  getTopCountries as getGSCTopCountries,
+} from "@/lib/analytics/searchconsole";
 
 // ─── Хелперы ────────────────────────────────────────────────────────────────
 
@@ -124,6 +131,7 @@ export default async function AdminPage() {
   const [
     yaSummary, yaGeo, yaDaily, yaSources, yaDevices, yaHours,
     ga4Summary, ga4Geo, ga4Daily, ga4Sources, ga4Devices, ga4Pages,
+    gscQueries, gscPages, gscCountries,
   ] = await Promise.all([
     getYandexSummary(30),
     getYandexGeo(30),
@@ -137,6 +145,9 @@ export default async function AdminPage() {
     getGA4Sources(30),
     getGA4Devices(30),
     getGA4TopPages(7),
+    getTopQueries(28),
+    getGSCTopPages(28),
+    getGSCTopCountries(28),
   ]);
 
   const [
@@ -278,39 +289,11 @@ export default async function AdminPage() {
         </div>
 
         {/* ── График по дням ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <div className="text-sm font-semibold text-gray-700 mb-4">Динамика визитов — последние 14 дней</div>
-          {dayStats.every(([, count]) => count === 0) ? (
-            <div className="h-32 flex items-center justify-center text-sm text-gray-400">
-              Данных за последние 14 дней пока нет
-            </div>
-          ) : (
-            <div className="flex items-end gap-1 h-32">
-              {dayStats.map(([date, count]) => (
-                <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
-                  <div
-                    className="w-full bg-[#002C5F] rounded-t hover:bg-orange-500 transition-colors"
-                    style={{ height: `${Math.max((count / maxDay) * 100, count > 0 ? 4 : 1)}%` }}
-                  />
-                  {/* Тултип */}
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
-                    {count} визитов
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Даты */}
-          <div className="flex gap-1 mt-2">
-            {dayStats.map(([date], i) => (
-              <div key={date} className="flex-1 text-center">
-                {(i === 0 || i === 6 || i === 13) && (
-                  <span className="text-xs text-gray-400">{fmtShortDate(date)}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <AnalyticsChart
+          data={dayStats.map(([date, count]) => ({ date, orders: count }))}
+          type="orders"
+          title="Динамика заказов — последние 14 дней"
+        />
 
         {/* ── Строка: топ страниц + источники ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -432,26 +415,6 @@ export default async function AdminPage() {
             )}
           </div>
 
-          {/* Часы активности */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="text-sm font-semibold text-gray-700 mb-3">Часы активности — 7 дней</div>
-            <div className="flex items-end gap-px h-20">
-              {Array.from({ length: 24 }, (_, h) => (
-                <div key={h} className="flex-1 flex flex-col items-center group relative">
-                  <div
-                    className="w-full bg-[#002C5F] rounded-t hover:bg-orange-500 transition-colors"
-                    style={{ height: `${Math.max((hourMap[h] / maxHour) * 100, hourMap[h] > 0 ? 4 : 1)}%` }}
-                  />
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
-                    {h}:00 — {hourMap[h]}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
-            </div>
-          </div>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
@@ -490,31 +453,13 @@ export default async function AdminPage() {
               </div>
 
               {/* График по дням Яндекс */}
-              {yaDaily.length > 0 && (() => {
-                const maxYaDay = Math.max(...yaDaily.map(d => d.visits), 1);
-                return (
-                  <div className="bg-white rounded-xl border border-gray-200 p-5">
-                    <div className="text-sm font-semibold text-gray-700 mb-4">Динамика визитов — 14 дней (Яндекс)</div>
-                    <div className="flex items-end gap-1 h-28">
-                      {yaDaily.map((d) => (
-                        <div key={d.date} className="flex-1 flex flex-col items-center group relative">
-                          <div
-                            className="w-full bg-red-400 rounded-t hover:bg-red-500 transition-colors"
-                            style={{ height: `${Math.max((d.visits / maxYaDay) * 100, d.visits > 0 ? 4 : 1)}%` }}
-                          />
-                          <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
-                            {d.date}: {d.visits} визитов
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>{yaDaily[0]?.date}</span>
-                      <span>{yaDaily[yaDaily.length - 1]?.date}</span>
-                    </div>
-                  </div>
-                );
-              })()}
+              {yaDaily.length > 0 && (
+                <AnalyticsChart
+                  data={yaDaily}
+                  type="yandex"
+                  title="Динамика визитов — 14 дней (Яндекс)"
+                />
+              )}
 
               {/* Гео + Источники */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -594,8 +539,9 @@ export default async function AdminPage() {
                       <div className="text-sm font-semibold text-gray-700 mb-3">📱 Устройства (Яндекс)</div>
                       <div className="space-y-3">
                         {yaDevices.map((d) => {
-                          const key = d.device.toLowerCase().includes("mobile") ? "mobile"
-                            : d.device.toLowerCase().includes("tablet") ? "tablet" : "desktop";
+                          const dl = d.device.toLowerCase();
+                          const key = (dl.includes("mobile") || dl.includes("smartphone") || dl === "смартфоны") ? "mobile"
+                            : (dl.includes("tablet") || dl === "планшеты") ? "tablet" : "desktop";
                           const pct = Math.round((d.visits / totalDev) * 100);
                           return (
                             <div key={d.device} className="space-y-1">
@@ -615,34 +561,13 @@ export default async function AdminPage() {
                 })()}
 
                 {/* Часы активности Яндекс */}
-                {yaHours.length > 0 && (() => {
-                  const maxYaHour = Math.max(...yaHours.map(h => h.visits), 1);
-                  const peakHour = yaHours.reduce((a, b) => b.visits > a.visits ? b : a, yaHours[0]);
-                  return (
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                      <div className="text-sm font-semibold text-gray-700 mb-1">🕐 Часы активности (Яндекс, 7 дней)</div>
-                      {peakHour && (
-                        <div className="text-xs text-orange-600 mb-3">Пик: {peakHour.hour}:00 — {peakHour.visits} визитов</div>
-                      )}
-                      <div className="flex items-end gap-px h-20">
-                        {yaHours.map((h) => (
-                          <div key={h.hour} className="flex-1 flex flex-col items-center group relative">
-                            <div
-                              className="w-full bg-red-400 rounded-t hover:bg-red-500 transition-colors"
-                              style={{ height: `${Math.max((h.visits / maxYaHour) * 100, h.visits > 0 ? 4 : 1)}%` }}
-                            />
-                            <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
-                              {h.hour}:00 — {h.visits}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-400 mt-1">
-                        <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
-                      </div>
-                    </div>
-                  );
-                })()}
+                {yaHours.length > 0 && (
+                  <HoursChart
+                    data={yaHours}
+                    color="#e63e25"
+                    title="🕐 Часы активности (Яндекс, 7 дней)"
+                  />
+                )}
               </div>
 
             </div>
@@ -688,31 +613,13 @@ export default async function AdminPage() {
               </div>
 
               {/* График GA4 */}
-              {ga4Daily.length > 0 && (() => {
-                const maxG = Math.max(...ga4Daily.map(d => d.sessions), 1);
-                return (
-                  <div className="bg-white rounded-xl border border-gray-200 p-5">
-                    <div className="text-sm font-semibold text-gray-700 mb-4">Динамика сессий — 14 дней (GA4)</div>
-                    <div className="flex items-end gap-1 h-28">
-                      {ga4Daily.map((d) => (
-                        <div key={d.date} className="flex-1 flex flex-col items-center group relative">
-                          <div
-                            className="w-full bg-[#E37400] rounded-t hover:bg-orange-500 transition-colors"
-                            style={{ height: `${Math.max((d.sessions / maxG) * 100, d.sessions > 0 ? 4 : 1)}%` }}
-                          />
-                          <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
-                            {d.date}: {d.sessions} сессий
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>{ga4Daily[0]?.date}</span>
-                      <span>{ga4Daily[ga4Daily.length - 1]?.date}</span>
-                    </div>
-                  </div>
-                );
-              })()}
+              {ga4Daily.length > 0 && (
+                <AnalyticsChart
+                  data={ga4Daily}
+                  type="ga4"
+                  title="Динамика сессий — 14 дней (GA4)"
+                />
+              )}
 
               {/* Гео + Источники GA4 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -951,6 +858,73 @@ export default async function AdminPage() {
         <div className="text-center text-xs text-gray-400 pb-4">
           KMotors Admin · данные обновляются в реальном времени
         </div>
+      {/* ── Google Search Console ── */}
+      <div className="max-w-5xl mx-auto px-4 pb-10">
+        <div className="flex items-center gap-2 mb-4 mt-6">
+          <span className="text-lg">🔍</span>
+          <span className="font-bold text-gray-800">Google Search Console</span>
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">28 дней</span>
+        </div>
+
+        {gscQueries.length > 0 ? (
+          <div className="space-y-4">
+
+            {/* Топ запросов */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="text-sm font-semibold text-gray-700 mb-3">🔑 Топ ключевых слов</div>
+              <div className="space-y-2">
+                {gscQueries.slice(0, 15).map((q) => (
+                  <div key={q.query} className="flex items-center gap-3 text-sm">
+                    <div className="flex-1 truncate text-gray-700">{q.query}</div>
+                    <div className="text-blue-600 font-medium w-14 text-right">{q.clicks} кл.</div>
+                    <div className="text-gray-400 w-16 text-right">{q.impressions.toLocaleString()} пок.</div>
+                    <div className="text-green-600 w-10 text-right">{q.ctr}%</div>
+                    <div className="text-orange-500 w-12 text-right">#{q.position}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Топ страниц + страны */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {gscPages.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="text-sm font-semibold text-gray-700 mb-3">📄 Топ страниц (поиск)</div>
+                  <div className="space-y-2">
+                    {gscPages.map((p) => (
+                      <div key={p.page} className="flex justify-between text-sm">
+                        <span className="text-gray-600 truncate max-w-[70%]">{p.page || "/"}</span>
+                        <span className="text-blue-600 font-medium">{p.clicks} кл.</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {gscCountries.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="text-sm font-semibold text-gray-700 mb-3">🌍 География (поиск)</div>
+                  <div className="space-y-2">
+                    {gscCountries.map((c) => (
+                      <div key={c.country} className="flex justify-between text-sm">
+                        <span className="text-gray-600">{c.country}</span>
+                        <span className="text-blue-600 font-medium">{c.clicks} кл. · {c.impressions} пок.</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+            Нет данных Search Console
+          </div>
+        )}
+      </div>
+
       </main>
     </div>
   );
