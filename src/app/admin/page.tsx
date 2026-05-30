@@ -9,6 +9,14 @@ import {
   getYandexDevices,
   getYandexHours,
 } from "@/lib/analytics/yandex";
+import {
+  getGA4Summary,
+  getGA4Geo,
+  getGA4Daily,
+  getGA4Sources,
+  getGA4Devices,
+  getGA4TopPages,
+} from "@/lib/analytics/ga4";
 
 // ─── Хелперы ────────────────────────────────────────────────────────────────
 
@@ -112,14 +120,10 @@ export default async function AdminPage() {
   const days14ago = new Date(now.getTime() - 14 * 86400000).toISOString();
 
   // ── Все запросы параллельно ──────────────────────────────────────────────
-  // ── Яндекс.Метрика — параллельно ────────────────────────────────────────
+  // ── Яндекс + GA4 — параллельно ──────────────────────────────────────────
   const [
-    yaSummary,
-    yaGeo,
-    yaDaily,
-    yaSources,
-    yaDevices,
-    yaHours,
+    yaSummary, yaGeo, yaDaily, yaSources, yaDevices, yaHours,
+    ga4Summary, ga4Geo, ga4Daily, ga4Sources, ga4Devices, ga4Pages,
   ] = await Promise.all([
     getYandexSummary(30),
     getYandexGeo(30),
@@ -127,6 +131,12 @@ export default async function AdminPage() {
     getYandexSources(30),
     getYandexDevices(30),
     getYandexHours(7),
+    getGA4Summary(30),
+    getGA4Geo(30),
+    getGA4Daily(14),
+    getGA4Sources(30),
+    getGA4Devices(30),
+    getGA4TopPages(7),
   ]);
 
   const [
@@ -629,6 +639,186 @@ export default async function AdminPage() {
                       </div>
                       <div className="flex justify-between text-xs text-gray-400 mt-1">
                         <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* ── GOOGLE ANALYTICS 4 ── */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div className="border-t-2 border-blue-100 pt-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-[#E37400] flex items-center justify-center">
+              <span className="text-white text-xs font-bold">G</span>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800">Google Analytics 4</h2>
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">без ботов</span>
+          </div>
+
+          {!ga4Summary ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800 space-y-1">
+              <p className="font-semibold">⚠️ GA4 не подключён</p>
+              <p>Добавьте в Vercel Environment Variables:</p>
+              <p className="font-mono text-xs">GA4_CREDENTIALS = {'<'}содержимое JSON файла{'>'}</p>
+              <p className="font-mono text-xs">GA4_PROPERTY_ID = 504496694</p>
+              <p className="mt-2">И добавьте сервисный аккаунт в GA4 → Управление доступом к ресурсу → Читатель</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+
+              {/* Метрики GA4 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Пользователи (30 дн.)", value: ga4Summary.users.toLocaleString("ru"),    color: "text-[#E37400]" },
+                  { label: "Сессии",                value: ga4Summary.sessions.toLocaleString("ru"), color: "text-[#E37400]" },
+                  { label: "Bounce Rate",           value: `${ga4Summary.bounceRate}%`,              color: "text-orange-500" },
+                  { label: "Ср. время (сек)",       value: `${ga4Summary.avgDuration}с`,             color: "text-blue-500"   },
+                ].map((m) => (
+                  <div key={m.label} className="bg-white rounded-xl border border-gray-200 p-4">
+                    <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+                    <div className="text-xs text-gray-500 mt-1">{m.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* График GA4 */}
+              {ga4Daily.length > 0 && (() => {
+                const maxG = Math.max(...ga4Daily.map(d => d.sessions), 1);
+                return (
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="text-sm font-semibold text-gray-700 mb-4">Динамика сессий — 14 дней (GA4)</div>
+                    <div className="flex items-end gap-1 h-28">
+                      {ga4Daily.map((d) => (
+                        <div key={d.date} className="flex-1 flex flex-col items-center group relative">
+                          <div
+                            className="w-full bg-[#E37400] rounded-t hover:bg-orange-500 transition-colors"
+                            style={{ height: `${Math.max((d.sessions / maxG) * 100, d.sessions > 0 ? 4 : 1)}%` }}
+                          />
+                          <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none z-10">
+                            {d.date}: {d.sessions} сессий
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>{ga4Daily[0]?.date}</span>
+                      <span>{ga4Daily[ga4Daily.length - 1]?.date}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Гео + Источники GA4 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {ga4Geo.length > 0 && (() => {
+                  const maxGeo = Math.max(...ga4Geo.map(g => g.sessions), 1);
+                  const total = ga4Geo.reduce((a, g) => a + g.sessions, 0) || 1;
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">🌍 География (GA4)</div>
+                      <div className="space-y-2">
+                        {ga4Geo.map((g) => (
+                          <div key={g.country} className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-700 truncate max-w-[60%]">{g.country}</span>
+                              <span className="text-gray-500 flex-shrink-0">{Math.round((g.sessions / total) * 100)}% · {g.sessions}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-[#E37400] h-1.5 rounded-full" style={{ width: `${(g.sessions / maxGeo) * 100}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {ga4Sources.length > 0 && (() => {
+                  const maxSrc = Math.max(...ga4Sources.map(s => s.sessions), 1);
+                  const total = ga4Sources.reduce((a, s) => a + s.sessions, 0) || 1;
+                  const srcColors: Record<string, string> = {
+                    "Organic Search": "#4285F4", "Direct": "#6B7280",
+                    "Organic Social": "#E1306C", "Paid Search": "#FF9800",
+                    "Referral": "#9C27B0", "Email": "#00BCD4",
+                  };
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">🔗 Каналы трафика (GA4)</div>
+                      <div className="space-y-2">
+                        {ga4Sources.map((s) => {
+                          const pct = Math.round((s.sessions / total) * 100);
+                          return (
+                            <div key={s.source} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-700 truncate max-w-[65%]">{s.source}</span>
+                                <span className="text-gray-500 flex-shrink-0">{pct}% · {s.sessions}</span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                <div className="h-1.5 rounded-full" style={{ width: `${(s.sessions / maxSrc) * 100}%`, backgroundColor: srcColors[s.source] || "#6B7280" }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Устройства + Топ страниц GA4 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {ga4Devices.length > 0 && (() => {
+                  const total = ga4Devices.reduce((a, d) => a + d.sessions, 0) || 1;
+                  const devIcons: Record<string, string> = { desktop: "💻", mobile: "📱", tablet: "📟" };
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">📱 Устройства (GA4)</div>
+                      <div className="space-y-3">
+                        {ga4Devices.map((d) => {
+                          const pct = Math.round((d.sessions / total) * 100);
+                          const icon = devIcons[d.device.toLowerCase()] || "🖥️";
+                          return (
+                            <div key={d.device} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-700">{icon} {d.device}</span>
+                                <span className="text-gray-500">{pct}% · {d.sessions}</span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-2">
+                                <div className="bg-[#E37400] h-2 rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {ga4Pages.length > 0 && (() => {
+                  const maxV = Math.max(...ga4Pages.map(p => p.views), 1);
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="text-sm font-semibold text-gray-700 mb-3">🔥 Топ страниц — 7 дней (GA4)</div>
+                      <div className="space-y-2">
+                        {ga4Pages.map((p) => (
+                          <div key={p.page} className="space-y-1">
+                            <div className="flex justify-between text-sm gap-2">
+                              <span className="text-gray-700 truncate max-w-[70%] font-mono text-xs">{p.page}</span>
+                              <span className="font-semibold text-gray-900 flex-shrink-0">{p.views}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-[#002C5F] h-1.5 rounded-full" style={{ width: `${(p.views / maxV) * 100}%` }} />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
