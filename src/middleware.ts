@@ -69,7 +69,7 @@ export function middleware(request: NextRequest) {
 
     const adminPassword = process.env.ADMIN_PASSWORD;
     const cookie = request.cookies.get("admin_session");
-    if (!adminPassword || !cookie || cookie.value !== adminPassword) {
+if (!adminPassword || !cookie || cookie.value !== "1") {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
     return NextResponse.next();

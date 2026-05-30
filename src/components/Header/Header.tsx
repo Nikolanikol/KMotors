@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { X, Menu } from "lucide-react";
+import { trackEvent } from "@/utils/gtag";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -98,6 +99,7 @@ export default function Header() {
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
               className="text-sm transition-colors"
               style={{ color: "var(--axis-gray)" }}
+              onClick={() => trackEvent("contact", { method: "phone_header", position: "desktop" })}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
             >
@@ -162,6 +164,7 @@ export default function Header() {
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
               className="text-sm"
               style={{ color: "var(--axis-gray)" }}
+              onClick={() => trackEvent("contact", { method: "phone_header", position: "mobile" })}
             >
               {process.env.NEXT_PUBLIC_NUMBER_PHONE}
             </a>

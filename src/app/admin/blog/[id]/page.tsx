@@ -9,9 +9,8 @@ interface Props {
 export default async function EditPostPage({ params }: Props) {
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session");
-  const password = process.env.ADMIN_PASSWORD;
 
-  if (!session || session.value !== password) {
+  if (!session || session.value !== "1") {
     redirect("/admin/login");
   }
 

@@ -1,3 +1,6 @@
+import { notFound } from "next/navigation";
+import CarDescription from "@/components/Catalog/CarDetail/CarDescription";
+import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import DetailInfo from "@/components/Catalog/CarDetail/DetailInfo";
 import OptionsRow from "@/components/Catalog/CarDetail/OptionsRow/OptionsRow";
@@ -115,7 +118,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ params }) => {
   const { lang, id } = await params;
   const data = await fetchData(id);
-  if (!data) return <div>not found</div>;
+  if (!data) return notFound();
 
   const carName = [
     data.category.manufacturerEnglishName,
@@ -236,6 +239,17 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   };
 
   const fullCarName = `${carName} ${carData}`;
+  const krwPrice = data?.advertisement?.price ? data.advertisement.price * 10000 : null;
+
+  // Ищем совпадение в MODEL_PAGES для правильного catalogFilter
+  const mfrLower = (data.category.manufacturerEnglishName ?? "").toLowerCase();
+  const mdlClean = (data.category.modelGroupEnglishName ?? "")
+    .split("(")[0].replace(/THE NEW |NEW |ALL NEW /gi, "").trim().toLowerCase();
+  const matchedModel = MODEL_PAGES.find((m) =>
+    mfrLower.includes(m.manufacturerEn.toLowerCase()) &&
+    mdlClean.includes(m.modelEn.toLowerCase())
+  );
+  const catalogFilter = matchedModel?.catalogFilter ?? "";
   const photoLabel = ({ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<string, string>)[lang] || "photo";
 
   // Sort: OUTER → OPTION → INNER, within each group sort by code ascending
@@ -310,8 +324,24 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         </div>
       </div>
 
+      {/* Блок описания модели — виден пользователям и индексируется Google */}
+      {lang === "ru" && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
+          <CarDescription
+            lang={lang}
+            manufacturer={data.category.manufacturerEnglishName ?? ""}
+            model={data.category.modelGroupEnglishName ?? ""}
+            yearMonth={data?.category?.yearMonth ?? ""}
+            mileage={data.spec?.mileage ?? 0}
+            displacement={data.spec?.displacement ?? 0}
+            fuelName={data.spec?.fuelName ?? ""}
+            catalogFilter={catalogFilter}
+          />
+        </div>
+      )}
+
       <StickyMobileCTA carId={id} carName={fullCarName} />
-      <CarViewTracker carId={id} carName={fullCarName} />
+      <CarViewTracker carId={id} carName={fullCarName} price={krwPrice ?? undefined} />
     </div>
   );
 };

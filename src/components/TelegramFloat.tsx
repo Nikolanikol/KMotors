@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from "@/utils/gtag";
 
 const TG_URL = "https://t.me/KMOTORS_form_bot?start=website";
 
@@ -24,6 +25,7 @@ export default function TelegramFloat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
+      onClick={() => trackEvent("contact", { method: "telegram_float", lang: i18n.language })}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#229ED9] hover:bg-[#1a8bc2] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"

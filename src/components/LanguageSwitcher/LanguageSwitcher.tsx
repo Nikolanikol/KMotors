@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { trackEvent } from '@/utils/gtag';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
@@ -76,6 +77,8 @@ export default function LanguageSwitcher() {
     // Update i18n state and cookie
     i18n.changeLanguage(langCode);
     document.cookie = `kmotors-lang=${langCode}; path=/; max-age=31536000; SameSite=Lax`;
+
+    trackEvent("language_switch", { from: currentLanguage.code, to: langCode });
 
     const lang = languages.find((l) => l.code === langCode) || languages[0];
     setCurrentLanguage(lang);

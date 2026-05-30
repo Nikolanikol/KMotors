@@ -1,5 +1,6 @@
 import AnalyticsChart from "@/components/analytics/AnalyticsChart";
 import HoursChart from "@/components/analytics/HoursChart";
+import LeadsTable from "@/components/admin/LeadsTable";
 import { createServerClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -84,6 +85,52 @@ const COUNTRY_NAMES: Record<string, string> = {
   AZ: "🇦🇿 Азербайджан",
 };
 
+// ISO 3166-1 alpha-3 → читаемое название (используется в GSC)
+const GSC_COUNTRY_NAMES: Record<string, string> = {
+  rus: "🇷🇺 Россия",
+  kaz: "🇰🇿 Казахстан",
+  uzb: "🇺🇿 Узбекистан",
+  geo: "🇬🇪 Грузия",
+  sau: "🇸🇦 Саудовская Аравия",
+  are: "🇦🇪 ОАЭ",
+  kor: "🇰🇷 Корея",
+  deu: "🇩🇪 Германия",
+  usa: "🇺🇸 США",
+  ukr: "🇺🇦 Украина",
+  blr: "🇧🇾 Беларусь",
+  arm: "🇦🇲 Армения",
+  aze: "🇦🇿 Азербайджан",
+  tur: "🇹🇷 Турция",
+  isr: "🇮🇱 Израиль",
+  fra: "🇫🇷 Франция",
+  gbr: "🇬🇧 Великобритания",
+  pol: "🇵🇱 Польша",
+  cze: "🇨🇿 Чехия",
+  svk: "🇸🇰 Словакия",
+  can: "🇨🇦 Канада",
+  aus: "🇦🇺 Австралия",
+  bel: "🇧🇪 Бельгия",
+  nld: "🇳🇱 Нидерланды",
+  ita: "🇮🇹 Италия",
+  esp: "🇪🇸 Испания",
+  prt: "🇵🇹 Португалия",
+  swe: "🇸🇪 Швеция",
+  nor: "🇳🇴 Норвегия",
+  fin: "🇫🇮 Финляндия",
+  mda: "🇲🇩 Молдова",
+  kgz: "🇰🇬 Кыргызстан",
+  tjk: "🇹🇯 Таджикистан",
+  tkm: "🇹🇲 Туркменистан",
+  mnl: "🇲🇳 Монголия",
+  chn: "🇨🇳 Китай",
+  jpn: "🇯🇵 Япония",
+  khm: "🇰🇭 Камбоджа",
+  mhl: "🇲🇭 Маршалловы острова",
+  ago: "🇦🇴 Ангола",
+  yem: "🇾🇪 Йемен",
+  alb: "🇦🇱 Албания",
+};
+
 const LEAD_SOURCE_LABELS: Record<string, string> = {
   car_detail: "Карточка машины",
   car_detail_mobile: "Карточка (моб.)",
@@ -116,15 +163,19 @@ function fmtShortDate(str: string): string {
 export default async function AdminPage() {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("admin_session");
-  if (!sessionCookie || sessionCookie.value !== process.env.ADMIN_PASSWORD) {
+  if (!sessionCookie || sessionCookie.value !== "1") {
     redirect("/admin/login");
   }
 
   const supabase = createServerClient();
   const now = new Date();
-  const days7ago  = new Date(now.getTime() -  7 * 86400000).toISOString();
-  const days30ago = new Date(now.getTime() - 30 * 86400000).toISOString();
-  const days14ago = new Date(now.getTime() - 14 * 86400000).toISOString();
+  const days7ago   = new Date(now.getTime() -  7 * 86400000).toISOString();
+  const days14ago  = new Date(now.getTime() - 14 * 86400000).toISOString();
+  const days30ago  = new Date(now.getTime() - 30 * 86400000).toISOString();
+  // Предыдущие периоды для сравнения (WoW / MoM)
+  const days7to14ago  = new Date(now.getTime() - 14 * 86400000).toISOString();
+  const days14to21ago = new Date(now.getTime() - 21 * 86400000).toISOString();  // не используется
+  const days30to60ago = new Date(now.getTime() - 60 * 86400000).toISOString();
 
   // ── Все запросы параллельно ──────────────────────────────────────────────
   // ── Яндекс + GA4 — параллельно ──────────────────────────────────────────
@@ -153,6 +204,8 @@ export default async function AdminPage() {
   const [
     { count: total7 },
     { count: total30 },
+    { count: prevTotal7 },
+    { count: prevTotal30 },
     { data: topPages },
     { data: sources },
     { data: dailyData },
@@ -161,29 +214,33 @@ export default async function AdminPage() {
     { data: hourlyRaw },
     { count: leadsTotal7 },
     { count: leadsTotal30 },
+    { count: prevLeadsTotal7 },
     { data: recentLeads },
     { data: topCars },
   ] = await Promise.all([
-    // Визиты 7 дней
+    // Визиты — текущий период
     supabase.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", days7ago),
-    // Визиты 30 дней
     supabase.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", days30ago),
+    // Визиты — предыдущий период (для WoW/MoM сравнения)
+    supabase.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", days7to14ago).lt("created_at", days7ago),
+    supabase.from("page_views").select("*", { count: "exact", head: true }).gte("created_at", days30to60ago).lt("created_at", days30ago),
     // Топ страниц через RPC
     supabase.rpc("get_top_pages", { since_date: days7ago, limit_count: 10 }),
     // Источники через RPC
     supabase.rpc("get_traffic_sources", { since_date: days30ago }),
-    // График по дням — прямой запрос, агрегация в JS
-    supabase.from("page_views").select("created_at").gte("created_at", days14ago).limit(50000),
+    // График по дням через RPC
+    supabase.rpc("get_daily_views", { since_date: days14ago }),
     // Страны
     supabase.from("page_views").select("country").gte("created_at", days30ago).not("country", "is", null).limit(5000),
     // Устройства
     supabase.from("page_views").select("device").gte("created_at", days30ago).not("device", "is", null).limit(5000),
     // Часы активности
     supabase.from("page_views").select("created_at").gte("created_at", days7ago).limit(5000),
-    // Лиды 7 дней
+    // Лиды — текущий период
     supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days7ago),
-    // Лиды 30 дней
     supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days30ago),
+    // Лиды — предыдущая неделя
+    supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days7to14ago).lt("created_at", days7ago),
     // Последние заявки
     supabase.from("leads").select("id,name,phone,car_name,source_page,created_at,messenger,vin,tg_username").order("created_at", { ascending: false }).limit(20),
     // Топ просматриваемых машин
@@ -217,8 +274,7 @@ export default async function AdminPage() {
   });
   const maxHour = Math.max(...Object.values(hourMap), 1);
 
-  // График по дням — заполняем пропуски нулями, агрегируем из сырых строк
-  // Ключи дней в Seoul-таймзоне чтобы совпадало с отображаемым временем
+  // График по дням — RPC возвращает уже агрегированные {day, views}, заполняем пропуски нулями
   const toSeoulDate = (d: Date) =>
     d.toLocaleDateString("sv-SE", { timeZone: TZ }); // "YYYY-MM-DD"
   const dayMap: Record<string, number> = {};
@@ -226,9 +282,9 @@ export default async function AdminPage() {
     const d = new Date(now.getTime() - i * 86400000);
     dayMap[toSeoulDate(d)] = 0;
   }
-  (dailyData || []).forEach((r: { created_at: string }) => {
-    const dateKey = toSeoulDate(new Date(r.created_at));
-    if (dateKey in dayMap) dayMap[dateKey] = (dayMap[dateKey] || 0) + 1;
+  (dailyData || []).forEach((r: { day: string; views: number }) => {
+    const key = r.day.slice(0, 10); // "YYYY-MM-DD"
+    if (key in dayMap) dayMap[key] = Number(r.views);
   });
   const dayStats = Object.entries(dayMap);
   const maxDay = Math.max(...dayStats.map((d) => d[1]), 1);
@@ -250,6 +306,16 @@ export default async function AdminPage() {
   const convRate = total30 && (leadsTotal30 || 0) > 0
     ? (((leadsTotal30 || 0) / total30) * 100).toFixed(2)
     : "0.00";
+
+  // Дельта для сравнения периодов: возвращает строку "+12%" / "-5%" / "—"
+  function delta(current: number | null, previous: number | null): { text: string; up: boolean | null } {
+    if (!current || !previous || previous === 0) return { text: "—", up: null };
+    const pct = Math.round(((current - previous) / previous) * 100);
+    return { text: `${pct > 0 ? "+" : ""}${pct}%`, up: pct >= 0 };
+  }
+  const d7  = delta(total7,       prevTotal7);
+  const d30 = delta(total30,      prevTotal30);
+  const dL7 = delta(leadsTotal7,  prevLeadsTotal7);
 
   // Лиды по источнику
   const leadsSourceMap: Record<string, number> = {};
@@ -276,14 +342,22 @@ export default async function AdminPage() {
         {/* ── Главные метрики ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Визитов за 7 дней",   value: (total7  || 0).toLocaleString("ru"), color: "text-[#002C5F]" },
-            { label: "Визитов за 30 дней",  value: (total30 || 0).toLocaleString("ru"), color: "text-[#002C5F]" },
-            { label: "Заявок за 7 дней",    value: (leadsTotal7  || 0).toString(),       color: "text-orange-500" },
-            { label: "Конверсия (30 дн.)",  value: `${convRate}%`,                       color: "text-green-600" },
+            { label: "Визитов за 7 дней",  value: (total7  || 0).toLocaleString("ru"), color: "text-[#002C5F]", d: d7,  hint: "vs прошлая неделя" },
+            { label: "Визитов за 30 дней", value: (total30 || 0).toLocaleString("ru"), color: "text-[#002C5F]", d: d30, hint: "vs прошлый месяц" },
+            { label: "Заявок за 7 дней",   value: (leadsTotal7 || 0).toString(),        color: "text-orange-500", d: dL7, hint: "vs прошлая неделя" },
+            { label: "Конверсия (30 дн.)", value: `${convRate}%`,                        color: "text-green-600", d: { text: "—", up: null }, hint: "" },
           ].map((m) => (
             <div key={m.label} className="bg-white rounded-xl border border-gray-200 p-5">
               <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
-              <div className="text-sm text-gray-500 mt-1">{m.label}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-gray-500">{m.label}</span>
+                {m.d.text !== "—" && (
+                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${m.d.up ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                    {m.d.up ? "↑" : "↓"} {m.d.text}
+                  </span>
+                )}
+              </div>
+              {m.hint && <div className="text-xs text-gray-400 mt-0.5">{m.hint}</div>}
             </div>
           ))}
         </div>
@@ -292,7 +366,7 @@ export default async function AdminPage() {
         <AnalyticsChart
           data={dayStats.map(([date, count]) => ({ date, orders: count }))}
           type="orders"
-          title="Динамика заказов — последние 14 дней"
+          title="Визиты на сайт — последние 14 дней (собственный трекер)"
         />
 
         {/* ── Строка: топ страниц + источники ── */}
@@ -380,7 +454,7 @@ export default async function AdminPage() {
                 </div>
               ))}
               {countryStats.length === 0 && (
-                <div className="text-sm text-gray-400 text-center py-4">Появится после деплоя</div>
+                <div className="text-sm text-gray-400 text-center py-4">Нет данных — трафик ещё не накоплен</div>
               )}
             </div>
           </div>
@@ -411,7 +485,7 @@ export default async function AdminPage() {
                 })}
               </div>
             ) : (
-              <div className="text-sm text-gray-400 text-center py-4">Появится после деплоя</div>
+              <div className="text-sm text-gray-400 text-center py-4">Нет данных — трафик ещё не накоплен</div>
             )}
           </div>
 
@@ -792,67 +866,9 @@ export default async function AdminPage() {
             ))}
           </div>
 
-          {/* Таблица заявок */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="text-sm font-semibold text-gray-700">Последние заявки</div>
-              <div className="text-xs text-gray-400">последние 20</div>
-            </div>
-            {!recentLeads || recentLeads.length === 0 ? (
-              <div className="px-5 py-8 text-center text-sm text-gray-400">Заявок пока нет</div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {recentLeads.map((lead) => (
-                  <div key={lead.id} className="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 text-sm">{lead.name}</div>
-                      <a href={`tel:${lead.phone}`} className="text-orange-500 text-sm hover:underline">
-                        {lead.phone}
-                      </a>
-                      {lead.car_name && (
-                        <div className="text-xs text-gray-400 truncate">{lead.car_name}</div>
-                      )}
-                      {lead.vin && (
-                        <div className="text-xs text-gray-500 font-mono">VIN: {lead.vin}</div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {lead.messenger === "whatsapp" && (
-                        <a
-                          href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-lg hover:bg-green-100 transition-colors"
-                        >
-                          💚 WhatsApp
-                        </a>
-                      )}
-                      {lead.messenger === "telegram" && (
-                        lead.tg_username ? (
-                          <a
-                            href={`https://t.me/${lead.tg_username.replace(/^@/, "")}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-100 transition-colors"
-                          >
-                            ✈️ {lead.tg_username}
-                          </a>
-                        ) : (
-                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg">
-                            ✈️ Telegram
-                          </span>
-                        )
-                      )}
-                      <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-lg">
-                        {LEAD_SOURCE_LABELS[lead.source_page] || lead.source_page}
-                      </span>
-                      <span className="text-xs text-gray-400">{fmtDate(lead.created_at)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Таблица заявок с поиском, фильтром и экспортом */}
+          <LeadsTable leads={recentLeads || []} />
+
         </div>
 
         <div className="text-center text-xs text-gray-400 pb-4">
@@ -908,7 +924,7 @@ export default async function AdminPage() {
                   <div className="space-y-2">
                     {gscCountries.map((c) => (
                       <div key={c.country} className="flex justify-between text-sm">
-                        <span className="text-gray-600">{c.country}</span>
+                        <span className="text-gray-600">{GSC_COUNTRY_NAMES[c.country.toLowerCase()] || c.country.toUpperCase()}</span>
                         <span className="text-blue-600 font-medium">{c.clicks} кл. · {c.impressions} пок.</span>
                       </div>
                     ))}
@@ -919,8 +935,9 @@ export default async function AdminPage() {
 
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
-            Нет данных Search Console
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-sm text-yellow-800 space-y-1">
+            <p className="font-semibold">⚠️ Search Console: нет данных</p>
+            <p>Возможные причины: сайт недавно добавлен, GA4_REFRESH_TOKEN не настроен, или нет кликов за 28 дней.</p>
           </div>
         )}
       </div>

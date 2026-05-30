@@ -33,9 +33,9 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Читаем lang из cookie (выставляется middleware при каждом запросе)
   const cookieStore = await cookies();
   const lang = cookieStore.get("kmotors-lang")?.value || "ru";
+  const isAdmin = cookieStore.get("admin_session")?.value === "1";
 
   return (
     <html lang={lang} className={inter.className}>
@@ -95,37 +95,41 @@ export default async function RootLayout({
       <body className="min-h-screen flex flex-col mx-auto">
         {children}
 
-        {/* Google Analytics 4 — Script должен быть в body, не в head */}
-        <Script
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-ZMRTQCD8SF"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZMRTQCD8SF');`}
-        </Script>
+        {/* GA4 + Яндекс.Метрика + Clarity — не рендерятся для админа вообще */}
+        {!isAdmin && (
+          <>
+            <Script id="analytics-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-ZMRTQCD8SF');
+                window.gtag = gtag;
+                var s1 = document.createElement('script');
+                s1.async = true;
+                s1.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZMRTQCD8SF';
+                document.body.appendChild(s1);
 
-        {/* Microsoft Clarity */}
-        <Script id="clarity" strategy="afterInteractive">
-          {`(function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-          })(window,document,"clarity","script","wrkhuoyd68");`}
-        </Script>
+                (function(c,l,a,r,i,t,y){
+                  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                  t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;
+                  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window,document,'clarity','script','wrkhuoyd68');
 
-        {/* Yandex.Metrika */}
-        <Script id="yandex-metrika" strategy="afterInteractive">
-          {`(function(m,e,t,r,i,k,a){
-            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-            m[i].l=1*new Date();
-            for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
-            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-          })(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=109267986','ym');
-          ym(109267986,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});`}
-        </Script>
-        <noscript>
-          <div><img src="https://mc.yandex.ru/watch/109267986" style={{position:"absolute",left:"-9999px"}} alt="" /></div>
-        </noscript>
+                (function(m,e,t,r,i,k,a){
+                  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+                  m[i].l=1*new Date();
+                  for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
+                  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+                })(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=109267986','ym');
+                ym(109267986,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:'dataLayer',referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});
+              `}
+            </Script>
+            <noscript>
+              <div><img src="https://mc.yandex.ru/watch/109267986" style={{position:"absolute",left:"-9999px"}} alt="" /></div>
+            </noscript>
+          </>
+        )}
       </body>
     </html>
   );

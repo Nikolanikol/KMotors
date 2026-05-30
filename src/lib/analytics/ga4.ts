@@ -22,24 +22,19 @@ async function getAccessToken(): Promise<string | null> {
       }),
     });
     const data = await res.json();
-    if (data.access_token) {
-      console.log("[GA4] ✅ Access token получен успешно");
-    } else {
-      console.log("[GA4] ❌ Токен не получен:", JSON.stringify(data));
+    if (!data.access_token) {
+      console.error("[GA4] токен не получен:", JSON.stringify(data));
     }
     return data.access_token ?? null;
   } catch (e) {
-    console.log("[GA4] ❌ Ошибка получения токена:", e);
+    console.error("[GA4] ошибка получения токена:", e);
     return null;
   }
 }
 
 async function ga4Fetch(body: object) {
   const token = await getAccessToken();
-  if (!token) {
-    console.log("[GA4] ❌ Нет токена, запрос отменён");
-    return null;
-  }
+  if (!token) return null;
   try {
     const res = await fetch(BASE_URL, {
       method: "POST",
@@ -49,10 +44,9 @@ async function ga4Fetch(body: object) {
     });
     if (!res.ok) {
       const err = await res.text();
-      console.log("[GA4] ❌ API ошибка:", res.status, err);
+      console.error("[GA4] API ошибка:", res.status, err);
       return null;
     }
-    console.log("[GA4] ✅ Данные получены успешно");
     return res.json();
   } catch {
     return null;
@@ -87,7 +81,7 @@ export async function getGA4Summary(days = 30): Promise<GA4Summary | null> {
   return {
     users:       Math.round(parseFloat(v[0].value)),
     sessions:    Math.round(parseFloat(v[1].value)),
-    bounceRate:  Math.round(parseFloat(v[2].value) * 100),
+    bounceRate:  Math.round(parseFloat(v[2].value)),
     avgDuration: Math.round(parseFloat(v[3].value)),
   };
 }
@@ -116,8 +110,7 @@ export async function getGA4Daily(days = 14): Promise<GA4DayRow[]> {
     metrics: [{ name: "activeUsers" }, { name: "sessions" }],
     orderBys: [{ dimension: { dimensionName: "date" } }],
   });
-  if (!data?.rows) { console.log("[GA4] Daily: нет строк данных"); return []; }
-  console.log("[GA4] Daily rows sample:", JSON.stringify(data.rows[0]));
+  if (!data?.rows) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.rows.map((r: any) => ({
     date:     r.dimensionValues[0].value, // YYYYMMDD

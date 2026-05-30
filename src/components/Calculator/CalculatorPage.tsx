@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { calcCustomsRU, calcCustomsKZ, calcCustomsUZ } from "@/utils/customsCalculator";
 import type { CustomsResultRU, CustomsResultKZ, CustomsResultUZ } from "@/utils/customsCalculator";
+import { trackEvent } from "@/utils/gtag";
 
 interface Rates {
   EUR: number;
@@ -85,6 +86,14 @@ export default function CalculatorPage({ lang }: { lang: string }) {
 
   function handleCalculate() {
     if (!validate() || !rates) return;
+
+    trackEvent("calculator_use", {
+      country,
+      fuel_type: fuelType,
+      price_usd: priceUSD,
+      engine_volume: engineVolume,
+      year,
+    });
 
     const price    = parseFloat(priceUSD);
     const vol      = parseInt(engineVolume);

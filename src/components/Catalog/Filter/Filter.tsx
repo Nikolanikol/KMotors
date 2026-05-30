@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { data } from "./FilterData";
+import { trackEvent } from "@/utils/gtag";
 import {
   Select,
   SelectContent,
@@ -79,9 +80,9 @@ const Filter = ({}) => {
         onValueChange={(e) => {
           setAction(e);
           setManufactureAction(e);
-          setManufacture(
-            () => data.filter((item) => item.Action == e)[0].title,
-          );
+          const title = data.filter((item) => item.Action == e)[0].title;
+          setManufacture(() => title);
+          trackEvent("filter_manufacturer", { manufacturer: title });
         }}
       >
         <SelectTrigger>
@@ -111,7 +112,16 @@ const Filter = ({}) => {
       <MyFilterMileage setMileage={setMileage} defaultMin={initMileageMin} defaultMax={initMileageMax} />
       <MyFilterYear setYear={setYear} defaultMin={initYearMin} defaultMax={initYearMax} />
       {/* ///////////////////////////// */}
-      <Button onClick={() => handleAction(action)}>{t("filter.show")}</Button>
+      <Button onClick={() => {
+        handleAction(action);
+        trackEvent("filter_apply", {
+          manufacturer: manufacture ?? "",
+          price_min: price.minPrice,
+          price_max: price.maxPrice,
+          year_min: year.minYear,
+          year_max: year.maxYear,
+        });
+      }}>{t("filter.show")}</Button>
       {isPending && (
         <div className="absolute inset-0 z-20 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.6)", backdropFilter: "blur(4px)" }}>
           <div className="flex items-center gap-2 text-sm" style={{ color: "var(--axis-orange)" }}>

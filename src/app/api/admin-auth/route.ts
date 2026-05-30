@@ -16,13 +16,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Неверный пароль" }, { status: 401 });
     }
 
-    // Устанавливаем cookie с паролем как токен сессии
     const response = NextResponse.json({ ok: true });
-    response.cookies.set("admin_session", adminPassword, {
-      httpOnly: true,
+    // httpOnly: false — чтобы JS на клиенте мог читать cookie и не грузить аналитику для админа
+    response.cookies.set("admin_session", "1", {
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 дней
+      maxAge: 60 * 60 * 24 * 365 * 10, // 10 лет = бессрочно
       path: "/",
     });
 

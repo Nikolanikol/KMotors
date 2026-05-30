@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useCallback } from "react";
+import { trackEvent } from "@/utils/gtag";
 import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { ArrowRight } from "lucide-react";
@@ -172,6 +173,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
               href={`https://t.me/KMOTORS_form_bot?start=car_${id}`}
               target="_blank" rel="noopener noreferrer"
               aria-label="Telegram"
+              onClick={() => trackEvent("contact", { method: "telegram_card", car_id: id, car_name: carName })}
               className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
               style={{ backgroundColor: "rgba(34,158,217,0.15)", color: "#229ED9" }}
             >
@@ -184,6 +186,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
               href={waUrl}
               target="_blank" rel="noopener noreferrer"
               aria-label="WhatsApp"
+              onClick={() => trackEvent("contact", { method: "whatsapp_card", car_id: id, car_name: carName })}
               className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
               style={{ backgroundColor: "rgba(37,211,102,0.15)", color: "#25D366" }}
             >
@@ -195,6 +198,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             <Link
               href={`/${lang}/catalog/${id}`}
               target="_blank"
+              onClick={() => trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture })}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
               style={{ backgroundColor: "var(--axis-orange)", color: "var(--axis-white)" }}
             >

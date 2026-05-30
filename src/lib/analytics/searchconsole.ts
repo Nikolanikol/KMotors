@@ -1,6 +1,12 @@
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://kmotors.shop";
 
+// Кэш токена на время жизни процесса (сбрасывается при редеплое)
+let cachedToken: string | null = null;
+let tokenExpiresAt = 0;
+
 async function getAccessToken(): Promise<string | null> {
+  if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
+
   const clientId     = process.env.GA4_CLIENT_ID;
   const clientSecret = process.env.GA4_CLIENT_SECRET;
   const refreshToken = process.env.GA4_REFRESH_TOKEN;
@@ -17,6 +23,11 @@ async function getAccessToken(): Promise<string | null> {
       }),
     });
     const data = await res.json();
+    if (data.access_token) {
+      cachedToken = data.access_token;
+      // expires_in обычно 3600 сек, обновляем за 5 минут до истечения
+      tokenExpiresAt = Date.now() + ((data.expires_in ?? 3600) - 300) * 1000;
+    }
     return data.access_token ?? null;
   } catch {
     return null;
@@ -25,7 +36,7 @@ async function getAccessToken(): Promise<string | null> {
 
 async function scFetch(endpoint: string, body: object) {
   const token = await getAccessToken();
-  if (!token) { console.log("[GSC] ❌ Нет токена"); return null; }
+  if (!token) return null;
   try {
     const res = await fetch(`https://searchconsole.googleapis.com/webmasters/v3${endpoint}`, {
       method: "POST",
@@ -35,13 +46,12 @@ async function scFetch(endpoint: string, body: object) {
     });
     if (!res.ok) {
       const err = await res.text();
-      console.log("[GSC] ❌ API ошибка:", res.status, err.slice(0, 200));
+      console.error("[GSC] API ошибка:", res.status, err.slice(0, 200));
       return null;
     }
-    console.log("[GSC] ✅ Данные получены");
     return res.json();
   } catch (e) {
-    console.log("[GSC] ❌ Ошибка:", e);
+    console.error("[GSC] ошибка:", e);
     return null;
   }
 }
@@ -77,6 +87,7 @@ export async function getTopQueries(days = 28): Promise<GSCQueryRow[]> {
     orderBy: [{ fieldName: "clicks", sortOrder: "DESCENDING" }],
   });
   if (!data?.rows) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.rows.map((r: any) => ({
     query:       r.keys[0],
     clicks:      Math.round(r.clicks),
@@ -97,6 +108,7 @@ export async function getTopPages(days = 28): Promise<GSCPageRow[]> {
     orderBy: [{ fieldName: "clicks", sortOrder: "DESCENDING" }],
   });
   if (!data?.rows) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.rows.map((r: any) => ({
     page:        r.keys[0].replace(SITE_URL, ""),
     clicks:      Math.round(r.clicks),
@@ -115,6 +127,7 @@ export async function getTopCountries(days = 28): Promise<GSCCountryRow[]> {
     orderBy: [{ fieldName: "clicks", sortOrder: "DESCENDING" }],
   });
   if (!data?.rows) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.rows.map((r: any) => ({
     country:     r.keys[0],
     clicks:      Math.round(r.clicks),
