@@ -167,6 +167,18 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
+  // Диагностика переменных окружения на проде
+  console.log("[ADMIN ENV CHECK]", {
+    hasYandexToken:    !!process.env.YANDEX_METRIKA_TOKEN,
+    hasGA4ClientId:    !!process.env.GA4_CLIENT_ID,
+    hasGA4Secret:      !!process.env.GA4_CLIENT_SECRET,
+    hasGA4Refresh:     !!process.env.GA4_REFRESH_TOKEN,
+    hasGA4PropertyId:  !!process.env.GA4_PROPERTY_ID,
+    hasGA4Credentials: !!process.env.GA4_CREDENTIALS,
+    hasSupabaseUrl:    !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasServiceRole:    !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
+
   const supabase = createServerClient();
   const now = new Date();
   const days7ago   = new Date(now.getTime() -  7 * 86400000).toISOString();
