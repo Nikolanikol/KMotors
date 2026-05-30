@@ -1,6 +1,7 @@
 import AnalyticsChart from "@/components/analytics/AnalyticsChart";
 import HoursChart from "@/components/analytics/HoursChart";
 import LeadsTable from "@/components/admin/LeadsTable";
+import AdminTabs from "@/components/admin/AdminTabs";
 import { createServerClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -167,21 +168,6 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  // Детальная диагностика — показываем первые 6 символов каждой переменной
-  const envVars = [
-    "GA4_CLIENT_ID", "GA4_CLIENT_SECRET", "GA4_REFRESH_TOKEN",
-    "GA4_PROPERTY_ID", "GA4_CREDENTIALS", "YANDEX_METRIKA_TOKEN",
-    "SUPABASE_SERVICE_ROLE_KEY", "NEXT_PUBLIC_SUPABASE_URL",
-  ];
-  const envCheck: Record<string, string> = {};
-  for (const key of envVars) {
-    const val = process.env[key];
-    envCheck[key] = val ? `✅ ${val.slice(0, 6)}...` : "❌ MISSING";
-  }
-  // Проверяем все ключи окружения содержащие GA4
-  const allGA4Keys = Object.keys(process.env).filter(k => k.includes("GA4") || k.includes("YANDEX"));
-  console.log("[ENV KEYS with GA4/YANDEX]", allGA4Keys);
-  console.log("[ENV VALUES]", envCheck);
 
   const supabase = createServerClient();
   const now = new Date();
@@ -353,7 +339,8 @@ export default async function AdminPage() {
         <a href="/" className="text-xs text-blue-200 hover:text-white transition-colors">← На сайт</a>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <AdminTabs
+        overview={<>
 
         {/* ── Главные метрики ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -507,9 +494,10 @@ export default async function AdminPage() {
 
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* ── ЯНДЕКС.МЕТРИКА — чистые данные без ботов ── */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
+        </>}
+        yandex={<>
+
+        {/* ── ЯНДЕКС.МЕТРИКА ── */}
         <div className="border-t-2 border-orange-100 pt-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center">
@@ -664,9 +652,10 @@ export default async function AdminPage() {
           )}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════ */}
+        </>}
+        ga4={<>
+
         {/* ── GOOGLE ANALYTICS 4 ── */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
         <div className="border-t-2 border-blue-100 pt-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-lg bg-[#E37400] flex items-center justify-center">
@@ -826,6 +815,9 @@ export default async function AdminPage() {
           )}
         </div>
 
+        </>}
+        leads={<>
+
         {/* ── Топ машин ── */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="text-sm font-semibold text-gray-700 mb-3">
@@ -887,11 +879,11 @@ export default async function AdminPage() {
 
         </div>
 
-        <div className="text-center text-xs text-gray-400 pb-4">
-          KMotors Admin · данные обновляются в реальном времени
-        </div>
+        </>}
+        search={<>
+
       {/* ── Google Search Console ── */}
-      <div className="max-w-5xl mx-auto px-4 pb-10">
+      <div className="pb-10">
         <div className="flex items-center gap-2 mb-4 mt-6">
           <span className="text-lg">🔍</span>
           <span className="font-bold text-gray-800">Google Search Console</span>
@@ -958,7 +950,8 @@ export default async function AdminPage() {
         )}
       </div>
 
-      </main>
+        </>}
+      />
     </div>
   );
 }
