@@ -26,6 +26,7 @@ async function fetchPartData(slug: string) {
           Authorization: `Bearer ${supabaseKey}`,
         },
         next: { revalidate: 604800 },
+        signal: AbortSignal.timeout(3000),
       }
     );
 

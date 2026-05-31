@@ -7,6 +7,7 @@ async function fetchCarData(id: string) {
   try {
     const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {
       next: { revalidate: 604800 },
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`Encar ${res.status}`);
     return await res.json();
@@ -15,7 +16,7 @@ async function fetchCarData(id: string) {
     try {
       const res = await fetch(
         `https://encar-proxy-main.onrender.com/api/vehicle/${id}`,
-        { next: { revalidate: 604800 } }
+        { next: { revalidate: 604800 }, signal: AbortSignal.timeout(3000) }
       );
       if (!res.ok) throw new Error(`proxy ${res.status}`);
       return await res.json();

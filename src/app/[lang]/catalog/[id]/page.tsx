@@ -82,24 +82,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = TITLE[lang] ?? TITLE.ru;
   const description = DESCRIPTION[lang] ?? DESCRIPTION.ru;
-  const mainPhoto = data?.photos?.[0]?.location
-    ? `https://ci.encar.com${data.photos[0].location}`
-    : "/noimage.png";
-
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      images: [mainPhoto],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [mainPhoto],
     },
     alternates: {
       canonical: `https://kmotors.shop/${lang}/catalog/${id}`,
@@ -128,9 +122,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   ].join(" ");
   const carData = formatDate(data?.category?.yearMonth);
   const rates = await getCurrencyRates();
-  const mainPhoto = data?.photos?.[0]?.location
-    ? `https://ci.encar.com${data.photos[0].location}`
-    : "/noimage.png";
+  const mainPhoto = data?.photos?.[0]?.path
+    ? `https://ci.encar.com${data.photos[0].path}`
+    : null;
 
   const CATALOG_LABEL: Record<string, string> = {
     ru: "Каталог", en: "Catalog", ko: "카탈로그", ka: "კატალოგი", ar: "الكتالوج",
