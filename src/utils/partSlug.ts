@@ -1,7 +1,8 @@
 export function generatePartSlug(
-  partNumber: string,
+  partNumber: string | null,
   name: string,
-  lang: "ru" | "en" | "ko" = "ru"
+  lang: "ru" | "en" | "ko" = "ru",
+  id?: number
 ): string {
   // Выбираем нужное имя в зависимости от языка
   const nameToSlug = lang === "ru" ? name : name;
@@ -9,24 +10,35 @@ export function generatePartSlug(
   // Конвертируем в ASCII-slug (кириллица → транслит вручную)
   const slug = slugify(nameToSlug);
 
-  // Формат: "51712-B4000--tormoznoy-disk"
-  return `${partNumber}--${slug}`;
+  // Если part_number отсутствует, используем ID как fallback
+  const identifier = partNumber || (id ? `id-${id}` : "unknown");
+
+  // Формат: "51712-B4000--tormoznoy-disk" или "id-25--k8-..."
+  return `${identifier}--${slug}`;
 }
 
 export function parsePartSlug(slug: string): {
-  partNumber: string;
+  partNumber: string | null;
+  productId: number | null;
   nameSlug: string;
 } {
   // "51712-B4000--tormoznoy-disk" → { partNumber: "51712-B4000", nameSlug: "tormoznoy-disk" }
+  // "id-25--k8-..." → { productId: 25, nameSlug: "k8-..." }
   const parts = slug.split("--");
   if (parts.length < 2) {
-    return { partNumber: slug, nameSlug: "" };
+    return { partNumber: null, productId: null, nameSlug: "" };
   }
 
-  const partNumber = parts[0];
+  const identifier = parts[0];
   const nameSlug = parts.slice(1).join("--");
 
-  return { partNumber, nameSlug };
+  // Проверяем это ID или part_number
+  if (identifier.startsWith("id-")) {
+    const id = parseInt(identifier.substring(3), 10);
+    return { partNumber: null, productId: isNaN(id) ? null : id, nameSlug };
+  }
+
+  return { partNumber: identifier, productId: null, nameSlug };
 }
 
 // Простой транслит кириллицы + slugify

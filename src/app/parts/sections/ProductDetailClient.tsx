@@ -124,7 +124,9 @@ export function ProductDetailClient({
       ? product.name_ko || product.name_en || product.name_ru
       : lang === "ru"
       ? product.name_ru
-      : product.name_en || product.name_ru
+      : product.name_en || product.name_ru,
+    lang as "ru" | "en" | "ko",
+    product.id
   );
 
   const productUrl =

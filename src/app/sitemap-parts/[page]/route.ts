@@ -15,14 +15,15 @@ const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
         xmlns:xhtml="http://www.w3.org/1999/xhtml"></urlset>`;
 
 function alternates(
-  partNumber: string,
+  partNumber: string | null,
   name_ru: string,
   name_en: string,
-  name_ko: string | null
+  name_ko: string | null,
+  id: number
 ) {
-  const ru = generatePartSlug(partNumber, name_ru, "ru");
-  const en = generatePartSlug(partNumber, name_en, "en");
-  const ko = generatePartSlug(partNumber, name_ko || name_en || name_ru, "ko");
+  const ru = generatePartSlug(partNumber, name_ru, "ru", id);
+  const en = generatePartSlug(partNumber, name_en, "en", id);
+  const ko = generatePartSlug(partNumber, name_ko || name_en || name_ru, "ko", id);
 
   return [
     ...LANGS.map((lang) => {
@@ -52,8 +53,8 @@ export async function GET(
     const supabase = createServerClient();
     const { data: products } = await supabase
       .from("parts_products")
-      .select("part_number, name_ru, name_en, name_ko, scraped_at")
-      .order("part_number")
+      .select("id, part_number, name_ru, name_en, name_ko, scraped_at")
+      .order("id")
       .range(from, from + PAGE_SIZE - 1);
 
     if (!products?.length) {
@@ -70,12 +71,13 @@ export async function GET(
         ? new Date(product.scraped_at).toISOString().slice(0, 10)
         : fallbackDate;
 
-      const slugRu = generatePartSlug(product.part_number, product.name_ru, "ru");
-      const slugEn = generatePartSlug(product.part_number, product.name_en, "en");
+      const slugRu = generatePartSlug(product.part_number, product.name_ru, "ru", product.id);
+      const slugEn = generatePartSlug(product.part_number, product.name_en, "en", product.id);
       const slugKo = generatePartSlug(
         product.part_number,
         product.name_ko || product.name_en || product.name_ru,
-        "ko"
+        "ko",
+        product.id
       );
 
       // Only add RU as primary (one per product, with alternates)
@@ -84,7 +86,7 @@ export async function GET(
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-${alternates(product.part_number, product.name_ru, product.name_en, product.name_ko)}
+${alternates(product.part_number, product.name_ru, product.name_en, product.name_ko, product.id)}
   </url>`);
     }
 

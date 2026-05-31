@@ -24,18 +24,26 @@ const BRAND_ORDER: Record<string, number> = {
 // ─── Data fetching ─────────────────────────────────────────────────────────────
 
 async function fetchProduct(slug: string) {
-  const { partNumber } = parsePartSlug(slug);
+  const { partNumber, productId } = parsePartSlug(slug);
 
   const supabase = createServerClient();
 
-  // Fetch product по part_number (из slug), потом используем product.id для fitment
-  const { data: product, error } = await supabase
+  let query = supabase
     .from("parts_products")
     .select(
       "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id"
-    )
-    .eq("part_number", partNumber)
-    .single();
+    );
+
+  // Ищем по part_number или по ID
+  if (productId !== null) {
+    query = query.eq("id", productId);
+  } else if (partNumber) {
+    query = query.eq("part_number", partNumber);
+  } else {
+    return null;
+  }
+
+  const { data: product, error } = await query.single();
 
   if (error || !product) return null;
 
@@ -156,14 +164,23 @@ function buildMeta(
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
-  const { partNumber } = parsePartSlug(slug);
+  const { partNumber, productId } = parsePartSlug(slug);
 
   const supabase = createServerClient();
-  const { data: p } = await supabase
+
+  let query = supabase
     .from("parts_products")
-    .select("part_number, name_ru, name_en, name_ko, image_url")
-    .eq("part_number", partNumber)
-    .single();
+    .select("id, part_number, name_ru, name_en, name_ko, image_url");
+
+  if (productId !== null) {
+    query = query.eq("id", productId);
+  } else if (partNumber) {
+    query = query.eq("part_number", partNumber);
+  } else {
+    return {};
+  }
+
+  const { data: p } = await query.single();
 
   if (!p) return {};
 
@@ -175,9 +192,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const en = p.name_en || p.name_ru;
   const ko = p.name_ko || p.name_en || p.name_ru;
 
-  const slugRu = generatePartSlug(p.part_number, ru, "ru");
-  const slugEn = generatePartSlug(p.part_number, en, "en");
-  const slugKo = generatePartSlug(p.part_number, ko, "ko");
+  const slugRu = generatePartSlug(p.part_number, ru, "ru", p.id);
+  const slugEn = generatePartSlug(p.part_number, en, "en", p.id);
+  const slugKo = generatePartSlug(p.part_number, ko, "ko", p.id);
 
   return {
     title,

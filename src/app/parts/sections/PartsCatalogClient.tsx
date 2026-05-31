@@ -606,7 +606,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                 view={view}
                 isVisible={isVisible}
                 index={index}
-                href={`/${lang}/parts/${generatePartSlug(product.part_number, getProductName(product))}`}
+                href={`/${lang}/parts/${generatePartSlug(product.part_number, getProductName(product), lang as "ru" | "en" | "ko", product.id)}`}
                 onOrder={() => scrollToContact(getProductName(product), product.part_number)}
                 onNavigate={() => sessionStorage.setItem("parts:filters", window.location.search)}
                 t={t}
