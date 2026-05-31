@@ -22,7 +22,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const data = await fetchData(id);
 
   if (!data || data === undefined)
-    return { title: "Автомобиль | K-Axis", description: "" };
+    return {
+      title: "Автомобиль | K-Axis",
+      description: "Автомобиль из Южной Кореи на K-Axis",
+      openGraph: {
+        title: "Автомобиль | K-Axis",
+        description: "Автомобиль из Южной Кореи на K-Axis",
+        images: [{ url: "https://kmotors.shop/preview/preview.png", width: 1200, height: 630, alt: "K-Axis" }],
+        type: "website",
+      },
+    };
   const carName = [
     data.category.manufacturerEnglishName,
     data.category.modelGroupEnglishName,
