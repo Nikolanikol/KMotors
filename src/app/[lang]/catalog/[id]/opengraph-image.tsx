@@ -28,7 +28,7 @@ async function fetchCarData(id: string) {
 
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const contentType = "image/jpeg";
 export const revalidate = 604800; // Cache for 1 week
 
 export default async function Image({ params }: { params: Promise<{ lang: string; id: string }> }) {
@@ -55,70 +55,26 @@ export default async function Image({ params }: { params: Promise<{ lang: string
 
   // Use .path (not .location) — that's what API returns
   const firstPhoto = sortedPhotos[0];
+  // Serve JPEG directly — avoids PNG bloat, stays under WhatsApp's ~300KB limit
   const photoUrl = firstPhoto?.path
-    ? `https://ci.encar.com${firstPhoto.path}?impolicy=heightRate&rh=696&cw=1160&ch=696&cg=Center`
+    ? `https://ci.encar.com${firstPhoto.path}?impolicy=heightRate&rh=630&cw=1200&ch=630&cg=Center`
     : null;
 
   if (photoUrl) {
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            background: "#0a0a0a",
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-            position: "relative",
-          }}
-        >
-          {/* Car photo as background */}
-          <img
-            src={photoUrl}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-            alt={carName}
-          />
-          {/* Gradient overlay */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: "220px",
-              background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)",
-              display: "flex",
-            }}
-          />
-          {/* Text over photo */}
-          <div
-            style={{
-              position: "relative",
-              padding: "0 48px 36px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            <p style={{ fontSize: 20, margin: 0, color: "#FF4500", fontWeight: 700, letterSpacing: 2 }}>
-              K-AXIS
-            </p>
-            <h1 style={{ fontSize: 40, margin: 0, color: "white", fontWeight: 700, lineHeight: 1.2 }}>
-              {carName}
-            </h1>
-          </div>
-        </div>
-      ),
-      { ...size },
-    );
+    try {
+      const imgRes = await fetch(photoUrl, { signal: AbortSignal.timeout(3000) });
+      if (imgRes.ok) {
+        const buffer = await imgRes.arrayBuffer();
+        return new Response(buffer, {
+          headers: {
+            "Content-Type": "image/jpeg",
+            "Cache-Control": "public, max-age=604800, immutable",
+          },
+        });
+      }
+    } catch {
+      // fall through to branded fallback
+    }
   }
 
   // Fallback: branded gradient
