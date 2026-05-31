@@ -96,14 +96,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/catalog/${id}`,
+      canonical: `https://www.kmotors.shop/${lang}/catalog/${id}`,
       languages: {
-        ru: `https://kmotors.shop/ru/catalog/${id}`,
-        en: `https://kmotors.shop/en/catalog/${id}`,
-        ko: `https://kmotors.shop/ko/catalog/${id}`,
-        ka: `https://kmotors.shop/ka/catalog/${id}`,
-        ar: `https://kmotors.shop/ar/catalog/${id}`,
-        "x-default": `https://kmotors.shop/ru/catalog/${id}`,
+        ru: `https://www.kmotors.shop/ru/catalog/${id}`,
+        en: `https://www.kmotors.shop/en/catalog/${id}`,
+        ko: `https://www.kmotors.shop/ko/catalog/${id}`,
+        ka: `https://www.kmotors.shop/ka/catalog/${id}`,
+        ar: `https://www.kmotors.shop/ar/catalog/${id}`,
+        "x-default": `https://www.kmotors.shop/ru/catalog/${id}`,
       },
     },
   };
@@ -134,9 +134,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
-      { "@type": "ListItem", position: 3, name: carName, item: `https://kmotors.shop/${lang}/catalog/${id}` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://www.kmotors.shop/${lang}/catalog` },
+      { "@type": "ListItem", position: 3, name: carName, item: `https://www.kmotors.shop/${lang}/catalog/${id}` },
     ],
   };
 
@@ -187,7 +187,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     }),
     offers: {
       "@type": "Offer",
-      url: `https://kmotors.shop/${lang}/catalog/${data?.vehicleId}`,
+      url: `https://www.kmotors.shop/${lang}/catalog/${data?.vehicleId}`,
       priceCurrency: "KRW",
       price: data?.advertisement?.price * 10000,
       availability: "https://schema.org/InStock",
@@ -195,7 +195,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       seller: {
         "@type": "Organization",
         name: "K-Axis",
-        url: "https://kmotors.shop",
+        url: "https://www.kmotors.shop",
       },
       shippingDetails: {
         "@type": "OfferShippingDetails",

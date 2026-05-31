@@ -13,7 +13,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://kmotors.shop"),
+  metadataBase: new URL("https://www.kmotors.shop"),
   title: {
     default: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
     template: "%s | K-Axis",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
     description: "K-Axis — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
     type: "website",
-    images: [{ url: "https://kmotors.shop/preview/preview.png", width: 1200, height: 630, alt: "K-Axis" }],
+    images: [{ url: "https://www.kmotors.shop/preview/preview.png", width: 1200, height: 630, alt: "K-Axis" }],
   },
   keywords: [
     "авто из Кореи", "купить авто из Кореи", "kmotors",
@@ -48,12 +48,12 @@ export default async function RootLayout({
     <html lang={lang} className={inter.className}>
       <head>
         <meta name="robots" content="index, follow" />
-        <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="ru" />
-        <link rel="alternate" href="https://kmotors.shop/en/" hrefLang="en" />
-        <link rel="alternate" href="https://kmotors.shop/ko/" hrefLang="ko" />
-        <link rel="alternate" href="https://kmotors.shop/ka/" hrefLang="ka" />
-        <link rel="alternate" href="https://kmotors.shop/ar/" hrefLang="ar" />
-        <link rel="alternate" href="https://kmotors.shop/ru/" hrefLang="x-default" />
+        <link rel="alternate" href="https://www.kmotors.shop/ru/" hrefLang="ru" />
+        <link rel="alternate" href="https://www.kmotors.shop/en/" hrefLang="en" />
+        <link rel="alternate" href="https://www.kmotors.shop/ko/" hrefLang="ko" />
+        <link rel="alternate" href="https://www.kmotors.shop/ka/" hrefLang="ka" />
+        <link rel="alternate" href="https://www.kmotors.shop/ar/" hrefLang="ar" />
+        <link rel="alternate" href="https://www.kmotors.shop/ru/" hrefLang="x-default" />
         <link rel="manifest" href="/favicon_io/site.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" sizes="192x192" />
@@ -67,9 +67,9 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": ["LocalBusiness", "AutoDealer"],
               name: "K-Axis",
-              url: "https://kmotors.shop/",
-              logo: "https://kmotors.shop/favicon_io/android-chrome-192x192.png",
-              image: "https://kmotors.shop/preview/preview.png",
+              url: "https://www.kmotors.shop/",
+              logo: "https://www.kmotors.shop/favicon_io/android-chrome-192x192.png",
+              image: "https://www.kmotors.shop/preview/preview.png",
               description: "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
               telephone: "+821058654344",
               address: {

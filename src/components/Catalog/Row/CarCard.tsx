@@ -33,11 +33,11 @@ const BUY_FROM_KOREA: Record<string, string> = {
 };
 
 const WA_CAR_TEXT: Record<string, (id: string, name: string) => string> = {
-  ru: (id, name) => `Здравствуйте! Интересует ${name}, ID: ${id} — https://kmotors.shop/ru/catalog/${id}`,
-  en: (id, name) => `Hello! I'm interested in ${name}, ID: ${id} — https://kmotors.shop/en/catalog/${id}`,
-  ko: (id, name) => `안녕하세요! ${name} 차량에 관심 있습니다, ID: ${id} — https://kmotors.shop/ko/catalog/${id}`,
-  ka: (id, name) => `გამარჯობა! მაინტერესებს ${name}, ID: ${id} — https://kmotors.shop/ka/catalog/${id}`,
-  ar: (id, name) => `مرحباً! أنا مهتم بـ ${name}, ID: ${id} — https://kmotors.shop/ar/catalog/${id}`,
+  ru: (id, name) => `Здравствуйте! Интересует ${name}, ID: ${id} — https://www.kmotors.shop/ru/catalog/${id}`,
+  en: (id, name) => `Hello! I'm interested in ${name}, ID: ${id} — https://www.kmotors.shop/en/catalog/${id}`,
+  ko: (id, name) => `안녕하세요! ${name} 차량에 관심 있습니다, ID: ${id} — https://www.kmotors.shop/ko/catalog/${id}`,
+  ka: (id, name) => `გამარჯობა! მაინტერესებს ${name}, ID: ${id} — https://www.kmotors.shop/ka/catalog/${id}`,
+  ar: (id, name) => `مرحباً! أنا مهتم بـ ${name}, ID: ${id} — https://www.kmotors.shop/ar/catalog/${id}`,
 };
 
 const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, fuel, price, krwToRub, krwToUsd }: CarCardProps) => {

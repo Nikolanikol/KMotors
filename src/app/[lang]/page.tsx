@@ -51,13 +51,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://kmotors.shop/${lang}/`,
+      url: `https://www.kmotors.shop/${lang}/`,
       siteName: "K-Axis",
       type: "website",
       locale: lang === "ko" ? "ko_KR" : lang === "ar" ? "ar_SA" : lang === "ka" ? "ka_GE" : lang === "en" ? "en_US" : "ru_RU",
       images: [
         {
-          url: "https://kmotors.shop/preview/preview.png",
+          url: "https://www.kmotors.shop/preview/preview.png",
           width: 1200,
           height: 630,
           alt: meta.title,
@@ -68,17 +68,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: ["https://kmotors.shop/preview/preview.png"],
+      images: ["https://www.kmotors.shop/preview/preview.png"],
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/`,
+      canonical: `https://www.kmotors.shop/${lang}/`,
       languages: {
-        ru: "https://kmotors.shop/ru/",
-        en: "https://kmotors.shop/en/",
-        ko: "https://kmotors.shop/ko/",
-        ka: "https://kmotors.shop/ka/",
-        ar: "https://kmotors.shop/ar/",
-        "x-default": "https://kmotors.shop/ru/",
+        ru: "https://www.kmotors.shop/ru/",
+        en: "https://www.kmotors.shop/en/",
+        ko: "https://www.kmotors.shop/ko/",
+        ka: "https://www.kmotors.shop/ka/",
+        ar: "https://www.kmotors.shop/ar/",
+        "x-default": "https://www.kmotors.shop/ru/",
       },
     },
   };
@@ -92,14 +92,14 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "K-Axis",
-    url: "https://kmotors.shop/",
+    url: "https://www.kmotors.shop/",
     description: meta.description,
     inLanguage: lang,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `https://kmotors.shop/${lang}/catalog?manufacture={search_term_string}`,
+        urlTemplate: `https://www.kmotors.shop/${lang}/catalog?manufacture={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -109,7 +109,7 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
     ],
   };
 
@@ -117,9 +117,9 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     name: "K-Axis",
-    url: "https://kmotors.shop",
-    logo: "https://kmotors.shop/favicon_io/android-chrome-512x512.png",
-    image: "https://kmotors.shop/preview/preview.png",
+    url: "https://www.kmotors.shop",
+    logo: "https://www.kmotors.shop/favicon_io/android-chrome-512x512.png",
+    image: "https://www.kmotors.shop/preview/preview.png",
     telephone: "+821058654344",
     address: {
       "@type": "PostalAddress",

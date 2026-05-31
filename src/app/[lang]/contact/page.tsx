@@ -66,18 +66,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://kmotors.shop/${lang}/contact`,
-      images: [{ url: "https://kmotors.shop/preview/preview.png" }],
+      url: `https://www.kmotors.shop/${lang}/contact`,
+      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/contact`,
+      canonical: `https://www.kmotors.shop/${lang}/contact`,
       languages: {
-        ru: "https://kmotors.shop/ru/contact",
-        en: "https://kmotors.shop/en/contact",
-        ko: "https://kmotors.shop/ko/contact",
-        ka: "https://kmotors.shop/ka/contact",
-        ar: "https://kmotors.shop/ar/contact",
-        "x-default": "https://kmotors.shop/ru/contact",
+        ru: "https://www.kmotors.shop/ru/contact",
+        en: "https://www.kmotors.shop/en/contact",
+        ko: "https://www.kmotors.shop/ko/contact",
+        ka: "https://www.kmotors.shop/ka/contact",
+        ar: "https://www.kmotors.shop/ar/contact",
+        "x-default": "https://www.kmotors.shop/ru/contact",
       },
     },
   };
@@ -95,8 +95,8 @@ export default async function ContactPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: CONTACT_LABEL[lang] || "Contact", item: `https://kmotors.shop/${lang}/contact` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CONTACT_LABEL[lang] || "Contact", item: `https://www.kmotors.shop/${lang}/contact` },
     ],
   };
 

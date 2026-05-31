@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
-const BASE = "https://kmotors.shop";
+const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 export const revalidate = 3600;

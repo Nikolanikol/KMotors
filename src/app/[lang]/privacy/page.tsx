@@ -207,7 +207,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: meta.description,
     robots: { index: false },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/privacy`,
+      canonical: `https://www.kmotors.shop/${lang}/privacy`,
     },
   };
 }

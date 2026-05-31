@@ -32,17 +32,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: content.title,
       description: content.subtitle,
-      url: `https://kmotors.shop/${lang}/models/${slug}`,
-      images: [{ url: `https://kmotors.shop${model.coverImage}`, alt: content.title }],
+      url: `https://www.kmotors.shop/${lang}/models/${slug}`,
+      images: [{ url: `https://www.kmotors.shop${model.coverImage}`, alt: content.title }],
       type: "website",
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/models/${slug}`,
+      canonical: `https://www.kmotors.shop/${lang}/models/${slug}`,
       languages: {
         ...Object.fromEntries(
-          LANGS.map((l) => [l, `https://kmotors.shop/${l}/models/${slug}`])
+          LANGS.map((l) => [l, `https://www.kmotors.shop/${l}/models/${slug}`])
         ),
-        "x-default": `https://kmotors.shop/ru/models/${slug}`,
+        "x-default": `https://www.kmotors.shop/ru/models/${slug}`,
       },
     },
   };
@@ -70,9 +70,9 @@ export default async function ModelPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: isRu ? "Каталог" : "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
-      { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelEn}`, item: `https://kmotors.shop/${lang}/models/${slug}` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: isRu ? "Каталог" : "Catalog", item: `https://www.kmotors.shop/${lang}/catalog` },
+      { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelEn}`, item: `https://www.kmotors.shop/${lang}/models/${slug}` },
     ],
   };
 

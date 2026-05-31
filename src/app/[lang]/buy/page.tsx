@@ -66,18 +66,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://kmotors.shop/${lang}/buy`,
-      images: [{ url: "https://kmotors.shop/preview/preview.png" }],
+      url: `https://www.kmotors.shop/${lang}/buy`,
+      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/buy`,
+      canonical: `https://www.kmotors.shop/${lang}/buy`,
       languages: {
-        ru: "https://kmotors.shop/ru/buy",
-        en: "https://kmotors.shop/en/buy",
-        ko: "https://kmotors.shop/ko/buy",
-        ka: "https://kmotors.shop/ka/buy",
-        ar: "https://kmotors.shop/ar/buy",
-        "x-default": "https://kmotors.shop/ru/buy",
+        ru: "https://www.kmotors.shop/ru/buy",
+        en: "https://www.kmotors.shop/en/buy",
+        ko: "https://www.kmotors.shop/ko/buy",
+        ka: "https://www.kmotors.shop/ka/buy",
+        ar: "https://www.kmotors.shop/ar/buy",
+        "x-default": "https://www.kmotors.shop/ru/buy",
       },
     },
   };
@@ -95,8 +95,8 @@ export default async function BuyPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: BUY_LABEL[lang] || "How to Buy", item: `https://kmotors.shop/${lang}/buy` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BUY_LABEL[lang] || "How to Buy", item: `https://www.kmotors.shop/${lang}/buy` },
     ],
   };
 

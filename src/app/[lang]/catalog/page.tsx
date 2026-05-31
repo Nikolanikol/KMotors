@@ -64,8 +64,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     : meta.description;
 
   const canonical = manufacture
-    ? `https://kmotors.shop/${lang}/catalog?manufacture=.${manufacture}`
-    : `https://kmotors.shop/${lang}/catalog`;
+    ? `https://www.kmotors.shop/${lang}/catalog?manufacture=.${manufacture}`
+    : `https://www.kmotors.shop/${lang}/catalog`;
 
   return {
     title,
@@ -74,17 +74,17 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       title,
       description,
       url: canonical,
-      images: [{ url: "https://kmotors.shop/preview/preview.png" }],
+      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
     alternates: {
       canonical,
       languages: {
-        ru: "https://kmotors.shop/ru/catalog",
-        en: "https://kmotors.shop/en/catalog",
-        ko: "https://kmotors.shop/ko/catalog",
-        ka: "https://kmotors.shop/ka/catalog",
-        ar: "https://kmotors.shop/ar/catalog",
-        "x-default": "https://kmotors.shop/ru/catalog",
+        ru: "https://www.kmotors.shop/ru/catalog",
+        en: "https://www.kmotors.shop/en/catalog",
+        ko: "https://www.kmotors.shop/ko/catalog",
+        ka: "https://www.kmotors.shop/ka/catalog",
+        ar: "https://www.kmotors.shop/ar/catalog",
+        "x-default": "https://www.kmotors.shop/ru/catalog",
       },
     },
   };
@@ -146,8 +146,8 @@ export default async function CatalogPage({ params, searchParams }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://kmotors.shop/${lang}/catalog` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://www.kmotors.shop/${lang}/catalog` },
     ],
   };
 
@@ -161,12 +161,12 @@ export default async function CatalogPage({ params, searchParams }: Props) {
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: CATALOG_LABEL[lang] || "Catalog",
-        url: `https://kmotors.shop/${lang}/catalog`,
+        url: `https://www.kmotors.shop/${lang}/catalog`,
         numberOfItems: data.length,
         itemListElement: data.map((car: { Id: string; Manufacturer?: string; Model?: string; Year?: string; Price?: string }, index: number) => ({
           "@type": "ListItem",
           position: index + 1,
-          url: `https://kmotors.shop/${lang}/catalog/${car.Id}`,
+          url: `https://www.kmotors.shop/${lang}/catalog/${car.Id}`,
           name: [car.Manufacturer, car.Model, car.Year].filter(Boolean).join(" "),
         })),
       };

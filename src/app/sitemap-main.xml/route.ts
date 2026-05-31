@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { MODEL_PAGES } from "@/data/model-pages";
 
-const BASE = "https://kmotors.shop";
+const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 interface PageConfig {

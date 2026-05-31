@@ -77,18 +77,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://kmotors.shop/${lang}/blog/tag/${tag}`,
-      images: [{ url: "https://kmotors.shop/preview/preview.png" }],
+      url: `https://www.kmotors.shop/${lang}/blog/tag/${tag}`,
+      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/blog/tag/${tag}`,
+      canonical: `https://www.kmotors.shop/${lang}/blog/tag/${tag}`,
       languages: {
-        ru: `https://kmotors.shop/ru/blog/tag/${tag}`,
-        en: `https://kmotors.shop/en/blog/tag/${tag}`,
-        ko: `https://kmotors.shop/ko/blog/tag/${tag}`,
-        ka: `https://kmotors.shop/ka/blog/tag/${tag}`,
-        ar: `https://kmotors.shop/ar/blog/tag/${tag}`,
-        "x-default": `https://kmotors.shop/ru/blog/tag/${tag}`,
+        ru: `https://www.kmotors.shop/ru/blog/tag/${tag}`,
+        en: `https://www.kmotors.shop/en/blog/tag/${tag}`,
+        ko: `https://www.kmotors.shop/ko/blog/tag/${tag}`,
+        ka: `https://www.kmotors.shop/ka/blog/tag/${tag}`,
+        ar: `https://www.kmotors.shop/ar/blog/tag/${tag}`,
+        "x-default": `https://www.kmotors.shop/ru/blog/tag/${tag}`,
       },
     },
   };

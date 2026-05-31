@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
-          `🔗 <a href="https://kmotors.shop/ru/catalog/${carId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=lead">Открыть на K-Axis</a>`
+          `🔗 <a href="https://www.kmotors.shop/ru/catalog/${carId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=lead">Открыть на K-Axis</a>`
         : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +
@@ -222,7 +222,7 @@ async function handleGenerateCommand(chatId: number) {
   await sendMessage(chatId, "⏳ Генерирую статью, подождите 30–60 секунд...");
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kmotors.shop";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
     const res = await fetch(`${baseUrl}/api/blog-generate`, { method: "POST" });
     const result = await res.json();
 

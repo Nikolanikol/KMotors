@@ -74,19 +74,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://kmotors.shop/${lang}/blog`,
-      images: [{ url: "https://kmotors.shop/preview/preview.png" }],
+      url: `https://www.kmotors.shop/${lang}/blog`,
+      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
       type: "website",
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/blog`,
+      canonical: `https://www.kmotors.shop/${lang}/blog`,
       languages: {
-        ru: "https://kmotors.shop/ru/blog",
-        en: "https://kmotors.shop/en/blog",
-        ko: "https://kmotors.shop/ko/blog",
-        ka: "https://kmotors.shop/ka/blog",
-        ar: "https://kmotors.shop/ar/blog",
-        "x-default": "https://kmotors.shop/ru/blog",
+        ru: "https://www.kmotors.shop/ru/blog",
+        en: "https://www.kmotors.shop/en/blog",
+        ko: "https://www.kmotors.shop/ko/blog",
+        ka: "https://www.kmotors.shop/ka/blog",
+        ar: "https://www.kmotors.shop/ar/blog",
+        "x-default": "https://www.kmotors.shop/ru/blog",
       },
     },
   };
@@ -103,8 +103,8 @@ export default async function BlogPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: BLOG_META[lang]?.title.split("—")[0]?.trim() || "Blog", item: `https://kmotors.shop/${lang}/blog` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BLOG_META[lang]?.title.split("—")[0]?.trim() || "Blog", item: `https://www.kmotors.shop/${lang}/blog` },
     ],
   };
 

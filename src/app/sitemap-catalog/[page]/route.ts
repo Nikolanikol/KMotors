@@ -1,7 +1,7 @@
 // app/sitemap-catalog/[page]/route.ts
 import { NextResponse } from "next/server";
 
-const BASE = "https://kmotors.shop";
+const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 const PAGE_SIZE = 20;
 const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";

@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: "https://kmotors.shop/preview/preview.png",
+          url: "https://www.kmotors.shop/preview/preview.png",
           width: 1200,
           height: 630,
           alt: meta.title,
@@ -56,17 +56,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: ["https://kmotors.shop/preview/preview.png"],
+      images: ["https://www.kmotors.shop/preview/preview.png"],
     },
     alternates: {
-      canonical: `https://kmotors.shop/${lang}/calculator`,
+      canonical: `https://www.kmotors.shop/${lang}/calculator`,
       languages: {
-        ru: "https://kmotors.shop/ru/calculator",
-        en: "https://kmotors.shop/en/calculator",
-        ko: "https://kmotors.shop/ko/calculator",
-        ka: "https://kmotors.shop/ka/calculator",
-        ar: "https://kmotors.shop/ar/calculator",
-        "x-default": "https://kmotors.shop/ru/calculator",
+        ru: "https://www.kmotors.shop/ru/calculator",
+        en: "https://www.kmotors.shop/en/calculator",
+        ko: "https://www.kmotors.shop/ko/calculator",
+        ka: "https://www.kmotors.shop/ka/calculator",
+        ar: "https://www.kmotors.shop/ar/calculator",
+        "x-default": "https://www.kmotors.shop/ru/calculator",
       },
     },
   };
@@ -143,14 +143,14 @@ export default async function Page({ params }: Props) {
     "@type": "WebPage",
     name: meta.title,
     description: meta.description,
-    url: `https://kmotors.shop/${lang}/calculator`,
+    url: `https://www.kmotors.shop/${lang}/calculator`,
     inLanguage: lang,
-    isPartOf: { "@type": "WebSite", name: "K-Axis", url: "https://kmotors.shop/" },
+    isPartOf: { "@type": "WebSite", name: "K-Axis", url: "https://www.kmotors.shop/" },
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://kmotors.shop/${lang}/` },
-        { "@type": "ListItem", position: 2, name: meta.title, item: `https://kmotors.shop/${lang}/calculator` },
+        { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+        { "@type": "ListItem", position: 2, name: meta.title, item: `https://www.kmotors.shop/${lang}/calculator` },
       ],
     },
   };
