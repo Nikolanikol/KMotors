@@ -47,8 +47,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       images: [
         data?.photos?.[0]?.location
-          ? `https://ci.encar.com${data.photos[0].location}`
-          : "/noimage.png",
+          ? {
+              url: `https://ci.encar.com${data.photos[0].location}`,
+              width: 800,
+              height: 600,
+              alt: carName,
+            }
+          : {
+              url: "https://kmotors.shop/preview/preview.png",
+              width: 1200,
+              height: 630,
+              alt: "K-Axis",
+            },
       ],
       type: "website",
     },
