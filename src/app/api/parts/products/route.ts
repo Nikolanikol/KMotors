@@ -44,10 +44,14 @@ export async function GET(req: NextRequest) {
     const sort      = sp.get("sort")  ?? "default";
     const page      = Math.max(1, Number(sp.get("page") ?? "1"));
 
-    // Кэшируем только запросы без фильтров — одинаковые для всех пользователей
-    const hasFilters = !!(brandSlug || catSlug || subSlug || modelName || q || minPrice || maxPrice || sort !== "default");
-    const cacheHeader = hasFilters
+    // Поисковые запросы (q, price) уникальны — не кэшируем.
+    // Фильтры по бренду/категории/модели — стабильные данные, кэш 30с на CDN.
+    const hasSearch = !!(q || minPrice || maxPrice);
+    const hasFilters = !!(brandSlug || catSlug || subSlug || modelName || sort !== "default");
+    const cacheHeader = hasSearch
       ? "no-store"
+      : hasFilters
+      ? "s-maxage=30, stale-while-revalidate=120"
       : "s-maxage=60, stale-while-revalidate=300";
 
     // ── Step 1: resolve slugs → IDs (cached, no DB hit after first request) ──

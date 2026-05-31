@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
@@ -121,6 +122,12 @@ async function fetchProduct(slug: string) {
   };
 }
 
+const getCachedProduct = unstable_cache(
+  (slug: string) => fetchProduct(slug),
+  ["parts-product"],
+  { revalidate: 3600 }
+);
+
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -164,26 +171,11 @@ function buildMeta(
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
-  const { partNumber, productId } = parsePartSlug(slug);
 
-  const supabase = createServerClient();
+  const data = await getCachedProduct(slug);
+  if (!data) return {};
 
-  let query = supabase
-    .from("parts_products")
-    .select("id, part_number, name_ru, name_en, name_ko, image_url");
-
-  if (productId !== null) {
-    query = query.eq("id", productId);
-  } else if (partNumber) {
-    query = query.eq("part_number", partNumber);
-  } else {
-    return {};
-  }
-
-  const { data: p } = await query.single();
-
-  if (!p) return {};
-
+  const p = data.product;
   const { title, description } = buildMeta(lang, p);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -225,7 +217,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const { lang, slug } = await params;
 
   const [data, { krwToUsd }] = await Promise.all([
-    fetchProduct(slug),
+    getCachedProduct(slug),
     getCurrencyRates(),
   ]);
   if (!data) notFound();

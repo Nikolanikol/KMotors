@@ -262,10 +262,13 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   const [subCounts, setSubCounts] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // In-memory cache: cacheKey → response. Survives filter toggling within a session.
+  type CacheEntry = { products: Product[]; total: number; catCounts: Record<number, number>; subCounts: Record<number, number> };
+  const fetchCache = useRef<Map<string, CacheEntry>>(new Map());
+
   // Fetch whenever any filter or page changes
   useEffect(() => {
     const controller = new AbortController();
-    setIsLoading(true);
 
     const params = new URLSearchParams();
     if (brandSlug)              params.set("brand",  brandSlug);
@@ -279,13 +282,34 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     if (sort !== "default")     params.set("sort",   sort);
     params.set("page", String(apiPage));
 
+    const cacheKey = params.toString();
+    const cached = fetchCache.current.get(cacheKey);
+
+    if (cached) {
+      setProducts(cached.products);
+      setTotal(cached.total);
+      setCatCounts(cached.catCounts);
+      setSubCounts(cached.subCounts);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
     fetch(`/api/parts/products?${params}`, { signal: controller.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(({ products: newProds, total: newTotal, catCounts: newCat, subCounts: newSub }) => {
-        setProducts(newProds ?? []);
-        setTotal(newTotal ?? 0);
-        setCatCounts(newCat ?? {});
-        setSubCounts(newSub ?? {});
+        const entry: CacheEntry = {
+          products: newProds ?? [],
+          total: newTotal ?? 0,
+          catCounts: newCat ?? {},
+          subCounts: newSub ?? {},
+        };
+        fetchCache.current.set(cacheKey, entry);
+        setProducts(entry.products);
+        setTotal(entry.total);
+        setCatCounts(entry.catCounts);
+        setSubCounts(entry.subCounts);
         setIsLoading(false);
       })
       .catch((err) => {

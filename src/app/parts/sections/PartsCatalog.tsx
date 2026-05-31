@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { PartsCatalogClient } from "./PartsCatalogClient";
@@ -120,8 +121,14 @@ async function fetchCatalogData() {
   return { brands, categories, brandModelChipsMap, krwToUsd };
 }
 
+const getCachedCatalogData = unstable_cache(
+  fetchCatalogData,
+  ["parts-catalog-data"],
+  { revalidate: 3600 }
+);
+
 export async function PartsCatalog() {
-  const data = await fetchCatalogData();
+  const data = await getCachedCatalogData();
 
   return (
     <Suspense
