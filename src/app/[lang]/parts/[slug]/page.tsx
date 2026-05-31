@@ -204,11 +204,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "website",
       url: `${BASE}/${lang}/parts/${slug}`,
-      images: [
-        p.image_url
-          ? { url: p.image_url, width: 800, height: 600, alt: title }
-          : { url: `${BASE}/preview/preview.png`, width: 1200, height: 630, alt: title },
-      ],
     },
     alternates: {
       canonical: `${BASE}/${lang}/parts/${slug}`,
