@@ -323,9 +323,9 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     (ru: string, en: string) => (i18n.language === "ru" ? ru : en || ru),
     [i18n.language]
   );
-  const getProductName = (p: Product) => {
-    if (i18n.language === "ru") return p.name_ru;
-    if (i18n.language === "ko") return p.name_ko || p.name_en || p.name_ru;
+  const getProductName = (p: Product, language = lang) => {
+    if (language === "ru") return p.name_ru;
+    if (language === "ko") return p.name_ko || p.name_en || p.name_ru;
     return p.name_en || p.name_ru;
   };
 
@@ -598,21 +598,24 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
           <EmptyState onReset={resetAll} t={t} />
         ) : (
           <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
-            {products.map((product, index) => (
+            {products.map((product, index) => {
+              const productName = getProductName(product, lang);
+              return (
               <ProductCard
                 key={product.id}
                 product={product}
-                productName={getProductName(product)}
+                productName={productName}
                 view={view}
                 isVisible={isVisible}
                 index={index}
-                href={`/${lang}/parts/${generatePartSlug(product.part_number, getProductName(product), lang as "ru" | "en" | "ko", product.id)}`}
-                onOrder={() => scrollToContact(getProductName(product), product.part_number)}
+                href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
+                onOrder={() => scrollToContact(productName, product.part_number)}
                 onNavigate={() => sessionStorage.setItem("parts:filters", window.location.search)}
                 t={t}
                 krwToUsd={krwToUsd}
               />
-            ))}
+              );
+            })}
           </div>
         )}
 
