@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
+import { generatePartSlug } from "@/utils/partSlug";
 import { OrderModal } from "./OrderModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -117,10 +118,19 @@ export function ProductDetailClient({
 
   const handleOrder = () => setIsOrderOpen(true);
 
+  const partSlug = generatePartSlug(
+    product.part_number,
+    lang === "ko"
+      ? product.name_ko || product.name_en || product.name_ru
+      : lang === "ru"
+      ? product.name_ru
+      : product.name_en || product.name_ru
+  );
+
   const productUrl =
     typeof window !== "undefined"
       ? window.location.href
-      : `/${lang}/parts/${product.id}`;
+      : `/${lang}/parts/${partSlug}`;
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">

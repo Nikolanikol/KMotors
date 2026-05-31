@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { generatePartSlug } from "@/utils/partSlug";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -605,7 +606,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                 view={view}
                 isVisible={isVisible}
                 index={index}
-                href={`/${lang}/parts/${product.id}`}
+                href={`/${lang}/parts/${generatePartSlug(product.part_number, getProductName(product))}`}
                 onOrder={() => scrollToContact(getProductName(product), product.part_number)}
                 onNavigate={() => sessionStorage.setItem("parts:filters", window.location.search)}
                 t={t}

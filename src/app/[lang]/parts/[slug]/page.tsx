@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
+import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
   CompatibleBrand,
@@ -10,7 +11,7 @@ import type {
 
 // Страницы продуктов рендерятся по требованию и кэшируются навсегда.
 // generateStaticParams убран: 50k × 5 langs = 250k страниц при сборке — неприемлемо.
-// dynamicParams = true (дефолт) — неизвестные [id] рендерятся при первом визите.
+// dynamicParams = true (дефолт) — неизвестные [slug] рендерятся при первом визите.
 export const revalidate = false;
 export const dynamicParams = true;
 
@@ -22,25 +23,27 @@ const BRAND_ORDER: Record<string, number> = {
 
 // ─── Data fetching ─────────────────────────────────────────────────────────────
 
-async function fetchProduct(id: number) {
+async function fetchProduct(slug: string) {
+  const { partNumber } = parsePartSlug(slug);
+
   const supabase = createServerClient();
 
-  // Fetch product + fitment in parallel
-  const [{ data: product, error }, { data: fitmentRows }] = await Promise.all([
-    supabase
-      .from("parts_products")
-      .select(
-        "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id"
-      )
-      .eq("id", id)
-      .single(),
-    supabase
-      .from("parts_fitment")
-      .select("vehicle_model_id")
-      .eq("product_id", id),
-  ]);
+  // Fetch product по part_number (из slug), потом используем product.id для fitment
+  const { data: product, error } = await supabase
+    .from("parts_products")
+    .select(
+      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id"
+    )
+    .eq("part_number", partNumber)
+    .single();
 
   if (error || !product) return null;
+
+  // Теперь ищем fitment по product.id
+  const { data: fitmentRows } = await supabase
+    .from("parts_fitment")
+    .select("vehicle_model_id")
+    .eq("product_id", product.id);
 
   const modelIds = (fitmentRows ?? []).map((f) => f.vehicle_model_id);
   const catIds = [product.category_id, product.subcategory_id].filter(
@@ -113,7 +116,7 @@ async function fetchProduct(id: number) {
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  params: Promise<{ lang: string; id: string }>;
+  params: Promise<{ lang: string; slug: string }>;
 }
 
 // Заголовки и описания для каждого языка
@@ -152,21 +155,29 @@ function buildMeta(
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { lang, id } = await params;
-  const numId = Number(id);
-  if (isNaN(numId)) return {};
+  const { lang, slug } = await params;
+  const { partNumber } = parsePartSlug(slug);
 
   const supabase = createServerClient();
   const { data: p } = await supabase
     .from("parts_products")
     .select("part_number, name_ru, name_en, name_ko, image_url")
-    .eq("id", numId)
+    .eq("part_number", partNumber)
     .single();
 
   if (!p) return {};
 
   const { title, description } = buildMeta(lang, p);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
+
+  // Генерируем правильный slug для каждого языка
+  const ru = p.name_ru;
+  const en = p.name_en || p.name_ru;
+  const ko = p.name_ko || p.name_en || p.name_ru;
+
+  const slugRu = generatePartSlug(p.part_number, ru, "ru");
+  const slugEn = generatePartSlug(p.part_number, en, "en");
+  const slugKo = generatePartSlug(p.part_number, ko, "ko");
 
   return {
     title,
@@ -175,18 +186,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: "website",
-      url: `${BASE}/${lang}/parts/${id}`,
+      url: `${BASE}/${lang}/parts/${slug}`,
       images: p.image_url ? [{ url: p.image_url, width: 800, height: 600, alt: title }] : [],
     },
     alternates: {
-      canonical: `${BASE}/${lang}/parts/${id}`,
+      canonical: `${BASE}/${lang}/parts/${slug}`,
       languages: {
-        ru: `${BASE}/ru/parts/${id}`,
-        en: `${BASE}/en/parts/${id}`,
-        ko: `${BASE}/ko/parts/${id}`,
-        ka: `${BASE}/ka/parts/${id}`,
-        ar: `${BASE}/ar/parts/${id}`,
-        "x-default": `${BASE}/ru/parts/${id}`,
+        ru: `${BASE}/ru/parts/${slugRu}`,
+        en: `${BASE}/en/parts/${slugEn}`,
+        ko: `${BASE}/ko/parts/${slugKo}`,
+        ka: `${BASE}/ka/parts/${slug}`,
+        ar: `${BASE}/ar/parts/${slug}`,
+        "x-default": `${BASE}/ru/parts/${slugRu}`,
       },
     },
   };
@@ -195,13 +206,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ProductDetailPage({ params }: Props) {
-  const { lang, id } = await params;
-
-  const numId = Number(id);
-  if (isNaN(numId) || numId <= 0) notFound();
+  const { lang, slug } = await params;
 
   const [data, { krwToUsd }] = await Promise.all([
-    fetchProduct(numId),
+    fetchProduct(slug),
     getCurrencyRates(),
   ]);
   if (!data) notFound();
@@ -231,7 +239,7 @@ export default async function ProductDetailPage({ params }: Props) {
     },
     offers: {
       "@type": "Offer",
-      url: `${BASE}/${lang}/parts/${id}`,
+      url: `${BASE}/${lang}/parts/${slug}`,
       priceCurrency: "USD",
       price: priceUsd,
       availability: "https://schema.org/InStock",
@@ -255,7 +263,7 @@ export default async function ProductDetailPage({ params }: Props) {
       ...(data.categoryName
         ? [{ "@type": "ListItem", position: 3, name: lang === "ru" ? data.categoryName.ru : data.categoryName.en, item: `${BASE}/${lang}/parts?cat=${data.categoryName.slug}` }]
         : []),
-      { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${BASE}/${lang}/parts/${id}` },
+      { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${BASE}/${lang}/parts/${slug}` },
     ],
   };
 
