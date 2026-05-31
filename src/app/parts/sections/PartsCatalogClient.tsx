@@ -324,10 +324,10 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     (ru: string, en: string) => (i18n.language === "ru" ? ru : en || ru),
     [i18n.language]
   );
-  const getProductName = (p: Product, language = lang) => {
-    if (language === "ru") return p.name_ru;
-    if (language === "ko") return p.name_ko || p.name_en || p.name_ru;
-    return p.name_en || p.name_ru;
+  const getProductName = (p: Product, language = lang): string => {
+    if (language === "ru") return p.name_ru || p.name_en || p.part_number;
+    if (language === "ko") return p.name_ko || p.name_en || p.name_ru || p.part_number;
+    return p.name_en || p.name_ru || p.part_number;
   };
 
   const hasFilters = !!(
