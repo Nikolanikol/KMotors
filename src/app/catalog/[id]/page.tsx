@@ -13,12 +13,13 @@ import { Metadata } from "next";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
-export async function generateMetadata({ params }): Promise<Metadata> {
-  const data = await fetchData(params?.id);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const data = await fetchData(id);
 
   if (!data || data === undefined)
     return { title: "Автомобиль | K-Axis", description: "" };
@@ -62,14 +63,14 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       ],
     },
     alternates: {
-      canonical: `https://kmotors.shop/catalog/${params.id}`,
+      canonical: `https://kmotors.shop/catalog/${id}`,
       languages: {
-        ru: `https://kmotors.shop/catalog/${params.id}`,
-        en: `https://kmotors.shop/catalog/${params.id}`,
-        ko: `https://kmotors.shop/catalog/${params.id}`,
-        ka: `https://kmotors.shop/catalog/${params.id}`,
-        ar: `https://kmotors.shop/catalog/${params.id}`,
-        "x-default": `https://kmotors.shop/catalog/${params.id}`,
+        ru: `https://kmotors.shop/catalog/${id}`,
+        en: `https://kmotors.shop/catalog/${id}`,
+        ko: `https://kmotors.shop/catalog/${id}`,
+        ka: `https://kmotors.shop/catalog/${id}`,
+        ar: `https://kmotors.shop/catalog/${id}`,
+        "x-default": `https://kmotors.shop/catalog/${id}`,
       },
     },
   };
@@ -86,7 +87,8 @@ export async function fetchData(id: string): Promise<any> {
   } catch (error) {}
 }
 const Page: FC<PageProps> = async ({ params }) => {
-  const data = await fetchData(params.id);
+  const { id } = await params;
+  const data = await fetchData(id);
   if (data === undefined) return <div>not found</div>;
   // =================?
   const carName = [
