@@ -82,6 +82,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = TITLE[lang] ?? TITLE.ru;
   const description = DESCRIPTION[lang] ?? DESCRIPTION.ru;
+
+  // Sort photos same way as Carousel (OUTER first) and get direct encar URL
+  // WhatsApp fetches this directly — no latency from our server
+  const TYPE_ORDER: Record<string, number> = { OUTER: 0, OPTION: 1, INNER: 2 };
+  const sortedPhotos = [...(data?.photos || [])].sort((a: any, b: any) => {
+    const typeA = TYPE_ORDER[a.type] ?? 1;
+    const typeB = TYPE_ORDER[b.type] ?? 1;
+    if (typeA !== typeB) return typeA - typeB;
+    return (a.code || "").localeCompare(b.code || "", undefined, { numeric: true });
+  });
+  const ogImage = sortedPhotos[0]?.path
+    ? `https://ci.encar.com${sortedPhotos[0].path}?impolicy=heightRate&rh=630&cw=1200&ch=630&cg=Center`
+    : undefined;
+
   return {
     title,
     description,
@@ -89,6 +103,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       type: "website",
+      ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630, alt: carName }] }),
     },
     twitter: {
       card: "summary_large_image",
