@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
     description: "K-Axis — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
     type: "website",
-    images: [{ url: "https://www.kmotors.shop/preview/preview.png", width: 1200, height: 630, alt: "K-Axis" }],
+    images: [{ url: "https://www.kmotors.shop/hero-bg.jpg", width: 1160, height: 696, alt: "K-Axis — авто из Кореи" }],
   },
   keywords: [
     "авто из Кореи", "купить авто из Кореи", "kmotors",

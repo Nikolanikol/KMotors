@@ -42,11 +42,30 @@ export async function fetchData(id: string): Promise<any> {
   }
 }
 
+// Separate fast fetch for metadata — strict 1.5s timeout so WhatsApp never waits too long
+async function fetchDataFast(id: string) {
+  try {
+    const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lang, id } = await params;
-  const data = await fetchData(id);
+  const data = await fetchDataFast(id);
 
-  if (!data) return { title: "Car | K-Axis", description: "" };
+  // If API is slow → return fast generic metadata, WhatsApp gets it instantly
+  if (!data) return {
+    title: `Авто из Кореи | K-Axis`,
+    description: "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
+    openGraph: { title: "Авто из Кореи | K-Axis", description: "Купить автомобиль из Южной Кореи.", type: "website" },
+  };
 
   const carName = [
     data.category.manufacturerEnglishName,
