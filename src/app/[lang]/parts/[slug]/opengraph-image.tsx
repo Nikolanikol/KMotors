@@ -1,25 +1,37 @@
 import { ImageResponse } from "next/og";
-import { createServerClient } from "@/lib/supabase";
 import { parsePartSlug } from "@/utils/partSlug";
 
 async function fetchPartData(slug: string) {
   try {
     const { partNumber, productId } = parsePartSlug(slug);
 
-    const supabase = createServerClient();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-    let query = supabase.from("parts_products").select("id, part_number, name_ru, name_en, image_url");
-
+    let filter: string;
     if (productId !== null) {
-      query = query.eq("id", productId);
+      filter = `id=eq.${productId}`;
     } else if (partNumber) {
-      query = query.eq("part_number", partNumber);
+      filter = `part_number=eq.${encodeURIComponent(partNumber)}`;
     } else {
       return null;
     }
 
-    const { data: p } = await query.single();
-    return p;
+    // Use fetch directly → Next.js кэширует автоматически на revalidate срок
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/parts_products?${filter}&select=id,part_number,name_ru,name_en,image_url&limit=1`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        next: { revalidate: 604800 },
+      }
+    );
+
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows?.[0] ?? null;
   } catch {
     return null;
   }
@@ -28,6 +40,7 @@ async function fetchPartData(slug: string) {
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+export const revalidate = 604800; // Cache for 1 week
 
 export default async function Image({
   params,
@@ -45,8 +58,7 @@ export default async function Image({
       (
         <div
           style={{
-            fontSize: 48,
-            background: "white",
+            background: "#f5f5f5",
             width: "100%",
             height: "100%",
             display: "flex",
@@ -57,12 +69,20 @@ export default async function Image({
         >
           <img
             src={imageUrl}
-            style={{ width: "100%", height: "400px", objectFit: "cover", borderRadius: "8px" }}
+            style={{ width: "100%", height: "420px", objectFit: "contain" }}
             alt={title}
           />
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h1 style={{ fontSize: 32, margin: 0, color: "#002C5F" }}>{title}</h1>
-            <p style={{ fontSize: 20, margin: 0, color: "#666" }}>K-Axis</p>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <h1 style={{ fontSize: 28, margin: 0, color: "#002C5F", maxWidth: "800px" }}>
+              {title}
+            </h1>
+            <p style={{ fontSize: 22, margin: 0, color: "#FF4500", fontWeight: 700 }}>K-Axis</p>
           </div>
         </div>
       ),
@@ -70,11 +90,11 @@ export default async function Image({
     );
   }
 
+  // Fallback: branded gradient
   return new ImageResponse(
     (
       <div
         style={{
-          fontSize: 48,
           background: "linear-gradient(135deg, #002C5F 0%, #BB162B 100%)",
           width: "100%",
           height: "100%",
@@ -85,8 +105,8 @@ export default async function Image({
           color: "white",
         }}
       >
-        <h1 style={{ fontSize: 48, margin: 0, textAlign: "center" }}>K-Axis</h1>
-        <p style={{ fontSize: 24, margin: "20px 0 0 0", textAlign: "center" }}>
+        <h1 style={{ fontSize: 64, margin: 0, fontWeight: 700 }}>K-Axis</h1>
+        <p style={{ fontSize: 28, margin: "16px 0 0 0", opacity: 0.8 }}>
           Оригинальные запчасти из Кореи
         </p>
       </div>
