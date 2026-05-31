@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useTransition } from "react";
 import { trackEvent } from "@/utils/gtag";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
@@ -168,6 +168,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const lang = pathname.split("/")[1] || "ru";
 
@@ -206,7 +207,9 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
         else params.set(k, v);
       });
       const qs = params.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      startTransition(() => {
+        router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
     },
     [searchParams, router, pathname]
   );
@@ -219,13 +222,11 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     [updateParams]
   );
 
-  // Page change — updates URL and scrolls up to results area
+  // Page change — updates URL and scrolls up to results area immediately (skeleton is already visible)
   const goToPage = useCallback(
     (newPage: number) => {
       updateParams({ page: newPage <= 1 ? undefined : String(newPage) });
-      setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 50);
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
     [updateParams]
   );
@@ -400,10 +401,12 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                 <button
                   key={brand.id}
                   type="button"
+                  disabled={isPending}
                   onClick={() => updateFilters({ brand: active ? undefined : brand.slug, model: undefined })}
                   className={cn(
                     "px-7 py-2.5 rounded-full border-2 text-sm font-semibold tracking-wide transition-all shadow-sm",
-                    active ? colors.active : colors.inactive
+                    active ? colors.active : colors.inactive,
+                    isPending && "opacity-60 cursor-wait"
                   )}
                 >
                   {brand.name}
@@ -421,12 +424,14 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                   <button
                     key={name}
                     type="button"
+                    disabled={isPending}
                     onClick={() => updateFilters({ model: modelName === name ? undefined : name })}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
                       active
                         ? "bg-[#BB162B] text-white border-[#BB162B]"
-                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"
+                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200",
+                      isPending && "opacity-60 cursor-wait"
                     )}
                   >
                     {name}
@@ -449,7 +454,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                   <button
                     key={cat.id}
                     type="button"
-                    disabled={empty}
+                    disabled={empty || isPending}
                     onClick={() => updateFilters({ cat: catSlug === cat.slug ? undefined : cat.slug, sub: undefined })}
                     className={cn(
                       "flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 text-xs font-medium transition-all",
@@ -457,7 +462,8 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                         ? "border-gray-100 text-gray-300 cursor-not-allowed opacity-50"
                         : active
                         ? "border-[#BB162B] bg-[#BB162B]/5 text-[#BB162B]"
-                        : "border-gray-200 text-gray-500 hover:border-[#002C5F]/30 hover:text-[#002C5F]"
+                        : "border-gray-200 text-gray-500 hover:border-[#002C5F]/30 hover:text-[#002C5F]",
+                      isPending && !empty && "opacity-60 cursor-wait"
                     )}
                   >
                     <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -486,7 +492,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                   <button
                     key={sub.id}
                     type="button"
-                    disabled={empty}
+                    disabled={empty || isPending}
                     onClick={() => updateFilters({ sub: subSlug === sub.slug ? undefined : sub.slug })}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
@@ -494,7 +500,8 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                         ? "bg-gray-50 text-gray-300 border-transparent cursor-not-allowed opacity-50"
                         : active
                         ? "bg-[#002C5F] text-white border-[#002C5F]"
-                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200"
+                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200",
+                      isPending && !empty && "opacity-60 cursor-wait"
                     )}
                   >
                     {getLocalName(sub.name_ru, sub.name_en)}
@@ -566,9 +573,10 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
           <div className="flex items-center gap-3">
             <Select
               value={sort}
+              disabled={isPending}
               onValueChange={(val) => updateFilters({ sort: val === "default" ? undefined : val })}
             >
-              <SelectTrigger className="h-9 w-44 bg-white text-gray-700 border-gray-300 text-sm shadow-sm">
+              <SelectTrigger className={cn("h-9 w-44 bg-white text-gray-700 border-gray-300 text-sm shadow-sm", isPending && "opacity-60 cursor-wait")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white text-gray-900 border-gray-200">
@@ -621,7 +629,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
 
         {/* Pagination */}
         {!isLoading && totalPages > 1 && (
-          <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} />
+          <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} isPending={isPending} />
         )}
 
       </div>
@@ -635,19 +643,21 @@ function Pagination({
   page,
   totalPages,
   onPageChange,
+  isPending,
 }: {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  isPending: boolean;
 }) {
   const pages = getPageNumbers(page, totalPages);
 
   return (
-    <nav className="flex items-center justify-center gap-1 mt-10" aria-label="Pagination">
+    <nav className={cn("flex items-center justify-center gap-1 mt-10", isPending && "opacity-60 pointer-events-none")} aria-label="Pagination">
       {/* Prev */}
       <button
         onClick={() => onPageChange(page - 1)}
-        disabled={page === 1}
+        disabled={page === 1 || isPending}
         className={cn(
           "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
           page === 1
@@ -667,6 +677,7 @@ function Pagination({
         ) : (
           <button
             key={p}
+            disabled={isPending}
             onClick={() => onPageChange(p as number)}
             className={cn(
               "w-9 h-9 rounded-lg text-sm font-medium transition-all",
@@ -683,7 +694,7 @@ function Pagination({
       {/* Next */}
       <button
         onClick={() => onPageChange(page + 1)}
-        disabled={page === totalPages}
+        disabled={page === totalPages || isPending}
         className={cn(
           "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
           page === totalPages

@@ -1,11 +1,10 @@
 export function generatePartSlug(
   partNumber: string | null,
-  name: string,
+  name: string | null | undefined,
   lang: "ru" | "en" | "ko" = "ru",
   id?: number
 ): string {
-  // Выбираем нужное имя в зависимости от языка
-  const nameToSlug = lang === "ru" ? name : name;
+  const nameToSlug = name ?? "";
 
   // Конвертируем в ASCII-slug (кириллица → транслит вручную)
   const slug = slugify(nameToSlug);
@@ -79,7 +78,7 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
 };
 
 function transliterate(text: string): string {
-  return text
+  return (text ?? "")
     .toLowerCase()
     .split("")
     .map((char) => CYRILLIC_TO_LATIN[char] || char)
