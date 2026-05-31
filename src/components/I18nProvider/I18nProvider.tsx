@@ -10,12 +10,11 @@ interface Props {
 }
 
 export default function I18nProvider({ children, lang }: Props) {
-  // Меняем язык синхронно — все ресурсы уже загружены в i18n.ts
-  if (i18n.isInitialized && i18n.language !== lang) {
-    i18n.changeLanguage(lang);
-  }
-
   useEffect(() => {
+    // Меняем язык внутри useEffect, не во время рендеринга
+    if (i18n.isInitialized && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+    }
     // Сохраняем в localStorage для совместимости
     localStorage.setItem('kmotors-language', lang);
     // Обновляем html lang атрибут на клиенте
