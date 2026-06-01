@@ -55,7 +55,7 @@ export async function GET(
     const { data: products, error } = await supabase
       .from("parts_products")
       .select("id, part_number, name_ru, name_en, name_ko, scraped_at", { count: "exact" })
-      .order("id")
+      .order("price_krw", { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
 
     console.log(`[sitemap-parts] DB Response: error=${!!error}, products=${products?.length || 0}`);
