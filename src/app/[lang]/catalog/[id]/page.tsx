@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import CarDescription from "@/components/Catalog/CarDetail/CarDescription";
 import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
@@ -146,7 +146,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ params }) => {
   const { lang, id } = await params;
   const data = await fetchData(id);
-  if (!data) return notFound();
+  if (!data) redirect(`/${lang}/catalog`);
 
   const carName = [
     data.category.manufacturerEnglishName,
