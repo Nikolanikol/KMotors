@@ -137,33 +137,41 @@ interface Props {
 // Заголовки и описания для каждого языка
 function buildMeta(
   lang: string,
-  p: { part_number: string; name_ru: string; name_en: string; name_ko: string | null }
+  p: { part_number: string | null; name_ru: string; name_en: string; name_ko: string | null }
 ) {
   const ru = p.name_ru;
   const en = p.name_en || p.name_ru;
   const ko = p.name_ko || p.name_en || p.name_ru;
-  const pn = p.part_number;
+  const pn = p.part_number || "";
 
   const map: Record<string, { title: string; description: string }> = {
     ru: {
-      title: `${ru} — ${pn} | K-Axis`,
+      title: pn ? `${ru} — ${pn} | K-Axis` : `${ru} | K-Axis`,
       description: `Оригинальная запчасть Hyundai Mobis — ${ru}. Артикул: ${pn}. Прямые поставки из Кореи, гарантия качества.`,
     },
     en: {
-      title: `${en} — ${pn} | K-Axis`,
-      description: `Original Hyundai Mobis spare part — ${en}. Part number: ${pn}. Direct supply from Korea, quality guarantee.`,
+      title: pn ? `${en} — ${pn} | K-Axis` : `${en} | K-Axis`,
+      description: pn
+        ? `Original Hyundai Mobis spare part — ${en}. Part number: ${pn}. Direct supply from Korea, quality guarantee.`
+        : `Original Hyundai Mobis spare part — ${en}. Direct supply from Korea, quality guarantee.`,
     },
     ko: {
-      title: `${ko} — ${pn} | K-Axis`,
-      description: `현대모비스 정품 부품 — ${ko}. 부품 번호: ${pn}. 한국에서 직접 공급, 품질 보증.`,
+      title: pn ? `${ko} — ${pn} | K-Axis` : `${ko} | K-Axis`,
+      description: pn
+        ? `현대모비스 정품 부품 — ${ko}. 부품 번호: ${pn}. 한국에서 직접 공급, 품질 보증.`
+        : `현대모비스 정품 부품 — ${ko}. 한국에서 직접 공급, 품질 보증.`,
     },
     ka: {
-      title: `${en} — ${pn} | K-Axis`,
-      description: `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. ნომერი: ${pn}. პირდაპირი მიწოდება კორეიდან.`,
+      title: pn ? `${en} — ${pn} | K-Axis` : `${en} | K-Axis`,
+      description: pn
+        ? `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. ნომერი: ${pn}. პირდაპირი მიწოდება კორეიდან.`
+        : `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. პირდაპირი მიწოდება კორეიდან.`,
     },
     ar: {
-      title: `${en} — ${pn} | K-Axis`,
-      description: `قطعة غيار أصلية من Hyundai Mobis — ${en}. رقم القطعة: ${pn}. توريد مباشر من كوريا.`,
+      title: pn ? `${en} — ${pn} | K-Axis` : `${en} | K-Axis`,
+      description: pn
+        ? `قطعة غيار أصلية من Hyundai Mobis — ${en}. رقم القطعة: ${pn}. توريد مباشر من كوريا.`
+        : `قطعة غيار أصلية من Hyundai Mobis — ${en}. توريد مباشر من كوريا.`,
     },
   };
   return map[lang] ?? map.ru;

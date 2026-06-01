@@ -1,14 +1,16 @@
 // app/sitemap.xml/route.ts
 import { NextResponse } from "next/server";
+import { createServerClient } from "@/lib/supabase";
 
 const BASE = "https://www.kmotors.shop";
-const PAGE_SIZE = 20;
+const CATALOG_PAGE_SIZE = 20;
+const PARTS_PAGE_SIZE = 1_000;
 const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
 const QUERY = "(And.Hidden.N._.CarType.Y.)";
 
 export const revalidate = 3600;
 
-async function fetchCount(): Promise<number> {
+async function fetchCatalogCount(): Promise<number> {
   try {
     const url = `${PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C0%7C1`;
     const res = await fetch(url);
@@ -20,29 +22,46 @@ async function fetchCount(): Promise<number> {
   }
 }
 
-export async function GET() {
-  let totalPages = 50; // fallback: 50 pages × 20 cars = 1000 slots
+async function fetchPartsCount(): Promise<number> {
   try {
-    const count = await fetchCount();
-    if (count > 0) {
-      totalPages = Math.min(Math.ceil(count / PAGE_SIZE), 200);
-    }
+    const supabase = createServerClient();
+    const { count } = await supabase
+      .from("parts_products")
+      .select("*", { count: "exact", head: true });
+    return count ?? 0;
   } catch {
-    totalPages = 50;
+    return 49_000; // fallback
   }
+}
+
+export async function GET() {
+  const [catalogCount, partsCount] = await Promise.all([
+    fetchCatalogCount(),
+    fetchPartsCount(),
+  ]);
+
+  const catalogPages = catalogCount > 0
+    ? Math.min(Math.ceil(catalogCount / CATALOG_PAGE_SIZE), 200)
+    : 50;
+
+  const partsPages = Math.ceil(partsCount / PARTS_PAGE_SIZE) || 49;
 
   const staticSitemaps = [
     `${BASE}/sitemap-main.xml`,
     `${BASE}/sitemap-blog.xml`,
-    `${BASE}/sitemap-parts.xml`,
   ];
 
+  const partsSitemaps = Array.from(
+    { length: partsPages },
+    (_, i) => `${BASE}/sitemap-parts/${i + 1}`
+  );
+
   const catalogSitemaps = Array.from(
-    { length: totalPages },
+    { length: catalogPages },
     (_, i) => `${BASE}/sitemap-catalog/${i + 1}`
   );
 
-  const all = [...staticSitemaps, ...catalogSitemaps];
+  const all = [...staticSitemaps, ...partsSitemaps, ...catalogSitemaps];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
