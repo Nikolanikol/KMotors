@@ -18,6 +18,7 @@ type Category = {
   name_ru: string;
   name_en: string;
   slug: string;
+  parent_id: number | null;
 };
 
 const fetchTopParts = unstable_cache(
@@ -34,8 +35,7 @@ const fetchTopParts = unstable_cache(
         .limit(200),
       supabase
         .from("parts_categories")
-        .select("id, name_ru, name_en, slug")
-        .is("parent_id", null),
+        .select("id, name_ru, name_en, slug, parent_id"),
     ]);
 
     const parts = (partsResult.data ?? []) as TopPart[];
@@ -45,9 +45,17 @@ const fetchTopParts = unstable_cache(
     const catMap: Record<number, Category> = {};
     cats.forEach((c) => { catMap[c.id] = c; });
 
+    // Resolve to top-level category (parent if exists)
+    const resolveTopCat = (catId: number): Category | null => {
+      const cat = catMap[catId];
+      if (!cat) return null;
+      if (cat.parent_id === null) return cat;
+      return catMap[cat.parent_id] ?? cat;
+    };
+
     const grouped: Record<string, { cat: Category; parts: TopPart[] }> = {};
     for (const p of parts) {
-      const cat = p.category_id ? catMap[p.category_id] : null;
+      const cat = p.category_id ? resolveTopCat(p.category_id) : null;
       if (!cat) continue;
       if (!grouped[cat.id]) grouped[cat.id] = { cat, parts: [] };
       if (grouped[cat.id].parts.length < 20) {
