@@ -285,11 +285,55 @@ export default async function ProductDetailPage({ params }: Props) {
     ],
   };
 
+  // ── Auto-generated description ────────────────────────────────────────────
+  const brandNames = data.compatibleBrands.map((b) => b.name).join(", ");
+  const catRu = data.categoryName?.ru ?? "";
+  const catEn = data.categoryName?.en ?? "";
+
+  const descriptionMap: Record<string, string> = {
+    ru: [
+      `${product.name_ru}${product.part_number ? ` (артикул ${product.part_number})` : ""} — оригинальная запчасть Hyundai Mobis.`,
+      catRu ? `Категория: ${catRu}.` : "",
+      brandNames ? `Подходит для автомобилей ${brandNames}.` : "",
+      `Прямые поставки из Южной Кореи. Доставка по всему миру. Гарантия качества Hyundai Mobis.`,
+    ].filter(Boolean).join(" "),
+
+    en: [
+      `${product.name_en || product.name_ru}${product.part_number ? ` (part number ${product.part_number})` : ""} — genuine Hyundai Mobis spare part.`,
+      catEn ? `Category: ${catEn}.` : "",
+      brandNames ? `Compatible with ${brandNames} vehicles.` : "",
+      `Direct supply from South Korea. Worldwide delivery. Hyundai Mobis quality guarantee.`,
+    ].filter(Boolean).join(" "),
+
+    ko: [
+      `${product.name_ko || product.name_en || product.name_ru}${product.part_number ? ` (부품 번호 ${product.part_number})` : ""} — 현대모비스 정품 부품입니다.`,
+      catEn ? `카테고리: ${catEn}.` : "",
+      brandNames ? `${brandNames} 차량에 적합합니다.` : "",
+      `한국에서 직접 공급. 전 세계 배송. 현대모비스 품질 보증.`,
+    ].filter(Boolean).join(" "),
+
+    ka: [
+      `${product.name_en || product.name_ru}${product.part_number ? ` (ნომერი ${product.part_number})` : ""} — Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი.`,
+      catEn ? `კატეგორია: ${catEn}.` : "",
+      brandNames ? `შესაფერისია ${brandNames} მანქანებისთვის.` : "",
+      `პირდაპირი მიწოდება სამხრეთ კორეიდან. მიტანა მსოფლიოს ნებისმიერ ქვეყანაში. Hyundai Mobis-ის ხარისხის გარანტია.`,
+    ].filter(Boolean).join(" "),
+
+    ar: [
+      `${product.name_en || product.name_ru}${product.part_number ? ` (رقم القطعة ${product.part_number})` : ""} — قطعة غيار أصلية من Hyundai Mobis.`,
+      catEn ? `الفئة: ${catEn}.` : "",
+      brandNames ? `متوافقة مع سيارات ${brandNames}.` : "",
+      `توريد مباشر من كوريا الجنوبية. توصيل إلى جميع أنحاء العالم. ضمان جودة Hyundai Mobis.`,
+    ].filter(Boolean).join(" "),
+  };
+
+  const description = descriptionMap[lang] ?? descriptionMap.ru;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} />
+      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} />
     </>
   );
 }

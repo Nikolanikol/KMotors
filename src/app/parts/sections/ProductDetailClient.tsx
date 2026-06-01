@@ -50,6 +50,7 @@ interface Props {
   compatibleBrands: CompatibleBrand[];
   lang: string;
   krwToUsd: number;
+  description?: string;
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ export function ProductDetailClient({
   compatibleBrands,
   lang,
   krwToUsd,
+  description,
 }: Props) {
   const { t, i18n } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -302,6 +304,13 @@ export function ProductDetailClient({
             </div>
           </div>
         </div>
+
+        {/* ── Description ───────────────────────────────────────────────────── */}
+        {description && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8 mb-10">
+            <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+          </div>
+        )}
 
         {/* ── Compatible models ──────────────────────────────────────────────── */}
         {compatibleBrands.length > 0 && (
