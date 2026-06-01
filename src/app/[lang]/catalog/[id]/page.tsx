@@ -62,9 +62,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   // If API is slow → return fast generic metadata, WhatsApp gets it instantly
   if (!data) return {
-    title: `Авто из Кореи | K-Axis`,
+    title: `Авто из Кореи`,
     description: "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
-    openGraph: { title: "Авто из Кореи | K-Axis", description: "Купить автомобиль из Южной Кореи.", type: "website" },
+    openGraph: { title: "Авто из Кореи", description: "Купить автомобиль из Южной Кореи.", type: "website" },
   };
 
   const carName = [
@@ -84,11 +84,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const rubPrice = krwPrice ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU") : null;
 
   const TITLE: Record<string, string> = {
-    ru: `${carName} ${year} из Кореи — цена, доставка | K-Axis`,
-    en: `${carName} ${year} from Korea — price, delivery | K-Axis`,
-    ko: `한국산 ${carName} ${year} — 가격, 배송 | K-Axis`,
-    ka: `${carName} ${year} კორეიდან — ფასი, მიტანა | K-Axis`,
-    ar: `${carName} ${year} من كوريا — السعر والتوصيل | K-Axis`,
+    ru: `${carName} ${year} из Кореи — цена, доставка`,
+    en: `${carName} ${year} from Korea — price, delivery`,
+    ko: `한국산 ${carName} ${year} — 가격, 배송`,
+    ka: `${carName} ${year} კორეიდან — ფასი, მიტანა`,
+    ar: `${carName} ${year} من كوريا — السعر والتوصيل`,
   };
 
   const DESCRIPTION: Record<string, string> = {

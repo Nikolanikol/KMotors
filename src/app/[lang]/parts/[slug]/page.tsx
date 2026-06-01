@@ -146,29 +146,31 @@ function buildMeta(
 
   const map: Record<string, { title: string; description: string }> = {
     ru: {
-      title: pn ? `${ru} — ${pn} | K-Axis` : `${ru} | K-Axis`,
-      description: `Оригинальная запчасть Hyundai Mobis — ${ru}. Артикул: ${pn}. Прямые поставки из Кореи, гарантия качества.`,
+      title: pn ? `${ru} — ${pn}` : ru,
+      description: pn
+        ? `Оригинальная запчасть Hyundai Mobis — ${ru}. Артикул: ${pn}. Прямые поставки из Кореи, гарантия качества.`
+        : `Оригинальная запчасть Hyundai Mobis — ${ru}. Прямые поставки из Кореи, гарантия качества.`,
     },
     en: {
-      title: pn ? `${en} — ${pn} | K-Axis` : `${en} | K-Axis`,
+      title: pn ? `${en} — ${pn}` : en,
       description: pn
         ? `Original Hyundai Mobis spare part — ${en}. Part number: ${pn}. Direct supply from Korea, quality guarantee.`
         : `Original Hyundai Mobis spare part — ${en}. Direct supply from Korea, quality guarantee.`,
     },
     ko: {
-      title: pn ? `${ko} — ${pn} | K-Axis` : `${ko} | K-Axis`,
+      title: pn ? `${ko} — ${pn}` : ko,
       description: pn
         ? `현대모비스 정품 부품 — ${ko}. 부품 번호: ${pn}. 한국에서 직접 공급, 품질 보증.`
         : `현대모비스 정품 부품 — ${ko}. 한국에서 직접 공급, 품질 보증.`,
     },
     ka: {
-      title: pn ? `${en} — ${pn} | K-Axis` : `${en} | K-Axis`,
+      title: pn ? `${en} — ${pn}` : en,
       description: pn
         ? `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. ნომერი: ${pn}. პირდაპირი მიწოდება კორეიდან.`
         : `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. პირდაპირი მიწოდება კორეიდან.`,
     },
     ar: {
-      title: pn ? `${en} — ${pn} | K-Axis` : `${en} | K-Axis`,
+      title: pn ? `${en} — ${pn}` : en,
       description: pn
         ? `قطعة غيار أصلية من Hyundai Mobis — ${en}. رقم القطعة: ${pn}. توريد مباشر من كوريا.`
         : `قطعة غيار أصلية من Hyundai Mobis — ${en}. توريد مباشر من كوريا.`,

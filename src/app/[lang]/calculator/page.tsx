@@ -7,27 +7,27 @@ interface Props {
 
 const META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Калькулятор растаможки авто из Кореи 2026 | K-Axis",
+    title: "Калькулятор растаможки авто из Кореи 2026",
     description:
       "Рассчитайте стоимость растаможки корейского автомобиля в Россию, Казахстан или Узбекистан. Актуальные ставки пошлин 2026 для физических лиц. Онлайн-калькулятор.",
   },
   en: {
-    title: "Korean Car Import Duty Calculator 2026 | K-Axis",
+    title: "Korean Car Import Duty Calculator 2026",
     description:
       "Calculate import customs duties for Korean cars to Russia, Kazakhstan or Uzbekistan. Updated 2026 rates for individuals.",
   },
   ko: {
-    title: "한국 자동차 통관 관세 계산기 2026 | K-Axis",
+    title: "한국 자동차 통관 관세 계산기 2026",
     description:
       "러시아, 카자흐스탄, 우즈베키스탄으로 한국 자동차 수입 관세를 계산하세요. 2026년 최신 요율.",
   },
   ka: {
-    title: "კორეული მანქანის საბაჟო გადასახადის კალკულატორი 2026 | K-Axis",
+    title: "კორეული მანქანის საბაჟო გადასახადის კალკულატორი 2026",
     description:
       "გამოთვალეთ კორეული ავტომობილის იმპორტის საბაჟო გადასახადი რუსეთში, ყაზახეთში ან უზბეკეთში. 2026 წლის განახლებული განაკვეთები.",
   },
   ar: {
-    title: "حاسبة الرسوم الجمركية للسيارات الكورية 2026 | K-Axis",
+    title: "حاسبة الرسوم الجمركية للسيارات الكورية 2026",
     description:
       "احسب رسوم الاستيراد الجمركية للسيارات الكورية إلى روسيا أو كازاخستان أو أوزبكستان. أسعار 2026 المحدّثة للأفراد.",
   },

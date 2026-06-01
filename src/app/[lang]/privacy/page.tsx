@@ -2,23 +2,23 @@ import type { Metadata } from "next";
 
 const PRIVACY_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Политика конфиденциальности | K-Axis",
+    title: "Политика конфиденциальности",
     description: "Политика конфиденциальности K-Axis — как мы собираем, используем и защищаем ваши данные.",
   },
   en: {
-    title: "Privacy Policy | K-Axis",
+    title: "Privacy Policy",
     description: "K-Axis Privacy Policy — how we collect, use and protect your data.",
   },
   ko: {
-    title: "개인정보 처리방침 | K-Axis",
+    title: "개인정보 처리방침",
     description: "K-Axis 개인정보 처리방침 — 데이터 수집, 사용 및 보호 방법.",
   },
   ka: {
-    title: "კონფიდენციალურობის პოლიტიკა | K-Axis",
+    title: "კონფიდენციალურობის პოლიტიკა",
     description: "K-Axis კონფიდენციალურობის პოლიტიკა — როგორ ვაგროვებთ, ვიყენებთ და ვიცავთ თქვენს მონაცემებს.",
   },
   ar: {
-    title: "سياسة الخصوصية | K-Axis",
+    title: "سياسة الخصوصية",
     description: "سياسة خصوصية K-Axis — كيف نجمع بياناتك ونستخدمها ونحميها.",
   },
 };

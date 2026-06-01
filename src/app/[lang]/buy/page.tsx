@@ -3,23 +3,23 @@ import BuyClientPage from "@/app/buy/BuyClientPage";
 
 const BUY_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Как купить авто из Кореи — пошаговая инструкция | K-Axis",
+    title: "Как купить авто из Кореи — пошаговая инструкция",
     description: "Пошаговая инструкция по покупке автомобиля из Южной Кореи через K-Axis. Выбор, документы, оплата, доставка, таможня.",
   },
   en: {
-    title: "How to Buy a Car from Korea — Step by Step | K-Axis",
+    title: "How to Buy a Car from Korea — Step by Step",
     description: "Step-by-step guide to buying a car from South Korea through K-Axis. Selection, documents, payment, delivery, customs.",
   },
   ko: {
-    title: "한국에서 자동차 구매 방법 — 단계별 가이드 | K-Axis",
+    title: "한국에서 자동차 구매 방법 — 단계별 가이드",
     description: "K-Axis를 통해 한국에서 자동차를 구매하는 단계별 가이드. 선택, 서류, 결제, 배송, 세관.",
   },
   ka: {
-    title: "კორეიდან ავტომობილის შეძენა — ნაბიჯ-ნაბიჯ | K-Axis",
+    title: "კორეიდან ავტომობილის შეძენა — ნაბიჯ-ნაბიჯ",
     description: "K-Axis-ის მეშვეობით კორეიდან ავტომობილის შეძენის სრული ინსტრუქცია. შერჩევა, დოკუმენტები, გადახდა, მიტანა.",
   },
   ar: {
-    title: "كيفية شراء سيارة من كوريا — خطوة بخطوة | K-Axis",
+    title: "كيفية شراء سيارة من كوريا — خطوة بخطوة",
     description: "دليل خطوة بخطوة لشراء سيارة من كوريا الجنوبية عبر K-Axis. الاختيار والوثائق والدفع والتوصيل والجمارك.",
   },
 };

@@ -61,10 +61,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { lang, slug } = await params;
   const post = await fetchPost(slug, lang);
 
-  if (!post) return { title: "Post not found | K-Axis" };
+  if (!post) return { title: "Post not found" };
 
   return {
-    title: `${post.title} | K-Axis`,
+    title: `${post.title}`,
     description: post.excerpt || post.title,
     openGraph: {
       title: post.title,

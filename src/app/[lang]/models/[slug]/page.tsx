@@ -22,7 +22,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
   const model = getModelBySlug(slug);
-  if (!model) return { title: "Not found | K-Axis" };
+  if (!model) return { title: "Not found" };
 
   const content = model.content[lang as "ru" | "en"] ?? model.content.ru;
 

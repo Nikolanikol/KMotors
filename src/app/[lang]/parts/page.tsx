@@ -17,23 +17,23 @@ export function generateStaticParams() {
 
 const PARTS_META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "Оригинальные запчасти из Кореи — Hyundai, Kia, Genesis | K-Axis",
+    title: "Оригинальные запчасти из Кореи — Hyundai, Kia, Genesis",
     description: "Оригинальные запчасти из Южной Кореи с доставкой. Двигатели, подвеска, кузов, тормоза для Hyundai, Kia, Genesis. Гарантия качества, прямые поставки.",
   },
   en: {
-    title: "Original Korean Car Parts — Hyundai, Kia, Genesis | K-Axis",
+    title: "Original Korean Car Parts — Hyundai, Kia, Genesis",
     description: "Original spare parts from South Korea with delivery. Engines, suspension, body, brakes for Hyundai, Kia, Genesis. Quality guarantee, direct supply.",
   },
   ko: {
-    title: "한국 정품 자동차 부품 — Hyundai, Kia, Genesis | K-Axis",
+    title: "한국 정품 자동차 부품 — Hyundai, Kia, Genesis",
     description: "한국에서 직배송 정품 부품. 엔진, 서스펜션, 차체, 브레이크 (Hyundai, Kia, Genesis). 품질 보증, 직접 공급.",
   },
   ka: {
-    title: "კორეული ორიგინალი სათადარიგო ნაწილები — Hyundai, Kia, Genesis | K-Axis",
+    title: "კორეული ორიგინალი სათადარიგო ნაწილები — Hyundai, Kia, Genesis",
     description: "კორეიდან ორიგინალი სათადარიგო ნაწილები მიტანით. ძრავი, საკიდი, კუზოვი, სამუხრუჭო სისტემა Hyundai, Kia, Genesis-ისთვის.",
   },
   ar: {
-    title: "قطع غيار كورية أصلية — Hyundai وKia وGenesis | K-Axis",
+    title: "قطع غيار كورية أصلية — Hyundai وKia وGenesis",
     description: "قطع غيار أصلية من كوريا الجنوبية مع التوصيل. محركات، تعليق، هيكل، فرامل لـ Hyundai وKia وGenesis. ضمان الجودة، توريد مباشر.",
   },
 };
