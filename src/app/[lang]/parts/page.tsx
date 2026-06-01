@@ -3,6 +3,7 @@ import { Hero } from "@/app/parts/sections/Hero";
 import { PartsCatalog } from "@/app/parts/sections/PartsCatalog";
 import { About } from "@/app/parts/sections/About";
 import { ContactForm } from "@/app/parts/sections/ContactForm";
+import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
@@ -132,7 +133,8 @@ export default async function PartsPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
-      <div>
+      <div style={{ position: "relative" }}>
+        <PartsTopLinks lang={lang} />
         <Hero />
         <PartsCatalog />
         <About />
