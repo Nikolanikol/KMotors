@@ -131,6 +131,10 @@ export default async function CatalogPage({ params, searchParams }: Props) {
   const { lang } = await params;
   const sp = await searchParams;
 
+  const meta = CATALOG_META[lang] || CATALOG_META.ru;
+  const manufacture = sp.manufacture?.slice(1) || "";
+  const title = manufacture ? meta.withBrand.replace("{brand}", manufacture) : meta.default;
+
   const faqs = CATALOG_FAQ[lang] || CATALOG_FAQ.ru;
   const faqSchema = {
     "@context": "https://schema.org",
