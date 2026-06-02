@@ -120,7 +120,8 @@
     "year": "წელი",
     "carNoSearch": "ავტო ნომრით ძიება",
     "carNoPlaceholder": "მაგ.: 123가4567",
-    "carNoButton": "ძიება"
+    "carNoButton": "ძიება",
+    "carNoInvalid": "შეიყვანეთ კორეული ნომერი, მაგ.: 317주9018"
   },
   "fuel": {
     "gasoline": "ბენზინი",

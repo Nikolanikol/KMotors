@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { data } from "./FilterData";
 import { trackEvent } from "@/utils/gtag";
@@ -43,14 +43,50 @@ const Filter = ({}) => {
   const initYearMin = searchParams.get("yearMin") ?? "";
   const initYearMax = searchParams.get("yearMax") ?? "";
 
+  const HISTORY_KEY = "kmotors_carno_history";
   const initCarNo = searchParams.get("carNo") ?? "";
   const [carNo, setCarNo] = useState(initCarNo);
+  const [carNoError, setCarNoError] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
 
-  const handleCarNoSearch = () => {
-    if (!carNo.trim()) return;
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) setHistory(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // Корейский номер: 12가3456 / 317주9018 / 서울12가3456
+  const KOREAN_PLATE = /^([가-힣]{2})?\d{2,3}[가-힣]\d{4}$/;
+
+  const saveHistory = (val: string) => {
+    const next = [val, ...history.filter((h) => h !== val)].slice(0, 5);
+    setHistory(next);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch {}
+  };
+
+  const handleCarNoSearch = (val = carNo) => {
+    const trimmed = val.trim();
+    if (!trimmed) return;
+    if (!KOREAN_PLATE.test(trimmed)) {
+      setCarNoError(t("filter.carNoInvalid"));
+      return;
+    }
+    setCarNoError("");
+    saveHistory(trimmed);
+    setCarNo(trimmed);
     const lang = i18n.language || "ru";
     startTransition(() => {
-      router.push(`/${lang}/catalog?carNo=${encodeURIComponent(carNo.trim())}&page=1`);
+      router.push(`/${lang}/catalog?carNo=${encodeURIComponent(trimmed)}&page=1`);
+    });
+  };
+
+  const handleClearCarNo = () => {
+    setCarNo("");
+    setCarNoError("");
+    const lang = i18n.language || "ru";
+    startTransition(() => {
+      router.push(`/${lang}/catalog?page=1`);
     });
   };
 
@@ -94,10 +130,10 @@ const Filter = ({}) => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--axis-gray)" }} />
             <input
               value={carNo}
-              onChange={(e) => setCarNo(e.target.value)}
+              onChange={(e) => { setCarNo(e.target.value); setCarNoError(""); }}
               onKeyDown={(e) => e.key === "Enter" && handleCarNoSearch()}
               placeholder={t("filter.carNoPlaceholder")}
-              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg outline-none focus:ring-1"
+              className="w-full pl-8 pr-7 py-2 text-sm rounded-lg outline-none"
               style={{
                 backgroundColor: "var(--axis-graphite)",
                 border: "1px solid rgba(74,74,74,0.4)",
@@ -107,15 +143,46 @@ const Filter = ({}) => {
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--axis-orange)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(74,74,74,0.4)")}
             />
+            {carNo && (
+              <button
+                onClick={handleClearCarNo}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full transition-opacity hover:opacity-70"
+                style={{ color: "var(--axis-gray)" }}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
           <Button
-            onClick={handleCarNoSearch}
+            onClick={() => handleCarNoSearch()}
             className="shrink-0 px-4 text-sm font-semibold"
             style={{ backgroundColor: "var(--axis-orange)", color: "var(--axis-white)" }}
           >
             {t("filter.carNoButton")}
           </Button>
         </div>
+        {carNoError && (
+          <p className="text-xs mt-1.5" style={{ color: "#f87171" }}>{carNoError}</p>
+        )}
+        {/* История поиска */}
+        {history.length > 0 && !carNo && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {history.map((h) => (
+              <button
+                key={h}
+                onClick={() => handleCarNoSearch(h)}
+                className="px-2.5 py-1 text-xs rounded-full transition-all hover:opacity-80"
+                style={{
+                  backgroundColor: "var(--axis-graphite)",
+                  border: "1px solid rgba(74,74,74,0.4)",
+                  color: "var(--axis-gray)",
+                }}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <h2 className="text-sm font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("filter.manufacturer")}</h2>

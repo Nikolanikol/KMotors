@@ -120,7 +120,8 @@
     "year": "السنة",
     "carNoSearch": "البحث برقم السيارة",
     "carNoPlaceholder": "مثال: 123가4567",
-    "carNoButton": "بحث"
+    "carNoButton": "بحث",
+    "carNoInvalid": "أدخل رقم اللوحة الكورية، مثال: 317주9018"
   },
   "fuel": {
     "gasoline": "بنزين",

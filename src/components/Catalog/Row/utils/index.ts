@@ -34,7 +34,8 @@ const generateFilterQuery = ({
 
 function getString(params: CarSearchParams) {
   if (params.carNo && params.carNo.trim()) {
-    return `(And.Hidden.N._.CarNo.${params.carNo.trim()}.)`;
+    const encoded = encodeURIComponent(params.carNo.trim());
+    return `(And.Hidden.N._.CarType.Y._.Simple.keyword(${encoded}).)`;
   }
 
     const action =

@@ -120,7 +120,8 @@
     "year": "Год",
     "carNoSearch": "Поиск по номеру авто",
     "carNoPlaceholder": "Например: 123가4567",
-    "carNoButton": "Найти"
+    "carNoButton": "Найти",
+    "carNoInvalid": "Введите корейский номер авто, например: 317주9018"
   },
   "fuel": {
     "gasoline": "Бензин",

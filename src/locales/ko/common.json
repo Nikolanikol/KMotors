@@ -120,7 +120,8 @@
     "year": "연도",
     "carNoSearch": "차량 번호 검색",
     "carNoPlaceholder": "예: 123가4567",
-    "carNoButton": "검색"
+    "carNoButton": "검색",
+    "carNoInvalid": "차량 번호를 입력하세요. 예: 317주9018"
   },
   "fuel": {
     "gasoline": "가솔린",

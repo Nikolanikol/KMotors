@@ -1,33 +1,30 @@
 "use server";
 
+const isCarNoQuery = (query: string) => query.includes("Simple.keyword");
+
 export async function getCars(query: string, offset: string = "0") {
+  const cache = isCarNoQuery(query) ? "no-store" : "force-cache";
 
   try {
     const res = await fetch(
-      `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20
-`,
+      `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20`,
       {
-          cache: 'force-cache',
+        cache,
         headers: {
-          "user-agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-     },
+          "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        },
       }
     );
     const data = await res.json();
-
-    return   {
+    return {
       data: data.SearchResults ?? [],
       count: data.Count ?? 0,
-    } ;
+    };
   } catch {
     const fallbackRes = await fetch(
-      `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20
-`, {
-      cache: 'force-cache',
-}
+      `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20`,
+      { cache }
     );
-
     const fallbackData = await fallbackRes.json();
     return {
       data: fallbackData.SearchResults ?? [],

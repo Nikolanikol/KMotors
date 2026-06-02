@@ -5,6 +5,7 @@ import { CarSearchParams } from "./utils/Types";
 import CarCard from "./CarCard";
 import { Suspense } from "react";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { Search } from "lucide-react";
 
 const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   const params = await searchParams;
@@ -15,6 +16,23 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
     getCars(newString, offset),
     getCurrencyRates(),
   ]);
+
+  if (!data || data.length === 0) {
+    const isCarNoSearch = !!params.carNo;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <Search className="w-12 h-12 opacity-20" style={{ color: "var(--axis-gray)" }} />
+        <p className="text-base font-medium" style={{ color: "var(--axis-gray)" }}>
+          {isCarNoSearch ? `Авто с номером «${params.carNo}» не найдено` : "Ничего не найдено"}
+        </p>
+        {isCarNoSearch && (
+          <p className="text-sm" style={{ color: "rgba(120,120,120,0.8)" }}>
+            Проверьте номер и попробуйте снова
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
