@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "kmotors_parts_favorites";
+const SYNC_EVENT = "kmotors_parts_favorites_sync";
 
 export interface FavoritePart {
   id: number;
@@ -24,11 +25,19 @@ function readStorage(): FavoritePart[] {
   }
 }
 
+function writeStorage(next: FavoritePart[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event(SYNC_EVENT));
+}
+
 export function usePartsFavorites() {
   const [favorites, setFavorites] = useState<FavoritePart[]>([]);
 
   useEffect(() => {
     setFavorites(readStorage());
+    const sync = () => setFavorites(readStorage());
+    window.addEventListener(SYNC_EVENT, sync);
+    return () => window.removeEventListener(SYNC_EVENT, sync);
   }, []);
 
   const isFavorite = useCallback(
@@ -37,20 +46,15 @@ export function usePartsFavorites() {
   );
 
   const toggleFavorite = useCallback((part: FavoritePart) => {
-    setFavorites((prev) => {
-      const exists = prev.some((f) => f.id === part.id);
-      const next = exists ? prev.filter((f) => f.id !== part.id) : [...prev, part];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    const prev = readStorage();
+    const exists = prev.some((f) => f.id === part.id);
+    const next = exists ? prev.filter((f) => f.id !== part.id) : [...prev, part];
+    writeStorage(next);
   }, []);
 
   const removeFavorite = useCallback((id: number) => {
-    setFavorites((prev) => {
-      const next = prev.filter((f) => f.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    const next = readStorage().filter((f) => f.id !== id);
+    writeStorage(next);
   }, []);
 
   return { favorites, isFavorite, toggleFavorite, removeFavorite };
