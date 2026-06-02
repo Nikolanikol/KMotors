@@ -21,7 +21,7 @@ type Row = {
 };
 
 const ROWS: Row[] = [
-  { label: "Год", key: "year", best: "max" },
+  { label: "Год", key: "year", format: (v) => v?.toString().slice(0, 4) ?? v, best: "max" },
   { label: "Цена", key: "price", format: (v) => convertNumber(v), best: "min" },
   { label: "Пробег", key: "mileage", format: (v) => `${convertNumberKm(v)} км`, best: "min" },
   { label: "Топливо", key: "fuel", format: (v, t) => translateGenerationRow(v, t) },
@@ -49,10 +49,19 @@ export default function CompareClient() {
   // Находим лучшее значение по строке
   const getBest = (row: Row): string | null => {
     if (!row.best) return null;
-    const nums = cars.map((c) => Number(c[row.key])).filter((n) => !isNaN(n));
-    if (!nums.length) return null;
-    const best = row.best === "min" ? Math.min(...nums) : Math.max(...nums);
-    return String(best);
+    const vals = cars.map((c) => {
+      const raw = c[row.key] as string;
+      // Для года берём только первые 4 символа
+      return row.key === "year" ? Number(raw?.toString().slice(0, 4)) : Number(raw);
+    }).filter((n) => !isNaN(n));
+    if (!vals.length) return null;
+    const best = row.best === "min" ? Math.min(...vals) : Math.max(...vals);
+    // Возвращаем оригинальное значение из данных
+    return cars.find((c) => {
+      const raw = c[row.key] as string;
+      const num = row.key === "year" ? Number(raw?.toString().slice(0, 4)) : Number(raw);
+      return num === best;
+    })?.[row.key] as string ?? null;
   };
 
   if (cars.length < 2) {
@@ -86,16 +95,16 @@ export default function CompareClient() {
 
         {/* Таблица */}
         <div className="overflow-x-auto rounded-2xl" style={{ border: "1px solid rgba(74,74,74,0.25)" }}>
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[600px] table-fixed">
 
             {/* Фото + название */}
             <thead>
               <tr>
-                <th className="w-32 p-4 text-left text-xs font-medium" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-charcoal)", borderBottom: "1px solid rgba(74,74,74,0.2)" }}>
+                <th className="w-36 shrink-0 p-4 text-left text-xs font-medium" style={{ color: "var(--axis-gray)", backgroundColor: "var(--axis-charcoal)", borderBottom: "1px solid rgba(74,74,74,0.2)" }}>
                   Характеристика
                 </th>
                 {cars.map((car) => (
-                  <th key={car.id} className="p-4 text-center" style={{ backgroundColor: "var(--axis-charcoal)", borderBottom: "1px solid rgba(74,74,74,0.2)", borderLeft: "1px solid rgba(74,74,74,0.15)" }}>
+                  <th key={car.id} className="p-4 text-center" style={{ width: `${100 / cars.length}%`, backgroundColor: "var(--axis-charcoal)", borderBottom: "1px solid rgba(74,74,74,0.2)", borderLeft: "1px solid rgba(74,74,74,0.15)" }}>
                     <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden mb-3">
                       <Image
                         fill unoptimized
