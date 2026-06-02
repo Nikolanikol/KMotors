@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 const WA_PHONE = "821058654344";
-const TG_BOT = "KMOTORS_form_bot";
+const TG_MANAGER = "axiskorea";
 
 const usdFormatter = new Intl.NumberFormat("en-US");
 const formatUsd = (krw: number, rate: number) =>
@@ -52,8 +52,11 @@ export default function FavoritesClient() {
   };
 
   const buildPartsTgText = () => {
-    const lines = parts.map((p) => `${p.part_number}`);
-    return `parts_${lines.join("_")}`;
+    const lines = parts.map((p) => {
+      const name = i18n.language === "ru" ? p.name_ru : (p.name_en || p.name_ru);
+      return `• ${name} (${p.part_number}) — ${formatUsd(p.price_krw, krwToUsd)}`;
+    });
+    return `Здравствуйте! Хочу заказать запчасти:\n\n${lines.join("\n")}\n\nИтого: ~$${usdFormatter.format(totalPartsUsd)}`;
   };
 
   const toggleSelect = (id: string) => {
@@ -313,7 +316,7 @@ export default function FavoritesClient() {
                     WhatsApp
                   </a>
                   <a
-                    href={`https://t.me/${TG_BOT}?start=${buildPartsTgText()}`}
+                    href={`https://t.me/${TG_MANAGER}?text=${encodeURIComponent(buildPartsTgText())}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
                     style={{ backgroundColor: "rgba(34,158,217,0.15)", color: "#229ED9", border: "1px solid rgba(34,158,217,0.3)" }}
