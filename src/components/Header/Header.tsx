@@ -6,8 +6,9 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { X, Menu } from "lucide-react";
+import { X, Menu, Heart } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
+import { useFavorites } from "@/hooks/useFavorites";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -29,6 +30,7 @@ export default function Header() {
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { favorites } = useFavorites();
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
@@ -94,6 +96,22 @@ export default function Header() {
 
           {/* Right side */}
           <div className="hidden lg:flex items-center gap-4">
+            <Link
+              href={`/${lang}/favorites`}
+              className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+              style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}
+              aria-label={t("nav.favorites")}
+            >
+              <Heart className="w-4 h-4" fill={favorites.length > 0 ? "currentColor" : "none"} />
+              {favorites.length > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full"
+                  style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
+                >
+                  {favorites.length > 9 ? "9+" : favorites.length}
+                </span>
+              )}
+            </Link>
             <LanguageSwitcher />
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
@@ -110,6 +128,22 @@ export default function Header() {
 
           {/* Mobile right */}
           <div className="flex lg:hidden items-center gap-3">
+            <Link
+              href={`/${lang}/favorites`}
+              className="relative flex items-center justify-center w-8 h-8 rounded-xl"
+              style={{ color: "var(--axis-orange)" }}
+              aria-label={t("nav.favorites")}
+            >
+              <Heart className="w-4 h-4" fill={favorites.length > 0 ? "currentColor" : "none"} />
+              {favorites.length > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full"
+                  style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
+                >
+                  {favorites.length > 9 ? "9+" : favorites.length}
+                </span>
+              )}
+            </Link>
             <LanguageSwitcher />
             <button
               onClick={() => setIsMobileMenuOpen(true)}

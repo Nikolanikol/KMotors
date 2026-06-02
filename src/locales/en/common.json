@@ -6,7 +6,8 @@
     "contact": "Contact",
     "parts": "Parts",
     "blog": "Blog",
-    "calculator": "Calculator"
+    "calculator": "Calculator",
+    "favorites": "Favorites"
   },
   "catalog": {
     "title": "Korean Cars Catalog",
@@ -116,7 +117,10 @@
     "updating": "⏳ Updating...",
     "price": "Price",
     "mileage": "Mileage",
-    "year": "Year"
+    "year": "Year",
+    "carNoSearch": "Search by car number",
+    "carNoPlaceholder": "E.g.: 123가4567",
+    "carNoButton": "Search"
   },
   "fuel": {
     "gasoline": "Gasoline",
@@ -511,5 +515,12 @@
       "successDesc": "We will contact you shortly.",
       "closeBtn": "Close"
     }
+  },
+  "favorites": {
+    "title": "Favorites",
+    "add": "Add to favorites",
+    "remove": "Remove from favorites",
+    "empty": "No favorites yet",
+    "hint": "Add cars to favorites to compare prices"
   }
 }

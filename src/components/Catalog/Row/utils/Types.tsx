@@ -7,4 +7,6 @@ export type CarSearchParams = {
   mileageMax?: string;
   yearMin?: string;
   yearMax?: string;
+  carNo?: string;
+  manufacture?: string;
 };

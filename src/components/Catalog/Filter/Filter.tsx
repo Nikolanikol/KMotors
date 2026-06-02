@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
+import { Search } from "lucide-react";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { data } from "./FilterData";
 import { trackEvent } from "@/utils/gtag";
@@ -42,6 +43,17 @@ const Filter = ({}) => {
   const initYearMin = searchParams.get("yearMin") ?? "";
   const initYearMax = searchParams.get("yearMax") ?? "";
 
+  const initCarNo = searchParams.get("carNo") ?? "";
+  const [carNo, setCarNo] = useState(initCarNo);
+
+  const handleCarNoSearch = () => {
+    if (!carNo.trim()) return;
+    const lang = i18n.language || "ru";
+    startTransition(() => {
+      router.push(`/${lang}/catalog?carNo=${encodeURIComponent(carNo.trim())}&page=1`);
+    });
+  };
+
   const [manufactureAction, setManufactureAction] = useState<string | null>(null);
   const [manufacture, setManufacture] = useState<string | null>(initManufacture);
   const [modelActionDrill, setModelActionDrill] = useState<string | null>(null);
@@ -73,6 +85,39 @@ const Filter = ({}) => {
 
   return (
     <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+
+      {/* Поиск по номеру авто */}
+      <div className="pb-3 border-b" style={{ borderColor: "rgba(74,74,74,0.3)" }}>
+        <h2 className="text-sm font-semibold tracking-wide mb-2" style={{ color: "var(--axis-gray)" }}>{t("filter.carNoSearch")}</h2>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--axis-gray)" }} />
+            <input
+              value={carNo}
+              onChange={(e) => setCarNo(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCarNoSearch()}
+              placeholder={t("filter.carNoPlaceholder")}
+              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg outline-none focus:ring-1"
+              style={{
+                backgroundColor: "var(--axis-graphite)",
+                border: "1px solid rgba(74,74,74,0.4)",
+                color: "var(--axis-white)",
+                caretColor: "var(--axis-orange)",
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--axis-orange)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(74,74,74,0.4)")}
+            />
+          </div>
+          <Button
+            onClick={handleCarNoSearch}
+            className="shrink-0 px-4 text-sm font-semibold"
+            style={{ backgroundColor: "var(--axis-orange)", color: "var(--axis-white)" }}
+          >
+            {t("filter.carNoButton")}
+          </Button>
+        </div>
+      </div>
+
       <h2 className="text-sm font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("filter.manufacturer")}</h2>
 
       <Select

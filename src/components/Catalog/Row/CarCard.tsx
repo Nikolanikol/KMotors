@@ -4,11 +4,12 @@ import { useRef, useCallback } from "react";
 import { trackEvent } from "@/utils/gtag";
 import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface CarCardProps {
   id: string;
@@ -43,6 +44,7 @@ const WA_CAR_TEXT: Record<string, (id: string, name: string) => string> = {
 const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, fuel, price, krwToRub, krwToUsd }: CarCardProps) => {
   const { t } = useTranslation(["common", "cars"]);
   const pathname = usePathname();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
@@ -114,6 +116,25 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
         >
           {year}
         </div>
+        {/* Favorite button */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            toggleFavorite({ id, photo, model, manufacture, year, mileage, transmission, fuel, price });
+          }}
+          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
+          style={{
+            backgroundColor: isFavorite(id) ? "var(--axis-orange)" : "rgba(10,10,10,0.6)",
+            backdropFilter: "blur(4px)",
+          }}
+          aria-label={isFavorite(id) ? t("common:favorites.remove") : t("common:favorites.add")}
+        >
+          <Heart
+            className="w-4 h-4"
+            fill={isFavorite(id) ? "white" : "none"}
+            style={{ color: isFavorite(id) ? "white" : "var(--axis-gray)" }}
+          />
+        </button>
       </div>
 
       {/* Content */}
