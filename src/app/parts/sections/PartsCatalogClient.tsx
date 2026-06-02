@@ -29,7 +29,9 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Heart,
 } from "lucide-react";
+import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 
 const BRAND_CHIP_COLORS: Record<string, { active: string; inactive: string }> = {
   hyundai: {
@@ -779,6 +781,21 @@ interface ProductCardProps {
 
 function ProductCard({ product, productName, view, isVisible, index, href, onOrder, onNavigate, t, krwToUsd }: ProductCardProps) {
   const delay = `${Math.min(index * 20, 400)}ms`;
+  const { isFavorite, toggleFavorite } = usePartsFavorites();
+  const fav = isFavorite(product.id);
+
+  const FavButton = ({ className }: { className?: string }) => (
+    <button
+      onClick={(e) => { e.preventDefault(); toggleFavorite(product); }}
+      className={cn("flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 hover:scale-110", className)}
+      style={{
+        backgroundColor: fav ? "#BB162B" : "rgba(0,0,0,0.06)",
+      }}
+      aria-label={fav ? t("common:favorites.remove") : t("common:favorites.add")}
+    >
+      <Heart className="w-3.5 h-3.5" fill={fav ? "white" : "none"} style={{ color: fav ? "white" : "#9ca3af" }} />
+    </button>
+  );
 
   if (view === "list") {
     return (
@@ -796,7 +813,10 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
           <h3 className="text-sm font-semibold text-[#002C5F] truncate">{productName}</h3>
         </Link>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="text-lg font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
+            <FavButton />
+          </div>
           <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8">
             {t("parts.catalog.orderBtn")}
           </Button>
@@ -821,6 +841,9 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
             {t("parts.catalog.newBadge")}
           </div>
         )}
+        <div className="absolute top-2 right-2">
+          <FavButton />
+        </div>
       </Link>
       <div className="p-3 flex flex-col gap-1.5 flex-1">
         <Link href={href} onClick={onNavigate} className="block">

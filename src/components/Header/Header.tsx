@@ -9,6 +9,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { X, Menu, Heart } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
+import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -30,7 +31,9 @@ export default function Header() {
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { favorites } = useFavorites();
+  const { favorites: favCars } = useFavorites();
+  const { favorites: favParts } = usePartsFavorites();
+  const favTotal = favCars.length + favParts.length;
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
@@ -102,13 +105,13 @@ export default function Header() {
               style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}
               aria-label={t("nav.favorites")}
             >
-              <Heart className="w-4 h-4" fill={favorites.length > 0 ? "currentColor" : "none"} />
-              {favorites.length > 0 && (
+              <Heart className="w-4 h-4" fill={favTotal > 0 ? "currentColor" : "none"} />
+              {favTotal > 0 && (
                 <span
                   className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full"
                   style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
                 >
-                  {favorites.length > 9 ? "9+" : favorites.length}
+                  {favTotal > 9 ? "9+" : favTotal}
                 </span>
               )}
             </Link>
@@ -134,13 +137,13 @@ export default function Header() {
               style={{ color: "var(--axis-orange)" }}
               aria-label={t("nav.favorites")}
             >
-              <Heart className="w-4 h-4" fill={favorites.length > 0 ? "currentColor" : "none"} />
-              {favorites.length > 0 && (
+              <Heart className="w-4 h-4" fill={favTotal > 0 ? "currentColor" : "none"} />
+              {favTotal > 0 && (
                 <span
                   className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full"
                   style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
                 >
-                  {favorites.length > 9 ? "9+" : favorites.length}
+                  {favTotal > 9 ? "9+" : favTotal}
                 </span>
               )}
             </Link>
