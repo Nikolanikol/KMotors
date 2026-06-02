@@ -101,14 +101,19 @@ export default function Header() {
           <div className="hidden lg:flex items-center gap-4">
             <Link
               href={`/${lang}/favorites`}
-              className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
-              style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}
+              className="relative flex items-center gap-2 px-3 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
+              style={{
+                backgroundColor: favTotal > 0 ? "rgba(255,69,0,0.15)" : "rgba(255,69,0,0.08)",
+                color: "var(--axis-orange)",
+                border: favTotal > 0 ? "1px solid rgba(255,69,0,0.3)" : "1px solid transparent",
+              }}
               aria-label={t("nav.favorites")}
             >
-              <Heart className="w-4 h-4" fill={favTotal > 0 ? "currentColor" : "none"} />
+              <Heart className="w-4 h-4 shrink-0" fill={favTotal > 0 ? "currentColor" : "none"} />
+              <span className="text-sm font-medium">{t("nav.favorites")}</span>
               {favTotal > 0 && (
                 <span
-                  className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full"
+                  className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full"
                   style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
                 >
                   {favTotal > 9 ? "9+" : favTotal}
@@ -133,14 +138,18 @@ export default function Header() {
           <div className="flex lg:hidden items-center gap-3">
             <Link
               href={`/${lang}/favorites`}
-              className="relative flex items-center justify-center w-8 h-8 rounded-xl"
-              style={{ color: "var(--axis-orange)" }}
+              className="relative flex items-center justify-center w-9 h-9 rounded-xl cursor-pointer"
+              style={{
+                backgroundColor: favTotal > 0 ? "rgba(255,69,0,0.15)" : "rgba(255,69,0,0.08)",
+                color: "var(--axis-orange)",
+                border: favTotal > 0 ? "1px solid rgba(255,69,0,0.3)" : "1px solid transparent",
+              }}
               aria-label={t("nav.favorites")}
             >
               <Heart className="w-4 h-4" fill={favTotal > 0 ? "currentColor" : "none"} />
               {favTotal > 0 && (
                 <span
-                  className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full"
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full"
                   style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
                 >
                   {favTotal > 9 ? "9+" : favTotal}
