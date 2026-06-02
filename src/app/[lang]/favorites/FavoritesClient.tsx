@@ -43,20 +43,21 @@ export default function FavoritesClient() {
 
   const totalPartsUsd = parts.reduce((sum, p) => sum + Math.ceil(p.price_krw * krwToUsd * 1.23), 0);
 
-  const buildPartsWaText = () => {
-    const lines = parts.map((p) => {
-      const name = i18n.language === "ru" ? p.name_ru : (p.name_en || p.name_ru);
-      return `• ${name} (${p.part_number}) — ${formatUsd(p.price_krw, krwToUsd)}`;
-    });
-    return `Здравствуйте! Хочу заказать запчасти из избранного:\n\n${lines.join("\n")}\n\nИтого: ~$${usdFormatter.format(totalPartsUsd)}`;
+  const PARTS_ORDER_TEXT: Record<string, { greeting: string; total: string }> = {
+    ru: { greeting: "Здравствуйте! Хочу заказать запчасти из избранного:", total: "Итого" },
+    en: { greeting: "Hello! I'd like to order parts from my favorites:", total: "Total" },
+    ko: { greeting: "안녕하세요! 즐겨찾기에서 부품을 주문하고 싶습니다:", total: "합계" },
+    ka: { greeting: "გამარჯობა! მინდა შევუკვეთო ნაწილები რჩეულებიდან:", total: "სულ" },
+    ar: { greeting: "مرحباً! أريد طلب قطع الغيار من المفضلة:", total: "المجموع" },
   };
 
-  const buildPartsTgText = () => {
+  const buildOrderMessage = () => {
+    const tx = PARTS_ORDER_TEXT[lang] ?? PARTS_ORDER_TEXT.ru;
     const lines = parts.map((p) => {
       const name = i18n.language === "ru" ? p.name_ru : (p.name_en || p.name_ru);
       return `• ${name} (${p.part_number}) — ${formatUsd(p.price_krw, krwToUsd)}`;
     });
-    return `Здравствуйте! Хочу заказать запчасти:\n\n${lines.join("\n")}\n\nИтого: ~$${usdFormatter.format(totalPartsUsd)}`;
+    return `${tx.greeting}\n\n${lines.join("\n")}\n\n${tx.total}: ~$${usdFormatter.format(totalPartsUsd)}`;
   };
 
   const toggleSelect = (id: string) => {
@@ -296,7 +297,7 @@ export default function FavoritesClient() {
               >
                 <div>
                   <p className="text-xs mb-1" style={{ color: "var(--axis-gray)" }}>
-                    Итого {parts.length} {parts.length === 1 ? "позиция" : parts.length < 5 ? "позиции" : "позиций"}
+                    {PARTS_ORDER_TEXT[lang]?.total ?? "Итого"} · {parts.length} {lang === "ru" ? (parts.length === 1 ? "позиция" : parts.length < 5 ? "позиции" : "позиций") : "items"}
                   </p>
                   <p className="text-2xl font-bold" style={{ color: "var(--axis-orange)" }}>
                     ~${usdFormatter.format(totalPartsUsd)}
@@ -307,7 +308,7 @@ export default function FavoritesClient() {
                 </div>
                 <div className="flex gap-3">
                   <a
-                    href={`https://wa.me/${WA_PHONE}?text=${encodeURIComponent(buildPartsWaText())}`}
+                    href={`https://wa.me/${WA_PHONE}?text=${encodeURIComponent(buildOrderMessage())}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
                     style={{ backgroundColor: "rgba(37,211,102,0.15)", color: "#25D366", border: "1px solid rgba(37,211,102,0.3)" }}
@@ -316,7 +317,7 @@ export default function FavoritesClient() {
                     WhatsApp
                   </a>
                   <a
-                    href={`https://t.me/${TG_MANAGER}?text=${encodeURIComponent(buildPartsTgText())}`}
+                    href={`https://t.me/${TG_MANAGER}?text=${encodeURIComponent(buildOrderMessage())}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
                     style={{ backgroundColor: "rgba(34,158,217,0.15)", color: "#229ED9", border: "1px solid rgba(34,158,217,0.3)" }}
