@@ -47,21 +47,26 @@ export default function CompareClient() {
   );
 
   // Находим лучшее значение по строке
-  const getBest = (row: Row): string | null => {
-    if (!row.best) return null;
-    const vals = cars.map((c) => {
-      const raw = c[row.key] as string;
-      // Для года берём только первые 4 символа
-      return row.key === "year" ? Number(raw?.toString().slice(0, 4)) : Number(raw);
-    }).filter((n) => !isNaN(n));
-    if (!vals.length) return null;
-    const best = row.best === "min" ? Math.min(...vals) : Math.max(...vals);
-    // Возвращаем оригинальное значение из данных
-    return cars.find((c) => {
-      const raw = c[row.key] as string;
-      const num = row.key === "year" ? Number(raw?.toString().slice(0, 4)) : Number(raw);
-      return num === best;
-    })?.[row.key] as string ?? null;
+  const getNumVal = (row: Row, car: FavoriteCar): number => {
+    const raw = car[row.key] as string;
+    return row.key === "year" ? Number(raw?.toString().slice(0, 4)) : Number(raw);
+  };
+
+  // Возвращает true если данное авто имеет лучшее значение по строке
+  const isBestCar = (row: Row, car: FavoriteCar): boolean => {
+    if (!row.best) return false;
+    const vals = cars.map((c) => getNumVal(row, c)).filter((n) => !isNaN(n));
+    if (!vals.length) return false;
+    const bestVal = row.best === "min" ? Math.min(...vals) : Math.max(...vals);
+    const carVal = getNumVal(row, car);
+    if (isNaN(carVal)) return false;
+    // Не подсвечиваем если разница меньше 5% (для цены и пробега)
+    if (row.key === "price" || row.key === "mileage") {
+      const worstVal = row.best === "min" ? Math.max(...vals) : Math.min(...vals);
+      const diff = Math.abs(worstVal - bestVal) / worstVal;
+      if (diff < 0.05) return false;
+    }
+    return carVal === bestVal;
   };
 
   if (cars.length < 2) {
@@ -131,39 +136,36 @@ export default function CompareClient() {
 
             {/* Строки характеристик */}
             <tbody>
-              {ROWS.map((row, ri) => {
-                const best = getBest(row);
-                return (
-                  <tr key={row.key} style={{ backgroundColor: ri % 2 === 0 ? "var(--axis-graphite)" : "var(--axis-charcoal)" }}>
-                    <td className="p-4 text-xs font-medium" style={{ color: "var(--axis-gray)", borderTop: "1px solid rgba(74,74,74,0.1)" }}>
-                      {row.label}
-                    </td>
-                    {cars.map((car) => {
-                      const raw = car[row.key] as string;
-                      const display = row.format ? row.format(raw, t) : raw;
-                      const isBest = best !== null && raw === best;
-                      return (
-                        <td
-                          key={car.id}
-                          className="p-4 text-center text-sm font-semibold"
-                          style={{
-                            color: isBest ? "var(--axis-orange)" : "var(--axis-white)",
-                            borderTop: "1px solid rgba(74,74,74,0.1)",
-                            borderLeft: "1px solid rgba(74,74,74,0.15)",
-                          }}
-                        >
-                          {display}
-                          {isBest && (
-                            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(255,69,0,0.15)", color: "var(--axis-orange)" }}>
-                              ✓
-                            </span>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
+              {ROWS.map((row, ri) => (
+                <tr key={row.key} style={{ backgroundColor: ri % 2 === 0 ? "var(--axis-graphite)" : "var(--axis-charcoal)" }}>
+                  <td className="p-4 text-xs font-medium" style={{ color: "var(--axis-gray)", borderTop: "1px solid rgba(74,74,74,0.1)" }}>
+                    {row.label}
+                  </td>
+                  {cars.map((car) => {
+                    const raw = car[row.key] as string;
+                    const display = row.format ? row.format(raw, t) : raw;
+                    const best = isBestCar(row, car);
+                    return (
+                      <td
+                        key={car.id}
+                        className="p-4 text-center text-sm font-semibold"
+                        style={{
+                          color: best ? "var(--axis-orange)" : "var(--axis-white)",
+                          borderTop: "1px solid rgba(74,74,74,0.1)",
+                          borderLeft: "1px solid rgba(74,74,74,0.15)",
+                        }}
+                      >
+                        {display}
+                        {best && (
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(255,69,0,0.15)", color: "var(--axis-orange)" }}>
+                            ✓
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
