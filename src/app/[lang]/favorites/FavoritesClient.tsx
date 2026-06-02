@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useTranslation } from "react-i18next";
-import { Heart, Trash2, ArrowRight, Car, Wrench } from "lucide-react";
+import { Heart, Trash2, ArrowRight, Car, Wrench, GitCompare, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { generatePartSlug } from "@/utils/partSlug";
@@ -26,6 +26,20 @@ export default function FavoritesClient() {
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   const [tab, setTab] = useState<"cars" | "parts">("cars");
+  const [selected, setSelected] = useState<string[]>([]);
+  const router = useRouter();
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) =>
+      prev.includes(id)
+        ? prev.filter((i) => i !== id)
+        : prev.length < 4 ? [...prev, id] : prev
+    );
+  };
+
+  const goCompare = () => {
+    router.push(`/${lang}/compare?ids=${selected.join(",")}`);
+  };
 
   return (
     <div className="min-h-screen pt-24 pb-16" style={{ backgroundColor: "var(--axis-black)" }}>
@@ -99,12 +113,25 @@ export default function FavoritesClient() {
             {cars.length === 0 ? (
               <EmptyState lang={lang} t={t} type="cars" />
             ) : (
+              <>
+              {cars.length >= 2 && (
+                <p className="text-xs mb-4" style={{ color: "var(--axis-gray)" }}>
+                  Выберите до 4 авто для сравнения
+                </p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {cars.map((car) => (
+                {cars.map((car) => {
+                  const isSelected = selected.includes(car.id);
+                  const isDisabled = !isSelected && selected.length >= 4;
+                  return (
                   <div
                     key={car.id}
-                    className="relative rounded-2xl overflow-hidden"
-                    style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.25)" }}
+                    className="relative rounded-2xl overflow-hidden transition-all duration-200"
+                    style={{
+                      backgroundColor: "var(--axis-charcoal)",
+                      border: `2px solid ${isSelected ? "var(--axis-orange)" : "rgba(74,74,74,0.25)"}`,
+                      opacity: isDisabled ? 0.5 : 1,
+                    }}
                   >
                     <div className="relative aspect-[16/10]" style={{ backgroundColor: "var(--axis-graphite)" }}>
                       <Image
@@ -115,9 +142,17 @@ export default function FavoritesClient() {
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#141414]/70 to-transparent" />
-                      <div className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full text-white z-10" style={{ backgroundColor: "var(--axis-orange)" }}>
-                        {car.year}
-                      </div>
+                      {/* Чекбокс выбора */}
+                      <button
+                        onClick={() => !isDisabled && toggleSelect(car.id)}
+                        className="absolute top-3 left-3 z-10 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                        style={{
+                          backgroundColor: isSelected ? "var(--axis-orange)" : "rgba(10,10,10,0.6)",
+                          border: `2px solid ${isSelected ? "var(--axis-orange)" : "rgba(255,255,255,0.3)"}`,
+                        }}
+                      >
+                        {isSelected && <span className="text-white text-xs font-bold">{selected.indexOf(car.id) + 1}</span>}
+                      </button>
                       <button
                         onClick={() => removeCar(car.id)}
                         className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
@@ -157,8 +192,10 @@ export default function FavoritesClient() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
+              </>
             )}
           </>
         )}
@@ -223,6 +260,43 @@ export default function FavoritesClient() {
           </>
         )}
       </div>
+
+      {/* Панель сравнения */}
+      {selected.length >= 2 && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl"
+          style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid var(--axis-orange)" }}
+        >
+          <div className="flex items-center gap-2">
+            {selected.map((id, i) => {
+              const car = cars.find((c) => c.id === id);
+              return (
+                <div key={id} className="flex items-center gap-1.5">
+                  <span className="text-xs font-medium" style={{ color: "var(--axis-white)" }}>
+                    {car ? `${car.manufacture} ${car.year}` : id}
+                  </span>
+                  {i < selected.length - 1 && <span style={{ color: "var(--axis-gray)" }}>vs</span>}
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setSelected([])}
+            className="w-6 h-6 flex items-center justify-center rounded-full hover:opacity-70"
+            style={{ color: "var(--axis-gray)" }}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={goCompare}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
+            style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
+          >
+            <GitCompare className="w-4 h-4" />
+            Сравнить {selected.length}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
