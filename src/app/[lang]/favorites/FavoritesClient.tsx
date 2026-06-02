@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useTranslation } from "react-i18next";
-import { Heart, Trash2, ArrowRight, Car, Wrench, GitCompare, X } from "lucide-react";
+import { Heart, Trash2, ArrowRight, Car, Wrench, GitCompare, X, MessageCircle, Send } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,8 +14,12 @@ import { generatePartSlug } from "@/utils/partSlug";
 import { cn } from "@/lib/utils";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+const WA_PHONE = "821058654344";
+const TG_BOT = "KMOTORS_form_bot";
 
 const usdFormatter = new Intl.NumberFormat("en-US");
+const formatUsd = (krw: number, rate: number) =>
+  "$" + usdFormatter.format(Math.ceil(krw * rate * 1.23));
 
 export default function FavoritesClient() {
   const { t, i18n } = useTranslation(["common", "cars"]);
@@ -27,7 +31,30 @@ export default function FavoritesClient() {
 
   const [tab, setTab] = useState<"cars" | "parts">("cars");
   const [selected, setSelected] = useState<string[]>([]);
+  const [krwToUsd, setKrwToUsd] = useState(0.00075);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/exchange-rate")
+      .then((r) => r.json())
+      .then((d) => { if (d?.krwToUsd) setKrwToUsd(d.krwToUsd); })
+      .catch(() => {});
+  }, []);
+
+  const totalPartsUsd = parts.reduce((sum, p) => sum + Math.ceil(p.price_krw * krwToUsd * 1.23), 0);
+
+  const buildPartsWaText = () => {
+    const lines = parts.map((p) => {
+      const name = i18n.language === "ru" ? p.name_ru : (p.name_en || p.name_ru);
+      return `• ${name} (${p.part_number}) — ${formatUsd(p.price_krw, krwToUsd)}`;
+    });
+    return `Здравствуйте! Хочу заказать запчасти из избранного:\n\n${lines.join("\n")}\n\nИтого: ~$${usdFormatter.format(totalPartsUsd)}`;
+  };
+
+  const buildPartsTgText = () => {
+    const lines = parts.map((p) => `${p.part_number}`);
+    return `parts_${lines.join("_")}`;
+  };
 
   const toggleSelect = (id: string) => {
     setSelected((prev) =>
@@ -241,7 +268,7 @@ export default function FavoritesClient() {
                         </Link>
                         <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
                           <span className="text-base font-bold text-[#BB162B]">
-                            ${usdFormatter.format(Math.ceil(part.price_krw * 0.00075 * 1.23))}
+                            {formatUsd(part.price_krw, krwToUsd)}
                           </span>
                           <Link
                             href={href}
@@ -255,6 +282,46 @@ export default function FavoritesClient() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Итого + кнопки заказа */}
+            {parts.length > 0 && (
+              <div
+                className="mt-6 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.25)" }}
+              >
+                <div>
+                  <p className="text-xs mb-1" style={{ color: "var(--axis-gray)" }}>
+                    Итого {parts.length} {parts.length === 1 ? "позиция" : parts.length < 5 ? "позиции" : "позиций"}
+                  </p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--axis-orange)" }}>
+                    ~${usdFormatter.format(totalPartsUsd)}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(120,120,120,0.8)" }}>
+                    включая наценку 23%
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <a
+                    href={`https://wa.me/${WA_PHONE}?text=${encodeURIComponent(buildPartsWaText())}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
+                    style={{ backgroundColor: "rgba(37,211,102,0.15)", color: "#25D366", border: "1px solid rgba(37,211,102,0.3)" }}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp
+                  </a>
+                  <a
+                    href={`https://t.me/${TG_BOT}?start=${buildPartsTgText()}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
+                    style={{ backgroundColor: "rgba(34,158,217,0.15)", color: "#229ED9", border: "1px solid rgba(34,158,217,0.3)" }}
+                  >
+                    <Send className="w-4 h-4" />
+                    Telegram
+                  </a>
+                </div>
               </div>
             )}
           </>
