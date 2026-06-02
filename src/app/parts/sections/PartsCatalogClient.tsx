@@ -784,16 +784,25 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
   const { isFavorite, toggleFavorite } = usePartsFavorites();
   const fav = isFavorite(product.id);
 
-  const FavButton = ({ className }: { className?: string }) => (
+  const FavButton = ({ overlay = false }: { overlay?: boolean }) => (
     <button
       onClick={(e) => { e.preventDefault(); toggleFavorite(product); }}
-      className={cn("flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 hover:scale-110", className)}
+      className="flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 cursor-pointer"
       style={{
-        backgroundColor: fav ? "#BB162B" : "rgba(0,0,0,0.06)",
+        width: overlay ? 32 : 30,
+        height: overlay ? 32 : 30,
+        backgroundColor: fav ? "#BB162B" : overlay ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.06)",
+        backdropFilter: overlay ? "blur(4px)" : "none",
+        border: fav ? "none" : overlay ? "1.5px solid rgba(255,255,255,0.25)" : "1.5px solid #e5e7eb",
+        boxShadow: fav ? "0 0 10px rgba(187,22,43,0.35)" : "none",
       }}
       aria-label={fav ? t("common:favorites.remove") : t("common:favorites.add")}
     >
-      <Heart className="w-3.5 h-3.5" fill={fav ? "white" : "none"} style={{ color: fav ? "white" : "#9ca3af" }} />
+      <Heart
+        className="w-4 h-4"
+        fill={fav ? "white" : "none"}
+        style={{ color: fav ? "white" : overlay ? "rgba(255,255,255,0.85)" : "#9ca3af" }}
+      />
     </button>
   );
 
@@ -815,7 +824,7 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
-            <FavButton />
+            <FavButton overlay={false} />
           </div>
           <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8">
             {t("parts.catalog.orderBtn")}
@@ -842,7 +851,7 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
           </div>
         )}
         <div className="absolute top-2 right-2">
-          <FavButton />
+          <FavButton overlay />
         </div>
       </Link>
       <div className="p-3 flex flex-col gap-1.5 flex-1">

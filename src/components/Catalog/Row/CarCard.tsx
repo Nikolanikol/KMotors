@@ -122,17 +122,19 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             e.preventDefault();
             toggleFavorite({ id, photo, model, manufacture, year, mileage, transmission, fuel, price });
           }}
-          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110"
+          className="absolute top-3 right-3 z-10 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 cursor-pointer"
           style={{
-            backgroundColor: isFavorite(id) ? "var(--axis-orange)" : "rgba(10,10,10,0.6)",
-            backdropFilter: "blur(4px)",
+            backgroundColor: isFavorite(id) ? "var(--axis-orange)" : "rgba(10,10,10,0.55)",
+            backdropFilter: "blur(6px)",
+            border: isFavorite(id) ? "none" : "1.5px solid rgba(255,255,255,0.25)",
+            boxShadow: isFavorite(id) ? "0 0 12px rgba(255,69,0,0.4)" : "none",
           }}
           aria-label={isFavorite(id) ? t("common:favorites.remove") : t("common:favorites.add")}
         >
           <Heart
-            className="w-4 h-4"
+            className="w-5 h-5"
             fill={isFavorite(id) ? "white" : "none"}
-            style={{ color: isFavorite(id) ? "white" : "var(--axis-gray)" }}
+            style={{ color: isFavorite(id) ? "white" : "rgba(255,255,255,0.85)" }}
           />
         </button>
       </div>

@@ -176,13 +176,18 @@ export default function FavoritesClient() {
                       {/* Чекбокс выбора */}
                       <button
                         onClick={() => !isDisabled && toggleSelect(car.id)}
-                        className="absolute top-3 left-3 z-10 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                        className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer hover:scale-105"
                         style={{
-                          backgroundColor: isSelected ? "var(--axis-orange)" : "rgba(10,10,10,0.6)",
-                          border: `2px solid ${isSelected ? "var(--axis-orange)" : "rgba(255,255,255,0.3)"}`,
+                          backgroundColor: isSelected ? "var(--axis-orange)" : "rgba(10,10,10,0.55)",
+                          backdropFilter: "blur(6px)",
+                          border: `1.5px solid ${isSelected ? "var(--axis-orange)" : "rgba(255,255,255,0.25)"}`,
+                          cursor: isDisabled ? "not-allowed" : "pointer",
                         }}
                       >
-                        {isSelected && <span className="text-white text-xs font-bold">{selected.indexOf(car.id) + 1}</span>}
+                        {isSelected
+                          ? <span className="text-white text-xs font-bold">#{selected.indexOf(car.id) + 1}</span>
+                          : <span className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>Сравнить</span>
+                        }
                       </button>
                       <button
                         onClick={() => removeCar(car.id)}
