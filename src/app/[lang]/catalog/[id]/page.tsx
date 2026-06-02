@@ -84,11 +84,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const rubPrice = krwPrice ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU") : null;
 
   const TITLE: Record<string, string> = {
-    ru: `${carName} ${year} из Кореи — цена, доставка`,
-    en: `${carName} ${year} from Korea — price, delivery`,
-    ko: `한국산 ${carName} ${year} — 가격, 배송`,
-    ka: `${carName} ${year} კორეიდან — ფასი, მიტანა`,
-    ar: `${carName} ${year} من كوريا — السعر والتوصيل`,
+    ru: `${carName} ${year} из Кореи`,
+    en: `${carName} ${year} from Korea`,
+    ko: `한국산 ${carName} ${year}`,
+    ka: `${carName} ${year} კორეიდან`,
+    ar: `${carName} ${year} من كوريا`,
   };
 
   const DESCRIPTION: Record<string, string> = {
