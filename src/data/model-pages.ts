@@ -349,7 +349,7 @@ export const MODEL_PAGES: ModelData[] = [
     sliderUrl: "https://api.encar.com/search/car/list/general?count=true&q=(And.Hidden.N._.(C.CarType.Y._.(C.Manufacturer.%EC%A0%9C%EB%84%A4%EC%8B%9C%EC%8A%A4._.(C.ModelGroup.GV80._.Model.GV80.))))&sr=%7CModifiedDate%7C%7C20",
     content: {
       ru: {
-        title: "Genesis GV80 из Кореи — купить премиум кроссовер, цена под ключ",
+        title: "Genesis GV80 из Кореи — цена под ключ",
         subtitle: "Корейский флагманский люкс-кроссовер. Конкурент BMW X5 и Lexus RX вдвое дешевле.",
         description: "Genesis GV80 — флагманский кроссовер люксового бренда Hyundai Motor Group. Сочетает в себе изысканный дизайн, передовые технологии и непревзойдённый комфорт. На корейском рынке GV80 — статусный автомобиль, который конкурирует с BMW X5, Mercedes GLE и Lexus GX, превосходя их по оснащению при значительно меньшей цене.",
         benefits: [

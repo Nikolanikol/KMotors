@@ -135,13 +135,22 @@ interface Props {
 }
 
 // Заголовки и описания для каждого языка
+// Truncate name so title stays under 65 chars (Bing/Google recommendation)
+// Format: "{name} — {partNumber} | K-Axis" → max ~52 chars for name+pn
+function truncateName(name: string, pn: string, maxTotal = 50): string {
+  const suffix = pn ? ` — ${pn}` : "";
+  const budget = maxTotal - suffix.length;
+  if (name.length <= budget) return name;
+  return name.slice(0, budget - 1).trimEnd() + "…";
+}
+
 function buildMeta(
   lang: string,
   p: { part_number: string | null; name_ru: string; name_en: string; name_ko: string | null }
 ) {
-  const ru = p.name_ru;
-  const en = p.name_en || p.name_ru;
-  const ko = p.name_ko || p.name_en || p.name_ru;
+  const ru = truncateName(p.name_ru, p.part_number || "");
+  const en = truncateName(p.name_en || p.name_ru, p.part_number || "");
+  const ko = truncateName(p.name_ko || p.name_en || p.name_ru, p.part_number || "");
   const pn = p.part_number || "";
 
   const map: Record<string, { title: string; description: string }> = {
