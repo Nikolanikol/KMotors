@@ -17,8 +17,8 @@ export async function getCars(query: string, offset: string = "0") {
     const data = await res.json();
 
     return   {
-      data: data.SearchResults,
-      count: data.Count,
+      data: data.SearchResults ?? [],
+      count: data.Count ?? 0,
     } ;
   } catch {
     const fallbackRes = await fetch(
@@ -30,8 +30,8 @@ export async function getCars(query: string, offset: string = "0") {
 
     const fallbackData = await fallbackRes.json();
     return {
-      data: fallbackData.SearchResults,
-      count: fallbackData.Count,
+      data: fallbackData.SearchResults ?? [],
+      count: fallbackData.Count ?? 0,
     };
   }
 }
