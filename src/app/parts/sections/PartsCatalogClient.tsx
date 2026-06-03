@@ -623,7 +623,8 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
           </div>
         </div>
 
-        {/* Products */}
+        {/* Products — min-height фиксирует высоту при загрузке (CLS fix) */}
+        <div style={{ minHeight: isLoading ? "600px" : undefined }}>
         {isLoading ? (
           <div className={cn(view === "grid" ? "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
@@ -657,6 +658,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
         {!isLoading && totalPages > 1 && (
           <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} isPending={isPending} />
         )}
+        </div>{/* /min-height wrapper */}
 
       </div>
     </section>
