@@ -40,14 +40,14 @@ export const Pagination = ({ count }: { count: number }) => {
 
   const btnBase: React.CSSProperties = {
     display: "flex", alignItems: "center", justifyContent: "center",
-    width: 36, height: 36, borderRadius: 8,
+    width: 44, height: 44, borderRadius: 8,
     fontSize: 14, fontWeight: 500, cursor: "pointer",
     border: "1px solid rgba(74,74,74,0.3)",
     transition: "all 0.2s",
   };
 
   return (
-    <div className={`flex items-center gap-2 flex-wrap ${isPending ? "opacity-40 pointer-events-none" : ""}`}>
+    <div className={`flex items-center justify-center gap-2 flex-wrap ${isPending ? "opacity-40 pointer-events-none" : ""}`}>
       <button
         onClick={() => goTo(currentPage - 1)}
         disabled={currentPage === 1}
