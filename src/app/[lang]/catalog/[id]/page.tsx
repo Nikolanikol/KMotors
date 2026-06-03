@@ -329,6 +329,23 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
               </div>
             </div>
             <CarouselLight photos={sortedPhotos} carName={fullCarName} photoLabel={photoLabel} />
+
+            {/* Цена — только мобиль, сразу под фото */}
+            {data?.advertisement?.price && (
+              <div className="lg:hidden rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 4px 20px rgba(255,69,0,0.25)" }}>
+                <div>
+                  <p className="text-white/70 text-xs mb-0.5">Цена покупки</p>
+                  <p className="text-white text-2xl font-bold leading-tight">
+                    {data.advertisement.price.toLocaleString("ru-RU")} <span className="text-base font-normal">вон</span>
+                  </p>
+                  {rates.krwToRub && (
+                    <p className="text-white/80 text-sm mt-0.5">
+                      ≈ {Math.round(data.advertisement.price * 10000 * rates.krwToRub).toLocaleString("ru-RU")} ₽
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
             <OptionsRow data={data.options} />
