@@ -319,9 +319,6 @@ export default function FavoritesClient() {
                   <p className="text-2xl font-bold" style={{ color: "var(--axis-orange)" }}>
                     ~${usdFormatter.format(totalPartsUsd)}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(120,120,120,0.8)" }}>
-                    включая наценку 23%
-                  </p>
                 </div>
                 <div className="flex gap-3">
                   <a
