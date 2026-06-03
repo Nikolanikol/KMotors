@@ -336,7 +336,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
                 <div>
                   <p className="text-white/70 text-xs mb-0.5">Цена покупки</p>
                   <p className="text-white text-2xl font-bold leading-tight">
-                    {data.advertisement.price.toLocaleString("ru-RU")} <span className="text-base font-normal">вон</span>
+                    {(data.advertisement.price * 10000).toLocaleString("ru-RU")} <span className="text-base font-normal">вон</span>
                   </p>
                   {rates.krwToRub && (
                     <p className="text-white/80 text-sm mt-0.5">
