@@ -23,6 +23,7 @@ interface CarCardProps {
   price: string;
   krwToRub?: number;
   krwToUsd?: number;
+  priority?: boolean;
 }
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -41,7 +42,7 @@ const WA_CAR_TEXT: Record<string, (id: string, name: string) => string> = {
   ar: (id, name) => `مرحباً! أنا مهتم بـ ${name}, ID: ${id} — https://www.kmotors.shop/ar/catalog/${id}`,
 };
 
-const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, fuel, price, krwToRub, krwToUsd }: CarCardProps) => {
+const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, fuel, price, krwToRub, krwToUsd, priority = false }: CarCardProps) => {
   const { t } = useTranslation(["common", "cars"]);
   const pathname = usePathname();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -108,6 +109,8 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           style={{ transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          priority={priority}
+          fetchPriority={priority ? "high" : "auto"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#141414]/70 to-transparent" />
         {/* Year badge */}

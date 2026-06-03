@@ -48,6 +48,16 @@ export default async function RootLayout({
     <html lang={lang} className={inter.className}>
       <head>
         <meta name="robots" content="index, follow" />
+
+        {/* Preconnect — ускоряет загрузку внешних ресурсов (LCP) */}
+        <link rel="preconnect" href="https://ci.encar.com" />
+        <link rel="dns-prefetch" href="https://ci.encar.com" />
+        <link rel="preconnect" href="https://api.encar.com" />
+        <link rel="dns-prefetch" href="https://api.encar.com" />
+        <link rel="preconnect" href="https://encar-proxy-main.onrender.com" />
+        <link rel="dns-prefetch" href="https://encar-proxy-main.onrender.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="alternate" href="https://www.kmotors.shop/ru/" hrefLang="ru" />
         <link rel="alternate" href="https://www.kmotors.shop/en/" hrefLang="en" />
         <link rel="alternate" href="https://www.kmotors.shop/ko/" hrefLang="ko" />

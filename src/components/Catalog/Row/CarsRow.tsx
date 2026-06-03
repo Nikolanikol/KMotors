@@ -50,7 +50,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
               Transmission: string;
               FuelType: string;
               Price: string;
-            }) => (
+            }, index: number) => (
               <CarCard
                 key={item.Id}
                 id={item.Id}
@@ -64,6 +64,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
                 price={item.Price}
                 krwToRub={rates.krwToRub}
                 krwToUsd={rates.krwToUsd}
+                priority={index < 2}
               />
             )
           )}
