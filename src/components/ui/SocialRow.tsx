@@ -9,6 +9,7 @@ const SocialRow = () => {
         href="https://wa.me/821058654344"
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Написать в WhatsApp"
         className="group relative w-14 h-14 rounded-xl bg-gradient-to-br from-[#218a3f] to-[#1a7c2e] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
           shadow-[0_8px_16px_rgba(0,0,0,0.15)]
           hover:shadow-[0_20px_32px_rgba(136,185,150,0.3),inset_-2px_-2px_8px_rgba(0,0,0,0.2),inset_2px_2px_8px_rgba(255,255,255,0.2)]
@@ -23,6 +24,7 @@ const SocialRow = () => {
         href="https://t.me/avto_korea_nikolai"
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Написать в Telegram"
         className="group relative w-14 h-14 rounded-xl bg-gradient-to-br from-[#7fbde7] to-[#093587] flex items-center justify-center text-white transition-all duration-300 cursor-pointer
           shadow-[0_8px_16px_rgba(0,0,0,0.15)]
           hover:shadow-[0_20px_32px_rgba(122,168,199,0.3),inset_-2px_-2px_8px_rgba(0,0,0,0.2),inset_2px_2px_8px_rgba(255,255,255,0.2)]

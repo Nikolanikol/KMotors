@@ -72,6 +72,7 @@ export default function CookieBanner() {
           href={`/${lang}/privacy`}
           className="underline underline-offset-2 transition-colors"
           style={{ color: "var(--axis-orange)" }}
+          aria-label="Политика конфиденциальности и cookies"
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.8"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
         >
