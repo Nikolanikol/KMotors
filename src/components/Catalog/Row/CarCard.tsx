@@ -109,7 +109,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
           alt={`${manufacture} ${model} ${year} — ${BUY_FROM_KOREA[lang] ?? BUY_FROM_KOREA.ru}`}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           style={{ transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 400px"
           priority={priority}
           fetchPriority={priority ? "high" : "auto"}
         />

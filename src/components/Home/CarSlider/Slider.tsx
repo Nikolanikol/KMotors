@@ -2,9 +2,7 @@
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/navigation";
+// Swiper CSS перенесён в globals.css для избежания render-blocking
 import { ICar } from "./dataType";
 import CarCard from "./CarCard";
 
@@ -52,6 +50,7 @@ export default function AutoSlider({ data, krwToRub, krwToUsd }: AutoSliderProps
               price={item.Price}
               krwToRub={krwToRub}
               krwToUsd={krwToUsd}
+              priority={i < 2}
             />{" "}
           </SwiperSlide>
         ))}
