@@ -1,19 +1,22 @@
 import { notFound, redirect } from "next/navigation";
-import CarDescription from "@/components/Catalog/CarDetail/CarDescription";
+import dynamic from "next/dynamic";
 import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
-import DetailInfo from "@/components/Catalog/CarDetail/DetailInfo";
-import OptionsRow from "@/components/Catalog/CarDetail/OptionsRow/OptionsRow";
-import CustomsCalculator from "@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator";
-import StickyMobileCTA from "@/components/Catalog/CarDetail/StickyMobileCTA";
-import CarViewTracker from "@/components/Catalog/CarDetail/CarViewTracker";
-import CarDetailSidebar from "@/components/Catalog/CarDetail/CarDetailSidebar";
+import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import { FC } from "react";
 import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
-import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
+
+// Lazy load — не нужны сразу при загрузке
+const DetailInfo = dynamic(() => import("@/components/Catalog/CarDetail/DetailInfo"));
+const OptionsRow = dynamic(() => import("@/components/Catalog/CarDetail/OptionsRow/OptionsRow"));
+const CustomsCalculator = dynamic(() => import("@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator"));
+const CarDetailSidebar = dynamic(() => import("@/components/Catalog/CarDetail/CarDetailSidebar"));
+const CarDescription = dynamic(() => import("@/components/Catalog/CarDetail/CarDescription"));
+const StickyMobileCTA = dynamic(() => import("@/components/Catalog/CarDetail/StickyMobileCTA"));
+const CarViewTracker = dynamic(() => import("@/components/Catalog/CarDetail/CarViewTracker"));
 
 interface PageProps {
   params: Promise<{ lang: string; id: string }>;

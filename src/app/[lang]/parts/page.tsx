@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Hero } from "@/app/parts/sections/Hero";
-import { PartsCatalog } from "@/app/parts/sections/PartsCatalog";
-import { About } from "@/app/parts/sections/About";
-import { ContactForm } from "@/app/parts/sections/ContactForm";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
+
+// Lazy load — грузятся после Hero
+const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").then(m => ({ default: m.PartsCatalog })));
+const About = dynamic(() => import("@/app/parts/sections/About").then(m => ({ default: m.About })));
+const ContactForm = dynamic(() => import("@/app/parts/sections/ContactForm").then(m => ({ default: m.ContactForm })));
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
