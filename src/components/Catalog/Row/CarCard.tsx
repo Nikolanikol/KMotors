@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useFavorites } from "@/hooks/useFavorites";
 import { clarityEvent } from "@/utils/clarity";
+import { encarLoader } from "@/utils/encarLoader";
 
 interface CarCardProps {
   id: string;
@@ -103,8 +104,8 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
       <Link href={`/${lang}/catalog/${id}`} target="_blank" onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_card_click"); }}>
       <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: "var(--axis-graphite)" }}>
         <Image
+          loader={encarLoader}
           fill
-          unoptimized
           src={`https://ci.encar.com${photo}`}
           alt={`${manufacture} ${model} ${year} — ${BUY_FROM_KOREA[lang] ?? BUY_FROM_KOREA.ru}`}
           className="object-cover transition-transform duration-500 group-hover:scale-105"

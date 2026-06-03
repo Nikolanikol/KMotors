@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { encarLoader, encarThumbLoader } from "@/utils/encarLoader";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
@@ -42,8 +43,8 @@ const CarouselLight = ({
       if (mode === "static" || typeof photo === "string")
         return photo as string;
       const p = photo as Photo;
-      if (thumb) return `https://ci.encar.com${p.path}`;
-      return `https://ci.encar.com${p.path}?impolicy=heightRate&rh=696&cw=1160&ch=696&cg=Center&wtmk=https://ci.encar.com/wt_mark/w_mark_04.png`;
+      // thumb и full — возвращаем base URL без параметров, loader добавит нужный размер
+      return `https://ci.encar.com${p.path}`;
     },
     [mode],
   );
@@ -69,6 +70,7 @@ const CarouselLight = ({
       >
         {current && (
           <Image
+            loader={encarLoader}
             src={getUrl(current)}
             alt={
               carName
@@ -76,9 +78,8 @@ const CarouselLight = ({
                 : `photo ${index + 1}`
             }
             fill
-            unoptimized
             className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 1024px) 100vw, 60vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 60vw"
             priority={index === 0}
           />
         )}
@@ -167,12 +168,12 @@ const CarouselLight = ({
               }}
             >
               <Image
+                loader={encarThumbLoader}
                 src={getUrl(photo, true)}
                 alt={`thumb ${i + 1}`}
                 fill
-                unoptimized
                 className="object-cover"
-                sizes="72px"
+                sizes="90px"
               />
             </button>
           ))}
