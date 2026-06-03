@@ -32,8 +32,8 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
 
   return (
     <div className="space-y-4">
-      {/* Price */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+      {/* Price — только десктоп, на мобиле показывается над фото */}
+      <div className="hidden lg:block rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
         <p className="text-xs mb-2" style={{ color: "var(--axis-gray)" }}>{t("common:car.buyPrice")}</p>
         <div className="rounded-xl px-5 py-4 mb-2" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 8px 24px rgba(255,69,0,0.25)" }}>
           <p className="text-2xl font-bold text-white">{convertNumber(data.advertisement.price)}</p>
