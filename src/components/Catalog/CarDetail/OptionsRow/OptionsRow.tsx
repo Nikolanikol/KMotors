@@ -222,51 +222,53 @@ export default function OptionsRow({ data }: OptionsRowProps) {
   };
 
   const renderGroups = (groups: [string, any[]][], accentColor: string) => (
-    <div className="space-y-6 pt-4">
-      {groups.map(([category, options], idx) => (
-        <div key={category}>
-          {/* Category header */}
-          <div className="flex items-center gap-2 mb-3">
-            <span
-              className="flex items-center justify-center w-6 h-6 rounded-md flex-shrink-0"
-              style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
-            >
-              {CATEGORY_ICONS[category]}
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--axis-gray)" }}>
-              {t(`car.optionCategory.${category}`)}
-            </span>
-            <span className="flex-1 h-px" style={{ backgroundColor: "rgba(74,74,74,0.3)" }} />
-          </div>
-
-          {/* Items — карточки с иконками, 3 колонки */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {options.map((option: any) => (
-              <div
-                key={option.code}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(74,74,74,0.2)",
-                }}
-              >
+    <div className="divide-y" style={{ borderColor: "rgba(74,74,74,0.15)" }}>
+      {groups.map(([category, options]) => (
+        <Accordion key={category} type="single" collapsible>
+          <AccordionItem value={category} className="border-0">
+            <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-white/[0.02]">
+              <div className="flex items-center gap-3">
                 <span
-                  className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0"
-                  style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+                  style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
                 >
-                  {OPTION_ICONS[option.code] ?? FALLBACK_ICON}
+                  {CATEGORY_ICONS[category]}
                 </span>
-                <span className="text-xs leading-tight" style={{ color: "var(--axis-white)" }}>
-                  {option.translatedValue}
+                <span className="text-sm font-semibold" style={{ color: "var(--axis-white)" }}>
+                  {t(`car.optionCategory.${category}`)}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold ml-1"
+                  style={{ backgroundColor: `${accentColor}15`, color: accentColor }}>
+                  {options.length}
                 </span>
               </div>
-            ))}
-          </div>
-
-          {idx < groups.length - 1 && (
-            <div className="mt-6 h-px" style={{ backgroundColor: "rgba(74,74,74,0.15)" }} />
-          )}
-        </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-5 pb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
+                {options.map((option: any) => (
+                  <div
+                    key={option.code}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(74,74,74,0.2)",
+                    }}
+                  >
+                    <span
+                      className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                    >
+                      {OPTION_ICONS[option.code] ?? FALLBACK_ICON}
+                    </span>
+                    <span className="text-xs leading-tight" style={{ color: "var(--axis-white)" }}>
+                  {option.translatedValue}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       ))}
     </div>
   );
@@ -275,7 +277,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
     <div className="space-y-3">
       {/* Standard Options */}
       <div className="rounded-2xl overflow-hidden" style={cardStyle}>
-        <Accordion type="single" collapsible>
+        <Accordion type="single" defaultValue="standard-options" collapsible>
           <AccordionItem value="standard-options" className="border-0">
             <AccordionTrigger className="px-5 py-4 hover:no-underline" style={{ color: "var(--axis-white)" }}>
               <div className="flex items-center gap-2">
