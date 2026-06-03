@@ -29,14 +29,14 @@ async function sendMessage(chatId: number, text: string, extra?: Record<string, 
 }
 
 export async function GET() {
+  // Никогда не отдаём реальные значения env — только факт наличия
   return NextResponse.json({
     ok: true,
     env: {
-      hasToken: !!process.env.TELEGRAM_BOT_TOKEN,
-      hasChatId: !!process.env.TELEGRAM_CHAT_ID,
-      chatId: process.env.TELEGRAM_CHAT_ID,
-      hasSecret: !!process.env.TELEGRAM_WEBHOOK_SECRET,
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+      hasToken:   !!process.env.TELEGRAM_BOT_TOKEN,
+      hasChatId:  !!process.env.TELEGRAM_CHAT_ID,
+      hasSecret:  !!process.env.TELEGRAM_WEBHOOK_SECRET,
+      hasSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
     },
     version: "v4",
   });
@@ -46,9 +46,10 @@ export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-telegram-bot-api-secret-token");
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
 
-  if (expectedSecret && secret !== expectedSecret) {
-    console.warn("Telegram webhook: invalid secret token");
-    return ok();
+  // Секрет обязателен — если не задан в env, отклоняем все запросы
+  if (!expectedSecret || secret !== expectedSecret) {
+    console.warn("Telegram webhook: invalid or missing secret token");
+    return ok(); // Возвращаем 200 чтобы Telegram не ретраил
   }
 
   let body: Record<string, unknown>;
@@ -68,15 +69,15 @@ export async function POST(req: NextRequest) {
       }
     | undefined;
 
-  // DEBUG: вернуть что пришло
+  // DEBUG: только для администраторов и без утечки sensitive данных
   if (message?.text?.startsWith("/debug")) {
+    const chatId = message.chat?.id;
+    if (!chatId || !isAdmin(chatId)) return ok();
     return NextResponse.json({
       ok: true,
       debug: {
         text: message.text,
-        chatId: message.chat?.id,
-        allowedChatId: ALLOWED_CHAT_ID,
-        match: String(message.chat?.id) === String(ALLOWED_CHAT_ID),
+        isAdmin: isAdmin(chatId),
         hasToken: !!process.env.TELEGRAM_BOT_TOKEN,
       }
     });
@@ -181,6 +182,16 @@ export async function POST(req: NextRequest) {
   const data = callbackQuery.data || "";
   const messageId = callbackQuery.message?.message_id;
   const chatId = callbackQuery.message?.chat?.id;
+
+  // Callback-кнопки (publish/delete) — только для администраторов
+  if (!chatId || !isAdmin(chatId)) {
+    await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ callback_query_id: callbackId, text: "⛔ Нет доступа", show_alert: true }),
+    });
+    return ok();
+  }
 
   await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
     method: "POST",
