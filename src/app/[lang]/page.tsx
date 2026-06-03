@@ -8,6 +8,7 @@ import Testimonials from "@/components/Home/Testimonials";
 import CTASection from "@/components/Home/CTASection";
 import CalculatorBanner from "@/components/Home/CalculatorBanner";
 import PopularModels from "@/components/Home/PopularModels";
+import NavCards from "@/components/Home/NavCards";
 
 const LANG_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -139,6 +140,7 @@ export default async function Home({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
     <div className="min-h-[70vh]">
       <Main />
+      <NavCards />
       <div className="py-16" style={{ backgroundColor: "var(--axis-black)" }}>
         <CarSlider
           reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%EA%B8%B0%EC%95%84.))&sr=%7CModifiedDate%7C0%7C20"

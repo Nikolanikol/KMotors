@@ -29,7 +29,7 @@ const Main = () => {
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-[68px] w-full max-w-full">
+    <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden -mt-[68px] w-full max-w-full">
       <PaintSplashCanvas />
 
       <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto">
@@ -100,23 +100,31 @@ const Main = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10">
-        <div className="w-px h-10 relative overflow-hidden opacity-30" style={{ backgroundColor: "var(--axis-gray-dim)" }}>
-          <div
-            className="w-2 h-2 rounded-full absolute left-1/2 -translate-x-1/2"
-            style={{
-              backgroundColor: "var(--axis-orange)",
-              animation: "scrollBounce 2s ease-in-out infinite",
-            }}
-          />
+      {/* Scroll indicator — заметная стрелка */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-10 cursor-pointer group"
+        onClick={() => window.scrollBy({ top: window.innerHeight * 0.85, behavior: "smooth" })}
+      >
+        <span className="text-xs font-medium tracking-widest uppercase" style={{ color: "var(--axis-gray)", animation: "fadeInOut 2s ease-in-out infinite" }}>
+          листай вниз
+        </span>
+        <div className="flex flex-col items-center gap-0.5" style={{ animation: "arrowBounce 1.5s ease-in-out infinite" }}>
+          <svg width="24" height="14" viewBox="0 0 24 14" fill="none">
+            <path d="M2 2L12 11L22 2" stroke="var(--axis-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <svg width="24" height="14" viewBox="0 0 24 14" fill="none" style={{ opacity: 0.4 }}>
+            <path d="M2 2L12 11L22 2" stroke="var(--axis-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
       </div>
 
       <style>{`
-        @keyframes scrollBounce {
-          0%, 100% { top: 0; opacity: 1; }
-          50% { top: calc(100% - 8px); opacity: 0.3; }
+        @keyframes arrowBounce {
+          0%, 100% { transform: translateY(0); opacity: 1; }
+          50% { transform: translateY(6px); opacity: 0.7; }
+        }
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
         }
       `}</style>
     </section>
