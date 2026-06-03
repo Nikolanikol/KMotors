@@ -1,6 +1,6 @@
 "use client";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
-import { AlertTriangle, CheckCircle, TrendingUp, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import React, { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -106,22 +106,6 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
   return (
     <div className="space-y-4">
 
-      {/* Status */}
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
-        style={{
-          backgroundColor: statusOk ? "rgba(34,197,94,0.08)" : "rgba(255,69,0,0.08)",
-          border: `1px solid ${statusOk ? "rgba(34,197,94,0.3)" : "rgba(255,69,0,0.3)"}`,
-        }}>
-        {statusOk
-          ? <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: "#22c55e" }} />
-          : <AlertTriangle className="w-5 h-5 flex-shrink-0" style={{ color: "var(--axis-orange)" }} />}
-        <div>
-          <p className="text-xs" style={{ color: "var(--axis-gray)" }}>{t("car.carStatus")}</p>
-          <p className="text-sm font-semibold" style={{ color: statusOk ? "#22c55e" : "var(--axis-orange)" }}>
-            {statusOk ? t("car.condition.excellent") : t("car.condition.attention")}
-          </p>
-        </div>
-      </div>
 
       {/* Specs — сворачиваемая */}
       <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
