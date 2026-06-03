@@ -290,7 +290,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   });
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
+    <div className="min-h-screen pb-24 lg:pb-0" style={{ backgroundColor: "var(--axis-black)" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
