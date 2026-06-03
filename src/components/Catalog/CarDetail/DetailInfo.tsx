@@ -1,6 +1,6 @@
 "use client";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
-import { AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle, TrendingUp, ChevronDown } from "lucide-react";
 import React, { FC, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -99,6 +99,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
   );
   if (error || !data) return null;
 
+  const [specsOpen, setSpecsOpen] = useState(false);
   const totalAccidents = data.myAccidentCnt + data.otherAccidentCnt;
   const hasProblems = totalAccidents > 0 || data.robberCnt > 0 || data.floodTotalLossCnt > 0;
   const statusOk = !hasProblems && data.ownerChangeCnt <= 2;
@@ -123,19 +124,30 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
         </div>
       </div>
 
-      {/* Specs */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
-        <SectionTitle>{t("car.detailedInfo")}</SectionTitle>
-        <div>
-          <Row label={t("car.year")} value={data.year} />
-          <Row label={t("car.manufacturer")} value={translateGenerationRow(data.maker, t)} />
-          <Row label={t("car.model")} value={translateGenerationRow(data.model, t) ?? "—"} />
-          <Row label={t("car.bodyType")} value={translateGenerationRow(data.carShape, t)} />
-          <Row label={t("car.fuel")} value={translateGenerationRow(data.fuel, t)} />
-          <Row label={t("car.engineVolume")} value={`${data.displacement} cc`} />
-          <Row label={t("car.transmission")} value={translateGenerationRow(data.transmission, t) || t("common.notSpecified")} />
-          <Row label={t("car.registrationDate")} value={new Date(data.regDate).toLocaleDateString()} />
-        </div>
+      {/* Specs — сворачиваемая */}
+      <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+        <button
+          onClick={() => setSpecsOpen(v => !v)}
+          className="w-full flex items-center justify-between p-5 text-left"
+        >
+          <span className="font-semibold text-sm" style={{ color: "var(--axis-white)" }}>{t("car.detailedInfo")}</span>
+          <ChevronDown
+            className="w-4 h-4 transition-transform duration-200"
+            style={{ color: "var(--axis-gray)", transform: specsOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+          />
+        </button>
+        {specsOpen && (
+          <div className="px-5 pb-5">
+            <Row label={t("car.year")} value={data.year} />
+            <Row label={t("car.manufacturer")} value={translateGenerationRow(data.maker, t)} />
+            <Row label={t("car.model")} value={translateGenerationRow(data.model ?? "", t) || "—"} />
+            <Row label={t("car.bodyType")} value={translateGenerationRow(data.carShape, t)} />
+            <Row label={t("car.fuel")} value={translateGenerationRow(data.fuel, t)} />
+            <Row label={t("car.engineVolume")} value={`${data.displacement} cc`} />
+            <Row label={t("car.transmission")} value={translateGenerationRow(data.transmission, t) || t("common.notSpecified")} />
+            <Row label={t("car.registrationDate")} value={new Date(data.regDate).toLocaleDateString()} />
+          </div>
+        )}
       </div>
 
       {/* History summary */}
@@ -184,8 +196,9 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
         {data.accidents.length > 0 && (
           <div>
             <p className="text-xs mb-2" style={{ color: "var(--axis-gray)" }}>{t("car.accidentReport")} ({data.accidents.length})</p>
-            <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid rgba(74,74,74,0.2)" }}>
-              <table className="w-full text-xs">
+            <div className="relative">
+              <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid rgba(74,74,74,0.2)" }}>
+              <table className="min-w-[420px] w-full text-xs">
                 <thead>
                   <tr style={{ backgroundColor: "var(--axis-graphite)" }}>
                     {[t("common.date"), t("car.insuranceCoverage"), t("car.parts"), t("car.labor"), t("car.painting")].map(h => (
@@ -207,6 +220,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
                   ))}
                 </tbody>
               </table>
+              </div>
+              <p className="text-[10px] mt-1 sm:hidden" style={{ color: "var(--axis-gray)" }}>← листайте вправо</p>
             </div>
           </div>
         )}

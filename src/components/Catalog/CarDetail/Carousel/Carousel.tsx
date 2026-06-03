@@ -100,11 +100,14 @@ const CarouselLight = ({
                 e.stopPropagation();
                 setIndex((i) => Math.max(0, i - 1));
               }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              disabled={index === 0}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-all z-10 sm:opacity-0 sm:group-hover:opacity-100"
               style={{
                 backgroundColor: "rgba(10,10,10,0.7)",
                 color: "white",
                 backdropFilter: "blur(8px)",
+                opacity: index === 0 ? 0.3 : undefined,
+                fontSize: 22,
               }}
             >
               ‹
@@ -114,11 +117,14 @@ const CarouselLight = ({
                 e.stopPropagation();
                 setIndex((i) => Math.min((photos?.length || 1) - 1, i + 1));
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              disabled={index === (photos?.length || 1) - 1}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-all z-10 sm:opacity-0 sm:group-hover:opacity-100"
               style={{
                 backgroundColor: "rgba(10,10,10,0.7)",
                 color: "white",
                 backdropFilter: "blur(8px)",
+                opacity: index === (photos?.length || 1) - 1 ? 0.3 : undefined,
+                fontSize: 22,
               }}
             >
               ›
@@ -148,8 +154,8 @@ const CarouselLight = ({
               onClick={() => setIndex(i)}
               className="relative flex-shrink-0 rounded-lg overflow-hidden transition-all duration-200"
               style={{
-                width: 72,
-                height: 48,
+                width: 90,
+                height: 60,
                 outline:
                   i === index
                     ? "2px solid var(--axis-orange)"
