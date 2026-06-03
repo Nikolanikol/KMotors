@@ -62,12 +62,12 @@ const MyFilterMileage = ({
     <>
       <h2 className="text-left my-3 font-bold">{t('filter.mileage')}</h2>
 
-      <div className="flex justify-between">
+      <div className="flex gap-2">
         <Select
           onValueChange={handleminPriceChange}
           value={minPrice.toString()}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="flex-1 min-w-0">
             <SelectValue placeholder="Select a fruit" />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +87,7 @@ const MyFilterMileage = ({
           onValueChange={handlemaxPriceChange}
           value={maxPrice.toString()}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="flex-1 min-w-0">
             <SelectValue placeholder="Select a fruit" />
           </SelectTrigger>
           <SelectContent>

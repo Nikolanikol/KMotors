@@ -120,7 +120,7 @@ const Filter = ({}) => {
   });
 
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-2xl" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+    <div className="flex flex-col gap-3 p-4 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
 
       {/* Поиск по номеру авто */}
       <div className="pb-3 border-b" style={{ borderColor: "rgba(74,74,74,0.3)" }}>

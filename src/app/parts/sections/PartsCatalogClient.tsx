@@ -625,13 +625,13 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
 
         {/* Products */}
         {isLoading ? (
-          <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+          <div className={cn(view === "grid" ? "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
             {Array.from({ length: PAGE_SIZE }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
           </div>
         ) : products.length === 0 ? (
           <EmptyState onReset={resetAll} t={t} />
         ) : (
-          <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+          <div className={cn(view === "grid" ? "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
             {products.map((product, index) => {
               const productName = getProductName(product, lang);
               return (
