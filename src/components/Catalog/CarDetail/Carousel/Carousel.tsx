@@ -2,13 +2,16 @@
 
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import Lightbox from "yet-another-react-lightbox";
+import dynamic from "next/dynamic";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
-import "yet-another-react-lightbox/styles.css";
-import "yet-another-react-lightbox/plugins/thumbnails.css";
-import "yet-another-react-lightbox/plugins/counter.css";
+
+// Lightbox грузим только когда пользователь кликнул на фото
+const Lightbox = dynamic(() => import("yet-another-react-lightbox"), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface Photo {
   code: string;

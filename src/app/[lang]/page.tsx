@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import Brands from "@/components/Home/Brands/Brands";
-import CarSlider from "@/components/Home/CarSlider/CarSlider";
+import dynamic from "next/dynamic";
 import Main from "@/components/Home/Main";
-import Stage from "@/components/Home/Stage";
-import WhyChooseUs from "@/components/Home/WhyChooseUs";
-import Testimonials from "@/components/Home/Testimonials";
-import CTASection from "@/components/Home/CTASection";
-import CalculatorBanner from "@/components/Home/CalculatorBanner";
-import PopularModels from "@/components/Home/PopularModels";
 import NavCards from "@/components/Home/NavCards";
+
+// Lazy load — не нужны на первом экране
+const Brands = dynamic(() => import("@/components/Home/Brands/Brands"), { ssr: false });
+const CarSlider = dynamic(() => import("@/components/Home/CarSlider/CarSlider"), { ssr: false });
+const Stage = dynamic(() => import("@/components/Home/Stage"), { ssr: false });
+const WhyChooseUs = dynamic(() => import("@/components/Home/WhyChooseUs"), { ssr: false });
+const Testimonials = dynamic(() => import("@/components/Home/Testimonials"), { ssr: false });
+const CTASection = dynamic(() => import("@/components/Home/CTASection"), { ssr: false });
+const CalculatorBanner = dynamic(() => import("@/components/Home/CalculatorBanner"), { ssr: false });
+const PopularModels = dynamic(() => import("@/components/Home/PopularModels"), { ssr: false });
 
 const LANG_META: Record<string, { title: string; description: string }> = {
   ru: {

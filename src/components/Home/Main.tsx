@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import PaintSplashCanvas from "@/components/ui/PaintSplashCanvas";
+import dynamic from "next/dynamic";
+const PaintSplashCanvas = dynamic(() => import("@/components/ui/PaintSplashCanvas"), { ssr: false, loading: () => null });
 import { useCountAnimation } from "@/hooks/useScrollAnimation";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
