@@ -128,7 +128,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
             <Row label={t("car.fuel")} value={translateGenerationRow(data.fuel, t)} />
             <Row label={t("car.engineVolume")} value={`${data.displacement} cc`} />
             <Row label={t("car.transmission")} value={translateGenerationRow(data.transmission, t) || t("common.notSpecified")} />
-            <Row label={t("car.registrationDate")} value={new Date(data.regDate).toLocaleDateString()} />
+            <Row label={t("car.registrationDate")} value={data.regDate?.slice(0, 10) ?? "—"} />
           </div>
         )}
       </div>
@@ -168,7 +168,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
                   <span className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: "var(--axis-orange)", color: "white" }}>{i + 1}</span>
                   <span className="text-xs font-mono" style={{ color: "var(--axis-white)" }}>{change.carNo}</span>
-                  <span className="text-xs ml-auto" style={{ color: "var(--axis-gray)" }}>{new Date(change.date).toLocaleDateString()}</span>
+                  <span className="text-xs ml-auto" style={{ color: "var(--axis-gray)" }}>{change.date?.slice(0, 10) ?? "—"}</span>
                 </div>
               ))}
             </div>
