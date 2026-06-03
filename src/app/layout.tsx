@@ -49,16 +49,6 @@ export default async function RootLayout({
       <head>
         <meta name="robots" content="index, follow" />
 
-        {/* Preload критических ресурсов */}
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="preload"
-          href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-
         {/* Preconnect — ускоряет загрузку внешних ресурсов (LCP) */}
         <link rel="preconnect" href="https://ci.encar.com" />
         <link rel="dns-prefetch" href="https://ci.encar.com" />
@@ -66,8 +56,6 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://api.encar.com" />
         <link rel="preconnect" href="https://encar-proxy-main.onrender.com" />
         <link rel="dns-prefetch" href="https://encar-proxy-main.onrender.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="alternate" href="https://www.kmotors.shop/ru/" hrefLang="ru" />
         <link rel="alternate" href="https://www.kmotors.shop/en/" hrefLang="en" />
         <link rel="alternate" href="https://www.kmotors.shop/ko/" hrefLang="ko" />

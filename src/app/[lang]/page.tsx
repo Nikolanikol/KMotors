@@ -3,9 +3,11 @@ import dynamic from "next/dynamic";
 import Main from "@/components/Home/Main";
 import NavCards from "@/components/Home/NavCards";
 
-// Lazy load — code-split, грузятся после первого экрана
-const Brands = dynamic(() => import("@/components/Home/Brands/Brands"));
-const CarSlider = dynamic(() => import("@/components/Home/CarSlider/CarSlider"));
+// Выше fold — SSR для LCP
+import Brands from "@/components/Home/Brands/Brands";
+import CarSlider from "@/components/Home/CarSlider/CarSlider";
+
+// Ниже fold — lazy load
 const Stage = dynamic(() => import("@/components/Home/Stage"));
 const WhyChooseUs = dynamic(() => import("@/components/Home/WhyChooseUs"));
 const Testimonials = dynamic(() => import("@/components/Home/Testimonials"));
