@@ -138,16 +138,21 @@ export default async function RootLayout({
               `}
             </Script>
 
-            {/* Яндекс.Метрика — lazyOnload, без webvisor (тяжёлый) */}
+            {/* Яндекс.Метрика — только для СНГ аудитории по языку браузера */}
             <Script id="metrika-init" strategy="lazyOnload">
               {`
-                (function(m,e,t,r,i,k,a){
-                  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-                  m[i].l=1*new Date();
-                  for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
-                  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-                })(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=109267986','ym');
-                ym(109267986,'init',{clickmap:true,ecommerce:'dataLayer',accurateTrackBounce:true,trackLinks:true});
+                var _lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+                var _cis = ['ru','uk','kk','uz','be','ky','tg','az','hy','ka'];
+                var _isCIS = _cis.some(function(l){ return _lang.startsWith(l); });
+                if (_isCIS) {
+                  (function(m,e,t,r,i,k,a){
+                    m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+                    m[i].l=1*new Date();
+                    for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
+                    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+                  })(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=109267986','ym');
+                  ym(109267986,'init',{clickmap:true,ecommerce:'dataLayer',accurateTrackBounce:true,trackLinks:true});
+                }
               `}
             </Script>
             <noscript>
