@@ -128,12 +128,14 @@ export default function CustomsCalculator({
   ];
 
   return (
-    <div className="mt-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+    <div className="mt-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1.5px solid rgba(255,140,0,0.35)", boxShadow: "0 0 20px rgba(255,140,0,0.08)" }}>
+      {/* Акцентная полоска */}
+      <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #FF8C00, #FF4500)" }} />
       {/* Header с вкладками */}
       <div className="px-6 pt-4 pb-0" style={{ background: "linear-gradient(to right, var(--axis-graphite), #1a1a1a)" }}>
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h3 className="text-white text-lg font-semibold">🧮 Калькулятор растаможки</h3>
+            <h3 className="text-white text-lg font-bold">🧮 Калькулятор растаможки</h3>
             <p className="text-white/70 text-sm mt-0.5">Для физических лиц</p>
           </div>
         </div>

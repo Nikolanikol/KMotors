@@ -47,10 +47,28 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
       </div>
 
       {/* Request form */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(255,69,0,0.2)" }}>
-        <p className="font-semibold mb-1" style={{ color: "var(--axis-white)" }}>Хочу эту машину</p>
-        <p className="text-xs mb-4" style={{ color: "var(--axis-gray)" }}>Менеджер свяжется в течение 1 часа</p>
-        <CarRequestForm carId={id} carName={carName} />
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          backgroundColor: "var(--axis-charcoal)",
+          border: "1.5px solid rgba(255,69,0,0.5)",
+          boxShadow: "0 0 24px rgba(255,69,0,0.12)",
+        }}
+      >
+        {/* Акцентная полоска сверху */}
+        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, var(--axis-orange), var(--axis-amber))" }} />
+        <div className="p-5">
+          <div className="flex items-center gap-2 mb-1">
+            {/* Пульсирующий индикатор */}
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
+            </span>
+            <p className="font-bold text-base" style={{ color: "var(--axis-white)" }}>Хочу эту машину</p>
+          </div>
+          <p className="text-xs mb-4" style={{ color: "var(--axis-gray)" }}>Менеджер свяжется в течение 1 часа</p>
+          <CarRequestForm carId={id} carName={carName} />
+        </div>
       </div>
 
       {/* Seller info */}
