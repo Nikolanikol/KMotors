@@ -80,6 +80,7 @@ export default function Testimonials() {
           <div className="flex gap-3">
             {(["left", "right"] as const).map((dir) => (
               <button key={dir} onClick={() => scroll(dir)}
+                aria-label={dir === "left" ? "Предыдущий отзыв" : "Следующий отзыв"}
                 className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
                 style={{ backgroundColor: "var(--axis-graphite)", color: "var(--axis-orange)" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
