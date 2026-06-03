@@ -8,6 +8,7 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MessengerSelector } from "@/components/ui/MessengerSelector";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
+import { clarityEvent } from "@/utils/clarity";
 
 interface CarRequestFormProps {
   carId: string;
@@ -60,6 +61,7 @@ export default function CarRequestForm({
         setTgUsername("");
         onSuccess?.();
         trackEvent("generate_lead", { source, car_id: carId, car_name: carName });
+        clarityEvent("form_submit");
       } else {
         setError(true);
       }

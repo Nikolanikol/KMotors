@@ -32,6 +32,7 @@ import {
   Heart,
 } from "lucide-react";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
+import { clarityEvent } from "@/utils/clarity";
 
 const BRAND_CHIP_COLORS: Record<string, { active: string; inactive: string }> = {
   hyundai: {
@@ -372,6 +373,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   const scrollToContact = (name: string, partNumber: string) => {
     sessionStorage.setItem("prefillMessage", `${name} (${partNumber})`);
     document.getElementById("contacts")?.scrollIntoView({ behavior: "smooth" });
+    clarityEvent("parts_order_click");
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -645,7 +647,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                 index={index}
                 href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
                 onOrder={() => scrollToContact(productName, product.part_number)}
-                onNavigate={() => sessionStorage.setItem("parts:filters", window.location.search)}
+                onNavigate={() => { sessionStorage.setItem("parts:filters", window.location.search); clarityEvent("part_card_click"); }}
                 t={t}
                 krwToUsd={krwToUsd}
               />

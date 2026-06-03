@@ -10,6 +10,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useFavorites } from "@/hooks/useFavorites";
+import { clarityEvent } from "@/utils/clarity";
 
 interface CarCardProps {
   id: string;
@@ -99,7 +100,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
       <div ref={glossyRef} className="absolute inset-0 z-20 pointer-events-none rounded-2xl transition-all duration-200" />
 
       {/* Image — кликабельна */}
-      <Link href={`/${lang}/catalog/${id}`} target="_blank" onClick={() => trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture })}>
+      <Link href={`/${lang}/catalog/${id}`} target="_blank" onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_card_click"); }}>
       <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: "var(--axis-graphite)" }}>
         <Image
           fill
@@ -201,7 +202,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             href={`https://t.me/KMOTORS_form_bot?start=car_${id}`}
             target="_blank" rel="noopener noreferrer"
             aria-label="Telegram"
-            onClick={() => trackEvent("contact", { method: "telegram_card", car_id: id, car_name: carName })}
+            onClick={() => { trackEvent("contact", { method: "telegram_card", car_id: id, car_name: carName }); clarityEvent("contact_telegram"); }}
             className="flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 hover:-translate-y-0.5 flex-shrink-0"
             style={{ backgroundColor: "rgba(34,158,217,0.15)", color: "#229ED9" }}
           >
@@ -214,7 +215,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             href={waUrl}
             target="_blank" rel="noopener noreferrer"
             aria-label="WhatsApp"
-            onClick={() => trackEvent("contact", { method: "whatsapp_card", car_id: id, car_name: carName })}
+            onClick={() => { trackEvent("contact", { method: "whatsapp_card", car_id: id, car_name: carName }); clarityEvent("contact_whatsapp"); }}
             className="flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 hover:-translate-y-0.5 flex-shrink-0"
             style={{ backgroundColor: "rgba(37,211,102,0.15)", color: "#25D366" }}
           >
@@ -226,7 +227,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
           <Link
             href={`/${lang}/catalog/${id}`}
             target="_blank"
-            onClick={() => trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture })}
+            onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_details_click"); }}
             className="flex items-center justify-center gap-1.5 h-11 flex-1 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
             style={{ backgroundColor: "var(--axis-orange)", color: "var(--axis-white)" }}
           >

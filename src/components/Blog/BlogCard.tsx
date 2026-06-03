@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { BlogPost } from "@/types/blog";
+import { clarityEvent } from "@/utils/clarity";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -33,7 +34,7 @@ export default function BlogCard({ post }: BlogCardProps) {
   const router = useRouter();
 
   return (
-    <Link href={`/blog/${post.slug}`} className="group block h-full">
+    <Link href={`/blog/${post.slug}`} className="group block h-full" onClick={() => clarityEvent("blog_article_click")}>
       <article className="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-200 group-hover:border-[#BB162B] group-hover:shadow-md">
         {/* Cover image */}
         {post.cover_url ? (

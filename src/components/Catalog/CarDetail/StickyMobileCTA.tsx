@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { usePathname } from "next/navigation";
 import CarRequestForm from "./CarRequestForm";
 import { trackEvent } from "@/utils/gtag";
+import { clarityEvent } from "@/utils/clarity";
 
 const WA_PHONE = "821058654344";
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -85,7 +86,7 @@ export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps
 
           {/* Главная CTA */}
           <button
-            onClick={() => { setModalOpen(true); trackEvent("contact", { method: "form_sticky", car_id: carId }); }}
+            onClick={() => { setModalOpen(true); trackEvent("contact", { method: "form_sticky", car_id: carId }); clarityEvent("form_open"); }}
             className="flex-1 h-12 rounded-xl font-bold text-sm text-white transition-all active:scale-95"
             style={{
               background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))",
