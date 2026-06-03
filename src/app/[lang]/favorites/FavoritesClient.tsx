@@ -12,6 +12,7 @@ import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { generatePartSlug } from "@/utils/partSlug";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/utils/gtag";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 const WA_PHONE = "821058654344";
@@ -69,6 +70,7 @@ export default function FavoritesClient() {
   };
 
   const goCompare = () => {
+    trackEvent("compare_cars", { car_ids: selected.join(","), count: selected.length });
     router.push(`/${lang}/compare?ids=${selected.join(",")}`);
   };
 

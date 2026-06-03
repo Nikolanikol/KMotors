@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { trackEvent } from "@/utils/gtag";
 
 const STORAGE_KEY = "kmotors_parts_favorites";
 const SYNC_EVENT = "kmotors_parts_favorites_sync";
@@ -50,6 +51,13 @@ export function usePartsFavorites() {
     const exists = prev.some((f) => f.id === part.id);
     const next = exists ? prev.filter((f) => f.id !== part.id) : [...prev, part];
     writeStorage(next);
+    trackEvent(exists ? "remove_from_parts_favorites" : "add_to_parts_favorites", {
+      part_id: part.id,
+      part_number: part.part_number,
+      part_name: part.name_ru || part.name_en,
+      part_price_krw: part.price_krw,
+      favorites_count: next.length,
+    });
   }, []);
 
   const removeFavorite = useCallback((id: number) => {
