@@ -53,7 +53,7 @@ const BRAND_CHIP_COLORS: Record<string, { active: string; inactive: string }> = 
   },
 };
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 16;
 const BRAND_ORDER: Record<string, number> = { hyundai: 0, kia: 1, genesis: 2 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────

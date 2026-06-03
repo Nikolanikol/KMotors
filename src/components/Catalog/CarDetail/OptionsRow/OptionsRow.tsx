@@ -275,7 +275,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
     <div className="space-y-3">
       {/* Standard Options */}
       <div className="rounded-2xl overflow-hidden" style={cardStyle}>
-        <Accordion type="single" defaultValue="standard-options" collapsible>
+        <Accordion type="single" collapsible>
           <AccordionItem value="standard-options" className="border-0">
             <AccordionTrigger className="px-5 py-4 hover:no-underline" style={{ color: "var(--axis-white)" }}>
               <div className="flex items-center gap-2">
