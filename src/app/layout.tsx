@@ -49,6 +49,16 @@ export default async function RootLayout({
       <head>
         <meta name="robots" content="index, follow" />
 
+        {/* Preload критических ресурсов */}
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preload"
+          href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+
         {/* Preconnect — ускоряет загрузку внешних ресурсов (LCP) */}
         <link rel="preconnect" href="https://ci.encar.com" />
         <link rel="dns-prefetch" href="https://ci.encar.com" />

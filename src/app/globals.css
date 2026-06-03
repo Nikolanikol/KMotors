@@ -99,6 +99,13 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* Убирает задержку 300мс на тач-устройствах */
+  touch-action: manipulation;
+}
+
+/* Убираем задержку 300мс на всех кнопках и ссылках */
+a, button, [role="button"], input, select, textarea {
+  touch-action: manipulation;
 }
 
 body {

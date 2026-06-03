@@ -108,7 +108,7 @@ export default function BlogPostPage({ initialPost }: Props) {
       {post.cover_url ? (
         <div className="w-full h-64 md:h-80 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.cover_url} alt={post.title} className="w-full h-full object-cover" />
+          <img src={post.cover_url} alt={post.title} className="w-full h-full object-cover" width="1200" height="630" />
         </div>
       ) : (
         <div className="w-full h-16 glass-effect" />
