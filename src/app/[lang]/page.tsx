@@ -3,15 +3,15 @@ import dynamic from "next/dynamic";
 import Main from "@/components/Home/Main";
 import NavCards from "@/components/Home/NavCards";
 
-// Lazy load — не нужны на первом экране
-const Brands = dynamic(() => import("@/components/Home/Brands/Brands"), { ssr: false });
-const CarSlider = dynamic(() => import("@/components/Home/CarSlider/CarSlider"), { ssr: false });
-const Stage = dynamic(() => import("@/components/Home/Stage"), { ssr: false });
-const WhyChooseUs = dynamic(() => import("@/components/Home/WhyChooseUs"), { ssr: false });
-const Testimonials = dynamic(() => import("@/components/Home/Testimonials"), { ssr: false });
-const CTASection = dynamic(() => import("@/components/Home/CTASection"), { ssr: false });
-const CalculatorBanner = dynamic(() => import("@/components/Home/CalculatorBanner"), { ssr: false });
-const PopularModels = dynamic(() => import("@/components/Home/PopularModels"), { ssr: false });
+// Lazy load — code-split, грузятся после первого экрана
+const Brands = dynamic(() => import("@/components/Home/Brands/Brands"));
+const CarSlider = dynamic(() => import("@/components/Home/CarSlider/CarSlider"));
+const Stage = dynamic(() => import("@/components/Home/Stage"));
+const WhyChooseUs = dynamic(() => import("@/components/Home/WhyChooseUs"));
+const Testimonials = dynamic(() => import("@/components/Home/Testimonials"));
+const CTASection = dynamic(() => import("@/components/Home/CTASection"));
+const CalculatorBanner = dynamic(() => import("@/components/Home/CalculatorBanner"));
+const PopularModels = dynamic(() => import("@/components/Home/PopularModels"));
 
 const LANG_META: Record<string, { title: string; description: string }> = {
   ru: {
