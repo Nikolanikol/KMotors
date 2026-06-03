@@ -83,6 +83,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const { t } = useTranslation(["common", "cars"]);
+  const [specsOpen, setSpecsOpen] = useState(false);
 
   useEffect(() => {
     fetch(`https://api.encar.com/v1/readside/record/vehicle/${id}/open?vehicleNo=${carnumber}`)
@@ -98,8 +99,6 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
     </div>
   );
   if (error || !data) return null;
-
-  const [specsOpen, setSpecsOpen] = useState(false);
   const totalAccidents = data.myAccidentCnt + data.otherAccidentCnt;
   const hasProblems = totalAccidents > 0 || data.robberCnt > 0 || data.floodTotalLossCnt > 0;
   const statusOk = !hasProblems && data.ownerChangeCnt <= 2;
