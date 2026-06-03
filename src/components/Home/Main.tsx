@@ -12,7 +12,7 @@ function StatCounter({ end, suffix, label }: { end: number; suffix: string; labe
   const ref = useCountAnimation(end, suffix);
   return (
     <div className="flex flex-col items-center">
-      <span ref={ref} className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
+      <span ref={ref} className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
         0{suffix}
       </span>
       <span className="text-xs tracking-widest uppercase mt-1" style={{ color: "var(--axis-gray)" }}>
@@ -84,16 +84,16 @@ const Main = () => {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-center gap-8 md:gap-16 mt-20">
+        <div className="flex items-center justify-center gap-4 sm:gap-8 md:gap-16 mt-20 w-full">
           <StatCounter end={1240} suffix="+" label={t("home.hero.statCars")} />
-          <div className="w-px h-12 opacity-30" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
+          <div className="w-px h-10 opacity-30 shrink-0" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
           <StatCounter end={850} suffix="+" label={t("home.hero.statClients")} />
-          <div className="w-px h-12 opacity-30" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
-          <div className="flex flex-col items-center">
-            <span className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
+          <div className="w-px h-10 opacity-30 shrink-0" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
+          <div className="flex flex-col items-center shrink-0">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
               {t("home.hero.statYears")}
             </span>
-            <span className="text-xs tracking-widest uppercase mt-1" style={{ color: "var(--axis-gray)" }}>
+            <span className="text-[10px] sm:text-xs tracking-widest uppercase mt-1" style={{ color: "var(--axis-gray)" }}>
               {t("home.hero.statYearsLabel")}
             </span>
           </div>

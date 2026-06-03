@@ -92,9 +92,9 @@ export default function Testimonials() {
             ))}
           </div>
         </div>
-        <div ref={scrollRef} className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
+        <div ref={scrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
           {t.items.map((item, i) => (
-            <div key={i} className="snap-start min-w-[320px] max-w-[380px] flex-shrink-0 rounded-2xl p-6 relative"
+            <div key={i} className="snap-start w-[85vw] sm:min-w-[320px] sm:max-w-[380px] flex-shrink-0 rounded-2xl p-6 relative"
               style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
               <svg className="absolute top-4 right-4 opacity-10" width="40" height="40" viewBox="0 0 40 40">
                 <circle cx="20" cy="20" r="15" fill="var(--axis-orange)" />
