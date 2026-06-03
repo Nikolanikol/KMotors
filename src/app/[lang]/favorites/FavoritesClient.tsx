@@ -173,6 +173,16 @@ export default function FavoritesClient() {
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#141414]/70 to-transparent" />
+                      {/* Бейдж "Продано" */}
+                      {car.sold && (
+                        <div className="absolute inset-0 z-20 flex items-center justify-center"
+                          style={{ backgroundColor: "rgba(0,0,0,0.65)", backdropFilter: "blur(2px)" }}>
+                          <span className="px-5 py-2 rounded-full text-sm font-bold text-white"
+                            style={{ backgroundColor: "rgba(220,38,38,0.95)" }}>
+                            Продано
+                          </span>
+                        </div>
+                      )}
                       {/* Чекбокс выбора */}
                       <button
                         onClick={() => !isDisabled && toggleSelect(car.id)}

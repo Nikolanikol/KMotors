@@ -5,6 +5,7 @@ import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import MessengerButtons from "@/components/MessengerButtons";
 import CookieBanner from "@/components/CookieBanner";
 import ProgressBar from "@/components/ProgressBar";
+import FavoritePriceAlert from "@/components/FavoritePriceAlert";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -28,6 +29,7 @@ export default async function LangLayout({ children, params }: Props) {
       <Footer />
       <MessengerButtons />
       <CookieBanner />
+      <FavoritePriceAlert />
     </I18nProvider>
   );
 }

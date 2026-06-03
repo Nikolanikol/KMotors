@@ -15,9 +15,11 @@ export interface FavoriteCar {
   transmission: string;
   fuel: string;
   price: string;
+  sold?: boolean;
+  priceCheckedAt?: number;
 }
 
-function readStorage(): FavoriteCar[] {
+export function readStorage(): FavoriteCar[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -26,7 +28,7 @@ function readStorage(): FavoriteCar[] {
   }
 }
 
-function writeStorage(next: FavoriteCar[]) {
+export function writeStorage(next: FavoriteCar[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   window.dispatchEvent(new Event(SYNC_EVENT));
 }
