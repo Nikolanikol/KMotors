@@ -29,15 +29,18 @@ const Main = () => {
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-[68px]">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-[68px] w-full max-w-full">
       <PaintSplashCanvas />
 
-      <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+      <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto">
         <h1
-          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight"
+          className="font-display mb-6 leading-tight w-full"
           style={{
             color: "var(--axis-white)",
             textShadow: "0 0 60px rgba(255,69,0,0.3)",
+            fontSize: "clamp(1.5rem, 7vw, 4.5rem)",
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
           }}
         >
           {t("home.hero.title")}
@@ -85,8 +88,8 @@ const Main = () => {
           <StatCounter end={1240} suffix="+" label={t("home.hero.statCars")} />
           <div className="w-px h-12 opacity-30" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
           <StatCounter end={850} suffix="+" label={t("home.hero.statClients")} />
-          <div className="w-px h-12 opacity-30 hidden sm:block" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
-          <div className="hidden sm:flex flex-col items-center">
+          <div className="w-px h-12 opacity-30" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
+          <div className="flex flex-col items-center">
             <span className="text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
               {t("home.hero.statYears")}
             </span>
