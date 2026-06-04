@@ -1,7 +1,20 @@
 "use client";
-import ReactPhoneInput, { type Value } from "react-phone-number-input";
-import "react-phone-number-input/style.css";
+import dynamic from "next/dynamic";
+import { type Value } from "react-phone-number-input";
 import { cn } from "@/lib/utils";
+
+// Lazy load — библиотека 193KB, грузим только когда форма видна
+const ReactPhoneInput = dynamic(() => import("react-phone-number-input"), {
+  ssr: false,
+  loading: () => (
+    <input
+      type="tel"
+      placeholder="Загрузка..."
+      disabled
+      className="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm border-input"
+    />
+  ),
+});
 
 interface PhoneInputProps {
   value: Value | undefined;

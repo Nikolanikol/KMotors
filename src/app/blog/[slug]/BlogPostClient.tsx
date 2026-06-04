@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown from "react-markdown";
+import dynamic from "next/dynamic";
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false });
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { BlogPost } from "@/types/blog";
