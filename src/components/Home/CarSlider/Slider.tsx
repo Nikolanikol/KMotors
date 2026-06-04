@@ -2,7 +2,9 @@
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
-// Swiper CSS перенесён в globals.css для избежания render-blocking
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
 import { ICar } from "./dataType";
 import CarCard from "./CarCard";
 

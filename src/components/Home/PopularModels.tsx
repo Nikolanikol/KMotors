@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
-// Swiper CSS в globals.css
+import "swiper/css";
+import "swiper/css/pagination";
 
 const MODELS = [
   {
