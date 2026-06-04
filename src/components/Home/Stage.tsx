@@ -73,7 +73,7 @@ export default function Stage() {
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,69,0,0.5)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 40px rgba(255,69,0,0.1)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,69,0,0.2)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             >
-              <div className="text-4xl font-bold mb-4 opacity-60" style={{ color: "var(--axis-orange)" }}>{step.num}</div>
+              <div className="text-4xl font-bold mb-4" style={{ color: "var(--axis-orange)", opacity: 0.8 }}>{step.num}</div>
               <h3 className="text-base font-semibold mb-4 leading-snug" style={{ color: "var(--axis-white)" }}>{step.title}</h3>
               <ul className="space-y-2">
                 {step.desc.map((d, i) => (

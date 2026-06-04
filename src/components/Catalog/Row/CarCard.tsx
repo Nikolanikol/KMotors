@@ -101,7 +101,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
       <div ref={glossyRef} className="absolute inset-0 z-20 pointer-events-none rounded-2xl transition-all duration-200" />
 
       {/* Image — кликабельна */}
-      <Link href={`/${lang}/catalog/${id}`} target="_blank" onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_card_click"); }}>
+      <Link href={`/${lang}/catalog/${id}`} target="_blank" aria-label={carName} onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_card_click"); }}>
       <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: "var(--axis-graphite)" }}>
         <Image
           loader={encarLoader}
