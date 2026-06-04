@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
-const AnalyticsChart = dynamic(() => import("@/components/analytics/AnalyticsChart"), { ssr: false });
-const HoursChart = dynamic(() => import("@/components/analytics/HoursChart"), { ssr: false });
+const AnalyticsChart = dynamic(() => import("@/components/analytics/AnalyticsChart"));
+const HoursChart = dynamic(() => import("@/components/analytics/HoursChart"));
 import LeadsTable from "@/components/admin/LeadsTable";
 import AdminTabs from "@/components/admin/AdminTabs";
 import { createServerClient } from "@/lib/supabase";
