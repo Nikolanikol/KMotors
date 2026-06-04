@@ -1,5 +1,6 @@
-import AnalyticsChart from "@/components/analytics/AnalyticsChart";
-import HoursChart from "@/components/analytics/HoursChart";
+import dynamic from "next/dynamic";
+const AnalyticsChart = dynamic(() => import("@/components/analytics/AnalyticsChart"), { ssr: false });
+const HoursChart = dynamic(() => import("@/components/analytics/HoursChart"), { ssr: false });
 import LeadsTable from "@/components/admin/LeadsTable";
 import AdminTabs from "@/components/admin/AdminTabs";
 import { createServerClient } from "@/lib/supabase";
