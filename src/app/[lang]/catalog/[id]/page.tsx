@@ -86,12 +86,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Приблизительная цена в рублях для RU описания
   const rubPrice = krwPrice ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU") : null;
 
+  // Обрезаем carName если слишком длинный (лимит title ~60 символов)
+  const shortCarName = carName.length > 40 ? carName.slice(0, 38) + "…" : carName;
+
   const TITLE: Record<string, string> = {
-    ru: `${carName} ${year} из Кореи`,
-    en: `${carName} ${year} from Korea`,
-    ko: `한국산 ${carName} ${year}`,
-    ka: `${carName} ${year} კორეიდან`,
-    ar: `${carName} ${year} من كوريا`,
+    ru: `${shortCarName} ${year} из Кореи`,
+    en: `${shortCarName} ${year} from Korea`,
+    ko: `한국산 ${shortCarName} ${year}`,
+    ka: `${shortCarName} ${year} კორეიდან`,
+    ar: `${shortCarName} ${year} من كوريا`,
   };
 
   const DESCRIPTION: Record<string, string> = {
