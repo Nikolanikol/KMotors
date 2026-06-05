@@ -9,7 +9,8 @@ import { Search } from "lucide-react";
 
 const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   const params = await searchParams;
-  const offset = params.page;
+  const page = Math.max(1, Number(params.page || "1"));
+  const offset = String((page - 1) * 20); // page=1→0, page=2→20, page=3→40
   const newString = getString(params);
 
   const [{ data, count }, rates] = await Promise.all([
