@@ -265,9 +265,19 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   const [subCounts, setSubCounts] = useState<Record<number, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // In-memory cache: cacheKey → response. Survives filter toggling within a session.
+  // In-memory cache: cacheKey → response. Max 30 entries to prevent memory overflow.
   type CacheEntry = { products: Product[]; total: number; catCounts: Record<number, number>; subCounts: Record<number, number> };
+  const MAX_CACHE = 30;
   const fetchCache = useRef<Map<string, CacheEntry>>(new Map());
+
+  const setCacheEntry = (key: string, value: CacheEntry) => {
+    if (fetchCache.current.size >= MAX_CACHE) {
+      // Удаляем самую старую запись (первую в Map)
+      const firstKey = fetchCache.current.keys().next().value;
+      if (firstKey) fetchCache.current.delete(firstKey);
+    }
+    fetchCache.current.set(key, value);
+  };
 
   // Fetch whenever any filter or page changes
   useEffect(() => {
@@ -308,7 +318,7 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
           catCounts: newCat ?? {},
           subCounts: newSub ?? {},
         };
-        fetchCache.current.set(cacheKey, entry);
+        setCacheEntry(cacheKey, entry);
         setProducts(entry.products);
         setTotal(entry.total);
         setCatCounts(entry.catCounts);
