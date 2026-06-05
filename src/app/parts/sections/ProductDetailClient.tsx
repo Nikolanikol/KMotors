@@ -131,10 +131,8 @@ export function ProductDetailClient({
     product.id
   );
 
-  const productUrl =
-    typeof window !== "undefined"
-      ? window.location.href
-      : `/${lang}/parts/${partSlug}`;
+  // Используем стабильный URL без window — предотвращает hydration mismatch #418
+  const productUrl = `https://www.kmotors.shop/${lang}/parts/${partSlug}`;
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
