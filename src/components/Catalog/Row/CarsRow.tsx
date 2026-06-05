@@ -37,7 +37,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 items-start gap-5 min-h-[80vh]">
+      <div id="cars-grid" className="grid grid-cols-1 sm:grid-cols-2 items-start gap-5 min-h-[80vh]">
         {data &&
           data.length > 0 &&
           data.map(

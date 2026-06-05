@@ -17,7 +17,9 @@ export const Pagination = ({ count }: { count: number }) => {
     const newParams = new URLSearchParams(params.toString());
     newParams.set("page", page.toString());
     startTransition(() => {
-      router.push(`?${newParams.toString()}`);
+      router.push(`?${newParams.toString()}`, { scroll: false });
+      // Скроллим к началу карточек, не к верху страницы
+      document.getElementById("cars-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
 
