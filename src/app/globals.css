@@ -293,3 +293,20 @@ body {
   color: var(--axis-white) !important;
   border-color: rgba(74,74,74,0.2) !important;
 }
+
+/* ── PhoneInput dropdown z-index fix ─────────────────────── */
+.PhoneInputCountrySelectArrow {
+  opacity: 0.7;
+}
+.PhoneInput {
+  position: relative;
+}
+/* Дропдаун флагов должен быть поверх всех элементов формы */
+select.PhoneInputCountrySelect {
+  position: relative;
+  z-index: 50;
+}
+/* Нативный select показывается браузером нативно — проблема в flagsContainer */
+.PhoneInputCountryIconImg {
+  display: block;
+}
