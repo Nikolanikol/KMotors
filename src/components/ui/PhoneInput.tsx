@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { type Value } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { cn } from "@/lib/utils";
 
 // Lazy load — библиотека 193KB, грузим только когда форма видна
