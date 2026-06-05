@@ -207,20 +207,23 @@ export default async function CatalogPage({ params, searchParams }: Props) {
               </Suspense>
             </div>
             <div className="col-span-1 lg:col-span-9">
-              <Suspense fallback={
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 min-h-[80vh]">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="animate-pulse rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)" }}>
-                      <div className="aspect-[16/10]" style={{ backgroundColor: "var(--axis-graphite)" }} />
-                      <div className="p-5 space-y-3">
-                        <div className="h-4 rounded w-3/4" style={{ backgroundColor: "var(--axis-graphite)" }} />
-                        <div className="h-3 rounded w-1/2" style={{ backgroundColor: "var(--axis-graphite)" }} />
-                        <div className="h-8 rounded mt-4" style={{ backgroundColor: "var(--axis-graphite)" }} />
+              <Suspense
+                key={`${sp.page || "1"}-${sp.action || ""}-${sp.carNo || ""}`}
+                fallback={
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 min-h-[80vh]">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="animate-pulse rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)" }}>
+                        <div className="aspect-[16/10]" style={{ backgroundColor: "var(--axis-graphite)" }} />
+                        <div className="p-5 space-y-3">
+                          <div className="h-4 rounded w-3/4" style={{ backgroundColor: "var(--axis-graphite)" }} />
+                          <div className="h-3 rounded w-1/2" style={{ backgroundColor: "var(--axis-graphite)" }} />
+                          <div className="h-8 rounded mt-4" style={{ backgroundColor: "var(--axis-graphite)" }} />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              }>
+                    ))}
+                  </div>
+                }
+              >
                 <CarsRow searchParams={searchParams} />
               </Suspense>
             </div>
