@@ -45,7 +45,7 @@ export default async function RootLayout({
   const isAdmin = cookieStore.get("admin_session")?.value === "1";
 
   return (
-    <html lang={lang} className={inter.className}>
+    <html lang={lang} dir={lang === "ar" ? "rtl" : "ltr"} className={inter.className}>
       <head>
         <meta name="robots" content="index, follow" />
 
@@ -137,7 +137,7 @@ export default async function RootLayout({
             {/* Яндекс.Метрика — только для СНГ аудитории по языку браузера */}
             <Script id="metrika-init" strategy="lazyOnload">
               {`
-                var _lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+                var _lang = (navigator.language || '').toLowerCase();
                 var _cis = ['ru','uk','kk','uz','be','ky','tg','az','hy','ka'];
                 var _isCIS = _cis.some(function(l){ return _lang.startsWith(l); });
                 if (_isCIS) {
