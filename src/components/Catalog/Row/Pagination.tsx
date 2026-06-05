@@ -1,20 +1,19 @@
 "use client";
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export const Pagination = ({ count }: { count: number }) => {
   const router = useRouter();
   const params = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [currentPage, setCurrentPage] = useState(1);
+
+  // Синхронизируем с URL — читаем page из params
+  const currentPage = Math.max(1, Number(params.get("page") || "1"));
 
   const totalPages = Math.ceil(count / 20);
 
-  useEffect(() => { setCurrentPage(1); }, [count]);
-
   const goTo = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
-    setCurrentPage(page);
     const newParams = new URLSearchParams(params.toString());
     newParams.set("page", page.toString());
     startTransition(() => {
