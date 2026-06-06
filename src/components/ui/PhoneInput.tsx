@@ -44,7 +44,10 @@ export function PhoneInput({ value, onChange, placeholder, disabled, required, c
         ),
       }}
       className={cn(
-        "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 gap-2 [&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-none [&_.PhoneInputCountrySelect]:outline-none [&_.PhoneInputCountrySelect]:text-sm [&_.PhoneInputCountrySelectArrow]:opacity-50",
+        "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 gap-2",
+        "[&_.PhoneInputCountrySelect]:border-none [&_.PhoneInputCountrySelect]:outline-none [&_.PhoneInputCountrySelect]:text-sm",
+        "[&_.PhoneInputCountrySelect]:bg-white [&_.PhoneInputCountrySelect]:text-gray-900",
+        "[&_.PhoneInputCountrySelectArrow]:opacity-50",
         error
           ? "border-red-500 focus-within:ring-red-500"
           : "border-input focus-within:ring-ring"
