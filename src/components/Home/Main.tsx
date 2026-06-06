@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 const PaintSplashCanvas = dynamic(() => import("@/components/ui/PaintSplashCanvas"), { ssr: false, loading: () => null });
 import { useCountAnimation } from "@/hooks/useScrollAnimation";
+import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -28,6 +29,7 @@ const Main = () => {
   const pathname = usePathname();
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const { isCatalogBlocked } = useCountry();
 
   return (
     <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden -mt-[68px] w-full max-w-full">
@@ -51,24 +53,26 @@ const Main = () => {
           {t("home.hero.subtitle")}
         </p>
 
-        <Link
-          href={`/${lang}/catalog`}
-          className="paint-splash-btn inline-block px-10 py-4 border-2 font-semibold rounded-full transition-all duration-300 relative z-10"
-          style={{
-            borderColor: "var(--axis-orange)",
-            color: "var(--axis-orange)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)";
-            (e.currentTarget as HTMLElement).style.color = "var(--axis-white)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-            (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)";
-          }}
-        >
-          <span className="relative z-10">{t("home.hero.catalogButton")}</span>
-        </Link>
+        {!isCatalogBlocked && (
+          <Link
+            href={`/${lang}/catalog`}
+            className="paint-splash-btn inline-block px-10 py-4 border-2 font-semibold rounded-full transition-all duration-300 relative z-10"
+            style={{
+              borderColor: "var(--axis-orange)",
+              color: "var(--axis-orange)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)";
+              (e.currentTarget as HTMLElement).style.color = "var(--axis-white)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+              (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)";
+            }}
+          >
+            <span className="relative z-10">{t("home.hero.catalogButton")}</span>
+          </Link>
+        )}
 
         {/* Phone link — mobile friendly */}
         <div className="mt-4">

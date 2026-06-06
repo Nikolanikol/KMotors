@@ -10,6 +10,7 @@ import { X, Menu, Heart } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
+import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -34,13 +35,14 @@ export default function Header() {
   const { favorites: favCars } = useFavorites();
   const { favorites: favParts } = usePartsFavorites();
   const favTotal = favCars.length + favParts.length;
+  const { isCatalogBlocked } = useCountry();
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   const navLinks = [
     { href: `/${lang}/`, labelKey: "nav.home" },
-    { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
+    ...(!isCatalogBlocked ? [{ href: `/${lang}/catalog`, labelKey: "nav.catalog" }] : []),
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },

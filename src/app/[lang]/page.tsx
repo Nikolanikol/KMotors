@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { cookies } from "next/headers";
 import Main from "@/components/Home/Main";
 import NavCards from "@/components/Home/NavCards";
 
@@ -93,6 +94,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Home({ params }: Props) {
   const { lang } = await params;
   const meta = LANG_META[lang] || LANG_META.ru;
+  const cookieStore = await cookies();
+  const isCatalogBlocked = cookieStore.get("x-user-country")?.value === "KR";
 
   const websiteSchema = {
     "@context": "https://schema.org",
@@ -146,16 +149,18 @@ export default async function Home({ params }: Props) {
     <div className="min-h-[70vh]">
       <Main />
       <NavCards />
-      <div className="py-16" style={{ backgroundColor: "var(--axis-black)" }}>
-        <CarSlider
-          reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%EA%B8%B0%EC%95%84.))&sr=%7CModifiedDate%7C0%7C20"
-          title="Kia"
-        />
-        <CarSlider
-          reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%ED%98%84%EB%8C%80.))&sr=%7CModifiedDate%7C0%7C20"
-          title="Hyundai"
-        />
-      </div>
+      {!isCatalogBlocked && (
+        <div className="py-16" style={{ backgroundColor: "var(--axis-black)" }}>
+          <CarSlider
+            reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%EA%B8%B0%EC%95%84.))&sr=%7CModifiedDate%7C0%7C20"
+            title="Kia"
+          />
+          <CarSlider
+            reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%ED%98%84%EB%8C%80.))&sr=%7CModifiedDate%7C0%7C20"
+            title="Hyundai"
+          />
+        </div>
+      )}
       <Brands />
       <PopularModels />
       <WhyChooseUs />

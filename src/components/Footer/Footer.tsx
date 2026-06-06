@@ -20,6 +20,7 @@ const TikTokIcon = () => (
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -39,13 +40,14 @@ const KAxisLogo = () => (
 export default function Footer() {
   const { t } = useTranslation();
   const pathname = usePathname();
+  const { isCatalogBlocked } = useCountry();
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
   const navLinks = [
     { href: `/${lang}/`, labelKey: "nav.home" },
-    { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
+    ...(!isCatalogBlocked ? [{ href: `/${lang}/catalog`, labelKey: "nav.catalog" }] : []),
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },

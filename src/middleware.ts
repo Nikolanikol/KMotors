@@ -93,6 +93,17 @@ if (!adminPassword || !cookie || cookie.value !== "1") {
       maxAge: 60 * 60 * 24 * 365, // 1 год
     });
 
+    // Страна пользователя — от Cloudflare (cf-ipcountry) или Vercel fallback
+    const country =
+      request.headers.get("cf-ipcountry") ||
+      request.headers.get("x-vercel-ip-country") ||
+      "";
+    response.cookies.set("x-user-country", country, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24, // 24 часа
+    });
+
     // Аналитика — только реальные пользователи, не боты и не RSC
     if (shouldTrack(request)) {
       const referrer = request.headers.get("referer") || "";

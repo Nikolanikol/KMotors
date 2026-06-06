@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useCountry } from "@/hooks/useCountry";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -137,6 +138,7 @@ const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 export default function PopularModels() {
   const { i18n } = useTranslation();
   const pathname = usePathname();
+  const { isCatalogBlocked } = useCountry();
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : i18n.language || "ru";
@@ -155,15 +157,17 @@ export default function PopularModels() {
               {SUBTITLE[lang] || SUBTITLE.ru}
             </p>
           </div>
-          <Link
-            href={`/${lang}/catalog`}
-            className="hidden sm:inline-flex text-sm font-semibold transition-colors whitespace-nowrap"
-            style={{ color: "var(--axis-gray)" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
-          >
-            {ALL_LINK[lang] || ALL_LINK.ru}
-          </Link>
+          {!isCatalogBlocked && (
+            <Link
+              href={`/${lang}/catalog`}
+              className="hidden sm:inline-flex text-sm font-semibold transition-colors whitespace-nowrap"
+              style={{ color: "var(--axis-gray)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+            >
+              {ALL_LINK[lang] || ALL_LINK.ru}
+            </Link>
+          )}
         </div>
 
         {/* Slider */}

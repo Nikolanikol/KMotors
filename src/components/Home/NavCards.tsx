@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
+import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -71,11 +72,19 @@ export default function NavCards() {
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
   const labels = FALLBACK[lang] ?? FALLBACK.ru;
+  const { isCatalogBlocked } = useCountry();
+
+  const visibleCards = isCatalogBlocked
+    ? CARDS.filter((c) => c.href !== "/catalog")
+    : CARDS;
+  const visibleLabels = isCatalogBlocked
+    ? labels.filter((_, i) => CARDS[i].href !== "/catalog")
+    : labels;
 
   return (
     <section className="py-6 px-4 sm:px-6" style={{ backgroundColor: "var(--axis-black)" }}>
-      <div className="max-w-7xl mx-auto grid grid-cols-3 gap-3 sm:gap-4">
-        {CARDS.map((card, i) => (
+      <div className={`max-w-7xl mx-auto grid gap-3 sm:gap-4 ${visibleCards.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+        {visibleCards.map((card, i) => (
           <Link
             key={card.href}
             href={`/${lang}${card.href}`}
@@ -88,10 +97,10 @@ export default function NavCards() {
             <span className="text-2xl sm:text-3xl">{card.icon}</span>
             <div className="flex-1">
               <p className="text-sm sm:text-base font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
-                {labels[i].title}
+                {visibleLabels[i].title}
               </p>
               <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "var(--axis-gray)" }}>
-                {labels[i].desc}
+                {visibleLabels[i].desc}
               </p>
             </div>
             <ArrowRight
