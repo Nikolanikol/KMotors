@@ -8,6 +8,7 @@ import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
   CompatibleBrand,
+  ProductLogistics,
 } from "@/app/parts/sections/ProductDetailClient";
 
 // Страницы продуктов рендерятся по требованию и кэшируются навсегда.
@@ -58,6 +59,19 @@ async function fetchProduct(slug: string) {
   const catIds = [product.category_id, product.subcategory_id].filter(
     (x): x is number => !!x
   );
+
+  // Fetch logistics: subcategory_id (L2/L3) has priority over category_id (L1)
+  const logisticsCatId = product.subcategory_id ?? product.category_id;
+
+  const logisticsResult = logisticsCatId
+    ? await supabase
+        .from("v_category_logistics")
+        .select("weight_avg_kg, packed_weight_kg, vol_weight_kg, billed_weight_kg, ship_method, size_formula_cm, logistics_notes")
+        .eq("id", logisticsCatId)
+        .single()
+    : null;
+
+  const logistics: ProductLogistics | null = logisticsResult?.data ?? null;
 
   // Fetch models, brands, categories in parallel
   const [modelsResult, brandsResult, catsResult] = await Promise.all([
@@ -119,6 +133,7 @@ async function fetchProduct(slug: string) {
     categoryName,
     subcategoryName,
     compatibleBrands,
+    logistics,
   };
 }
 
@@ -342,7 +357,7 @@ export default async function ProductDetailPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} />
+      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} logistics={data.logistics} />
     </>
   );
 }

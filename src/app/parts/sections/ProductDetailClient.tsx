@@ -36,6 +36,16 @@ export type ProductDetail = {
   subcategory_id: number | null;
 };
 
+export type ProductLogistics = {
+  weight_avg_kg: number | null;
+  packed_weight_kg: number | null;
+  vol_weight_kg: number | null;
+  billed_weight_kg: number | null;
+  ship_method: "EMS" | "EMS_PREMIUM" | "SEA" | null;
+  size_formula_cm: number | null;
+  logistics_notes: string | null;
+};
+
 export type CompatibleBrand = {
   id: number;
   name: string;
@@ -48,6 +58,7 @@ interface Props {
   categoryName: { ru: string; en: string; slug: string } | null;
   subcategoryName: { ru: string; en: string } | null;
   compatibleBrands: CompatibleBrand[];
+  logistics: ProductLogistics | null;
   lang: string;
   krwToUsd: number;
   description?: string;
@@ -60,6 +71,7 @@ export function ProductDetailClient({
   categoryName,
   subcategoryName,
   compatibleBrands,
+  logistics,
   lang,
   krwToUsd,
   description,
@@ -262,13 +274,18 @@ export function ProductDetailClient({
             </div>
 
             {/* Price */}
-            <div className="mb-6">
+            <div className="mb-4">
               <span className="text-xs text-gray-500 uppercase tracking-widest">
                 {t("parts.detail.priceLabel")}
               </span>
               <div className="text-4xl font-bold text-[#BB162B] mt-1">
                 {formatUsd(product.price_krw)}
               </div>
+            </div>
+
+            {/* Shipping method badge */}
+            <div className="mb-6">
+              <ShippingBadge logistics={logistics} lang={lang} />
             </div>
 
             {/* Order CTA */}
@@ -403,5 +420,66 @@ function BrandDot({ slug }: { slug: string }) {
       className="w-2.5 h-2.5 rounded-full shrink-0"
       style={{ backgroundColor: color }}
     />
+  );
+}
+
+const SHIP_CONFIG = {
+  EMS: {
+    label: { ru: "Авиа EMS", en: "Air EMS" },
+    sublabel: { ru: "≤ 30 кг", en: "≤ 30 kg" },
+    bg: "bg-green-50",
+    border: "border-green-200",
+    text: "text-green-700",
+    dot: "bg-green-500",
+  },
+  EMS_PREMIUM: {
+    label: { ru: "Авиа EMS Premium", en: "Air EMS Premium" },
+    sublabel: { ru: "≤ 70 кг", en: "≤ 70 kg" },
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    text: "text-blue-700",
+    dot: "bg-blue-500",
+  },
+  SEA: {
+    label: { ru: "Только морем", en: "Sea freight only" },
+    sublabel: { ru: "Крупногабаритный груз", en: "Oversized cargo" },
+    bg: "bg-red-50",
+    border: "border-red-200",
+    text: "text-red-700",
+    dot: "bg-red-500",
+  },
+} as const;
+
+function ShippingBadge({ logistics, lang }: { logistics: ProductLogistics | null; lang: string }) {
+  const isRu = lang === "ru";
+
+  if (!logistics?.ship_method) {
+    return (
+      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
+        <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0" />
+        <span className="text-xs text-gray-500">
+          {isRu ? "Доставка: уточнить у менеджера" : "Shipping: ask manager"}
+        </span>
+      </div>
+    );
+  }
+
+  const cfg = SHIP_CONFIG[logistics.ship_method];
+  const label = isRu ? cfg.label.ru : cfg.label.en;
+  const sublabel = isRu ? cfg.sublabel.ru : cfg.sublabel.en;
+
+  return (
+    <div className={cn("inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border", cfg.bg, cfg.border)}>
+      <span className={cn("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
+      <div>
+        <span className={cn("text-xs font-semibold", cfg.text)}>{label}</span>
+        <span className={cn("text-xs ml-1.5 opacity-70", cfg.text)}>{sublabel}</span>
+        {logistics.billed_weight_kg && (
+          <span className={cn("text-xs ml-1.5 opacity-60", cfg.text)}>
+            · ~{logistics.billed_weight_kg} кг
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
