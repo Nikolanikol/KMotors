@@ -66,7 +66,17 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const meta = BLOG_META[lang] || BLOG_META.ru;
+
+  // Блог только на русском — остальные языки не индексируем
+  if (lang !== "ru") {
+    return {
+      title: BLOG_META[lang]?.title || BLOG_META.ru.title,
+      robots: { index: false, follow: true },
+      alternates: { canonical: "https://www.kmotors.shop/ru/blog" },
+    };
+  }
+
+  const meta = BLOG_META.ru;
 
   return {
     title: meta.title,
@@ -74,20 +84,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://www.kmotors.shop/${lang}/blog`,
+      url: "https://www.kmotors.shop/ru/blog",
       images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
       type: "website",
     },
     alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/blog`,
-      languages: {
-        ru: "https://www.kmotors.shop/ru/blog",
-        en: "https://www.kmotors.shop/en/blog",
-        ko: "https://www.kmotors.shop/ko/blog",
-        ka: "https://www.kmotors.shop/ka/blog",
-        ar: "https://www.kmotors.shop/ar/blog",
-        "x-default": "https://www.kmotors.shop/ru/blog",
-      },
+      canonical: "https://www.kmotors.shop/ru/blog",
     },
   };
 }

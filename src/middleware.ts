@@ -63,6 +63,11 @@ function isExcluded(path: string): boolean {
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
+  // --- 410 для старых Encar CDN путей (проиндексированных Google по ошибке) ---
+  if (/^\/carpicture\d/.test(path)) {
+    return new NextResponse(null, { status: 410 });
+  }
+
   // --- Защита /admin ---
   if (path.startsWith("/admin")) {
     if (path === "/admin/login") return NextResponse.next();

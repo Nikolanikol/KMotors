@@ -3,19 +3,8 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
 const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 export const revalidate = 3600;
-
-function alternates(slug: string) {
-  return [
-    ...LANGS.map(
-      (lang) =>
-        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}/blog/${slug}"/>`
-    ),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/blog/${slug}"/>`,
-  ].join("\n");
-}
 
 const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
@@ -37,44 +26,18 @@ export async function GET() {
 
     const urlBlocks: string[] = [];
 
-    // Статьи блога
+    // Блог только на русском — переводов нет
     for (const post of posts) {
       const lastmod = post.published_at || new Date().toISOString();
-
-      for (const lang of LANGS) {
-        urlBlocks.push(`  <url>
-    <loc>${BASE}/${lang}/blog/${post.slug}</loc>
+      urlBlocks.push(`  <url>
+    <loc>${BASE}/ru/blog/${post.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-${alternates(post.slug)}
   </url>`);
-      }
     }
 
-    // Страницы тегов
-    const allTags = new Set<string>();
-    for (const post of posts) {
-      (post.tags || []).forEach((tag: string) => allTags.add(tag));
-    }
-    for (const tag of allTags) {
-      const encodedTag = encodeURIComponent(tag);
-      const tagAlternates = [
-        ...LANGS.map(
-          (l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${BASE}/${l}/blog/tag/${encodedTag}"/>`
-        ),
-        `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/blog/tag/${encodedTag}"/>`,
-      ].join("\n");
-
-      for (const lang of LANGS) {
-        urlBlocks.push(`  <url>
-    <loc>${BASE}/${lang}/blog/tag/${encodedTag}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-${tagAlternates}
-  </url>`);
-      }
-    }
+    // Теги не включаем — они noindex
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"

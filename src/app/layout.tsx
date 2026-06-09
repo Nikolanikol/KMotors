@@ -52,12 +52,6 @@ export default async function RootLayout({
         {/* Preconnect — только для ресурсов загружаемых в браузере (не SSR) */}
         <link rel="preconnect" href="https://ci.encar.com" />
         <link rel="dns-prefetch" href="https://ci.encar.com" />
-        <link rel="alternate" href="https://www.kmotors.shop/ru/" hrefLang="ru" />
-        <link rel="alternate" href="https://www.kmotors.shop/en/" hrefLang="en" />
-        <link rel="alternate" href="https://www.kmotors.shop/ko/" hrefLang="ko" />
-        <link rel="alternate" href="https://www.kmotors.shop/ka/" hrefLang="ka" />
-        <link rel="alternate" href="https://www.kmotors.shop/ar/" hrefLang="ar" />
-        <link rel="alternate" href="https://www.kmotors.shop/ru/" hrefLang="x-default" />
         <link rel="manifest" href="/favicon_io/site.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" sizes="192x192" />

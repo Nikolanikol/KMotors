@@ -63,13 +63,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     ? `${meta.description} ${descParts.join(", ")}.`
     : meta.description;
 
-  const canonical = manufacture
-    ? `https://www.kmotors.shop/${lang}/catalog?manufacture=.${manufacture}`
-    : `https://www.kmotors.shop/${lang}/catalog`;
+  const hasFilters = !!(manufacture || yearMin || yearMax || priceMax || sp.page);
+  const canonical = `https://www.kmotors.shop/${lang}/catalog`;
 
   return {
     title,
     description,
+    ...(hasFilters && { robots: { index: false, follow: true } }),
     openGraph: {
       title,
       description,
