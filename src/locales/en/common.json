@@ -495,7 +495,12 @@
       "breadcrumbHome": "Home",
       "breadcrumbParts": "Parts",
       "copySuccess": "Copied!",
-      "viewAll": "View all"
+      "viewAll": "View all",
+      "shippingCalcTitle": "EMS Shipping cost",
+      "shippingCalcSelect": "Select country",
+      "shippingCalcResult": "Approx. {price} USD",
+      "shippingCalcUnavailable": "EMS not available for this country",
+      "shippingCalcNote": "* Shipping cost only. Final price may vary."
     },
     "order": {
       "partNumber": "Part number",

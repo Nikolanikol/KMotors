@@ -55,7 +55,7 @@ export default function FavoritesClient() {
   const buildOrderMessage = () => {
     const tx = PARTS_ORDER_TEXT[lang] ?? PARTS_ORDER_TEXT.ru;
     const lines = parts.map((p) => {
-      const name = i18n.language === "ru" ? p.name_ru : (p.name_en || p.name_ru);
+      const name = i18n.language === "ru" ? (p.name_ru || p.name_en || p.name_ko) : (p.name_en || p.name_ru || p.name_ko);
       return `• ${name} (${p.part_number}) — ${formatUsd(p.price_krw, krwToUsd)}`;
     });
     return `${tx.greeting}\n\n${lines.join("\n")}\n\n${tx.total}: ~$${usdFormatter.format(totalPartsUsd)}`;
@@ -256,7 +256,7 @@ export default function FavoritesClient() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {parts.map((part) => {
-                  const name = i18n.language === "ru" ? part.name_ru : (part.name_en || part.name_ru);
+                  const name = i18n.language === "ru" ? (part.name_ru || part.name_en || part.name_ko) : (part.name_en || part.name_ru || part.name_ko);
                   const href = `/${lang}/parts/${generatePartSlug(part.part_number, name, lang as "ru" | "en" | "ko", part.id)}`;
                   return (
                     <div

@@ -499,7 +499,12 @@
       "breadcrumbHome": "Главная",
       "breadcrumbParts": "Запчасти",
       "copySuccess": "Скопировано!",
-      "viewAll": "Смотреть все"
+      "viewAll": "Смотреть все",
+      "shippingCalcTitle": "Стоимость доставки EMS",
+      "shippingCalcSelect": "Выберите страну",
+      "shippingCalcResult": "Примерно {price} USD",
+      "shippingCalcUnavailable": "EMS недоступен для этой страны",
+      "shippingCalcNote": "* Указана стоимость доставки. Итоговая цена может отличаться."
     },
     "order": {
       "partNumber": "Артикул",

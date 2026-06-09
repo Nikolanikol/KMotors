@@ -16,6 +16,14 @@ import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { generatePartSlug } from "@/utils/partSlug";
 import { OrderModal } from "./OrderModal";
+import {
+  calcEmsUsd,
+  calcEmspUsd,
+  isEmsAvailable,
+  isEmspAvailable,
+  COUNTRY_NAMES,
+  COUNTRY_SELECTOR_ORDER,
+} from "@/lib/ems-rates";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -34,6 +42,7 @@ export type ProductDetail = {
   detail_url: string | null;
   category_id: number | null;
   subcategory_id: number | null;
+  weight_kg: number | null;
 };
 
 export type ProductLogistics = {
@@ -44,6 +53,11 @@ export type ProductLogistics = {
   ship_method: "EMS" | "EMS_PREMIUM" | "SEA" | null;
   size_formula_cm: number | null;
   logistics_notes: string | null;
+  // debug fields
+  length_cm: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+  name_ru: string | null;
 };
 
 export type CompatibleBrand = {
@@ -62,6 +76,7 @@ interface Props {
   lang: string;
   krwToUsd: number;
   description?: string;
+  logisticsCatId?: number | null;
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -75,6 +90,7 @@ export function ProductDetailClient({
   lang,
   krwToUsd,
   description,
+  logisticsCatId,
 }: Props) {
   const { t, i18n } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -89,7 +105,7 @@ export function ProductDetailClient({
     // Track product view
     trackEvent("view_item", {
       item_id: String(product.id),
-      item_name: product.name_en || product.name_ru,
+      item_name: product.name_en || product.name_ru || product.name_ko,
       part_number: product.part_number,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,10 +114,10 @@ export function ProductDetailClient({
   // Localised product name
   const productName =
     i18n.language === "ru"
-      ? product.name_ru
+      ? product.name_ru || product.name_en || product.name_ko
       : i18n.language === "ko"
       ? product.name_ko || product.name_en || product.name_ru
-      : product.name_en || product.name_ru;
+      : product.name_en || product.name_ru || product.name_ko;
 
   const catName = categoryName
     ? i18n.language === "ru"
@@ -137,8 +153,8 @@ export function ProductDetailClient({
     lang === "ko"
       ? product.name_ko || product.name_en || product.name_ru
       : lang === "ru"
-      ? product.name_ru
-      : product.name_en || product.name_ru,
+      ? product.name_ru || product.name_en || product.name_ko
+      : product.name_en || product.name_ru || product.name_ko,
     lang as "ru" | "en" | "ko",
     product.id
   );
@@ -283,9 +299,9 @@ export function ProductDetailClient({
               </div>
             </div>
 
-            {/* Shipping method badge */}
+            {/* Shipping method badge + calculator */}
             <div className="mb-6">
-              <ShippingBadge logistics={logistics} lang={lang} />
+              <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} />
             </div>
 
             {/* Order CTA */}
@@ -314,6 +330,37 @@ export function ProductDetailClient({
                   label={t("parts.detail.subcategory")}
                   value={subName}
                 />
+              )}
+
+              {/* ── DEV: logistics debug panel ── */}
+              {process.env.NODE_ENV === "development" && logistics && (
+                <div className="mt-4 pt-4 border-t border-dashed border-orange-300 text-[11px] font-mono space-y-1">
+                  <div className="text-orange-500 font-bold text-xs mb-1">
+                    🔧 Logistics debug (dev only)
+                  </div>
+                  <div className="text-gray-500">
+                    cat_id: <span className="text-orange-600 font-semibold">{logisticsCatId ?? "—"}</span>
+                    {" · "}<span className="text-orange-700">{logistics.name_ru ?? "—"}</span>
+                  </div>
+                  <div className="text-gray-500">
+                    dims: <span className="text-gray-700">{logistics.length_cm ?? "?"}×{logistics.width_cm ?? "?"}×{logistics.height_cm ?? "?"} см</span>
+                    {" · "}size_f: <span className="text-gray-700">{logistics.size_formula_cm ?? "?"} см</span>
+                  </div>
+                  <div className="text-gray-500">
+                    avg: <span className="text-gray-700">{logistics.weight_avg_kg} кг</span>
+                    {" → "}packed: <span className="text-blue-600">{logistics.packed_weight_kg} кг</span>
+                    {" · "}vol: <span className="text-gray-700">{logistics.vol_weight_kg} кг</span>
+                    {" → "}billed: <span className="text-green-700 font-semibold">{logistics.billed_weight_kg} кг</span>
+                  </div>
+                  <div className="text-gray-500">
+                    method: <span className={`font-bold ${logistics.ship_method === "EMS" ? "text-green-600" : logistics.ship_method === "EMS_PREMIUM" ? "text-blue-600" : "text-red-600"}`}>
+                      {logistics.ship_method}
+                    </span>
+                    {logistics.logistics_notes && (
+                      <span className="text-orange-400 ml-2">⚠ {logistics.logistics_notes}</span>
+                    )}
+                  </div>
+                </div>
               )}
 
             </div>
@@ -450,8 +497,18 @@ const SHIP_CONFIG = {
   },
 } as const;
 
-function ShippingBadge({ logistics, lang }: { logistics: ProductLogistics | null; lang: string }) {
+function ShippingBadge({
+  logistics,
+  lang,
+  krwToUsd,
+}: {
+  logistics: ProductLogistics | null;
+  lang: string;
+  krwToUsd: number;
+}) {
+  const { t } = useTranslation();
   const isRu = lang === "ru";
+  const [country, setCountry] = useState("");
 
   if (!logistics?.ship_method) {
     return (
@@ -468,18 +525,103 @@ function ShippingBadge({ logistics, lang }: { logistics: ProductLogistics | null
   const label = isRu ? cfg.label.ru : cfg.label.en;
   const sublabel = isRu ? cfg.sublabel.ru : cfg.sublabel.en;
 
+  // Recalculate packed/billed from per-product weight_avg_kg
+  const avgKg = logistics.weight_avg_kg;
+  const packedKg = avgKg !== null
+    ? Math.round((avgKg > 30 ? avgKg + 15 : avgKg * 1.05 + 0.3) * 1000) / 1000
+    : null;
+  const volKg = (logistics.length_cm && logistics.width_cm && logistics.height_cm)
+    ? Math.round((logistics.length_cm * logistics.width_cm * logistics.height_cm / 6000) * 1000) / 1000
+    : null;
+
+  // EMS Standard: billing by packed weight only (no volumetric)
+  const emsPackedKg = packedKg;
+  // EMS Premium: billing by max(packed, vol)
+  const emspBilledKg = packedKg !== null ? Math.max(packedKg, volKg ?? 0) : null;
+
+  const showCalculator =
+    (logistics.ship_method === "EMS" || logistics.ship_method === "EMS_PREMIUM") &&
+    (emsPackedKg !== null || emspBilledKg !== null);
+
+  // billed kg shown in badge
+  const displayKg = logistics.ship_method === "EMS" ? emsPackedKg : emspBilledKg;
+
+  const emsPrice =
+    country && emsPackedKg !== null && logistics.ship_method === "EMS"
+      ? calcEmsUsd(country, emsPackedKg, krwToUsd)
+      : null;
+
+  const emspPrice =
+    country && emspBilledKg !== null
+      ? calcEmspUsd(country, emspBilledKg, krwToUsd)
+      : null;
+
+  const countryName = (code: string) =>
+    isRu
+      ? COUNTRY_NAMES[code]?.ru ?? code
+      : COUNTRY_NAMES[code]?.en ?? code;
+
   return (
-    <div className={cn("inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border", cfg.bg, cfg.border)}>
-      <span className={cn("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
-      <div>
-        <span className={cn("text-xs font-semibold", cfg.text)}>{label}</span>
-        <span className={cn("text-xs ml-1.5 opacity-70", cfg.text)}>{sublabel}</span>
-        {logistics.billed_weight_kg && (
-          <span className={cn("text-xs ml-1.5 opacity-60", cfg.text)}>
-            · ~{logistics.billed_weight_kg} кг
-          </span>
-        )}
+    <div className="space-y-3">
+      {/* Method badge */}
+      <div className={cn("inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border", cfg.bg, cfg.border)}>
+        <span className={cn("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
+        <div>
+          <span className={cn("text-xs font-semibold", cfg.text)}>{label}</span>
+          <span className={cn("text-xs ml-1.5 opacity-70", cfg.text)}>{sublabel}</span>
+          {displayKg && (
+            <span className={cn("text-xs ml-1.5 opacity-60", cfg.text)}>
+              · ~{displayKg} {isRu ? "кг" : "kg"}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Shipping cost calculator */}
+      {showCalculator && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2">
+          <p className="text-xs font-semibold text-gray-600">
+            {t("parts.detail.shippingCalcTitle")}
+          </p>
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-[#002C5F] focus:outline-none focus:ring-2 focus:ring-[#002C5F]/20"
+          >
+            <option value="">{t("parts.detail.shippingCalcSelect")}</option>
+            {COUNTRY_SELECTOR_ORDER.map((code) => (
+              <option key={code} value={code}>
+                {countryName(code)}
+              </option>
+            ))}
+          </select>
+
+          {country && (
+            <div className="space-y-1.5">
+              {/* EMS Standard row */}
+              {emsPrice !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">EMS Standard</span>
+                  <span className="text-sm font-bold text-green-700">~${emsPrice}</span>
+                </div>
+              )}
+              {/* EMS Premium row */}
+              {emspPrice !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">EMS Premium</span>
+                  <span className="text-sm font-bold text-blue-700">~${emspPrice}</span>
+                </div>
+              )}
+              {emsPrice === null && emspPrice === null && (
+                <p className="text-xs text-red-500">
+                  {t("parts.detail.shippingCalcUnavailable")}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">{t("parts.detail.shippingCalcNote")}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
