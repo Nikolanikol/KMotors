@@ -53,6 +53,7 @@ function isExcluded(path: string): boolean {
   return (
     path.startsWith("/admin") ||
     path.startsWith("/api") ||
+    path.startsWith("/auth") ||
     path.startsWith("/_next") ||
     path.includes(".xml") ||
     path.includes("robots") ||
