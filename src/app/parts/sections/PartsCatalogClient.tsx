@@ -30,9 +30,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
+  ShoppingCart,
+  Check,
 } from "lucide-react";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { clarityEvent } from "@/utils/clarity";
+import { useAuth } from "@/providers/AuthProvider";
+import { createClient } from "@/lib/supabase/client";
 
 const BRAND_CHIP_COLORS: Record<string, { active: string; inactive: string }> = {
   hyundai: {
@@ -174,6 +178,34 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   const [isPending, startTransition] = useTransition();
 
   const lang = pathname.split("/")[1] || "ru";
+  const { user } = useAuth();
+  const supabase = useMemo(() => createClient(), []);
+
+  const handleAddToCart = useCallback(async (product: Product): Promise<boolean> => {
+    if (!user) {
+      router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
+      return false;
+    }
+
+    // Получаем или создаём корзину
+    let { data: cart } = await supabase
+      .from("carts").select("id").eq("user_id", user.id).single();
+
+    if (!cart) {
+      const { data: newCart } = await supabase
+        .from("carts").insert({ user_id: user.id }).select("id").single();
+      cart = newCart;
+    }
+    if (!cart) return false;
+
+    await supabase.from("cart_items").upsert(
+      { cart_id: cart.id, product_id: product.id, quantity: 1 },
+      { onConflict: "cart_id,product_id" }
+    );
+
+    return true;
+  }, [user, supabase, router, lang]);
+
 
   // ── Fade-in observer ────────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -657,7 +689,9 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
                 index={index}
                 href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
                 onOrder={() => scrollToContact(productName, product.part_number)}
+                onAddToCart={() => handleAddToCart(product)}
                 onNavigate={() => { sessionStorage.setItem("parts:filters", window.location.search); clarityEvent("part_card_click"); }}
+                lang={lang}
                 t={t}
                 krwToUsd={krwToUsd}
               />
@@ -788,15 +822,34 @@ interface ProductCardProps {
   index: number;
   href: string;
   onOrder: () => void;
+  onAddToCart: () => Promise<boolean>;
   onNavigate: () => void;
+  lang: string;
   t: (key: string) => string;
   krwToUsd: number;
 }
 
-function ProductCard({ product, productName, view, isVisible, index, href, onOrder, onNavigate, t, krwToUsd }: ProductCardProps) {
+const CART_LABELS: Record<string, string> = {
+  ru: "В корзину", en: "Add to cart", ko: "장바구니", ka: "კალათაში", ar: "للسلة",
+};
+
+function ProductCard({ product, productName, view, isVisible, index, href, onOrder, onAddToCart, onNavigate, lang, t, krwToUsd }: ProductCardProps) {
   const delay = `${Math.min(index * 20, 400)}ms`;
   const { isFavorite, toggleFavorite } = usePartsFavorites();
   const fav = isFavorite(product.id);
+  const [cartAdded, setCartAdded] = useState(false);
+
+  const handleCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const added = await onAddToCart();
+    if (added) {
+      setCartAdded(true);
+      setTimeout(() => setCartAdded(false), 2000);
+    }
+  };
+
+  const cartLabel = CART_LABELS[lang] ?? CART_LABELS.ru;
 
   const FavButton = ({ overlay = false }: { overlay?: boolean }) => (
     <button
@@ -840,9 +893,19 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
             <span className="text-lg font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
             <FavButton overlay={false} />
           </div>
-          <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8">
-            {t("parts.catalog.orderBtn")}
-          </Button>
+          <div className="flex gap-1.5">
+            <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-8">
+              {t("parts.catalog.orderBtn")}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCart}
+              className={`text-white text-xs h-8 flex items-center gap-1 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500" : "bg-[#BB162B] hover:bg-[#9a1122]"}`}
+            >
+              {cartAdded ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
+              <span className="hidden sm:inline">{cartAdded ? "✓" : cartLabel}</span>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -875,11 +938,20 @@ function ProductCard({ product, productName, view, isVisible, index, href, onOrd
             {productName}
           </h3>
         </Link>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
+        <div className="pt-2 border-t border-gray-100 mt-auto space-y-1.5">
           <span className="text-base font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
-          <Button size="sm" onClick={onOrder} className="bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-7 px-3">
-            {t("parts.catalog.orderBtn")}
-          </Button>
+          <div className="flex gap-1.5">
+            <Button size="sm" onClick={onOrder} className="flex-1 bg-[#002C5F] hover:bg-[#001f45] text-white text-xs h-7 px-2">
+              {t("parts.catalog.orderBtn")}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCart}
+              className={`h-7 px-2 text-white text-xs flex items-center gap-1 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500" : "bg-[#BB162B] hover:bg-[#9a1122]"}`}
+            >
+              {cartAdded ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
