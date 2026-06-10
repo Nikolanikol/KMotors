@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
       .insert({
         order_number: orderNumber,
         user_id: user.id,
-        status: "pending",
+        status: "pending_payment",
         subtotal_krw: subtotalKrw,
         shipping_method: effectiveShipMethod,
         shipping_country: country,
@@ -165,6 +165,7 @@ export async function POST(req: NextRequest) {
         exchange_rate: krwToUsd,
         total_usd: totalUsd,
         shipping_address: shippingAddress,
+        payment_status: "pending",
         notes: notes || null,
       })
       .select("id")
