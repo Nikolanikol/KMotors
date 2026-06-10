@@ -82,33 +82,39 @@ export async function POST(req: NextRequest) {
 
     const { data: products } = await db
       .from("parts_products")
-      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, ship_method, category_id")
+      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, ship_method, category_id, subcategory_id")
       .in("id", productIds);
 
-    // ── Load logistics data ───────────────────────────────────────────────────
-    const categoryIds = [
-      ...new Set((products ?? []).map((p) => p.category_id).filter(Boolean) as number[]),
+    // ── Load logistics via v_category_logistics (same as product detail page) ─
+    const logisticsCatIds = [
+      ...new Set(
+        (products ?? [])
+          .map((p) => (p.subcategory_id ?? p.category_id))
+          .filter(Boolean) as number[]
+      ),
     ];
 
-    const { data: categories } = categoryIds.length
+    const { data: logistics } = logisticsCatIds.length
       ? await db
-          .from("parts_categories")
-          .select("id, weight_avg_kg, ship_method, length_cm, width_cm, height_cm")
-          .in("id", categoryIds)
-      : { data: [] as { id: number; weight_avg_kg: number | null; ship_method: string | null; length_cm: number | null; width_cm: number | null; height_cm: number | null }[] };
+          .from("v_category_logistics")
+          .select("id, weight_avg_kg, billed_weight_kg, ship_method, length_cm, width_cm, height_cm")
+          .in("id", logisticsCatIds)
+      : { data: [] as { id: number; weight_avg_kg: number | null; billed_weight_kg: number | null; ship_method: string | null; length_cm: number | null; width_cm: number | null; height_cm: number | null }[] };
 
     // ── Build order items ─────────────────────────────────────────────────────
     const orderItems = cartItems.map((ci) => {
       const p = products?.find((x) => x.id === ci.product_id);
-      const cat = categories?.find((x) => x.id === p?.category_id);
+      const logCatId = (p?.subcategory_id ?? p?.category_id) as number | null;
+      const cat = logistics?.find((x) => x.id === logCatId);
 
       const weight = (p?.weight_kg ?? cat?.weight_avg_kg ?? 1.0) as number;
-      const physBilled = weight * 1.12;
-      const volBilled =
-        cat?.length_cm && cat?.width_cm && cat?.height_cm
-          ? (cat.length_cm * cat.width_cm * cat.height_cm) / 5000
-          : 0;
-      const billedWeightKg = Math.round(Math.max(physBilled, volBilled) * 1000) / 1000;
+      const billedWeightKg = cat?.billed_weight_kg
+        ? p?.weight_kg
+          ? Math.round(Math.max(p.weight_kg * 1.12,
+              cat.length_cm && cat.width_cm && cat.height_cm
+                ? (cat.length_cm * cat.width_cm * cat.height_cm) / 5000 : 0) * 1000) / 1000
+          : (cat.billed_weight_kg as number)
+        : Math.round(weight * 1.12 * 1000) / 1000;
       const itemShipMethod = (p?.ship_method ?? cat?.ship_method ?? "CLARIFY") as string;
 
       return {

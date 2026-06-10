@@ -37,35 +37,43 @@ export default async function CheckoutPage({ params }: Props) {
   const { data: products } = await supabase
     .from("parts_products")
     .select(
-      "id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id"
+      "id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, ship_method, category_id, subcategory_id"
     )
     .in("id", productIds);
 
-  const categoryIds = [
+  // subcategory_id имеет приоритет (конкретная L2/L3 категория — там назначен ship_method)
+  // Тот же подход, что и на странице товара
+  const logisticsCatIds = [
     ...new Set(
-      (products ?? []).map((p) => p.category_id).filter(Boolean) as number[]
+      (products ?? [])
+        .map((p) => (p.subcategory_id ?? p.category_id))
+        .filter(Boolean) as number[]
     ),
   ];
 
-  const { data: categories } = categoryIds.length
+  const { data: logistics } = logisticsCatIds.length
     ? await supabase
-        .from("parts_categories")
-        .select("id, weight_avg_kg, ship_method, length_cm, width_cm, height_cm")
-        .in("id", categoryIds)
-    : { data: [] as { id: number; weight_avg_kg: number | null; ship_method: string | null; length_cm: number | null; width_cm: number | null; height_cm: number | null }[] };
+        .from("v_category_logistics")
+        .select("id, weight_avg_kg, billed_weight_kg, ship_method, length_cm, width_cm, height_cm")
+        .in("id", logisticsCatIds)
+    : { data: [] as { id: number; weight_avg_kg: number | null; billed_weight_kg: number | null; ship_method: string | null; length_cm: number | null; width_cm: number | null; height_cm: number | null }[] };
 
   const items = cartItems.map((ci) => {
     const p = products?.find((x) => x.id === ci.product_id);
-    const cat = categories?.find((x) => x.id === p?.category_id);
+    const logisticsCatId = (p?.subcategory_id ?? p?.category_id) as number | null;
+    const cat = logistics?.find((x) => x.id === logisticsCatId);
 
-    const weight = p?.weight_kg ?? cat?.weight_avg_kg ?? 1.0;
-    const physBilled = (weight as number) * 1.12;
-    const volBilled =
-      cat?.length_cm && cat?.width_cm && cat?.height_cm
-        ? (cat.length_cm * cat.width_cm * cat.height_cm) / 5000
-        : 0;
-    const billedWeightKg =
-      Math.round(Math.max(physBilled, volBilled) * 1000) / 1000;
+    // Вес: реальный замер продукта → category avg → fallback 1 кг
+    const weight = (p?.weight_kg ?? cat?.weight_avg_kg ?? 1.0) as number;
+    // billed_weight из view (если есть) или пересчитываем с реальным весом продукта
+    const billedWeightKg = cat?.billed_weight_kg
+      ? p?.weight_kg
+        ? Math.round(Math.max(p.weight_kg * 1.12,
+            cat.length_cm && cat.width_cm && cat.height_cm
+              ? (cat.length_cm * cat.width_cm * cat.height_cm) / 5000
+              : 0) * 1000) / 1000
+        : (cat.billed_weight_kg as number)
+      : Math.round(weight * 1.12 * 1000) / 1000;
 
     return {
       cartItemId: ci.id as string,
@@ -76,7 +84,7 @@ export default async function CheckoutPage({ params }: Props) {
       nameEn: (p?.name_en ?? "") as string,
       priceKrw: (p?.price_krw ?? 0) as number,
       imageUrl: (p?.image_url ?? null) as string | null,
-      weightKg: weight as number,
+      weightKg: weight,
       billedWeightKg,
       shipMethod: (p?.ship_method ?? cat?.ship_method ?? "CLARIFY") as
         | "EMS"
