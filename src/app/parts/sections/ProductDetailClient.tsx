@@ -15,7 +15,11 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { generatePartSlug } from "@/utils/partSlug";
-import { OrderModal } from "./OrderModal";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+import { createClient } from "@/lib/supabase/client";
+import { formatUsd } from "@/lib/pricing";
+import { ShoppingCart } from "lucide-react";
 import {
   calcEmsUsd,
   calcEmspUsd,
@@ -93,9 +97,12 @@ export function ProductDetailClient({
   logisticsCatId,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const { user } = useAuth();
+  const supabase = createClient();
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [cartAdded, setCartAdded] = useState(false);
   const [backSearch, setBackSearch] = useState("");
   useScrollDepth(`part_${product.partNumber}`);
 
@@ -131,8 +138,7 @@ export function ProductDetailClient({
       : subcategoryName.en
     : null;
 
-  const formatUsd = (priceKrw: number) =>
-    "$" + new Intl.NumberFormat("en-US").format(Math.ceil(priceKrw * krwToUsd * 1.23));
+  const fmtUsd = (priceKrw: number) => formatUsd(priceKrw, krwToUsd);
 
   const copyPartNumber = async () => {
     try {
@@ -146,7 +152,24 @@ export function ProductDetailClient({
 
   const backHref = `/${lang}/parts${backSearch}`;
 
-  const handleOrder = () => setIsOrderOpen(true);
+  const handleAddToCart = async () => {
+    if (!user) {
+      router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
+      return;
+    }
+    let { data: cart } = await supabase.from("carts").select("id").eq("user_id", user.id).single();
+    if (!cart) {
+      const { data: newCart } = await supabase.from("carts").insert({ user_id: user.id }).select("id").single();
+      cart = newCart;
+    }
+    if (!cart) return;
+    await supabase.from("cart_items").upsert(
+      { cart_id: cart.id, product_id: product.id, quantity: 1 },
+      { onConflict: "cart_id,product_id" }
+    );
+    setCartAdded(true);
+    setTimeout(() => setCartAdded(false), 2500);
+  };
 
   const partSlug = generatePartSlug(
     product.part_number,
@@ -164,13 +187,6 @@ export function ProductDetailClient({
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
-      <OrderModal
-        isOpen={isOrderOpen}
-        onClose={() => setIsOrderOpen(false)}
-        productName={productName}
-        partNumber={product.part_number}
-        productUrl={productUrl}
-      />
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -295,7 +311,7 @@ export function ProductDetailClient({
                 {t("parts.detail.priceLabel")}
               </span>
               <div className="text-4xl font-bold text-[#BB162B] mt-1">
-                {formatUsd(product.price_krw)}
+                {fmtUsd(product.price_krw)}
               </div>
             </div>
 
@@ -304,13 +320,18 @@ export function ProductDetailClient({
               <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} />
             </div>
 
-            {/* Order CTA */}
+            {/* Add to cart CTA */}
             <Button
-              onClick={handleOrder}
+              onClick={handleAddToCart}
               size="lg"
-              className="bg-[#002C5F] hover:bg-[#001f45] text-white h-12 text-base font-semibold w-full mb-6"
+              className={`h-12 text-base font-semibold w-full mb-6 flex items-center justify-center gap-2 transition-all ${
+                cartAdded
+                  ? "bg-green-500 hover:bg-green-500 text-white"
+                  : "bg-[#BB162B] hover:bg-[#9a1122] text-white"
+              }`}
             >
-              {t("parts.detail.orderBtn")}
+              <ShoppingCart className="w-5 h-5" />
+              {cartAdded ? "✓ Добавлено в корзину" : t("parts.detail.addToCart")}
             </Button>
 
             {/* Specifications */}
@@ -431,11 +452,12 @@ export function ProductDetailClient({
             <p className="text-white font-bold text-xl">{productName}</p>
           </div>
           <Button
-            onClick={handleOrder}
+            onClick={handleAddToCart}
             size="lg"
-            className="bg-[#BB162B] hover:bg-[#9B1220] text-white font-semibold shrink-0 h-12 px-8"
+            className={`font-semibold shrink-0 h-12 px-8 flex items-center gap-2 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500 text-white" : "bg-[#BB162B] hover:bg-[#9B1220] text-white"}`}
           >
-            {t("parts.detail.orderBtn")}
+            <ShoppingCart className="w-4 h-4" />
+            {cartAdded ? "✓" : t("parts.detail.addToCart")}
           </Button>
         </div>
       </div>

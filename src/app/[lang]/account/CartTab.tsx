@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Trash2, ShoppingCart, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 
 interface CartProduct {
   cart_item_id: string;
@@ -23,12 +24,7 @@ interface Props {
 }
 
 const FALLBACK_KRW_TO_USD = 0.00072;
-const MARKUP = 1.23;
 const usdFmt = new Intl.NumberFormat("en-US");
-
-function formatUsd(priceKrw: number, krwToUsd: number): string {
-  return "$" + usdFmt.format(Math.ceil(priceKrw * krwToUsd * MARKUP));
-}
 
 const L: Record<string, Record<string, string>> = {
   ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", total: "Итого", checkout: "Оформить заказ", remove: "Удалить", loading: "Загрузка..." },
@@ -111,7 +107,7 @@ export default function CartTab({ lang, userId }: Props) {
   };
 
   const totalUsd = items.reduce(
-    (sum, i) => sum + Math.ceil(i.price_krw * krwToUsd * MARKUP) * i.quantity,
+    (sum, i) => sum + krwToDisplayUsd(i.price_krw, krwToUsd) * i.quantity,
     0
   );
   const displayName = (item: CartProduct) => lang === "en" ? item.name_en : item.name_ru;
