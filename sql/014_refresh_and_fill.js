@@ -1,11 +1,7 @@
-require('dotenv').config();
-const { Client } = require('pg');
+const { getClient } = require('./db');
 
 async function main() {
-  const c = new Client({
-    connectionString: process.env.POSTGRES_URL_NON_POOLING,
-    ssl: { rejectUnauthorized: false }
-  });
+  const c = getClient();
   await c.connect();
 
   // 1. Recreate v_product_weight (DROP + CREATE, not just REFRESH)
