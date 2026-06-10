@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AccountClient from "./AccountClient";
@@ -21,10 +22,12 @@ export default async function AccountPage({ params }: Props) {
     .single();
 
   return (
-    <AccountClient
-      lang={lang}
-      user={{ id: user.id, email: user.email ?? "" }}
-      profile={profile}
-    />
+    <Suspense fallback={null}>
+      <AccountClient
+        lang={lang}
+        user={{ id: user.id, email: user.email ?? "" }}
+        profile={profile}
+      />
+    </Suspense>
   );
 }

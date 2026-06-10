@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { User, ShoppingCart, Package } from "lucide-react";
 import ProfileForm from "./ProfileForm";
 import CartTab from "./CartTab";
@@ -33,8 +34,19 @@ const TABS: Record<string, { profile: string; cart: string; orders: string }> = 
 };
 
 export default function AccountClient({ lang, user, profile }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab | null) ?? "profile";
+  const [activeTab, setActiveTab] = useState<Tab>(
+    ["profile", "cart", "orders"].includes(initialTab) ? initialTab : "profile"
+  );
   const labels = TABS[lang] ?? TABS.ru;
+
+  useEffect(() => {
+    const tab = searchParams.get("tab") as Tab | null;
+    if (tab && ["profile", "cart", "orders"].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   const isRTL = lang === "ar";
 
   const tabs = [
@@ -84,7 +96,7 @@ export default function AccountClient({ lang, user, profile }: Props) {
             <CartTab lang={lang} userId={user.id} />
           )}
           {activeTab === "orders" && (
-            <OrdersTab lang={lang} />
+            <OrdersTab lang={lang} userId={user.id} />
           )}
         </div>
       </div>
