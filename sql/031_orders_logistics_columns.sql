@@ -16,12 +16,14 @@ ALTER TABLE public.orders
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "users_own_orders"
+DROP POLICY IF EXISTS "users_own_orders" ON public.orders;
+CREATE POLICY "users_own_orders"
   ON public.orders FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "users_own_order_items"
+DROP POLICY IF EXISTS "users_own_order_items" ON public.order_items;
+CREATE POLICY "users_own_order_items"
   ON public.order_items FOR ALL
   USING (
     order_id IN (
@@ -30,10 +32,12 @@ CREATE POLICY IF NOT EXISTS "users_own_order_items"
   );
 
 -- Service role bypass (нужен для нашего API)
-CREATE POLICY IF NOT EXISTS "service_role_orders"
+DROP POLICY IF EXISTS "service_role_orders" ON public.orders;
+CREATE POLICY "service_role_orders"
   ON public.orders FOR ALL
   TO service_role USING (true) WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "service_role_order_items"
+DROP POLICY IF EXISTS "service_role_order_items" ON public.order_items;
+CREATE POLICY "service_role_order_items"
   ON public.order_items FOR ALL
   TO service_role USING (true) WITH CHECK (true);
