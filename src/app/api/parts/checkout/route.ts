@@ -145,12 +145,11 @@ export async function POST(req: NextRequest) {
     const hasSea = orderItems.some(
       (i) => i.ship_method === "SEA" || i.ship_method === "CLARIFY"
     );
-    const effectiveShipMethod =
-      hasSea && !shippingMethod
-        ? "SEA"
-        : hasSea
-        ? "MIXED"
-        : shippingMethod ?? "CLARIFY";
+    // CHECK constraint допускает только: EMS | EMS_PREMIUM | SEA
+    // MIXED (воздух + море) → SEA (самый строгий метод)
+    // нет выбранного метода → SEA (безопасный fallback)
+    const effectiveShipMethod: "EMS" | "EMS_PREMIUM" | "SEA" =
+      hasSea ? "SEA" : (shippingMethod ?? "SEA");
 
     // ── Create order ──────────────────────────────────────────────────────────
     const orderNumber = generateOrderNumber();
