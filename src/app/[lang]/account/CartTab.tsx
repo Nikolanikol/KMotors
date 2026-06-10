@@ -189,10 +189,13 @@ export default function CartTab({ lang, userId }: Props) {
           <p className="text-sm text-gray-500">{l.total}</p>
           <p className="text-2xl font-bold text-[#002C5F]">${usdFmt.format(totalUsd)}</p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-[#BB162B] hover:bg-[#9a1122] text-white font-semibold rounded-xl transition text-sm">
+        <Link
+          href={`/${lang}/checkout`}
+          className="flex items-center gap-2 px-6 py-3 bg-[#BB162B] hover:bg-[#9a1122] text-white font-semibold rounded-xl transition text-sm"
+        >
           {l.checkout}
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     </div>
   );
