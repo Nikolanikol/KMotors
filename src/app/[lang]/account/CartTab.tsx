@@ -22,6 +22,14 @@ interface Props {
   userId: string;
 }
 
+const FALLBACK_KRW_TO_USD = 0.00072;
+const MARKUP = 1.23;
+const usdFmt = new Intl.NumberFormat("en-US");
+
+function formatUsd(priceKrw: number, krwToUsd: number): string {
+  return "$" + usdFmt.format(Math.ceil(priceKrw * krwToUsd * MARKUP));
+}
+
 const L: Record<string, Record<string, string>> = {
   ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", total: "Итого", checkout: "Оформить заказ", remove: "Удалить", loading: "Загрузка..." },
   en: { title: "Cart", empty: "Cart is empty", emptyDesc: "Add parts from the catalog", toCatalog: "Go to catalog", total: "Total", checkout: "Checkout", remove: "Remove", loading: "Loading..." },
@@ -35,11 +43,19 @@ export default function CartTab({ lang, userId }: Props) {
   const supabase = createClient();
   const [items, setItems] = useState<CartProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [krwToUsd, setKrwToUsd] = useState(FALLBACK_KRW_TO_USD);
+
+  // Загружаем курс валюты (тот же источник что и каталог)
+  useEffect(() => {
+    fetch("https://api.frankfurter.app/latest?from=KRW&to=USD")
+      .then(r => r.json())
+      .then(d => { if (d.rates?.USD) setKrwToUsd(d.rates.USD); })
+      .catch(() => {});
+  }, []);
 
   const fetchCart = async () => {
     setLoading(true);
 
-    // Получаем корзину пользователя
     const { data: cart } = await supabase
       .from("carts")
       .select("id")
@@ -48,7 +64,6 @@ export default function CartTab({ lang, userId }: Props) {
 
     if (!cart) { setLoading(false); return; }
 
-    // Получаем позиции + данные товара
     const { data: cartItems } = await supabase
       .from("cart_items")
       .select("id, quantity, product_id")
@@ -95,7 +110,10 @@ export default function CartTab({ lang, userId }: Props) {
     setItems(prev => prev.map(i => i.cart_item_id === cartItemId ? { ...i, quantity: qty } : i));
   };
 
-  const total = items.reduce((sum, i) => sum + i.price_krw * i.quantity, 0);
+  const totalUsd = items.reduce(
+    (sum, i) => sum + Math.ceil(i.price_krw * krwToUsd * MARKUP) * i.quantity,
+    0
+  );
   const displayName = (item: CartProduct) => lang === "en" ? item.name_en : item.name_ru;
 
   if (loading) {
@@ -130,7 +148,6 @@ export default function CartTab({ lang, userId }: Props) {
     <div className="space-y-4">
       <h2 className="text-lg font-bold text-[#002C5F]">{l.title} ({items.length})</h2>
 
-      {/* Список */}
       <div className="space-y-3">
         {items.map(item => (
           <div key={item.cart_item_id} className="flex gap-3 p-3 border border-gray-100 rounded-xl hover:border-gray-200 transition">
@@ -148,7 +165,10 @@ export default function CartTab({ lang, userId }: Props) {
               <p className="text-sm font-semibold text-[#002C5F] line-clamp-2">{displayName(item)}</p>
               <p className="text-xs text-gray-400 mt-0.5">{item.part_number}</p>
               <p className="text-sm font-bold text-[#BB162B] mt-1">
-                {(item.price_krw * item.quantity).toLocaleString("ko-KR")} ₩
+                {formatUsd(item.price_krw, krwToUsd)}
+                {item.quantity > 1 && (
+                  <span className="text-xs font-normal text-gray-400 ml-1">× {item.quantity}</span>
+                )}
               </p>
             </div>
 
@@ -171,7 +191,7 @@ export default function CartTab({ lang, userId }: Props) {
       <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">{l.total}</p>
-          <p className="text-2xl font-bold text-[#002C5F]">{total.toLocaleString("ko-KR")} ₩</p>
+          <p className="text-2xl font-bold text-[#002C5F]">${usdFmt.format(totalUsd)}</p>
         </div>
         <button className="flex items-center gap-2 px-6 py-3 bg-[#BB162B] hover:bg-[#9a1122] text-white font-semibold rounded-xl transition text-sm">
           {l.checkout}
