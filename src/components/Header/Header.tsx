@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { X, Menu, Heart } from "lucide-react";
+import { X, Menu, Heart, User, LogOut, Package } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCountry } from "@/hooks/useCountry";
+import { useAuth } from "@/providers/AuthProvider";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -29,13 +30,27 @@ const KAxisLogo = () => (
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { favorites: favCars } = useFavorites();
   const { favorites: favParts } = usePartsFavorites();
   const favTotal = favCars.length + favParts.length;
   const { isCatalogBlocked } = useCountry();
+  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
@@ -134,10 +149,74 @@ export default function Header() {
               {process.env.NEXT_PUBLIC_NUMBER_PHONE}
             </a>
             <ContactForm isVisible={false} />
+
+            {/* Auth */}
+            {user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                  style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
+                >
+                  <User className="w-4 h-4" />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 rounded-xl shadow-xl border py-1 z-50"
+                    style={{ backgroundColor: "rgba(20,20,20,0.98)", borderColor: "rgba(255,255,255,0.08)" }}>
+                    <Link href={`/${lang}/account`} onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                      style={{ color: "var(--axis-gray)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"}
+                    >
+                      <Package className="w-4 h-4" />
+                      Личный кабинет
+                    </Link>
+                    <div className="my-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+                    <button
+                      onClick={async () => { setUserMenuOpen(false); await signOut(); router.push(`/${lang}/parts`); router.refresh(); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                      style={{ color: "#FF4444" }}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Выйти
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href={`/${lang}/auth?mode=login`}
+                className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+                style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
+                aria-label="Войти"
+              >
+                <User className="w-4 h-4" />
+              </Link>
+            )}
           </div>
 
           {/* Mobile right */}
           <div className="flex lg:hidden items-center gap-3">
+            {user ? (
+              <Link
+                href={`/${lang}/account`}
+                className="flex items-center justify-center w-9 h-9 rounded-xl"
+                style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
+                aria-label="Личный кабинет"
+              >
+                <User className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                href={`/${lang}/auth?mode=login`}
+                className="flex items-center justify-center w-9 h-9 rounded-xl"
+                style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
+                aria-label="Войти"
+              >
+                <User className="w-4 h-4" />
+              </Link>
+            )}
             <Link
               href={`/${lang}/favorites`}
               className="relative flex items-center justify-center w-9 h-9 rounded-xl cursor-pointer"

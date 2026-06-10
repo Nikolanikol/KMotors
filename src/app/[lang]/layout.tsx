@@ -6,6 +6,8 @@ import MessengerButtons from "@/components/MessengerButtons";
 import CookieBanner from "@/components/CookieBanner";
 import ProgressBar from "@/components/ProgressBar";
 import FavoritePriceAlert from "@/components/FavoritePriceAlert";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { createClient } from "@/lib/supabase/server";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -21,15 +23,20 @@ export default async function LangLayout({ children, params }: Props) {
     notFound();
   }
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <I18nProvider lang={lang}>
-      <ProgressBar />
-      <Header />
-      <main className="flex-grow min-h-[70vh] pt-[68px]">{children}</main>
-      <Footer />
-      <MessengerButtons />
-      <CookieBanner />
-      <FavoritePriceAlert />
+      <AuthProvider initialUser={user}>
+        <ProgressBar />
+        <Header />
+        <main className="flex-grow min-h-[70vh] pt-[68px]">{children}</main>
+        <Footer />
+        <MessengerButtons />
+        <CookieBanner />
+        <FavoritePriceAlert />
+      </AuthProvider>
     </I18nProvider>
   );
 }
