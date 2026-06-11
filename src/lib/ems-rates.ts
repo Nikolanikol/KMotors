@@ -1,9 +1,12 @@
 /**
  * Korea Post EMS Non-Document (비서류) rates — 2022 tariff.
  * Source: Korea Post official tariff PDF (2022emsPrice.pdf).
- * Formula: L × W × H / 6000 for volumetric weight.
+ * Formula: L × W × H / 6000 for volumetric weight (EMS standard).
  * Prices in KRW. Convert to USD using live KRW/USD rate.
  */
+
+/** Markup applied to shipping cost (packaging, insurance, labor, post office trip) */
+export const SHIPPING_MARKUP = 1.35;
 
 // ─── Weight steps (kg) ────────────────────────────────────────────────────────
 // Billing rounds UP to the next step.
@@ -165,7 +168,7 @@ export function calcEmsUsd(
 ): number | null {
   const krw = calcEmsKrw(countryCode, billedWeightKg);
   if (krw === null) return null;
-  return Math.ceil(krw * krwToUsd);
+  return Math.ceil(krw * krwToUsd * SHIPPING_MARKUP);
 }
 
 export function isEmsAvailable(countryCode: string): boolean {
@@ -271,7 +274,7 @@ export function calcEmspUsd(
 ): number | null {
   const krw = calcEmspKrw(countryCode, billedWeightKg);
   if (krw === null) return null;
-  return Math.ceil(krw * krwToUsd);
+  return Math.ceil(krw * krwToUsd * SHIPPING_MARKUP);
 }
 
 export function isEmspAvailable(countryCode: string): boolean {

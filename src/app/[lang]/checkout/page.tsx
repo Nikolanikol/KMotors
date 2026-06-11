@@ -70,7 +70,7 @@ export default async function CheckoutPage({ params }: Props) {
       ? p?.weight_kg
         ? Math.round(Math.max(p.weight_kg * 1.12,
             cat.length_cm && cat.width_cm && cat.height_cm
-              ? (cat.length_cm * cat.width_cm * cat.height_cm) / 5000
+              ? (cat.length_cm * cat.width_cm * cat.height_cm) / 6000
               : 0) * 1000) / 1000
         : (cat.billed_weight_kg as number)
       : Math.round(weight * 1.12 * 1000) / 1000;

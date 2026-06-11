@@ -32,7 +32,7 @@ export default function FavoritesClient() {
 
   const [tab, setTab] = useState<"cars" | "parts">("cars");
   const [selected, setSelected] = useState<string[]>([]);
-  const [krwToUsd, setKrwToUsd] = useState(0.00075);
+  const [krwToUsd, setKrwToUsd] = useState(0.00066); // June 2026
   const router = useRouter();
 
   useEffect(() => {

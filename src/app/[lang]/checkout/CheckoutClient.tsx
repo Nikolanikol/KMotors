@@ -13,6 +13,7 @@ import {
   COUNTRY_NAMES,
   COUNTRY_SELECTOR_ORDER,
 } from "@/lib/ems-rates";
+import { packItems, type PackResult } from "@/lib/matryoshka";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -269,7 +270,7 @@ const L: Record<string, Record<string, string>> = {
   },
 };
 
-const FALLBACK_RATE = 0.00072;
+const FALLBACK_RATE = 0.00066; // June 2026
 const usdFmt = new Intl.NumberFormat("en-US");
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -294,7 +295,7 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=KRW&to=USD")
+    fetch("https://api.frankfurter.dev/v1/latest?from=KRW&to=USD")
       .then((r) => r.json())
       .then((d) => { if (d.rates?.USD) setKrwToUsd(d.rates.USD); })
       .catch(() => {});
@@ -309,10 +310,19 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
     () => items.filter((i) => i.shipMethod === "SEA" || i.shipMethod === "CLARIFY"),
     [items]
   );
-  const totalAirWeight = useMemo(
-    () => airItems.reduce((s, i) => s + i.billedWeightKg * i.quantity, 0),
+  // ── Matryoshka: pack EMS items into Korea Post boxes ──
+  const packResult: PackResult = useMemo(
+    () =>
+      packItems(
+        airItems.map((i) => ({
+          weightKg: i.weightKg,
+          quantity: i.quantity,
+          billedWeightKg: i.billedWeightKg,
+        }))
+      ),
     [airItems]
   );
+  const totalAirWeight = packResult.finalBilled;
   const hasForcedEmsP = airItems.some((i) => i.shipMethod === "EMS_PREMIUM");
 
   const emsOk = !!country && isEmsAvailable(country) && totalAirWeight > 0 && totalAirWeight <= 30;
@@ -620,6 +630,28 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
                       <span className="text-base font-bold text-[#002C5F]">${usdFmt.format(emspUsd)}</span>
                     </label>
                   )}
+                </div>
+              )}
+
+              {/* Matryoshka packing info */}
+              {packResult.boxes.length > 0 && shippingCostUsd !== null && (
+                <div className="flex items-start gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <span className="text-base mt-0.5">📦</span>
+                  <div className="text-xs text-emerald-700">
+                    <span className="font-medium">
+                      {packResult.boxes.length}{" "}
+                      {lang === "ru"
+                        ? (packResult.boxes.length === 1 ? "коробка" : packResult.boxes.length < 5 ? "коробки" : "коробок")
+                        : (packResult.boxes.length === 1 ? "box" : "boxes")}
+                      {" · "}{totalAirWeight.toFixed(2)} {l.kg}
+                    </span>
+                    {packResult.savings > 0 && (
+                      <span className="ml-1.5 text-emerald-600 font-semibold">
+                        — {lang === "ru" ? "экономия" : "you save"}{" "}
+                        {((packResult.savings / packResult.simpleBilled) * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

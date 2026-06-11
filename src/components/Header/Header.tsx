@@ -116,6 +116,7 @@ export default function Header() {
 
           {/* Right side */}
           <div className="hidden lg:flex items-center gap-4">
+            {/* Favorites link hidden — TODO: re-enable when ready
             <Link
               href={`/${lang}/favorites`}
               className="relative flex items-center gap-2 px-3 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
@@ -137,6 +138,7 @@ export default function Header() {
                 </span>
               )}
             </Link>
+            */}
             <LanguageSwitcher />
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
@@ -217,6 +219,7 @@ export default function Header() {
                 <User className="w-4 h-4" />
               </Link>
             )}
+            {/* Favorites icon hidden — TODO: re-enable when ready
             <Link
               href={`/${lang}/favorites`}
               className="relative flex items-center justify-center w-9 h-9 rounded-xl cursor-pointer"
@@ -237,6 +240,7 @@ export default function Header() {
                 </span>
               )}
             </Link>
+            */}
             <LanguageSwitcher />
             <button
               onClick={() => setIsMobileMenuOpen(true)}

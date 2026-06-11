@@ -1,12 +1,9 @@
 "use client";
-import { useState, useCallback, useEffect, useRef, useMemo, useTransition } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useReducer, useTransition } from "react";
 import { trackEvent } from "@/utils/gtag";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { generatePartSlug } from "@/utils/partSlug";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,48 +14,23 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  Cog,
-  Settings,
-  Disc,
-  Car,
-  Sofa,
-  Wrench,
   Search,
   LayoutGrid,
   List,
   X,
   ChevronLeft,
   ChevronRight,
-  Heart,
-  ShoppingCart,
-  Check,
+  SlidersHorizontal,
 } from "lucide-react";
-import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { clarityEvent } from "@/utils/clarity";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-import { formatUsd, PRICE_MARKUP } from "@/lib/pricing";
+import { PRICE_MARKUP } from "@/lib/pricing";
+import { QuickViewModal } from "./QuickViewModal";
+import { ProductCard } from "./ProductCard";
+import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
 
-const BRAND_CHIP_COLORS: Record<string, { active: string; inactive: string }> = {
-  hyundai: {
-    active:   "border-[#002C5F] bg-[#002C5F] text-white shadow-[#002C5F]/20",
-    inactive: "border-[#002C5F]/30 text-[#002C5F] hover:bg-[#002C5F]/5 hover:border-[#002C5F]",
-  },
-  kia: {
-    active:   "border-[#BB162B] bg-[#BB162B] text-white shadow-[#BB162B]/20",
-    inactive: "border-[#BB162B]/30 text-[#BB162B] hover:bg-[#BB162B]/5 hover:border-[#BB162B]",
-  },
-  genesis: {
-    active:   "border-[#8B6914] bg-[#8B6914] text-white shadow-[#8B6914]/20",
-    inactive: "border-[#8B6914]/30 text-[#8B6914] hover:bg-[#8B6914]/5 hover:border-[#8B6914]",
-  },
-  __default: {
-    active:   "border-[#002C5F] bg-[#002C5F] text-white",
-    inactive: "border-gray-300 text-gray-600 hover:border-[#002C5F] hover:text-[#002C5F]",
-  },
-};
-
-const PAGE_SIZE = 16;
+const PAGE_SIZE = 24;
 const BRAND_ORDER: Record<string, number> = { hyundai: 0, kia: 1, genesis: 2 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -99,31 +71,46 @@ interface Props {
   krwToUsd: number;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Pending filter reducer ──────────────────────────────────────────────────
 
-const CAT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  engine: Cog,
-  transmission: Settings,
-  chassis: Disc,
-  suspension: Disc,
-  body: Car,
-  interior: Sofa,
-};
-function getCatIcon(slug: string) {
-  return CAT_ICONS[slug] ?? Wrench;
+type PendingAction =
+  | { type: "TOGGLE_BRAND"; slug: string }
+  | { type: "TOGGLE_CATEGORY"; slug: string }
+  | { type: "SET_PRICE_MIN"; value: string }
+  | { type: "SET_PRICE_MAX"; value: string }
+  | { type: "RESET" }
+  | { type: "SYNC_FROM_URL"; state: PendingFilters };
+
+function pendingReducer(state: PendingFilters, action: PendingAction): PendingFilters {
+  switch (action.type) {
+    case "TOGGLE_BRAND": {
+      const brands = state.brands.includes(action.slug)
+        ? state.brands.filter(s => s !== action.slug)
+        : [...state.brands, action.slug];
+      return { ...state, brands };
+    }
+    case "TOGGLE_CATEGORY": {
+      const categories = state.categories.includes(action.slug)
+        ? state.categories.filter(s => s !== action.slug)
+        : [...state.categories, action.slug];
+      return { ...state, categories };
+    }
+    case "SET_PRICE_MIN": return { ...state, priceMin: action.value };
+    case "SET_PRICE_MAX": return { ...state, priceMax: action.value };
+    case "RESET": return { brands: [], categories: [], priceMin: "", priceMax: "" };
+    case "SYNC_FROM_URL": return action.state;
+  }
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// Returns page numbers with "…" for ellipsis gaps
 function getPageNumbers(current: number, total: number): (number | "…")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
   const show = new Set<number>([1, total, current]);
   if (current > 1) show.add(current - 1);
   if (current < total) show.add(current + 1);
   if (current > 2) show.add(current - 2);
   if (current < total - 1) show.add(current + 2);
-
   const sorted = Array.from(show).sort((a, b) => a - b);
   const result: (number | "…")[] = [];
   let prev = 0;
@@ -135,7 +122,13 @@ function getPageNumbers(current: number, total: number): (number | "…")[] {
   return result;
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+function mergeUrlParam(multi: string, single: string): string[] {
+  const arr = multi ? multi.split(",").filter(Boolean) : [];
+  if (single && !arr.includes(single)) arr.push(single);
+  return arr;
+}
+
+// ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function ProductSkeleton({ view }: { view: "grid" | "list" }) {
   if (view === "list") {
@@ -155,7 +148,7 @@ function ProductSkeleton({ view }: { view: "grid" | "list" }) {
   }
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
-      <div className="bg-gray-200" style={{ paddingBottom: "62%" }} />
+      <div className="aspect-square bg-gray-200" />
       <div className="p-3 space-y-2">
         <div className="h-3 bg-gray-200 rounded w-1/2" />
         <div className="h-4 bg-gray-200 rounded" />
@@ -165,9 +158,9 @@ function ProductSkeleton({ view }: { view: "grid" | "list" }) {
   );
 }
 
-// ─── Main component ────────────────────────────────────────────────────────────
+// ─── Main component ──────────────────────────────────────────────────────────
 
-export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krwToUsd }: Props) {
+export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -178,33 +171,28 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
+  // ── Cart ──────────────────────────────────────────────────────────────────
   const handleAddToCart = useCallback(async (product: Product): Promise<boolean> => {
     if (!user) {
       router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
       return false;
     }
-
-    // Получаем или создаём корзину
     let { data: cart } = await supabase
       .from("carts").select("id").eq("user_id", user.id).single();
-
     if (!cart) {
       const { data: newCart } = await supabase
         .from("carts").insert({ user_id: user.id }).select("id").single();
       cart = newCart;
     }
     if (!cart) return false;
-
     await supabase.from("cart_items").upsert(
       { cart_id: cart.id, product_id: product.id, quantity: 1 },
       { onConflict: "cart_id,product_id" }
     );
-
     return true;
   }, [user, supabase, router, lang]);
 
-
-  // ── Fade-in observer ────────────────────────────────────────────────────────
+  // ── Fade-in observer ──────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -217,20 +205,23 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     return () => observer.disconnect();
   }, []);
 
-  // ── URL params ───────────────────────────────────────────────────────────────
-  const brandSlug = searchParams.get("brand") ?? "";
-  const modelName = searchParams.get("model") ?? "";
-  const catSlug   = searchParams.get("cat")   ?? "";
-  const subSlug   = searchParams.get("sub")   ?? "";
-  const urlMin    = searchParams.get("min");
-  const urlMax    = searchParams.get("max");
-  const priceMin  = urlMin ? Number(urlMin) : undefined;
-  const priceMax  = urlMax ? Number(urlMax) : undefined;
-  const sort      = searchParams.get("sort") ?? "default";
-  // Page lives in the URL — preserved on refresh and shareable
-  const apiPage   = Math.max(1, Number(searchParams.get("page") ?? "1"));
+  // ── URL params (source of truth for what's fetched) ───────────────────────
+  const brandsParam = searchParams.get("brands") ?? "";
+  const brandParam  = searchParams.get("brand")  ?? "";
+  const catsParam   = searchParams.get("cats")   ?? "";
+  const catParam    = searchParams.get("cat")    ?? "";
+  const subSlug     = searchParams.get("sub")    ?? "";
+  const urlMinStr   = searchParams.get("min")    ?? "";
+  const urlMaxStr   = searchParams.get("max")    ?? "";
+  const priceMin    = urlMinStr ? Number(urlMinStr) : undefined;
+  const priceMax    = urlMaxStr ? Number(urlMaxStr) : undefined;
+  const sort        = searchParams.get("sort")   ?? "default";
+  const apiPage     = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
-  // Base URL updater
+  const urlBrands = useMemo(() => mergeUrlParam(brandsParam, brandParam), [brandsParam, brandParam]);
+  const urlCats   = useMemo(() => mergeUrlParam(catsParam, catParam), [catsParam, catParam]);
+
+  // ── URL updaters ──────────────────────────────────────────────────────────
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -243,10 +234,9 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
         router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
     },
-    [searchParams, router, pathname]
+    [searchParams, router, pathname, startTransition]
   );
 
-  // Filter updater — always resets to page 1 when filters change
   const updateFilters = useCallback(
     (updates: Record<string, string | undefined>) => {
       updateParams({ ...updates, page: undefined });
@@ -254,7 +244,6 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     [updateParams]
   );
 
-  // Page change — updates URL and scrolls up to results area immediately (skeleton is already visible)
   const goToPage = useCallback(
     (newPage: number) => {
       updateParams({ page: newPage <= 1 ? undefined : String(newPage) });
@@ -263,7 +252,52 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
     [updateParams]
   );
 
-  // ── Search (debounced 300ms) ─────────────────────────────────────────────────
+  // ── Pending filter state ──────────────────────────────────────────────────
+  const [pending, dispatch] = useReducer(pendingReducer, {
+    brands: urlBrands,
+    categories: urlCats,
+    priceMin: urlMinStr,
+    priceMax: urlMaxStr,
+  });
+
+  // Sync pending ← URL when searchParams change (browser back/forward, chip clicks)
+  useEffect(() => {
+    dispatch({
+      type: "SYNC_FROM_URL",
+      state: {
+        brands: mergeUrlParam(brandsParam, brandParam),
+        categories: mergeUrlParam(catsParam, catParam),
+        priceMin: urlMinStr,
+        priceMax: urlMaxStr,
+      },
+    });
+  }, [brandsParam, brandParam, catsParam, catParam, urlMinStr, urlMaxStr]);
+
+  const isDirty = useMemo(() => {
+    return JSON.stringify([...pending.brands].sort()) !== JSON.stringify([...urlBrands].sort()) ||
+           JSON.stringify([...pending.categories].sort()) !== JSON.stringify([...urlCats].sort()) ||
+           pending.priceMin !== urlMinStr ||
+           pending.priceMax !== urlMaxStr;
+  }, [pending, urlBrands, urlCats, urlMinStr, urlMaxStr]);
+
+  const handleApply = useCallback(() => {
+    updateFilters({
+      brands: pending.brands.length > 0 ? pending.brands.join(",") : undefined,
+      cats: pending.categories.length > 0 ? pending.categories.join(",") : undefined,
+      min: pending.priceMin || undefined,
+      max: pending.priceMax || undefined,
+      brand: undefined, cat: undefined, sub: undefined, model: undefined,
+    });
+  }, [pending, updateFilters]);
+
+  const handleReset = useCallback(() => {
+    dispatch({ type: "RESET" });
+    setSearchInput("");
+    setSearchQ("");
+    router.push(pathname, { scroll: false });
+  }, [router, pathname]);
+
+  // ── Search (debounced 300ms) ──────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
   const [searchQ, setSearchQ]         = useState(searchParams.get("q") ?? "");
   useEffect(() => {
@@ -278,80 +312,91 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
-  // ── Price inputs ─────────────────────────────────────────────────────────────
-  const [priceMinInput, setPriceMinInput] = useState(urlMin ?? "");
-  const [priceMaxInput, setPriceMaxInput] = useState(urlMax ?? "");
-  const applyPrice = () =>
-    updateFilters({ min: priceMinInput || undefined, max: priceMaxInput || undefined });
-
-  // ── View toggle ──────────────────────────────────────────────────────────────
+  // ── View toggle ───────────────────────────────────────────────────────────
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  // ── Server-fetched products state ────────────────────────────────────────────
-  const [products, setProducts]   = useState<Product[]>([]);
-  const [total, setTotal]         = useState(0);
-  const [catCounts, setCatCounts] = useState<Record<number, number>>({});
-  const [subCounts, setSubCounts] = useState<Record<number, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  // ── Quick view modal ──────────────────────────────────────────────────────
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  // In-memory cache: cacheKey → response. Max 30 entries to prevent memory overflow.
-  type CacheEntry = { products: Product[]; total: number; catCounts: Record<number, number>; subCounts: Record<number, number> };
+  // ── Mobile drawer ─────────────────────────────────────────────────────────
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (drawerOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [drawerOpen]);
+
+  // ── Server-fetched state ──────────────────────────────────────────────────
+  const [products, setProducts]       = useState<Product[]>([]);
+  const [total, setTotal]             = useState(0);
+  const [catCounts, setCatCounts]     = useState<Record<number, number>>({});
+  const [subCounts, setSubCounts]     = useState<Record<number, number>>({});
+  const [brandCounts, setBrandCounts] = useState<Record<number, number>>({});
+  const [isLoading, setIsLoading]     = useState(true);
+
+  type CacheEntry = {
+    products: Product[];
+    total: number;
+    catCounts: Record<number, number>;
+    subCounts: Record<number, number>;
+    brandCounts: Record<number, number>;
+  };
   const MAX_CACHE = 30;
   const fetchCache = useRef<Map<string, CacheEntry>>(new Map());
-
   const setCacheEntry = (key: string, value: CacheEntry) => {
     if (fetchCache.current.size >= MAX_CACHE) {
-      // Удаляем самую старую запись (первую в Map)
       const firstKey = fetchCache.current.keys().next().value;
       if (firstKey) fetchCache.current.delete(firstKey);
     }
     fetchCache.current.set(key, value);
   };
 
-  // Fetch whenever any filter or page changes
+  // Fetch whenever URL filters or page changes
   useEffect(() => {
     const controller = new AbortController();
-
     const params = new URLSearchParams();
-    if (brandSlug)              params.set("brand",  brandSlug);
-    if (catSlug)                params.set("cat",    catSlug);
-    if (subSlug)                params.set("sub",    subSlug);
-    if (modelName)              params.set("model",  modelName);
-    if (searchQ)                params.set("q",      searchQ);
-    // URL хранит цену в USD → конвертируем в KRW для API
-    if (priceMin !== undefined) params.set("min", String(Math.round(priceMin / (krwToUsd * PRICE_MARKUP))));
-    if (priceMax !== undefined) params.set("max", String(Math.round(priceMax / (krwToUsd * PRICE_MARKUP))));
-    if (sort !== "default")     params.set("sort",   sort);
+
+    const fetchBrands = mergeUrlParam(brandsParam, brandParam);
+    const fetchCats   = mergeUrlParam(catsParam, catParam);
+
+    if (fetchBrands.length > 0) params.set("brands", [...fetchBrands].sort().join(","));
+    if (fetchCats.length > 0)   params.set("cats", [...fetchCats].sort().join(","));
+    if (subSlug)                 params.set("sub", subSlug);
+    if (searchQ)                 params.set("q", searchQ);
+    if (priceMin !== undefined)  params.set("min", String(Math.round(priceMin / (krwToUsd * PRICE_MARKUP))));
+    if (priceMax !== undefined)  params.set("max", String(Math.round(priceMax / (krwToUsd * PRICE_MARKUP))));
+    if (sort !== "default")      params.set("sort", sort);
     params.set("page", String(apiPage));
 
     const cacheKey = params.toString();
     const cached = fetchCache.current.get(cacheKey);
-
     if (cached) {
       setProducts(cached.products);
       setTotal(cached.total);
       setCatCounts(cached.catCounts);
       setSubCounts(cached.subCounts);
+      setBrandCounts(cached.brandCounts);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-
     fetch(`/api/parts/products?${params}`, { signal: controller.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(({ products: newProds, total: newTotal, catCounts: newCat, subCounts: newSub }) => {
+      .then(({ products: p, total: t, catCounts: cc, subCounts: sc, brandCounts: bc }) => {
         const entry: CacheEntry = {
-          products: newProds ?? [],
-          total: newTotal ?? 0,
-          catCounts: newCat ?? {},
-          subCounts: newSub ?? {},
+          products: p ?? [],
+          total: t ?? 0,
+          catCounts: cc ?? {},
+          subCounts: sc ?? {},
+          brandCounts: bc ?? {},
         };
         setCacheEntry(cacheKey, entry);
         setProducts(entry.products);
         setTotal(entry.total);
         setCatCounts(entry.catCounts);
         setSubCounts(entry.subCounts);
+        setBrandCounts(entry.brandCounts);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -360,32 +405,33 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
           setIsLoading(false);
         }
       });
-
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandSlug, catSlug, subSlug, modelName, searchQ, priceMin, priceMax, sort, apiPage]);
+  }, [brandsParam, brandParam, catsParam, catParam, subSlug, searchQ, priceMin, priceMax, sort, apiPage]);
 
-  // ── Derived UI state ─────────────────────────────────────────────────────────
+  // ── Derived UI state ──────────────────────────────────────────────────────
   const sortedBrands = useMemo(
     () => [...brands].sort((a, b) => (BRAND_ORDER[a.slug] ?? 99) - (BRAND_ORDER[b.slug] ?? 99)),
     [brands]
   );
-  const selectedBrand = useMemo(() => brands.find((b) => b.slug === brandSlug), [brands, brandSlug]);
-  const parentCats    = useMemo(() => categories.filter((c) => c.parent_id === null), [categories]);
-  const allSubs       = useMemo(() => categories.filter((c) => c.parent_id !== null), [categories]);
-  const selectedCat   = useMemo(() => parentCats.find((c) => c.slug === catSlug), [parentCats, catSlug]);
-  const selectedSub   = useMemo(() => allSubs.find((s) => s.slug === subSlug), [allSubs, subSlug]);
-  const catSubs       = useMemo(
-    () => selectedCat ? allSubs.filter((s) => s.parent_id === selectedCat.id) : [],
-    [allSubs, selectedCat]
+  const parentCats = useMemo(() => categories.filter((c) => c.parent_id === null), [categories]);
+  const allSubs    = useMemo(() => categories.filter((c) => c.parent_id !== null), [categories]);
+
+  // Subcategory chips: only when exactly 1 parent category is selected
+  const singleCatId = useMemo(() => {
+    if (urlCats.length !== 1) return null;
+    return parentCats.find((c) => c.slug === urlCats[0])?.id ?? null;
+  }, [urlCats, parentCats]);
+  const catSubs = useMemo(
+    () => singleCatId ? allSubs.filter((s) => s.parent_id === singleCatId) : [],
+    [allSubs, singleCatId]
   );
-  const brandModelChips = brandModelChipsMap[brandSlug] ?? [];
+  const selectedSub = useMemo(() => allSubs.find((s) => s.slug === subSlug), [allSubs, subSlug]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const pageStart  = total > 0 ? (apiPage - 1) * PAGE_SIZE + 1 : 0;
   const pageEnd    = Math.min(apiPage * PAGE_SIZE, total);
 
-  // ── Misc helpers ─────────────────────────────────────────────────────────────
   const getLocalName = useCallback(
     (ru: string, en: string) => (i18n.language === "ru" ? ru : en || ru),
     [i18n.language]
@@ -397,353 +443,339 @@ export function PartsCatalogClient({ brands, categories, brandModelChipsMap, krw
   };
 
   const hasFilters = !!(
-    brandSlug || modelName || catSlug || subSlug ||
+    urlBrands.length > 0 || urlCats.length > 0 || subSlug ||
     priceMin !== undefined || priceMax !== undefined || searchQ
   );
 
-  const resetAll = () => {
-    setSearchInput("");
-    setSearchQ("");
-    setPriceMinInput("");
-    setPriceMaxInput("");
-    router.push(pathname, { scroll: false });
-  };
-
   const scrollToContact = (name: string, partNumber: string) => {
     sessionStorage.setItem("prefillMessage", `${name} (${partNumber})`);
-    document.getElementById("contacts")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
     clarityEvent("parts_order_click");
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // Active filter tag data
+  const activeTags = useMemo(() => {
+    const tags: { label: string; onRemove: () => void }[] = [];
+    urlBrands.forEach((slug) => {
+      const brand = brands.find((b) => b.slug === slug);
+      if (brand) tags.push({
+        label: brand.name,
+        onRemove: () => {
+          const next = urlBrands.filter((s) => s !== slug);
+          updateFilters({ brands: next.length > 0 ? next.join(",") : undefined, brand: undefined });
+        },
+      });
+    });
+    urlCats.forEach((slug) => {
+      const cat = parentCats.find((c) => c.slug === slug);
+      if (cat) tags.push({
+        label: getLocalName(cat.name_ru, cat.name_en),
+        onRemove: () => {
+          const next = urlCats.filter((s) => s !== slug);
+          updateFilters({ cats: next.length > 0 ? next.join(",") : undefined, cat: undefined, sub: undefined });
+        },
+      });
+    });
+    if (selectedSub) {
+      tags.push({
+        label: getLocalName(selectedSub.name_ru, selectedSub.name_en),
+        onRemove: () => updateFilters({ sub: undefined }),
+      });
+    }
+    if (priceMin !== undefined || priceMax !== undefined) {
+      tags.push({
+        label: `$${priceMin ?? 0} — ${priceMax ? "$" + priceMax : "∞"}`,
+        onRemove: () => updateFilters({ min: undefined, max: undefined }),
+      });
+    }
+    if (searchQ) {
+      tags.push({
+        label: `"${searchQ}"`,
+        onRemove: () => { setSearchInput(""); setSearchQ(""); updateFilters({ q: undefined }); },
+      });
+    }
+    return tags;
+  }, [urlBrands, urlCats, selectedSub, priceMin, priceMax, searchQ, brands, parentCats, getLocalName, updateFilters]);
+
+  // ── Sidebar props (shared between desktop and mobile drawer) ──────────────
+  const sidebarProps = {
+    brands: sortedBrands,
+    parentCats,
+    brandCounts,
+    catCounts,
+    pending,
+    onToggleBrand: (slug: string) => dispatch({ type: "TOGGLE_BRAND", slug }),
+    onToggleCategory: (slug: string) => dispatch({ type: "TOGGLE_CATEGORY", slug }),
+    onPriceMinChange: (val: string) => dispatch({ type: "SET_PRICE_MIN", value: val }),
+    onPriceMaxChange: (val: string) => dispatch({ type: "SET_PRICE_MAX", value: val }),
+    onReset: handleReset,
+    isDirty,
+    t,
+    getLocalName,
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <section id="catalog" ref={sectionRef} className="py-24 bg-[#F5F7FA]">
+    <section id="catalog" ref={sectionRef} className="py-16 lg:py-24 bg-[var(--pn-light-gray)]">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
 
         {/* Header */}
-        <div className={`text-center mb-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+        <div className={`text-center mb-8 lg:mb-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#BB162B]" />
-            <span className="text-[#BB162B] text-sm font-medium tracking-wider uppercase">
+            <div className="h-px w-12 bg-[var(--pn-orange)]" />
+            <span className="text-[var(--pn-orange)] text-sm font-medium tracking-wider uppercase">
               {t("parts.catalog.badge")}
             </span>
-            <div className="h-px w-12 bg-[#BB162B]" />
+            <div className="h-px w-12 bg-[var(--pn-orange)]" />
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--pn-deep-navy)] mb-4">
             {t("parts.catalog.title")}
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">{t("parts.catalog.subtitle")}</p>
         </div>
 
-        {/* Filter panel */}
-        <div className={`bg-white rounded-2xl shadow-sm p-5 mb-8 transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-
-          {/* Row 1: part number / VIN search — main search tool */}
-          <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#002C5F]/50 pointer-events-none" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t("parts.catalog.filterSearchPlaceholder")}
-              className="pl-12 h-13 text-base text-gray-900 placeholder:text-gray-400 border-2 border-[#002C5F]/20 focus-visible:border-[#002C5F] focus-visible:ring-[#002C5F]/20 focus-visible:ring-2 rounded-xl bg-[#002C5F]/[0.02] shadow-none"
-              style={{ height: "52px" }}
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => { setSearchInput(""); setSearchQ(""); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Row 2: brand chips — centered, brand colors */}
-          <div className="flex flex-wrap justify-center gap-3 mb-5">
-            {sortedBrands.map((brand) => {
-              const active = brandSlug === brand.slug;
-              const colors = BRAND_CHIP_COLORS[brand.slug] ?? BRAND_CHIP_COLORS.__default;
-              return (
-                <button
-                  key={brand.id}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => updateFilters({ brand: active ? undefined : brand.slug, model: undefined })}
-                  className={cn(
-                    "px-7 py-2.5 rounded-full border-2 text-sm font-semibold tracking-wide transition-all shadow-sm",
-                    active ? colors.active : colors.inactive,
-                    isPending && "opacity-60 cursor-wait"
-                  )}
-                >
-                  {brand.name}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Row 2: model chips */}
-          {selectedBrand && brandModelChips.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5 pb-1">
-              {brandModelChips.map(({ name, count }) => {
-                const active = modelName === name;
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => updateFilters({ model: modelName === name ? undefined : name })}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
-                      active
-                        ? "bg-[#BB162B] text-white border-[#BB162B]"
-                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200",
-                      isPending && "opacity-60 cursor-wait"
-                    )}
-                  >
-                    {name}
-                    <span className={active ? "opacity-60" : "opacity-50"}>{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Row 3: category cards */}
-          {parentCats.length > 0 && (
-            <div className="grid grid-cols-5 gap-3 mb-1">
-              {parentCats.map((cat) => {
-                const Icon  = getCatIcon(cat.slug);
-                const active = catSlug === cat.slug;
-                const count  = catCounts[cat.id];
-                const empty  = count !== undefined && count === 0 && !active;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    disabled={empty || isPending}
-                    onClick={() => updateFilters({ cat: catSlug === cat.slug ? undefined : cat.slug, sub: undefined })}
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl border-2 text-xs font-medium transition-all",
-                      empty
-                        ? "border-gray-100 text-gray-300 cursor-not-allowed opacity-50"
-                        : active
-                        ? "border-[#BB162B] bg-[#BB162B]/5 text-[#BB162B]"
-                        : "border-gray-200 text-gray-500 hover:border-[#002C5F]/30 hover:text-[#002C5F]",
-                      isPending && !empty && "opacity-60 cursor-wait"
-                    )}
-                  >
-                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                    <span className="text-center leading-tight hidden sm:block">
-                      {getLocalName(cat.name_ru, cat.name_en)}
-                    </span>
-                    {count !== undefined && (
-                      <span className={cn("text-xs font-bold tabular-nums", active ? "text-[#BB162B]" : empty ? "text-gray-300" : "text-gray-400")}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Row 4: subcategory chips */}
-          {selectedCat && catSubs.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-              {catSubs.map((sub) => {
-                const active = subSlug === sub.slug;
-                const count  = subCounts[sub.id];
-                const empty  = count !== undefined && count === 0 && !active;
-                return (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    disabled={empty || isPending}
-                    onClick={() => updateFilters({ sub: subSlug === sub.slug ? undefined : sub.slug })}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
-                      empty
-                        ? "bg-gray-50 text-gray-300 border-transparent cursor-not-allowed opacity-50"
-                        : active
-                        ? "bg-[#002C5F] text-white border-[#002C5F]"
-                        : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200",
-                      isPending && !empty && "opacity-60 cursor-wait"
-                    )}
-                  >
-                    {getLocalName(sub.name_ru, sub.name_en)}
-                    {count !== undefined && (
-                      <span className={active ? "opacity-60" : "opacity-50"}>{count}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Row 5: price range */}
-          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-            <span className="text-sm text-gray-500 whitespace-nowrap">{t("parts.catalog.filterPrice")}:</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">$</span>
-              <Input type="number" min={0} value={priceMinInput}
-                onChange={(e) => setPriceMinInput(e.target.value)}
-                onBlur={applyPrice} onKeyDown={(e) => e.key === "Enter" && applyPrice()}
-                placeholder="0" className="w-24 h-8 text-sm text-center text-gray-900 placeholder:text-gray-400"
-              />
-              <span className="text-gray-400">—</span>
-              <span className="text-xs text-gray-400">$</span>
-              <Input type="number" min={0} value={priceMaxInput}
-                onChange={(e) => setPriceMaxInput(e.target.value)}
-                onBlur={applyPrice} onKeyDown={(e) => e.key === "Enter" && applyPrice()}
-                placeholder="∞" className="w-24 h-8 text-sm text-center text-gray-900 placeholder:text-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* Active filter tags */}
-          {hasFilters && (
-            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-              {selectedBrand && <FilterTag label={selectedBrand.name} onRemove={() => updateFilters({ brand: undefined, model: undefined })} />}
-              {modelName && <FilterTag label={modelName} onRemove={() => updateFilters({ model: undefined })} />}
-              {selectedCat && <FilterTag label={getLocalName(selectedCat.name_ru, selectedCat.name_en)} onRemove={() => updateFilters({ cat: undefined, sub: undefined })} />}
-              {selectedSub && <FilterTag label={getLocalName(selectedSub.name_ru, selectedSub.name_en)} onRemove={() => updateFilters({ sub: undefined })} />}
-              {(priceMin !== undefined || priceMax !== undefined) && (
-                <FilterTag
-                  label={`$${priceMin ?? 0} — ${priceMax ? "$" + priceMax : "∞"}`}
-                  onRemove={() => { setPriceMinInput(""); setPriceMaxInput(""); updateFilters({ min: undefined, max: undefined }); }}
-                />
-              )}
-              {searchQ && (
-                <FilterTag label={`"${searchQ}"`} onRemove={() => { setSearchInput(""); setSearchQ(""); updateFilters({ q: undefined }); }} />
-              )}
-              <button onClick={resetAll} className="text-xs text-[#BB162B] underline ml-1 hover:text-[#9B1220] transition-colors">
-                {t("parts.catalog.resetFilters")}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Results bar — anchor for scroll-to-top on page change */}
-        <div
-          ref={resultsRef}
-          className={`flex items-center justify-between mb-6 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-        >
-          <span className="text-sm text-gray-500">
-            {isLoading && products.length === 0
-              ? "…"
-              : total === 0
-              ? t("parts.catalog.noResults")
-              : t("parts.catalog.resultsShown", { shown: `${pageStart}–${pageEnd}`, total })
-            }
-          </span>
-          <div className="flex items-center gap-3">
-            <Select
-              value={sort}
-              disabled={isPending}
-              onValueChange={(val) => updateFilters({ sort: val === "default" ? undefined : val })}
+        {/* Search bar */}
+        <div className={`relative mb-6 max-w-2xl mx-auto transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-deep-navy)]/50 pointer-events-none" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={t("parts.catalog.filterSearchPlaceholder")}
+            className="pl-12 h-13 text-base text-gray-900 placeholder:text-gray-400 border-2 border-[var(--pn-deep-navy)]/20 focus-visible:border-[var(--pn-deep-navy)] focus-visible:ring-[var(--pn-deep-navy)]/20 focus-visible:ring-2 rounded-xl bg-[var(--pn-deep-navy)]/[0.02] shadow-none"
+            style={{ height: "52px" }}
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => { setSearchInput(""); setSearchQ(""); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <SelectTrigger className={cn("h-9 w-44 bg-white text-gray-700 border-gray-300 text-sm shadow-sm", isPending && "opacity-60 cursor-wait")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white text-gray-900 border-gray-200">
-                <SelectItem value="default">{t("parts.catalog.sortDefault")}</SelectItem>
-                <SelectItem value="price_asc">{t("parts.catalog.sortPriceAsc")}</SelectItem>
-                <SelectItem value="price_desc">{t("parts.catalog.sortPriceDesc")}</SelectItem>
-                <SelectItem value="name_asc">{t("parts.catalog.sortNameAsc")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-              <button onClick={() => setView("grid")} className={cn("p-2 transition-colors", view === "grid" ? "bg-[#002C5F] text-white" : "bg-white text-gray-400 hover:text-[#002C5F]")} title={t("parts.catalog.gridView")}>
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button onClick={() => setView("list")} className={cn("p-2 transition-colors", view === "list" ? "bg-[#002C5F] text-white" : "bg-white text-gray-400 hover:text-[#002C5F]")} title={t("parts.catalog.listView")}>
-                <List className="w-4 h-4" />
-              </button>
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Two-column layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+
+          {/* Sidebar (desktop only) */}
+          <FilterSidebar
+            {...sidebarProps}
+            onApply={handleApply}
+            className="hidden lg:block w-[260px] shrink-0 sticky top-20 self-start"
+          />
+
+          {/* Main content area */}
+          <div className="flex-1 min-w-0">
+
+            {/* Mobile filter button */}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className={cn(
+                "lg:hidden flex items-center gap-2 px-4 py-2.5 mb-4 rounded-xl border-2 text-sm font-medium transition-all w-full justify-center",
+                hasFilters
+                  ? "border-[var(--pn-orange)] bg-[var(--pn-orange)]/5 text-[var(--pn-orange)]"
+                  : "border-gray-200 text-gray-600 hover:border-[var(--pn-deep-navy)]/30"
+              )}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              {t("parts.catalog.filtersTitle")}
+              {hasFilters && (
+                <span className="ml-1 w-5 h-5 rounded-full bg-[var(--pn-orange)] text-white text-xs flex items-center justify-center">
+                  {urlBrands.length + urlCats.length + (priceMin !== undefined || priceMax !== undefined ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {/* Subcategory chips (when exactly 1 parent category selected) */}
+            {catSubs.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {catSubs.map((sub) => {
+                  const active = subSlug === sub.slug;
+                  const count  = subCounts[sub.id];
+                  const empty  = count !== undefined && count === 0 && !active;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      disabled={empty || isPending}
+                      onClick={() => updateFilters({ sub: subSlug === sub.slug ? undefined : sub.slug })}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
+                        empty
+                          ? "bg-gray-50 text-gray-300 border-transparent cursor-not-allowed opacity-50"
+                          : active
+                          ? "bg-[var(--pn-deep-navy)] text-white border-[var(--pn-deep-navy)]"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-[var(--pn-deep-navy)]/30",
+                        isPending && !empty && "opacity-60 cursor-wait"
+                      )}
+                    >
+                      {getLocalName(sub.name_ru, sub.name_en)}
+                      {count !== undefined && (
+                        <span className={active ? "opacity-60" : "opacity-50"}>{count}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Active filter tags */}
+            {activeTags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {activeTags.map((tag, i) => (
+                  <FilterTag key={i} label={tag.label} onRemove={tag.onRemove} />
+                ))}
+                <button
+                  onClick={handleReset}
+                  className="text-xs text-[var(--pn-orange)] underline ml-1 hover:brightness-110 transition-colors"
+                >
+                  {t("parts.catalog.resetFilters")}
+                </button>
+              </div>
+            )}
+
+            {/* Results bar */}
+            <div
+              ref={resultsRef}
+              className={`flex items-center justify-between mb-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+            >
+              <span className="text-sm text-gray-500">
+                {isLoading && products.length === 0
+                  ? "…"
+                  : total === 0
+                  ? t("parts.catalog.noResults")
+                  : t("parts.catalog.resultsShown", { shown: `${pageStart}–${pageEnd}`, total })
+                }
+              </span>
+              <div className="flex items-center gap-3">
+                <Select
+                  value={sort}
+                  disabled={isPending}
+                  onValueChange={(val) => updateFilters({ sort: val === "default" ? undefined : val })}
+                >
+                  <SelectTrigger className={cn("h-9 w-44 bg-white text-gray-700 border-gray-300 text-sm shadow-sm", isPending && "opacity-60 cursor-wait")}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white text-gray-900 border-gray-200">
+                    <SelectItem value="default">{t("parts.catalog.sortDefault")}</SelectItem>
+                    <SelectItem value="price_asc">{t("parts.catalog.sortPriceAsc")}</SelectItem>
+                    <SelectItem value="price_desc">{t("parts.catalog.sortPriceDesc")}</SelectItem>
+                    <SelectItem value="name_asc">{t("parts.catalog.sortNameAsc")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+                  <button onClick={() => setView("grid")} className={cn("p-2 transition-colors", view === "grid" ? "bg-[var(--pn-deep-navy)] text-white" : "bg-white text-gray-400 hover:text-[var(--pn-deep-navy)]")} title={t("parts.catalog.gridView")}>
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setView("list")} className={cn("p-2 transition-colors", view === "list" ? "bg-[var(--pn-deep-navy)] text-white" : "bg-white text-gray-400 hover:text-[var(--pn-deep-navy)]")} title={t("parts.catalog.listView")}>
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Product grid / list */}
+            <div style={{ minHeight: isLoading ? "600px" : undefined }}>
+              {isLoading ? (
+                <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+                  {Array.from({ length: PAGE_SIZE }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
+                </div>
+              ) : products.length === 0 ? (
+                <EmptyState onReset={handleReset} t={t} />
+              ) : (
+                <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+                  {products.map((product, index) => {
+                    const productName = getProductName(product, lang);
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        productName={productName}
+                        view={view}
+                        isVisible={isVisible}
+                        index={index}
+                        href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
+                        onAddToCart={() => handleAddToCart(product)}
+                        onQuickView={() => setQuickViewProduct(product)}
+                        onNavigate={() => { sessionStorage.setItem("parts:filters", window.location.search); clarityEvent("part_card_click"); }}
+                        lang={lang}
+                        t={t}
+                        krwToUsd={krwToUsd}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {!isLoading && totalPages > 1 && (
+                <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} isPending={isPending} />
+              )}
             </div>
           </div>
         </div>
-
-        {/* Products — min-height фиксирует высоту при загрузке (CLS fix) */}
-        <div style={{ minHeight: isLoading ? "600px" : undefined }}>
-        {isLoading ? (
-          <div className={cn(view === "grid" ? "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
-            {Array.from({ length: PAGE_SIZE }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
-          </div>
-        ) : products.length === 0 ? (
-          <EmptyState onReset={resetAll} t={t} />
-        ) : (
-          <div className={cn(view === "grid" ? "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
-            {products.map((product, index) => {
-              const productName = getProductName(product, lang);
-              return (
-              <ProductCard
-                key={product.id}
-                product={product}
-                productName={productName}
-                view={view}
-                isVisible={isVisible}
-                index={index}
-                href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
-                onAddToCart={() => handleAddToCart(product)}
-                onNavigate={() => { sessionStorage.setItem("parts:filters", window.location.search); clarityEvent("part_card_click"); }}
-                lang={lang}
-                t={t}
-                krwToUsd={krwToUsd}
-              />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {!isLoading && totalPages > 1 && (
-          <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} isPending={isPending} />
-        )}
-        </div>{/* /min-height wrapper */}
-
       </div>
+
+      {/* Mobile filter drawer */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setDrawerOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-[85vw] max-w-sm bg-[var(--pn-light-gray)] shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-[var(--pn-light-gray)] px-4 pt-4 pb-2 flex items-center justify-between border-b border-gray-200">
+              <h3 className="text-lg font-bold text-[var(--pn-deep-navy)]">{t("parts.catalog.filtersTitle")}</h3>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+            <div className="p-4">
+              <FilterSidebar
+                {...sidebarProps}
+                onApply={() => { handleApply(); setDrawerOpen(false); }}
+                className="shadow-none bg-transparent p-0"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        krwToUsd={krwToUsd}
+        lang={lang}
+      />
     </section>
   );
 }
 
-// ─── Pagination ───────────────────────────────────────────────────────────────
+// ─── Pagination ──────────────────────────────────────────────────────────────
 
 function Pagination({
-  page,
-  totalPages,
-  onPageChange,
-  isPending,
+  page, totalPages, onPageChange, isPending,
 }: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  isPending: boolean;
+  page: number; totalPages: number; onPageChange: (page: number) => void; isPending: boolean;
 }) {
   const pages = getPageNumbers(page, totalPages);
-
   return (
     <nav className={cn("flex items-center justify-center gap-1 mt-10", isPending && "opacity-60 pointer-events-none")} aria-label="Pagination">
-      {/* Prev */}
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1 || isPending}
         className={cn(
           "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
-          page === 1
-            ? "text-gray-300 cursor-not-allowed"
-            : "text-gray-600 hover:bg-white hover:shadow-sm"
+          page === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-white hover:shadow-sm"
         )}
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-
-      {/* Page numbers */}
       {pages.map((p, i) =>
         p === "…" ? (
-          <span key={`e${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">
-            …
-          </span>
+          <span key={`e${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">…</span>
         ) : (
           <button
             key={p}
@@ -751,25 +783,19 @@ function Pagination({
             onClick={() => onPageChange(p as number)}
             className={cn(
               "w-9 h-9 rounded-lg text-sm font-medium transition-all",
-              p === page
-                ? "bg-[#002C5F] text-white shadow-sm"
-                : "text-gray-600 hover:bg-white hover:shadow-sm"
+              p === page ? "bg-[var(--pn-deep-navy)] text-white shadow-sm" : "text-gray-600 hover:bg-white hover:shadow-sm"
             )}
           >
             {p}
           </button>
         )
       )}
-
-      {/* Next */}
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages || isPending}
         className={cn(
           "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
-          page === totalPages
-            ? "text-gray-300 cursor-not-allowed"
-            : "text-gray-600 hover:bg-white hover:shadow-sm"
+          page === totalPages ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-white hover:shadow-sm"
         )}
       >
         <ChevronRight className="w-4 h-4" />
@@ -778,168 +804,32 @@ function Pagination({
   );
 }
 
-// ─── FilterTag ─────────────────────────────────────────────────────────────────
+// ─── FilterTag ───────────────────────────────────────────────────────────────
 
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#002C5F]/10 text-[#002C5F] text-xs font-medium">
+    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--pn-deep-navy)]/10 text-[var(--pn-deep-navy)] text-xs font-medium">
       {label}
-      <button onClick={onRemove} className="ml-0.5 hover:text-[#BB162B] transition-colors" aria-label="Remove filter">
+      <button onClick={onRemove} className="ml-0.5 hover:text-[var(--pn-orange)] transition-colors" aria-label="Remove filter">
         <X className="w-3 h-3" />
       </button>
     </span>
   );
 }
 
-// ─── EmptyState ───────────────────────────────────────────────────────────────
+// ─── EmptyState ──────────────────────────────────────────────────────────────
 
 function EmptyState({ onReset, t }: { onReset: () => void; t: (key: string) => string }) {
   return (
     <div className="text-center py-24">
-      <div className="w-16 h-16 rounded-full bg-[#002C5F]/5 flex items-center justify-center mx-auto mb-4">
-        <Search className="w-8 h-8 text-[#002C5F]/30" />
+      <div className="w-16 h-16 rounded-full bg-[var(--pn-deep-navy)]/5 flex items-center justify-center mx-auto mb-4">
+        <Search className="w-8 h-8 text-[var(--pn-deep-navy)]/30" />
       </div>
       <p className="text-gray-600 font-medium mb-1">{t("parts.catalog.noResults")}</p>
       <p className="text-sm text-gray-400 mb-4">{t("parts.catalog.noResultsHint")}</p>
-      <button onClick={onReset} className="text-sm text-[#BB162B] underline hover:text-[#9B1220] transition-colors">
+      <button onClick={onReset} className="text-sm text-[var(--pn-orange)] underline hover:brightness-110 transition-colors">
         {t("parts.catalog.resetFilters")}
       </button>
-    </div>
-  );
-}
-
-// ─── ProductCard ──────────────────────────────────────────────────────────────
-
-interface ProductCardProps {
-  product: Product;
-  productName: string;
-  view: "grid" | "list";
-  isVisible: boolean;
-  index: number;
-  href: string;
-  onAddToCart: () => Promise<boolean>;
-  onNavigate: () => void;
-  lang: string;
-  t: (key: string) => string;
-  krwToUsd: number;
-}
-
-const CART_LABELS: Record<string, string> = {
-  ru: "В корзину", en: "Add to cart", ko: "장바구니", ka: "კალათაში", ar: "للسلة",
-};
-
-function ProductCard({ product, productName, view, isVisible, index, href, onAddToCart, onNavigate, lang, t, krwToUsd }: ProductCardProps) {
-  const delay = `${Math.min(index * 20, 400)}ms`;
-  const { isFavorite, toggleFavorite } = usePartsFavorites();
-  const fav = isFavorite(product.id);
-  const [cartAdded, setCartAdded] = useState(false);
-
-  const handleCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const added = await onAddToCart();
-    if (added) {
-      setCartAdded(true);
-      setTimeout(() => setCartAdded(false), 2000);
-    }
-  };
-
-  const cartLabel = CART_LABELS[lang] ?? CART_LABELS.ru;
-
-  const FavButton = ({ overlay = false }: { overlay?: boolean }) => (
-    <button
-      onClick={(e) => { e.preventDefault(); toggleFavorite(product); }}
-      className="flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 cursor-pointer"
-      style={{
-        width: overlay ? 32 : 30,
-        height: overlay ? 32 : 30,
-        backgroundColor: fav ? "#BB162B" : overlay ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.06)",
-        backdropFilter: overlay ? "blur(4px)" : "none",
-        border: fav ? "none" : overlay ? "1.5px solid rgba(255,255,255,0.25)" : "1.5px solid #e5e7eb",
-        boxShadow: fav ? "0 0 10px rgba(187,22,43,0.35)" : "none",
-      }}
-      aria-label={fav ? t("common:favorites.remove") : t("common:favorites.add")}
-    >
-      <Heart
-        className="w-4 h-4"
-        fill={fav ? "white" : "none"}
-        style={{ color: fav ? "white" : overlay ? "rgba(255,255,255,0.85)" : "#9ca3af" }}
-      />
-    </button>
-  );
-
-  if (view === "list") {
-    return (
-      <div
-        className={cn("bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-4 p-4", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
-        style={{ transitionDelay: delay }}
-      >
-        <Link href={href} onClick={onNavigate} className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden relative">
-          {product.image_url
-            ? <Image src={product.image_url} alt={productName} width={80} height={80} unoptimized className="object-contain p-2" />
-            : <Wrench className="w-7 h-7 text-gray-300" />}
-        </Link>
-        <Link href={href} onClick={onNavigate} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
-          <div className="text-xs text-gray-400 font-mono mb-0.5">{product.part_number}</div>
-          <h3 className="text-sm font-semibold text-[#002C5F] truncate">{productName}</h3>
-        </Link>
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
-            <FavButton overlay={false} />
-          </div>
-          <Button
-            size="sm"
-            onClick={handleCart}
-            className={`text-white text-xs h-8 flex items-center gap-1.5 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500" : "bg-[#BB162B] hover:bg-[#9a1122]"}`}
-          >
-            {cartAdded ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
-            {cartAdded ? "✓" : cartLabel}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn("bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group flex flex-col", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
-      style={{ transitionDelay: delay }}
-    >
-      <Link href={href} onClick={onNavigate} className="block relative bg-gray-50 overflow-hidden" style={{ paddingBottom: "62%" }}>
-        <div className="absolute inset-0 flex items-center justify-center">
-          {product.image_url
-            ? <Image src={product.image_url} alt={productName} fill unoptimized className="object-contain p-3 group-hover:scale-105 transition-transform duration-300" />
-            : <div className="flex flex-col items-center gap-1.5 text-gray-300"><Wrench className="w-8 h-8" /><span className="text-xs">{t("parts.catalog.noPhoto")}</span></div>}
-        </div>
-        {product.is_new && (
-          <div className="absolute top-2 left-2 bg-[#BB162B] text-white text-xs px-2 py-0.5 rounded-full font-medium">
-            {t("parts.catalog.newBadge")}
-          </div>
-        )}
-        <div className="absolute top-2 right-2">
-          <FavButton overlay />
-        </div>
-      </Link>
-      <div className="p-3 flex flex-col gap-1.5 flex-1">
-        <Link href={href} onClick={onNavigate} className="block">
-          <div className="text-[11px] text-gray-400 font-mono leading-none mb-1">{product.part_number}</div>
-          <h3 className="text-sm font-semibold text-[#002C5F] line-clamp-2 leading-snug min-h-[2.625rem] hover:text-[#002C5F]/80 transition-colors">
-            {productName}
-          </h3>
-        </Link>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
-          <span className="text-base font-bold text-[#BB162B]">{formatUsd(product.price_krw, krwToUsd)}</span>
-          <Button
-            size="sm"
-            onClick={handleCart}
-            className={`h-7 px-3 text-white text-xs flex items-center gap-1.5 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500" : "bg-[#BB162B] hover:bg-[#9a1122]"}`}
-          >
-            {cartAdded ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
-            {cartAdded ? "✓" : cartLabel}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -23,7 +23,7 @@ interface Props {
   userId: string;
 }
 
-const FALLBACK_KRW_TO_USD = 0.00072;
+const FALLBACK_KRW_TO_USD = 0.00066; // June 2026
 const usdFmt = new Intl.NumberFormat("en-US");
 
 const L: Record<string, Record<string, string>> = {
@@ -43,7 +43,7 @@ export default function CartTab({ lang, userId }: Props) {
 
   // Загружаем курс валюты (тот же источник что и каталог)
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=KRW&to=USD")
+    fetch("https://api.frankfurter.dev/v1/latest?from=KRW&to=USD")
       .then(r => r.json())
       .then(d => { if (d.rates?.USD) setKrwToUsd(d.rates.USD); })
       .catch(() => {});

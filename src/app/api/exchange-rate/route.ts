@@ -83,7 +83,7 @@ export async function GET() {
     // KRW у ЦБ РФ — номинал 100 вон, поэтому делим
     const krw = data.Valute.KRW
       ? data.Valute.KRW.Value / data.Valute.KRW.Nominal
-      : usd / 1350; // fallback через USD если KRW нет
+      : usd / 1515; // fallback через USD если KRW нет (June 2026)
 
     // KRW/USD: сколько USD за 1 KRW
     const krwPerUsd = krw / usd;

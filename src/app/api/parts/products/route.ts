@@ -34,41 +34,53 @@ export async function GET(req: NextRequest) {
   try {
     const sp = new URL(req.url).searchParams;
 
-    const brandSlug = sp.get("brand") ?? "";
-    const catSlug   = sp.get("cat")   ?? "";
-    const subSlug   = sp.get("sub")   ?? "";
-    const modelName = sp.get("model") ?? "";
-    const q         = sp.get("q")     ?? "";
-    const minPrice  = sp.get("min") ? Number(sp.get("min")) : null;
-    const maxPrice  = sp.get("max") ? Number(sp.get("max")) : null;
-    const sort      = sp.get("sort")  ?? "default";
-    const page      = Math.max(1, Number(sp.get("page") ?? "1"));
+    // ── Parse params (multi-select + backward compat) ─────────────────────────
+    const brandSlug  = sp.get("brand")  ?? "";
+    const brandsParam = sp.get("brands") ?? "";
+    const catSlug    = sp.get("cat")    ?? "";
+    const catsParam  = sp.get("cats")   ?? "";
+    const subSlug    = sp.get("sub")    ?? "";
+    const modelName  = sp.get("model")  ?? "";
+    const q          = sp.get("q")      ?? "";
+    const minPrice   = sp.get("min") ? Number(sp.get("min")) : null;
+    const maxPrice   = sp.get("max") ? Number(sp.get("max")) : null;
+    const sort       = sp.get("sort")   ?? "default";
+    const page       = Math.max(1, Number(sp.get("page") ?? "1"));
 
-    // Поисковые запросы (q, price) уникальны — не кэшируем.
-    // Фильтры по бренду/категории/модели — стабильные данные, кэш 30с на CDN.
     const hasSearch = !!(q || minPrice || maxPrice);
-    const hasFilters = !!(brandSlug || catSlug || subSlug || modelName || sort !== "default");
+    const hasFilters = !!(brandSlug || brandsParam || catSlug || catsParam || subSlug || modelName || sort !== "default");
     const cacheHeader = hasSearch
       ? "no-store"
       : hasFilters
       ? "s-maxage=30, stale-while-revalidate=120"
       : "s-maxage=60, stale-while-revalidate=300";
 
-    // ── Step 1: resolve slugs → IDs (cached, no DB hit after first request) ──
+    // ── Step 1: resolve slugs → IDs ──────────────────────────────────────────
     const [brandsData, catsData] = await Promise.all([getBrands(), getCategories()]);
 
-    const brandId = brandsData.find((b) => b.slug === brandSlug)?.id ?? null;
-    const catId   = catsData.find((c) => c.slug === catSlug)?.id   ?? null;
-    const subId   = catsData.find((c) => c.slug === subSlug)?.id   ?? null;
+    // Multi-brand: merge "brands=hyundai,kia" with legacy "brand=hyundai"
+    const brandSlugs = [
+      ...(brandsParam ? brandsParam.split(",").filter(Boolean) : []),
+      ...(brandSlug ? [brandSlug] : []),
+    ];
+    const brandIds = [...new Set(brandSlugs)]
+      .map(s => brandsData.find(b => b.slug === s)?.id)
+      .filter((id): id is number => id != null);
 
-    const parentCatIds = catsData.filter((c) => c.parent_id === null).map((c) => c.id);
-    const subCatIds    = catId != null
-      ? catsData.filter((c) => c.parent_id === catId).map((c) => c.id)
-      : [];
+    // Multi-category: merge "cats=engine,body" with legacy "cat=engine"
+    const catSlugs = [
+      ...(catsParam ? catsParam.split(",").filter(Boolean) : []),
+      ...(catSlug ? [catSlug] : []),
+    ];
+    const catIds = [...new Set(catSlugs)]
+      .map(s => catsData.find(c => c.slug === s)?.id)
+      .filter((id): id is number => id != null);
 
-    // Brand slug provided but not found → 0 results
-    if (brandSlug && brandId === null) {
-      return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {} });
+    const subId = catsData.find((c) => c.slug === subSlug)?.id ?? null;
+
+    // If brand slug(s) provided but none resolved → 0 results
+    if (brandSlugs.length > 0 && brandIds.length === 0) {
+      return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {}, brandCounts: {} });
     }
 
     const supabase = createServerClient();
@@ -76,17 +88,17 @@ export async function GET(req: NextRequest) {
     // ── Step 2: model name → product IDs via fitment ──────────────────────────
     let modelProductIds: number[] | null = null;
 
-    if (modelName && brandId !== null) {
+    if (modelName && brandIds.length === 1) {
       const { data: modelRows } = await supabase
         .from("parts_vehicle_models")
         .select("id")
         .eq("name_en", modelName)
-        .eq("brand_id", brandId);
+        .eq("brand_id", brandIds[0]);
 
       const modelIds = modelRows?.map((m) => m.id) ?? [];
 
       if (modelIds.length === 0) {
-        return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {} });
+        return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {}, brandCounts: {} });
       }
 
       const { data: fitmentRows } = await supabase
@@ -97,32 +109,45 @@ export async function GET(req: NextRequest) {
       modelProductIds = [...new Set(fitmentRows?.map((f) => f.product_id) ?? [])];
 
       if (modelProductIds.length === 0) {
-        return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {} });
+        return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {}, brandCounts: {} });
       }
     }
 
     // ── Filter builders ───────────────────────────────────────────────────────
-    // "base" = brand + model + price + search  (NO cat/sub — used for catCounts)
+    // "base" = brand + model + price + search (NO cat/sub)
     function withBaseFilters(query: AnyQuery): AnyQuery {
-      if (brandId !== null)  query = query.eq("brand_id", brandId);
-      if (modelProductIds)   query = query.in("id", modelProductIds);
-      if (minPrice !== null) query = query.gte("price_krw", minPrice);
-      if (maxPrice !== null) query = query.lte("price_krw", maxPrice);
+      if (brandIds.length > 0) query = query.in("brand_id", brandIds);
+      if (modelProductIds)     query = query.in("id", modelProductIds);
+      if (minPrice !== null)   query = query.gte("price_krw", minPrice);
+      if (maxPrice !== null)   query = query.lte("price_krw", maxPrice);
       if (q) query = query.or(
         `part_number.ilike.%${q}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
       );
       return query;
     }
 
-    // "full" = base + cat + sub  (used for product query & total count)
+    // "full" = base + cat + sub
     function withFullFilters(query: AnyQuery): AnyQuery {
       query = withBaseFilters(query);
-      if (catId !== null) query = query.eq("category_id", catId);
-      if (subId !== null) query = query.eq("subcategory_id", subId);
+      if (catIds.length > 0) query = query.in("category_id", catIds);
+      if (subId !== null)    query = query.eq("subcategory_id", subId);
       return query;
     }
 
-    // ── Step 3: product page + total + catCounts + subCounts — all parallel ───
+    // "noBrand" = everything except brand (for brandCounts facet)
+    function withFiltersNoBrand(query: AnyQuery): AnyQuery {
+      if (modelProductIds)   query = query.in("id", modelProductIds);
+      if (minPrice !== null)  query = query.gte("price_krw", minPrice);
+      if (maxPrice !== null)  query = query.lte("price_krw", maxPrice);
+      if (q) query = query.or(
+        `part_number.ilike.%${q}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
+      );
+      if (catIds.length > 0) query = query.in("category_id", catIds);
+      if (subId !== null)     query = query.eq("subcategory_id", subId);
+      return query;
+    }
+
+    // ── Step 3: queries in parallel ──────────────────────────────────────────
     const from = (page - 1) * PAGE_SIZE;
 
     // Main product query
@@ -138,46 +163,58 @@ export async function GET(req: NextRequest) {
     }
     productQuery = productQuery.range(from, from + PAGE_SIZE - 1);
 
-    // Total count (HEAD — zero data transferred)
+    // Total count
     const countQuery = withFullFilters(
       supabase.from("parts_products").select("*", { count: "exact", head: true })
     );
 
-    // catCounts + subCounts: one query fetching just two columns, grouped in JS.
-    // Only when brand or model filter is active — otherwise all cats are full.
-    const hasBrandOrModel = brandId !== null || modelProductIds !== null;
+    // catCounts: always computed (sidebar always shows category counts)
+    const catGroupQuery = withBaseFilters(
+      supabase.from("parts_products")
+        .select("category_id, subcategory_id")
+        .limit(50000)
+    );
 
-    const groupQuery = hasBrandOrModel
-      ? withBaseFilters(
-          supabase.from("parts_products")
-            .select("category_id, subcategory_id")
-            .limit(50000)
-        )
-      : Promise.resolve({ data: null as { category_id: number | null; subcategory_id: number | null }[] | null });
+    // brandCounts: count per brand with all filters EXCEPT brand
+    const brandGroupQuery = withFiltersNoBrand(
+      supabase.from("parts_products")
+        .select("brand_id")
+        .limit(50000)
+    );
 
-    // Fire everything in parallel — 3 queries instead of 2 + N
-    const [productsRes, countRes, groupRes] = await Promise.all([
+    const [productsRes, countRes, catGroupRes, brandGroupRes] = await Promise.all([
       productQuery,
       countQuery,
-      groupQuery,
+      catGroupQuery,
+      brandGroupQuery,
     ]);
 
+    // ── Aggregate counts ─────────────────────────────────────────────────────
     const catCounts: Record<number, number> = {};
     const subCounts: Record<number, number> = {};
 
-    if (groupRes.data) {
-      for (const row of groupRes.data) {
+    if (catGroupRes.data) {
+      for (const row of catGroupRes.data) {
         if (row.category_id != null) {
           catCounts[row.category_id] = (catCounts[row.category_id] ?? 0) + 1;
         }
-        if (catId !== null && row.category_id === catId && row.subcategory_id != null) {
+        if (catIds.length === 1 && row.category_id === catIds[0] && row.subcategory_id != null) {
           subCounts[row.subcategory_id] = (subCounts[row.subcategory_id] ?? 0) + 1;
         }
       }
     }
 
+    const brandCounts: Record<number, number> = {};
+    if (brandGroupRes.data) {
+      for (const row of brandGroupRes.data) {
+        if (row.brand_id != null) {
+          brandCounts[row.brand_id] = (brandCounts[row.brand_id] ?? 0) + 1;
+        }
+      }
+    }
+
     return NextResponse.json(
-      { products: productsRes.data ?? [], total: countRes.count ?? 0, catCounts, subCounts },
+      { products: productsRes.data ?? [], total: countRes.count ?? 0, catCounts, subCounts, brandCounts },
       { headers: { "Cache-Control": cacheHeader } }
     );
   } catch (err) {
