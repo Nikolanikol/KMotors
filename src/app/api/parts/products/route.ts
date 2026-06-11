@@ -168,50 +168,51 @@ export async function GET(req: NextRequest) {
       supabase.from("parts_products").select("*", { count: "exact", head: true })
     );
 
-    // catCounts: always computed (sidebar always shows category counts)
-    const catGroupQuery = withBaseFilters(
-      supabase.from("parts_products")
-        .select("category_id, subcategory_id")
-        .limit(50000)
-    );
+    // ── Facet counts: per-item HEAD queries (exact counts, zero data) ────────
+    // PostgREST caps .limit() at 1000, so the old grouping approach was wrong.
+    // HEAD queries with count:"exact" are precise and transfer no row data.
 
-    // brandCounts: count per brand with all filters EXCEPT brand
-    const brandGroupQuery = withFiltersNoBrand(
-      supabase.from("parts_products")
-        .select("brand_id")
-        .limit(50000)
-    );
+    const [productsRes, countRes, brandCountEntries, catCountEntries, subCountEntries] =
+      await Promise.all([
+        productQuery,
+        countQuery,
 
-    const [productsRes, countRes, catGroupRes, brandGroupRes] = await Promise.all([
-      productQuery,
-      countQuery,
-      catGroupQuery,
-      brandGroupQuery,
-    ]);
+        // brandCounts: one HEAD per brand, all filters EXCEPT brand
+        Promise.all(
+          brandsData.map(async (b) => {
+            const { count } = await withFiltersNoBrand(
+              supabase.from("parts_products").select("*", { count: "exact", head: true })
+            ).eq("brand_id", b.id);
+            return [b.id, count ?? 0] as const;
+          })
+        ),
 
-    // ── Aggregate counts ─────────────────────────────────────────────────────
-    const catCounts: Record<number, number> = {};
-    const subCounts: Record<number, number> = {};
+        // catCounts: one HEAD per parent category, base filters (no cat/sub)
+        Promise.all(
+          catsData.filter((c) => c.parent_id === null).map(async (c) => {
+            const { count } = await withBaseFilters(
+              supabase.from("parts_products").select("*", { count: "exact", head: true })
+            ).eq("category_id", c.id);
+            return [c.id, count ?? 0] as const;
+          })
+        ),
 
-    if (catGroupRes.data) {
-      for (const row of catGroupRes.data) {
-        if (row.category_id != null) {
-          catCounts[row.category_id] = (catCounts[row.category_id] ?? 0) + 1;
-        }
-        if (catIds.length === 1 && row.category_id === catIds[0] && row.subcategory_id != null) {
-          subCounts[row.subcategory_id] = (subCounts[row.subcategory_id] ?? 0) + 1;
-        }
-      }
-    }
+        // subCounts: only when exactly 1 parent category selected
+        catIds.length === 1
+          ? Promise.all(
+              catsData.filter((c) => c.parent_id === catIds[0]).map(async (s) => {
+                const { count } = await withBaseFilters(
+                  supabase.from("parts_products").select("*", { count: "exact", head: true })
+                ).eq("subcategory_id", s.id);
+                return [s.id, count ?? 0] as const;
+              })
+            )
+          : Promise.resolve([]),
+      ]);
 
-    const brandCounts: Record<number, number> = {};
-    if (brandGroupRes.data) {
-      for (const row of brandGroupRes.data) {
-        if (row.brand_id != null) {
-          brandCounts[row.brand_id] = (brandCounts[row.brand_id] ?? 0) + 1;
-        }
-      }
-    }
+    const brandCounts = Object.fromEntries(brandCountEntries) as Record<number, number>;
+    const catCounts = Object.fromEntries(catCountEntries) as Record<number, number>;
+    const subCounts = Object.fromEntries(subCountEntries) as Record<number, number>;
 
     return NextResponse.json(
       { products: productsRes.data ?? [], total: countRes.count ?? 0, catCounts, subCounts, brandCounts },
