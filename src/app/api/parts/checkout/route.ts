@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
 import { krwToDisplayUsd } from "@/lib/pricing";
+import { sendOrderConfirmation } from "@/lib/email";
 
 interface ShippingAddress {
   name: string;
@@ -52,9 +53,36 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as CheckoutBody;
     const { country, shippingMethod, shippingCostUsd, shippingAddress, notes, krwToUsd } = body;
 
-    if (!country || !shippingAddress?.name || !shippingAddress?.phone) {
-      return NextResponse.json({ error: "Недостаточно данных" }, { status: 400 });
+    // ── Validation ───────────────────────────────────────────────────────────
+    const ALLOWED_COUNTRIES = ["RU", "KZ", "GE", "AM", "KG", "UZ", "AZ", "AE", "SA", "QA", "KW", "BH", "OM"];
+    const trim = (s: unknown) => (typeof s === "string" ? s.trim() : "");
+
+    const name = trim(shippingAddress?.name);
+    const phone = trim(shippingAddress?.phone);
+    const city = trim(shippingAddress?.city);
+    const address = trim(shippingAddress?.address);
+    const zip = trim(shippingAddress?.zip);
+
+    const errors: string[] = [];
+    if (!country || !ALLOWED_COUNTRIES.includes(country)) errors.push("country");
+    if (!name || name.length < 2) errors.push("name");
+    if (!phone || phone.length < 6) errors.push("phone");
+    if (!city || city.length < 2) errors.push("city");
+    if (!address || address.length < 3) errors.push("address");
+    if (typeof krwToUsd !== "number" || krwToUsd <= 0 || krwToUsd > 0.01) errors.push("exchange_rate");
+    if (notes && typeof notes === "string" && notes.length > 2000) errors.push("notes_too_long");
+
+    if (errors.length > 0) {
+      return NextResponse.json(
+        { error: "Заполните обязательные поля", fields: errors },
+        { status: 400 }
+      );
     }
+
+    // Sanitized address for DB
+    const cleanAddress: ShippingAddress = {
+      name, phone, city, address, zip, country,
+    };
 
     const db = createServerClient(); // service role
 
@@ -164,8 +192,8 @@ export async function POST(req: NextRequest) {
         shipping_cost_usd: shippingCostUsd ?? 0,
         exchange_rate: krwToUsd,
         total_usd: totalUsd,
-        shipping_address: shippingAddress,
-        payment_status: "pending",
+        shipping_address: cleanAddress,
+        payment_status: "pending_payment",
         notes: notes || null,
       })
       .select("id")
@@ -217,7 +245,27 @@ export async function POST(req: NextRequest) {
 
     await sendTelegramNotification(tgText);
 
-    return NextResponse.json({ orderNumber });
+    // ── Email to customer ────────────────────────────────────────────────────
+    if (user.email) {
+      // Detect lang from referer or default to "ru"
+      const referer = req.headers.get("referer") ?? "";
+      const langMatch = referer.match(/\/(\w{2})\//);
+      const emailLang = langMatch?.[1] ?? "ru";
+
+      sendOrderConfirmation({
+        to: user.email,
+        lang: emailLang,
+        orderNumber,
+        items: orderItems,
+        totalUsd,
+        shippingCostUsd: shippingCostUsd ?? 0,
+        shippingCountry: country,
+        shippingMethod: effectiveShipMethod,
+        krwToUsd,
+      }).catch((err) => console.error("Order email error:", err));
+    }
+
+    return NextResponse.json({ orderNumber, orderId: order.id, totalUsd });
   } catch (err) {
     console.error("Checkout error:", err);
     return NextResponse.json(

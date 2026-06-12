@@ -177,19 +177,28 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
       router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
       return false;
     }
-    let { data: cart } = await supabase
-      .from("carts").select("id").eq("user_id", user.id).single();
-    if (!cart) {
-      const { data: newCart } = await supabase
-        .from("carts").insert({ user_id: user.id }).select("id").single();
-      cart = newCart;
+    try {
+      let { data: cart, error: cartErr } = await supabase
+        .from("carts").select("id").eq("user_id", user.id).single();
+      if (!cart && cartErr?.code === "PGRST116") {
+        const { data: newCart, error: insertErr } = await supabase
+          .from("carts").insert({ user_id: user.id }).select("id").single();
+        if (insertErr) throw insertErr;
+        cart = newCart;
+      } else if (cartErr && cartErr.code !== "PGRST116") {
+        throw cartErr;
+      }
+      if (!cart) throw new Error("Cart not found");
+      const { error: upsertErr } = await supabase.from("cart_items").upsert(
+        { cart_id: cart.id, product_id: product.id, quantity: 1 },
+        { onConflict: "cart_id,product_id" }
+      );
+      if (upsertErr) throw upsertErr;
+      return true;
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+      return false;
     }
-    if (!cart) return false;
-    await supabase.from("cart_items").upsert(
-      { cart_id: cart.id, product_id: product.id, quantity: 1 },
-      { onConflict: "cart_id,product_id" }
-    );
-    return true;
   }, [user, supabase, router, lang]);
 
   // ── Fade-in observer ──────────────────────────────────────────────────────
@@ -517,7 +526,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <section id="catalog" ref={sectionRef} className="py-16 lg:py-24 bg-[var(--pn-light-gray)]">
-      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
         <div className={`text-center mb-8 lg:mb-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
@@ -559,11 +568,15 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
         <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Sidebar (desktop only) */}
-          <FilterSidebar
-            {...sidebarProps}
-            onApply={handleApply}
-            className="hidden lg:block w-[260px] shrink-0 sticky top-20 self-start"
-          />
+          <aside className="hidden lg:block w-[260px] shrink-0">
+            <div className="sticky top-20">
+              <FilterSidebar
+                {...sidebarProps}
+                onApply={handleApply}
+                className=""
+              />
+            </div>
+          </aside>
 
           {/* Main content area */}
           <div className="flex-1 min-w-0">

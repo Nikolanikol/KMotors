@@ -119,6 +119,7 @@ const L: Record<string, Record<string, string>> = {
 
 const STATUS: Record<string, { ru: string; en: string; color: string }> = {
   pending_payment:    { ru: "Ожидает оплаты",         en: "Awaiting payment",     color: "bg-amber-50 text-amber-700 border-amber-200" },
+  paid:               { ru: "Оплачен",                 en: "Paid",                 color: "bg-green-50 text-green-700 border-green-200" },
   payment_submitted:  { ru: "Оплата отправлена",       en: "Payment submitted",    color: "bg-blue-50 text-blue-700 border-blue-200" },
   payment_confirmed:  { ru: "Оплата подтверждена",     en: "Payment confirmed",    color: "bg-green-50 text-green-700 border-green-200" },
   processing:         { ru: "В обработке",             en: "Processing",           color: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -201,8 +202,10 @@ export default function OrdersTab({ lang, userId }: Props) {
       ? (SHIP_LABEL[method]?.ru ?? method.toUpperCase())
       : (SHIP_LABEL[method]?.en ?? method.toUpperCase());
 
-  const itemName = (item: OrderItem) =>
-    lang === "en" ? item.name_en || item.name_ru : item.name_ru || item.name_en;
+  const itemName = (item: OrderItem) => {
+    const name = lang === "en" ? (item.name_en || item.name_ru) : (item.name_ru || item.name_en);
+    return name || item.part_number || `#${item.id}`;
+  };
 
   if (loading) {
     return (

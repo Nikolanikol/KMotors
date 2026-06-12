@@ -98,7 +98,7 @@
 /* ── Base ─────────────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
   /* Убирает задержку 300мс на тач-устройствах */
   touch-action: manipulation;
 }
@@ -109,10 +109,7 @@ a, button, [role="button"], input, select, textarea {
 }
 
 body {
-  overflow-x: hidden;
-}
-
-body {
+  overflow-x: clip;
   background-color: var(--axis-black);
   color: var(--axis-white);
   font-family: 'Inter', sans-serif;

@@ -19,7 +19,7 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="min-h-[calc(100vh-120px)] bg-[var(--pn-deep-navy)] flex items-center"
+      className="min-h-[50vh] bg-[var(--pn-deep-navy)] flex items-center"
     >
       <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-12 lg:py-0">
         <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-4">

@@ -74,13 +74,15 @@ export function FilterSidebar({
               {brands.map((brand) => {
                 const checked = pending.brands.includes(brand.slug);
                 const count = brandCounts[brand.id] ?? 0;
+                const empty = count === 0 && !checked;
                 return (
-                  <label key={brand.id} className="flex items-center gap-2.5 cursor-pointer group">
+                  <label key={brand.id} className={`flex items-center gap-2.5 group ${empty ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
                     <Checkbox
                       checked={checked}
+                      disabled={empty}
                       onCheckedChange={() => onToggleBrand(brand.slug)}
                     />
-                    <span className="text-sm text-gray-700 group-hover:text-[var(--pn-deep-navy)] transition-colors flex-1">
+                    <span className={`text-sm flex-1 transition-colors ${empty ? "text-gray-400" : "text-gray-700 group-hover:text-[var(--pn-deep-navy)]"}`}>
                       {brand.name}
                     </span>
                     <span className="text-xs text-gray-400 tabular-nums">{count}</span>
@@ -101,13 +103,15 @@ export function FilterSidebar({
               {parentCats.map((cat) => {
                 const checked = pending.categories.includes(cat.slug);
                 const count = catCounts[cat.id] ?? 0;
+                const empty = count === 0 && !checked;
                 return (
-                  <label key={cat.id} className="flex items-center gap-2.5 cursor-pointer group">
+                  <label key={cat.id} className={`flex items-center gap-2.5 group ${empty ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
                     <Checkbox
                       checked={checked}
+                      disabled={empty}
                       onCheckedChange={() => onToggleCategory(cat.slug)}
                     />
-                    <span className="text-sm text-gray-700 group-hover:text-[var(--pn-deep-navy)] transition-colors flex-1">
+                    <span className={`text-sm flex-1 transition-colors ${empty ? "text-gray-400" : "text-gray-700 group-hover:text-[var(--pn-deep-navy)]"}`}>
                       {getLocalName(cat.name_ru, cat.name_en)}
                     </span>
                     <span className="text-xs text-gray-400 tabular-nums">{count}</span>

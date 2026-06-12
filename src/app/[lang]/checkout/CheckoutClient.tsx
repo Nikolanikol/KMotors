@@ -4,6 +4,17 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Loader2, Ship, Plane } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const PayPalCheckout = dynamic(() => import("@/components/PayPalCheckout"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center py-6 gap-2 text-gray-400">
+      <Loader2 className="w-5 h-5 animate-spin" />
+      <span className="text-sm">Loading payment...</span>
+    </div>
+  ),
+});
 import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 import {
   calcEmsUsd,
@@ -82,12 +93,19 @@ const L: Record<string, Record<string, string>> = {
     requiredFields: "Заполните: имя, телефон, город и адрес",
     selectCountryFirst: "Выберите страну доставки",
     chooseShipping: "Выберите способ доставки",
-    successTitle: "Заказ оформлен!",
+    paymentTitle: "Оплата заказа",
+    paymentDesc: "Завершите оплату для подтверждения заказа",
+    successTitle: "Заказ оплачен!",
     successDesc1: "Ваш заказ",
-    successDesc2: "принят. Менеджер свяжется с вами для подтверждения и оплаты.",
+    successDesc2: "оплачен. Менеджер свяжется с вами для уточнения деталей доставки.",
     toOrders: "Мои заказы",
     toCatalog: "Продолжить покупки",
     notesPlaceholder: "Особые пожелания, удобное время для связи...",
+    phName: "Иван Петров",
+    phPhone: "+7 900 123-45-67",
+    phCity: "Москва",
+    phAddress: "ул. Ленина, д. 1, кв. 10",
+    phZip: "123456",
     kg: "кг",
     per: "×",
     billedWeight: "расч. вес",
@@ -126,12 +144,19 @@ const L: Record<string, Record<string, string>> = {
     requiredFields: "Please fill in: name, phone, city and address",
     selectCountryFirst: "Please select a country",
     chooseShipping: "Please select a shipping method",
-    successTitle: "Order placed!",
+    paymentTitle: "Payment",
+    paymentDesc: "Complete your payment to confirm the order",
+    successTitle: "Order paid!",
     successDesc1: "Your order",
-    successDesc2: "has been received. A manager will contact you for payment confirmation.",
+    successDesc2: "has been paid. A manager will contact you to confirm shipping details.",
     toOrders: "My Orders",
     toCatalog: "Continue shopping",
     notesPlaceholder: "Special requests, preferred contact time...",
+    phName: "John Smith",
+    phPhone: "+1 555 123-4567",
+    phCity: "New York",
+    phAddress: "123 Main St, Apt 4",
+    phZip: "10001",
     kg: "kg",
     per: "×",
     billedWeight: "billed wt.",
@@ -170,12 +195,19 @@ const L: Record<string, Record<string, string>> = {
     requiredFields: "이름, 전화번호, 도시, 주소를 입력해주세요",
     selectCountryFirst: "국가를 선택해주세요",
     chooseShipping: "배송 방법을 선택해주세요",
-    successTitle: "주문 완료!",
+    paymentTitle: "결제",
+    paymentDesc: "주문 확인을 위해 결제를 완료해주세요",
+    successTitle: "결제 완료!",
     successDesc1: "주문",
-    successDesc2: "이 접수되었습니다. 담당자가 결제 확인을 위해 연락드릴 예정입니다.",
+    successDesc2: "이 결제되었습니다. 담당자가 배송 세부사항 확인을 위해 연락드립니다.",
     toOrders: "내 주문",
     toCatalog: "계속 쇼핑하기",
     notesPlaceholder: "특별 요청사항...",
+    phName: "홍길동",
+    phPhone: "+82 10-1234-5678",
+    phCity: "서울",
+    phAddress: "강남구 테헤란로 123",
+    phZip: "06100",
     kg: "kg",
     per: "×",
     billedWeight: "청구 중량",
@@ -214,12 +246,19 @@ const L: Record<string, Record<string, string>> = {
     requiredFields: "შეავსეთ: სახელი, ტელეფონი, ქალაქი და მისამართი",
     selectCountryFirst: "აირჩიეთ ქვეყანა",
     chooseShipping: "აირჩიეთ მიტანის მეთოდი",
-    successTitle: "შეკვეთა გაფორმებულია!",
+    paymentTitle: "გადახდა",
+    paymentDesc: "შეკვეთის დასადასტურებლად დაასრულეთ გადახდა",
+    successTitle: "შეკვეთა გადახდილია!",
     successDesc1: "თქვენი შეკვეთა",
     successDesc2: "მიღებულია. მენეჯერი დაგიკავშირდება გადახდის დასადასტურებლად.",
     toOrders: "ჩემი შეკვეთები",
     toCatalog: "შოპინგის გაგრძელება",
     notesPlaceholder: "სპეციალური სურვილები...",
+    phName: "გიორგი ბერიძე",
+    phPhone: "+995 555 12-34-56",
+    phCity: "თბილისი",
+    phAddress: "რუსთაველის გამზ. 1",
+    phZip: "0100",
     kg: "კგ",
     per: "×",
     billedWeight: "ანგარიშ. წონა",
@@ -258,12 +297,19 @@ const L: Record<string, Record<string, string>> = {
     requiredFields: "يرجى ملء: الاسم والهاتف والمدينة والعنوان",
     selectCountryFirst: "يرجى اختيار دولة",
     chooseShipping: "يرجى اختيار طريقة الشحن",
-    successTitle: "تم تأكيد الطلب!",
+    paymentTitle: "الدفع",
+    paymentDesc: "أكمل الدفع لتأكيد الطلب",
+    successTitle: "تم الدفع!",
     successDesc1: "طلبك",
-    successDesc2: "تم استلامه. سيتواصل معك المدير لتأكيد الدفع.",
+    successDesc2: "تم دفعه. سيتواصل معك المدير لتأكيد تفاصيل الشحن.",
     toOrders: "طلباتي",
     toCatalog: "مواصلة التسوق",
     notesPlaceholder: "طلبات خاصة...",
+    phName: "محمد أحمد",
+    phPhone: "+971 50 123 4567",
+    phCity: "دبي",
+    phAddress: "شارع الشيخ زايد، مبنى 5",
+    phZip: "00000",
     kg: "كغ",
     per: "×",
     billedWeight: "الوزن المحسوب",
@@ -292,7 +338,12 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
   const [krwToUsd, setKrwToUsd] = useState(FALLBACK_RATE);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderTotalUsd, setOrderTotalUsd] = useState(0);
+  const [showPayPal, setShowPayPal] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
 
   useEffect(() => {
     fetch("https://api.frankfurter.dev/v1/latest?from=KRW&to=USD")
@@ -353,16 +404,26 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
 
   // ── Submit ──────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!form.name || !form.phone || !form.city || !form.address) {
-      setError(l.requiredFields); return;
+    // Client-side per-field validation
+    const errs = new Set<string>();
+    if (!form.name.trim() || form.name.trim().length < 2) errs.add("name");
+    if (!form.phone.trim() || form.phone.trim().length < 6) errs.add("phone");
+    if (!form.city.trim() || form.city.trim().length < 2) errs.add("city");
+    if (!form.address.trim() || form.address.trim().length < 3) errs.add("address");
+    if (!country) errs.add("country");
+
+    if (errs.size > 0) {
+      setFieldErrors(errs);
+      setError(errs.has("country") ? l.selectCountryFirst : l.requiredFields);
+      return;
     }
-    if (!country) { setError(l.selectCountryFirst); return; }
     if (airItems.length > 0 && !shippingMethod) {
       setError(l.chooseShipping); return;
     }
 
     setSubmitting(true);
     setError(null);
+    setFieldErrors(new Set());
 
     try {
       const res = await fetch("/api/parts/checkout", {
@@ -378,8 +439,17 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Error");
+      if (!res.ok) {
+        // Server returned per-field errors
+        if (data.fields && Array.isArray(data.fields)) {
+          setFieldErrors(new Set(data.fields));
+        }
+        throw new Error(data.error ?? "Error");
+      }
       setOrderNumber(data.orderNumber);
+      setOrderId(data.orderId);
+      setOrderTotalUsd(data.totalUsd);
+      setShowPayPal(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
     } finally {
@@ -387,14 +457,16 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
     }
   };
 
-  const displayName = (item: CheckoutItem) =>
-    lang === "en" || lang === "ko" ? item.nameEn || item.nameRu : item.nameRu;
+  const displayName = (item: CheckoutItem) => {
+    const name = lang === "en" || lang === "ko" ? (item.nameEn || item.nameRu) : (item.nameRu || item.nameEn);
+    return name || item.partNumber || `#${item.productId}`;
+  };
 
-  // ── Success screen ──────────────────────────────────────────────────────────
-  if (orderNumber) {
+  // ── Payment success screen ──────────────────────────────────────────────────
+  if (paymentComplete && orderNumber) {
     return (
       <div
-        className="min-h-screen bg-[#F5F7FA] flex items-center justify-center px-4"
+        className="min-h-screen bg-[#F5F7FA] flex items-center justify-center px-4 text-gray-900"
         dir={isRTL ? "rtl" : "ltr"}
       >
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 max-w-md w-full text-center">
@@ -426,10 +498,35 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
     );
   }
 
+  // ── PayPal payment screen ─────────────────────────────────────────────────
+  if (showPayPal && orderNumber && orderId) {
+    return (
+      <div
+        className="min-h-screen bg-[#F5F7FA] flex items-center justify-center px-4 text-gray-900"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 max-w-md w-full space-y-6">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-[#002C5F] mb-1">{l.paymentTitle ?? "Payment"}</h2>
+            <p className="text-gray-500 text-sm">{l.paymentDesc ?? "Complete your payment to confirm the order"}</p>
+          </div>
+
+          <PayPalCheckout
+            orderId={orderId}
+            totalUsd={orderTotalUsd}
+            orderNumber={orderNumber}
+            onSuccess={() => setPaymentComplete(true)}
+            onError={(err) => setError(err)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // ── Main layout ─────────────────────────────────────────────────────────────
   return (
     <div
-      className="min-h-screen bg-[#F5F7FA] py-8 px-4"
+      className="min-h-screen bg-[#F5F7FA] py-8 px-4 text-gray-900"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="max-w-3xl mx-auto space-y-4">
@@ -448,55 +545,89 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             {l.itemsSection}
           </h2>
-          <div className="space-y-3">
-            {items.map((item) => (
-              <div key={item.cartItemId} className="flex gap-3">
-                <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.nameEn}
-                      width={48}
-                      height={48}
-                      className="object-contain w-full h-full p-1"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
-                  )}
+
+          {/* Авиадоставка */}
+          {airItems.length > 0 && (
+            <div className={seaItems.length > 0 ? "mb-4" : ""}>
+              {seaItems.length > 0 && (
+                <div className="flex items-center gap-2 mb-3 pb-1">
+                  <Plane className="w-3.5 h-3.5 text-green-600" />
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{l.shipping}</span>
+                  <span className="text-xs text-gray-400">({airItems.length})</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#002C5F] line-clamp-1">
-                    {displayName(item)}
-                  </p>
-                  <p className="text-xs text-gray-400">{item.partNumber}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400">
-                      {l.billedWeight} {item.billedWeightKg} {l.kg}
-                    </span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                      item.shipMethod === "SEA" || item.shipMethod === "CLARIFY"
-                        ? "bg-blue-50 text-blue-600"
-                        : item.shipMethod === "EMS_PREMIUM"
-                        ? "bg-orange-50 text-orange-600"
-                        : "bg-green-50 text-green-600"
-                    }`}>
-                      {item.shipMethod === "SEA" || item.shipMethod === "CLARIFY" ? <Ship className="w-2.5 h-2.5 inline mr-0.5" /> : <Plane className="w-2.5 h-2.5 inline mr-0.5" />}
-                      {item.shipMethod === "EMS" ? "EMS" : item.shipMethod === "EMS_PREMIUM" ? "EMS+P" : "SEA"}
-                    </span>
+              )}
+              <div className="space-y-3">
+                {airItems.map((item) => (
+                  <div key={item.cartItemId} className="flex gap-3">
+                    <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                      {item.imageUrl ? (
+                        <Image src={item.imageUrl} alt={item.nameEn} width={48} height={48} className="object-contain w-full h-full p-1" unoptimized />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#002C5F] line-clamp-1">{displayName(item)}</p>
+                      <p className="text-xs text-gray-400">{item.partNumber}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-gray-400">{l.billedWeight} {item.billedWeightKg} {l.kg}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium inline-flex items-center gap-0.5 ${
+                          item.shipMethod === "EMS_PREMIUM" ? "bg-orange-50 text-orange-600" : "bg-green-50 text-green-600"
+                        }`}>
+                          <Plane className="w-2.5 h-2.5" />
+                          {item.shipMethod === "EMS" ? "EMS" : "EMS+"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-[#BB162B]">{formatUsd(item.priceKrw, krwToUsd)}</p>
+                      {item.quantity > 1 && <p className="text-xs text-gray-400">{l.per} {item.quantity}</p>}
+                    </div>
                   </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-[#BB162B]">
-                    {formatUsd(item.priceKrw, krwToUsd)}
-                  </p>
-                  {item.quantity > 1 && (
-                    <p className="text-xs text-gray-400">{l.per} {item.quantity}</p>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Морская доставка */}
+          {seaItems.length > 0 && (
+            <div>
+              {airItems.length > 0 && <div className="border-t border-gray-100 my-3" />}
+              <div className="flex items-center gap-2 mb-3 pb-1">
+                <Ship className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{l.seaLine}</span>
+                <span className="text-xs text-gray-400">({seaItems.length})</span>
+              </div>
+              <div className="space-y-3">
+                {seaItems.map((item) => (
+                  <div key={item.cartItemId} className="flex gap-3">
+                    <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                      {item.imageUrl ? (
+                        <Image src={item.imageUrl} alt={item.nameEn} width={48} height={48} className="object-contain w-full h-full p-1" unoptimized />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#002C5F] line-clamp-1">{displayName(item)}</p>
+                      <p className="text-xs text-gray-400">{item.partNumber}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-gray-400">{l.billedWeight} {item.billedWeightKg} {l.kg}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded font-medium inline-flex items-center gap-0.5 bg-blue-50 text-blue-600">
+                          <Ship className="w-2.5 h-2.5" />
+                          SEA
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-[#BB162B]">{formatUsd(item.priceKrw, krwToUsd)}</p>
+                      {item.quantity > 1 && <p className="text-xs text-gray-400">{l.per} {item.quantity}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── 2. Address ── */}
@@ -510,8 +641,8 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
               <label className="block text-xs font-medium text-gray-600 mb-1">{l.country}</label>
               <select
                 value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F] bg-white"
+                onChange={(e) => { setCountry(e.target.value); setFieldErrors((p) => { const n = new Set(p); n.delete("country"); return n; }); }}
+                className={`w-full border rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-white ${fieldErrors.has("country") ? "border-red-400 ring-1 ring-red-200 focus:border-red-500" : "border-gray-200 focus:border-[#002C5F]"}`}
               >
                 <option value="">{l.selectCountry}</option>
                 {COUNTRY_SELECTOR_ORDER.map((code) => (
@@ -528,8 +659,9 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F]"
+                  placeholder={l.phName}
+                  onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setFieldErrors((p) => { const n = new Set(p); n.delete("name"); return n; }); }}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${fieldErrors.has("name") ? "border-red-400 ring-1 ring-red-200 focus:border-red-500" : "border-gray-200 focus:border-[#002C5F]"}`}
                 />
               </div>
               <div>
@@ -537,8 +669,9 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
                 <input
                   type="tel"
                   value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F]"
+                  placeholder={l.phPhone}
+                  onChange={(e) => { setForm((f) => ({ ...f, phone: e.target.value })); setFieldErrors((p) => { const n = new Set(p); n.delete("phone"); return n; }); }}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${fieldErrors.has("phone") ? "border-red-400 ring-1 ring-red-200 focus:border-red-500" : "border-gray-200 focus:border-[#002C5F]"}`}
                 />
               </div>
             </div>
@@ -548,8 +681,9 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
               <input
                 type="text"
                 value={form.city}
-                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F]"
+                placeholder={l.phCity}
+                onChange={(e) => { setForm((f) => ({ ...f, city: e.target.value })); setFieldErrors((p) => { const n = new Set(p); n.delete("city"); return n; }); }}
+                className={`w-full border rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${fieldErrors.has("city") ? "border-red-400 ring-1 ring-red-200 focus:border-red-500" : "border-gray-200 focus:border-[#002C5F]"}`}
               />
             </div>
             {/* Address + ZIP */}
@@ -559,8 +693,9 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
                 <input
                   type="text"
                   value={form.address}
-                  onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F]"
+                  placeholder={l.phAddress}
+                  onChange={(e) => { setForm((f) => ({ ...f, address: e.target.value })); setFieldErrors((p) => { const n = new Set(p); n.delete("address"); return n; }); }}
+                  className={`w-full border rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${fieldErrors.has("address") ? "border-red-400 ring-1 ring-red-200 focus:border-red-500" : "border-gray-200 focus:border-[#002C5F]"}`}
                 />
               </div>
               <div>
@@ -568,8 +703,9 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
                 <input
                   type="text"
                   value={form.zip}
+                  placeholder={l.phZip}
                   onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F]"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#002C5F]"
                 />
               </div>
             </div>
@@ -679,7 +815,7 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
             onChange={(e) => setNotes(e.target.value)}
             placeholder={l.notesPlaceholder}
             rows={3}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#002C5F] resize-none"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#002C5F] resize-none"
           />
         </div>
 

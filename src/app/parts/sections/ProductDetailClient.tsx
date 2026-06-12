@@ -20,6 +20,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { formatUsd } from "@/lib/pricing";
 import { ShoppingCart } from "lucide-react";
+import { notifyCartUpdate } from "@/hooks/useCartCount";
 import {
   calcEmsUsd,
   calcEmspUsd,
@@ -83,6 +84,19 @@ interface Props {
   logisticsCatId?: number | null;
 }
 
+const MANUFACTURER_NAMES: Record<string, string> = {
+  "현대모비스": "Hyundai Mobis",
+  "기아모비스": "Kia Mobis",
+  "현대자동차": "Hyundai Motor",
+  "기아자동차": "Kia Motors",
+  "만도": "Mando",
+  "한온시스템": "Hanon Systems",
+  "현대위아": "Hyundai Wia",
+  "에스엘": "SL Corporation",
+  "현대트랜시스": "Hyundai Transys",
+  "현대케피코": "Hyundai Kefico",
+};
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function ProductDetailClient({
@@ -103,6 +117,8 @@ export function ProductDetailClient({
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [cartAdded, setCartAdded] = useState(false);
+  const [cartError, setCartError] = useState("");
+  const [qty, setQty] = useState(1);
   const [backSearch, setBackSearch] = useState("");
   useScrollDepth(`part_${product.partNumber}`);
 
@@ -157,18 +173,30 @@ export function ProductDetailClient({
       router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
       return;
     }
-    let { data: cart } = await supabase.from("carts").select("id").eq("user_id", user.id).single();
-    if (!cart) {
-      const { data: newCart } = await supabase.from("carts").insert({ user_id: user.id }).select("id").single();
-      cart = newCart;
+    setCartError("");
+    try {
+      let { data: cart, error: cartErr } = await supabase.from("carts").select("id").eq("user_id", user.id).single();
+      if (!cart && cartErr?.code === "PGRST116") {
+        const { data: newCart, error: insertErr } = await supabase.from("carts").insert({ user_id: user.id }).select("id").single();
+        if (insertErr) throw insertErr;
+        cart = newCart;
+      } else if (cartErr && cartErr.code !== "PGRST116") {
+        throw cartErr;
+      }
+      if (!cart) throw new Error("Cart not found");
+      const { error: upsertErr } = await supabase.from("cart_items").upsert(
+        { cart_id: cart.id, product_id: product.id, quantity: qty },
+        { onConflict: "cart_id,product_id" }
+      );
+      if (upsertErr) throw upsertErr;
+      notifyCartUpdate();
+      setCartAdded(true);
+      setTimeout(() => setCartAdded(false), 2500);
+    } catch (err: unknown) {
+      console.error("Add to cart failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setCartError(lang === "ru" ? "Не удалось добавить в корзину" : "Failed to add to cart");
     }
-    if (!cart) return;
-    await supabase.from("cart_items").upsert(
-      { cart_id: cart.id, product_id: product.id, quantity: 1 },
-      { onConflict: "cart_id,product_id" }
-    );
-    setCartAdded(true);
-    setTimeout(() => setCartAdded(false), 2500);
   };
 
   const partSlug = generatePartSlug(
@@ -285,23 +313,27 @@ export function ProductDetailClient({
                 {t("parts.detail.partNumber")}:
               </span>
               <code className="text-sm font-mono font-semibold text-[#002C5F] bg-[#002C5F]/5 px-2.5 py-1 rounded-md">
-                {product.part_number}
+                {product.part_number || product.product_no || "—"}
               </code>
-              <button
-                onClick={copyPartNumber}
-                title={t("parts.detail.copySuccess")}
-                className="p-1.5 text-gray-400 hover:text-[#002C5F] transition-colors rounded-md hover:bg-gray-50"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-              {copied && (
-                <span className="text-xs text-green-500">
-                  {t("parts.detail.copySuccess")}
-                </span>
+              {(product.part_number || product.product_no) && (
+                <>
+                  <button
+                    onClick={copyPartNumber}
+                    title={t("parts.detail.copySuccess")}
+                    className="p-1.5 text-gray-400 hover:text-[#002C5F] transition-colors rounded-md hover:bg-gray-50"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                  {copied && (
+                    <span className="text-xs text-green-500">
+                      {t("parts.detail.copySuccess")}
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
@@ -320,25 +352,47 @@ export function ProductDetailClient({
               <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} />
             </div>
 
-            {/* Add to cart CTA */}
-            <Button
-              onClick={handleAddToCart}
-              size="lg"
-              className={`h-12 text-base font-semibold w-full mb-6 flex items-center justify-center gap-2 transition-all ${
-                cartAdded
-                  ? "bg-green-500 hover:bg-green-500 text-white"
-                  : "bg-[#BB162B] hover:bg-[#9a1122] text-white"
-              }`}
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {cartAdded ? "✓ Добавлено в корзину" : t("parts.detail.addToCart")}
-            </Button>
+            {/* Quantity + Add to cart */}
+            <div className="flex gap-3 mb-6">
+              <div className="flex items-center border border-gray-200 rounded-xl">
+                <button
+                  onClick={() => setQty(q => Math.max(1, q - 1))}
+                  className="w-10 h-12 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg"
+                >
+                  −
+                </button>
+                <span className="w-10 text-center text-sm font-semibold">{qty}</span>
+                <button
+                  onClick={() => setQty(q => q + 1)}
+                  className="w-10 h-12 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg"
+                >
+                  +
+                </button>
+              </div>
+              <Button
+                onClick={handleAddToCart}
+                size="lg"
+                className={`h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all ${
+                  cartAdded
+                    ? "bg-green-500 hover:bg-green-500 text-white"
+                    : cartError
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-[#BB162B] hover:bg-[#9a1122] text-white"
+                }`}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {cartAdded ? "✓ Добавлено" : t("parts.detail.addToCart")}
+              </Button>
+            </div>
+            {cartError && (
+              <p className="text-sm text-red-500 -mt-4 mb-2">{cartError}</p>
+            )}
 
             {/* Specifications */}
             <div className="border-t border-gray-100 pt-5 space-y-3 flex-1">
               <SpecRow
                 label={t("parts.detail.manufacturer")}
-                value={product.manufacturer || "Hyundai Mobis"}
+                value={MANUFACTURER_NAMES[product.manufacturer ?? ""] ?? product.manufacturer ?? "Hyundai Mobis"}
               />
               {catName && (
                 <SpecRow
@@ -353,36 +407,6 @@ export function ProductDetailClient({
                 />
               )}
 
-              {/* ── DEV: logistics debug panel ── */}
-              {process.env.NODE_ENV === "development" && logistics && (
-                <div className="mt-4 pt-4 border-t border-dashed border-orange-300 text-[11px] font-mono space-y-1">
-                  <div className="text-orange-500 font-bold text-xs mb-1">
-                    🔧 Logistics debug (dev only)
-                  </div>
-                  <div className="text-gray-500">
-                    cat_id: <span className="text-orange-600 font-semibold">{logisticsCatId ?? "—"}</span>
-                    {" · "}<span className="text-orange-700">{logistics.name_ru ?? "—"}</span>
-                  </div>
-                  <div className="text-gray-500">
-                    dims: <span className="text-gray-700">{logistics.length_cm ?? "?"}×{logistics.width_cm ?? "?"}×{logistics.height_cm ?? "?"} см</span>
-                    {" · "}size_f: <span className="text-gray-700">{logistics.size_formula_cm ?? "?"} см</span>
-                  </div>
-                  <div className="text-gray-500">
-                    avg: <span className="text-gray-700">{logistics.weight_avg_kg} кг</span>
-                    {" → "}packed: <span className="text-blue-600">{logistics.packed_weight_kg} кг</span>
-                    {" · "}vol: <span className="text-gray-700">{logistics.vol_weight_kg} кг</span>
-                    {" → "}billed: <span className="text-green-700 font-semibold">{logistics.billed_weight_kg} кг</span>
-                  </div>
-                  <div className="text-gray-500">
-                    method: <span className={`font-bold ${logistics.ship_method === "EMS" ? "text-green-600" : logistics.ship_method === "EMS_PREMIUM" ? "text-blue-600" : "text-red-600"}`}>
-                      {logistics.ship_method}
-                    </span>
-                    {logistics.logistics_notes && (
-                      <span className="text-orange-400 ml-2">⚠ {logistics.logistics_notes}</span>
-                    )}
-                  </div>
-                </div>
-              )}
 
             </div>
           </div>

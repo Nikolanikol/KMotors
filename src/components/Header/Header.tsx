@@ -6,10 +6,11 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { X, Menu, Heart, User, LogOut, Package } from "lucide-react";
+import { X, Menu, Heart, User, LogOut, Package, ShoppingCart } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
+import { useCartCount } from "@/hooks/useCartCount";
 import { useCountry } from "@/hooks/useCountry";
 import { useAuth } from "@/providers/AuthProvider";
 
@@ -41,6 +42,7 @@ export default function Header() {
   const favTotal = favCars.length + favParts.length;
   const { isCatalogBlocked } = useCountry();
   const { user, signOut } = useAuth();
+  const cartCount = useCartCount();
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -116,29 +118,6 @@ export default function Header() {
 
           {/* Right side */}
           <div className="hidden lg:flex items-center gap-4">
-            {/* Favorites link hidden — TODO: re-enable when ready
-            <Link
-              href={`/${lang}/favorites`}
-              className="relative flex items-center gap-2 px-3 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-              style={{
-                backgroundColor: favTotal > 0 ? "rgba(255,69,0,0.15)" : "rgba(255,69,0,0.08)",
-                color: "var(--axis-orange)",
-                border: favTotal > 0 ? "1px solid rgba(255,69,0,0.3)" : "1px solid transparent",
-              }}
-              aria-label={t("nav.favorites")}
-            >
-              <Heart className="w-4 h-4 shrink-0" fill={favTotal > 0 ? "currentColor" : "none"} />
-              <span className="text-sm font-medium">{t("nav.favorites")}</span>
-              {favTotal > 0 && (
-                <span
-                  className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full"
-                  style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
-                >
-                  {favTotal > 9 ? "9+" : favTotal}
-                </span>
-              )}
-            </Link>
-            */}
             <LanguageSwitcher />
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
@@ -152,96 +131,128 @@ export default function Header() {
             </a>
             <ContactForm isVisible={false} />
 
-            {/* Auth */}
-            {user ? (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
-                  style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
+            {/* Cart + User — grouped together */}
+            <div className="flex items-center gap-2">
+              {user && (
+                <Link
+                  href={`/${lang}/account?tab=cart`}
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
+                  style={{
+                    backgroundColor: cartCount > 0 ? "rgba(255,69,0,0.18)" : "rgba(255,255,255,0.08)",
+                    color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
+                    border: cartCount > 0 ? "1.5px solid rgba(255,69,0,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
+                  }}
+                  aria-label="Cart"
                 >
-                  <User className="w-4 h-4" />
-                </button>
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 rounded-xl shadow-xl border py-1 z-50"
-                    style={{ backgroundColor: "rgba(20,20,20,0.98)", borderColor: "rgba(255,255,255,0.08)" }}>
-                    <Link href={`/${lang}/account`} onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                      style={{ color: "var(--axis-gray)" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"}
+                  <ShoppingCart className="w-5 h-5" strokeWidth={2.2} />
+                  {cartCount > 0 && (
+                    <span
+                      className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] flex items-center justify-center px-1 text-[11px] font-bold rounded-full shadow-lg"
+                      style={{ backgroundColor: "var(--axis-orange)", color: "white", boxShadow: "0 2px 8px rgba(255,69,0,0.5)" }}
                     >
-                      <Package className="w-4 h-4" />
-                      Личный кабинет
-                    </Link>
-                    <div className="my-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
-                    <button
-                      onClick={async () => { setUserMenuOpen(false); await signOut(); router.push(`/${lang}/parts`); router.refresh(); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                      style={{ color: "#FF4444" }}
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Выйти
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href={`/${lang}/auth?mode=login`}
-                className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
-                style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
-                aria-label="Войти"
-              >
-                <User className="w-4 h-4" />
-              </Link>
-            )}
+                      {cartCount > 9 ? "9+" : cartCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+
+              {/* Auth */}
+              {user ? (
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 cursor-pointer hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,69,0,0.18)"; e.currentTarget.style.color = "var(--axis-orange)"; e.currentTarget.style.borderColor = "rgba(255,69,0,0.4)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--axis-silver)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                  >
+                    <User className="w-5 h-5" strokeWidth={2.2} />
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl shadow-xl border py-1 z-50"
+                      style={{ backgroundColor: "rgba(20,20,20,0.98)", borderColor: "rgba(255,255,255,0.08)" }}>
+                      <Link href={`/${lang}/account`} onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                        style={{ color: "var(--axis-gray)" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"}
+                      >
+                        <Package className="w-4 h-4" />
+                        Личный кабинет
+                      </Link>
+                      <div className="my-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+                      <button
+                        onClick={async () => { setUserMenuOpen(false); await signOut(); router.push(`/${lang}/parts`); router.refresh(); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
+                        style={{ color: "#FF4444" }}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Выйти
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={`/${lang}/auth?mode=login`}
+                  className="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,69,0,0.18)"; e.currentTarget.style.color = "var(--axis-orange)"; e.currentTarget.style.borderColor = "rgba(255,69,0,0.4)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--axis-silver)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                  aria-label="Войти"
+                >
+                  <User className="w-5 h-5" strokeWidth={2.2} />
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Mobile right */}
-          <div className="flex lg:hidden items-center gap-3">
-            {user ? (
-              <Link
-                href={`/${lang}/account`}
-                className="flex items-center justify-center w-9 h-9 rounded-xl"
-                style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
-                aria-label="Личный кабинет"
-              >
-                <User className="w-4 h-4" />
-              </Link>
-            ) : (
-              <Link
-                href={`/${lang}/auth?mode=login`}
-                className="flex items-center justify-center w-9 h-9 rounded-xl"
-                style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.25)" }}
-                aria-label="Войти"
-              >
-                <User className="w-4 h-4" />
-              </Link>
-            )}
-            {/* Favorites icon hidden — TODO: re-enable when ready
-            <Link
-              href={`/${lang}/favorites`}
-              className="relative flex items-center justify-center w-9 h-9 rounded-xl cursor-pointer"
-              style={{
-                backgroundColor: favTotal > 0 ? "rgba(255,69,0,0.15)" : "rgba(255,69,0,0.08)",
-                color: "var(--axis-orange)",
-                border: favTotal > 0 ? "1px solid rgba(255,69,0,0.3)" : "1px solid transparent",
-              }}
-              aria-label={t("nav.favorites")}
-            >
-              <Heart className="w-4 h-4" fill={favTotal > 0 ? "currentColor" : "none"} />
-              {favTotal > 0 && (
-                <span
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full"
-                  style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
-                >
-                  {favTotal > 9 ? "9+" : favTotal}
-                </span>
-              )}
-            </Link>
-            */}
+          <div className="flex lg:hidden items-center gap-2">
             <LanguageSwitcher />
+            <div className="flex items-center gap-1.5">
+              {user && (
+                <Link
+                  href={`/${lang}/account?tab=cart`}
+                  className="relative flex items-center justify-center w-9 h-9 rounded-full"
+                  style={{
+                    backgroundColor: cartCount > 0 ? "rgba(255,69,0,0.18)" : "rgba(255,255,255,0.08)",
+                    color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
+                    border: cartCount > 0 ? "1.5px solid rgba(255,69,0,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
+                  }}
+                  aria-label="Cart"
+                >
+                  <ShoppingCart className="w-[18px] h-[18px]" strokeWidth={2.2} />
+                  {cartCount > 0 && (
+                    <span
+                      className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full"
+                      style={{ backgroundColor: "var(--axis-orange)", color: "white", boxShadow: "0 2px 6px rgba(255,69,0,0.5)" }}
+                    >
+                      {cartCount > 9 ? "9+" : cartCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+              {user ? (
+                <Link
+                  href={`/${lang}/account`}
+                  className="flex items-center justify-center w-9 h-9 rounded-full"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
+                  aria-label="Личный кабинет"
+                >
+                  <User className="w-[18px] h-[18px]" strokeWidth={2.2} />
+                </Link>
+              ) : (
+                <Link
+                  href={`/${lang}/auth?mode=login`}
+                  className="flex items-center justify-center w-9 h-9 rounded-full"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
+                  aria-label="Войти"
+                >
+                  <User className="w-[18px] h-[18px]" strokeWidth={2.2} />
+                </Link>
+              )}
+            </div>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="p-2"

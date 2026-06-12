@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { User, ShoppingCart, Package } from "lucide-react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { User, ShoppingCart, Package, ChevronRight, Home } from "lucide-react";
+import Link from "next/link";
 import ProfileForm from "./ProfileForm";
 import CartTab from "./CartTab";
 import OrdersTab from "./OrdersTab";
@@ -33,13 +34,29 @@ const TABS: Record<string, { profile: string; cart: string; orders: string }> = 
   ar: { profile: "الملف الشخصي", cart: "السلة", orders: "الطلبات" },
 };
 
+const BREADCRUMB: Record<string, { home: string; account: string }> = {
+  ru: { home: "Главная", account: "Личный кабинет" },
+  en: { home: "Home", account: "My Account" },
+  ko: { home: "홈", account: "내 계정" },
+  ka: { home: "მთავარი", account: "ანგარიში" },
+  ar: { home: "الرئيسية", account: "حسابي" },
+};
+
 export default function AccountClient({ lang, user, profile }: Props) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const initialTab = (searchParams.get("tab") as Tab | null) ?? "profile";
   const [activeTab, setActiveTab] = useState<Tab>(
     ["profile", "cart", "orders"].includes(initialTab) ? initialTab : "profile"
   );
   const labels = TABS[lang] ?? TABS.ru;
+  const bc = BREADCRUMB[lang] ?? BREADCRUMB.ru;
+
+  const switchTab = (id: Tab) => {
+    setActiveTab(id);
+    router.replace(`${pathname}?tab=${id}`, { scroll: false });
+  };
 
   useEffect(() => {
     const tab = searchParams.get("tab") as Tab | null;
@@ -57,10 +74,17 @@ export default function AccountClient({ lang, user, profile }: Props) {
 
   return (
     <div
-      className="min-h-screen bg-[#F5F7FA] py-8 px-4"
+      className="min-h-screen bg-[#F5F7FA] py-8 px-4 text-gray-900"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="max-w-3xl mx-auto">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-5">
+          <Link href={`/${lang}`} className="hover:text-[#002C5F] transition-colors">{bc.home}</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-[#002C5F] font-medium">{bc.account}</span>
+        </nav>
+
         {/* Шапка */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#002C5F]">
@@ -74,7 +98,7 @@ export default function AccountClient({ lang, user, profile }: Props) {
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id)}
+              onClick={() => switchTab(id)}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === id
                   ? "bg-[#002C5F] text-white shadow-sm"
