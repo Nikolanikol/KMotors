@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
@@ -55,6 +56,8 @@ export default async function ModelPage({ params }: Props) {
 
   const content = model.content[lang as "ru" | "en"] ?? model.content.ru;
   const isRu = lang === "ru";
+  const cookieStore = await cookies();
+  const isCatalogBlocked = cookieStore.get("x-user-country")?.value === "KR";
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -156,12 +159,14 @@ export default async function ModelPage({ params }: Props) {
                 </svg>
                 WhatsApp
               </a>
+              {!isCatalogBlocked && (
               <Link
                 href={`/${lang}/catalog`}
                 className="inline-flex items-center justify-center gap-2 px-7 py-4 border-2 border-white/30 text-white hover:bg-white/10 font-bold rounded-2xl transition-colors"
               >
                 {isRu ? "Смотреть каталог" : "Browse catalog"}
               </Link>
+              )}
             </div>
           </div>
         </section>
@@ -194,6 +199,7 @@ export default async function ModelPage({ params }: Props) {
         </section>
 
         {/* Live cars slider */}
+        {!isCatalogBlocked && (
         <section className="py-12 px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-2 text-center">
@@ -221,6 +227,7 @@ export default async function ModelPage({ params }: Props) {
             </div>
           </div>
         </section>
+        )}
 
         {/* How to buy */}
         <section className="py-12 px-4">

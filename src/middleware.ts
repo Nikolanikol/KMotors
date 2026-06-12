@@ -61,6 +61,13 @@ function isExcluded(path: string): boolean {
 }
 
 export function middleware(request: NextRequest) {
+  const ua = request.headers.get("user-agent") || "";
+
+  // --- Блокируем Electron-ботов/скраперов ---
+  if (/electron/i.test(ua)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
   const path = request.nextUrl.pathname;
 
   // --- 410 для старых Encar CDN путей (проиндексированных Google по ошибке) ---
