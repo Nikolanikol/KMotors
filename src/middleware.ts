@@ -25,7 +25,6 @@ function shouldTrack(request: NextRequest): boolean {
   const adminSession = request.cookies.get("admin_session");
   if (adminSession?.value) return false;
   const ip =
-    request.headers.get("x-vercel-forwarded-for") ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "";
   if (EXCLUDED_IPS.includes(ip)) return false;
@@ -108,7 +107,7 @@ if (!adminPassword || !cookie || cookie.value !== "1") {
     // Страна пользователя — от Cloudflare (cf-ipcountry) или Vercel fallback
     const country =
       request.headers.get("cf-ipcountry") ||
-      request.headers.get("x-vercel-ip-country") ||
+      request.headers.get("x-country") ||
       "";
     response.cookies.set("x-user-country", country, {
       path: "/",
@@ -121,7 +120,7 @@ if (!adminPassword || !cookie || cookie.value !== "1") {
       const referrer = request.headers.get("referer") || "";
       const origin = request.nextUrl.origin;
       // Страна — бесплатный заголовок Vercel, на localhost будет пустым
-      const country = request.headers.get("x-vercel-ip-country") || "";
+      const country = request.headers.get("cf-ipcountry") || request.headers.get("x-country") || "";
       // Устройство — определяем по User-Agent
       const ua = request.headers.get("user-agent") || "";
       const device = /mobile|android|iphone|ipad|ipod/i.test(ua)
