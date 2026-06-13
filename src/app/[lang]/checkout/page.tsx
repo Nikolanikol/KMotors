@@ -37,7 +37,7 @@ export default async function CheckoutPage({ params }: Props) {
   const { data: products } = await supabase
     .from("parts_products")
     .select(
-      "id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, ship_method, category_id, subcategory_id"
+      "id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id"
     )
     .in("id", productIds);
 
@@ -63,17 +63,12 @@ export default async function CheckoutPage({ params }: Props) {
     const logisticsCatId = (p?.subcategory_id ?? p?.category_id) as number | null;
     const cat = logistics?.find((x) => x.id === logisticsCatId);
 
-    // Вес: реальный замер продукта → category avg → fallback 1 кг
     const weight = (p?.weight_kg ?? cat?.weight_avg_kg ?? 1.0) as number;
-    // billed_weight из view (если есть) или пересчитываем с реальным весом продукта
-    const billedWeightKg = cat?.billed_weight_kg
-      ? p?.weight_kg
-        ? Math.round(Math.max(p.weight_kg * 1.12,
-            cat.length_cm && cat.width_cm && cat.height_cm
-              ? (cat.length_cm * cat.width_cm * cat.height_cm) / 6000
-              : 0) * 1000) / 1000
-        : (cat.billed_weight_kg as number)
-      : Math.round(weight * 1.12 * 1000) / 1000;
+    const billedWeightKg = p?.billed_weight_kg
+      ? (p.billed_weight_kg as number)
+      : cat?.billed_weight_kg
+        ? (cat.billed_weight_kg as number)
+        : Math.round(weight * 1.12 * 1000) / 1000;
 
     return {
       cartItemId: ci.id as string,

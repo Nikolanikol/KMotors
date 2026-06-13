@@ -74,7 +74,7 @@ export default function CartTab({ lang, userId }: Props) {
     const productIds = cartItems.map(i => i.product_id);
     const { data: products } = await supabase
       .from("parts_products")
-      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, ship_method, category_id, subcategory_id")
+      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id")
       .in("id", productIds);
 
     if (!products) { setLoading(false); return; }
@@ -91,7 +91,11 @@ export default function CartTab({ lang, userId }: Props) {
       const catId = (product?.subcategory_id ?? product?.category_id) as number | null;
       const cat = logistics?.find(x => x.id === catId);
       const weight = (product?.weight_kg ?? cat?.weight_avg_kg ?? 1.0) as number;
-      const billedWeight = (cat?.billed_weight_kg ?? Math.round(weight * 1.12 * 1000) / 1000) as number;
+      const billedWeight = product?.billed_weight_kg
+        ? (product.billed_weight_kg as number)
+        : cat?.billed_weight_kg
+          ? (cat.billed_weight_kg as number)
+          : Math.round(weight * 1.12 * 1000) / 1000;
 
       return {
         cart_item_id: item.id,

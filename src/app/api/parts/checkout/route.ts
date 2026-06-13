@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     const { data: products } = await db
       .from("parts_products")
-      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, ship_method, category_id, subcategory_id")
+      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id")
       .in("id", productIds);
 
     // ── Load logistics via v_category_logistics (same as product detail page) ─
@@ -136,13 +136,11 @@ export async function POST(req: NextRequest) {
       const cat = logistics?.find((x) => x.id === logCatId);
 
       const weight = (p?.weight_kg ?? cat?.weight_avg_kg ?? 1.0) as number;
-      const billedWeightKg = cat?.billed_weight_kg
-        ? p?.weight_kg
-          ? Math.round(Math.max(p.weight_kg * 1.12,
-              cat.length_cm && cat.width_cm && cat.height_cm
-                ? (cat.length_cm * cat.width_cm * cat.height_cm) / 6000 : 0) * 1000) / 1000
-          : (cat.billed_weight_kg as number)
-        : Math.round(weight * 1.12 * 1000) / 1000;
+      const billedWeightKg = p?.billed_weight_kg
+        ? (p.billed_weight_kg as number)
+        : cat?.billed_weight_kg
+          ? (cat.billed_weight_kg as number)
+          : Math.round(weight * 1.12 * 1000) / 1000;
       const itemShipMethod = (p?.ship_method ?? cat?.ship_method ?? "CLARIFY") as string;
 
       return {

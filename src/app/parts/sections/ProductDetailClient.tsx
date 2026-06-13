@@ -571,7 +571,6 @@ function ShippingBadge({
   const label = isRu ? cfg.label.ru : cfg.label.en;
   const sublabel = isRu ? cfg.sublabel.ru : cfg.sublabel.en;
 
-  // Recalculate packed/billed from per-product weight_avg_kg
   const avgKg = logistics.weight_avg_kg;
   const packedKg = avgKg !== null
     ? Math.round((avgKg > 30 ? avgKg + 15 : avgKg * 1.05 + 0.3) * 1000) / 1000
@@ -580,17 +579,16 @@ function ShippingBadge({
     ? Math.round((logistics.length_cm * logistics.width_cm * logistics.height_cm / 6000) * 1000) / 1000
     : null;
 
-  // EMS Standard: billing by packed weight only (no volumetric)
-  const emsPackedKg = packedKg;
-  // EMS Premium: billing by max(packed, vol)
-  const emspBilledKg = packedKg !== null ? Math.max(packedKg, volKg ?? 0) : null;
+  const emsPackedKg = logistics.billed_weight_kg ?? packedKg;
+  const emspBilledKg = logistics.billed_weight_kg
+    ?? (packedKg !== null ? Math.max(packedKg, volKg ?? 0) : null);
 
   const showCalculator =
     (logistics.ship_method === "EMS" || logistics.ship_method === "EMS_PREMIUM") &&
     (emsPackedKg !== null || emspBilledKg !== null);
 
-  // billed kg shown in badge
-  const displayKg = logistics.ship_method === "EMS" ? emsPackedKg : emspBilledKg;
+  const displayKg = logistics.billed_weight_kg
+    ?? (logistics.ship_method === "EMS" ? emsPackedKg : emspBilledKg);
 
   const emsPrice =
     country && emsPackedKg !== null && logistics.ship_method === "EMS"

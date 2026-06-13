@@ -33,7 +33,7 @@ async function fetchProduct(slug: string) {
   let query = supabase
     .from("parts_products")
     .select(
-      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id, weight_kg"
+      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method"
     );
 
   // Ищем по part_number или по ID
@@ -73,13 +73,29 @@ async function fetchProduct(slug: string) {
 
   const catLogistics = logisticsResult?.data ?? null;
 
-  // Per-product weight (from price interpolation) overrides category avg
+  // Per-product fields override category-level logistics
   const logistics: ProductLogistics | null = catLogistics
     ? {
         ...catLogistics,
         weight_avg_kg: product.weight_kg ?? catLogistics.weight_avg_kg,
+        billed_weight_kg: product.billed_weight_kg ?? catLogistics.billed_weight_kg,
+        ship_method: product.ship_method ?? catLogistics.ship_method,
       }
-    : null;
+    : product.billed_weight_kg
+      ? {
+          weight_avg_kg: product.weight_kg,
+          packed_weight_kg: null,
+          vol_weight_kg: null,
+          billed_weight_kg: product.billed_weight_kg,
+          ship_method: product.ship_method as ProductLogistics["ship_method"],
+          size_formula_cm: null,
+          logistics_notes: null,
+          length_cm: null,
+          width_cm: null,
+          height_cm: null,
+          name_ru: null,
+        }
+      : null;
 
   // Fetch models, brands, categories in parallel
   const [modelsResult, brandsResult, catsResult] = await Promise.all([
