@@ -197,6 +197,16 @@ export default function Footer() {
             >
               {t("footer.privacy")}
             </Link>
+            <span style={{ color: "var(--axis-gray-dim)" }}> · </span>
+            <Link
+              href={`/${lang}/terms`}
+              className="transition-colors hover:underline"
+              style={{ color: "var(--axis-gray-dim)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray-dim)"; }}
+            >
+              {t("footer.terms")}
+            </Link>
           </p>
 
           <button
