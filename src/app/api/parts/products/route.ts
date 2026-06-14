@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
     const maxPrice   = sp.get("max") ? Number(sp.get("max")) : null;
     const sort       = sp.get("sort")   ?? "default";
     const page       = Math.max(1, Number(sp.get("page") ?? "1"));
+    const limit      = Math.min(PAGE_SIZE, Math.max(1, Number(sp.get("limit") ?? String(PAGE_SIZE))));
 
     const hasSearch = !!(q || minPrice || maxPrice);
     const hasFilters = !!(brandSlug || brandsParam || catSlug || catsParam || subSlug || modelName || sort !== "default");
@@ -148,7 +149,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Step 3: queries in parallel ──────────────────────────────────────────
-    const from = (page - 1) * PAGE_SIZE;
+    const from = (page - 1) * limit;
 
     // Main product query
     let productQuery = withFullFilters(
@@ -161,7 +162,7 @@ export async function GET(req: NextRequest) {
       case "price_desc": productQuery = productQuery.order("price_krw", { ascending: false }); break;
       default:           productQuery = productQuery.order("name_ru",   { ascending: true });  break;
     }
-    productQuery = productQuery.range(from, from + PAGE_SIZE - 1);
+    productQuery = productQuery.range(from, from + limit - 1);
 
     // Total count
     const countQuery = withFullFilters(

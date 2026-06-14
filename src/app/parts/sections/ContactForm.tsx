@@ -42,19 +42,22 @@ export function ContactForm() {
     }
   }, []);
 
+  const showVin = partType === "vin";
+  const showMessage = partType === "part";
+
   // Computed validation — errors only show after first submit attempt
   const errors = {
     name:     attempted && !formData.name.trim(),
     phone:    attempted && !phone,
     partType: attempted && !partType,
-    message:  attempted && !formData.message.trim(),
+    message:  attempted && showMessage && !formData.message.trim(),
   };
 
   const isValid =
     !!formData.name.trim() &&
     !!phone &&
     !!partType &&
-    !!formData.message.trim();
+    (!showMessage || !!formData.message.trim());
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -198,7 +201,7 @@ export function ContactForm() {
             </div>
 
             {/* Right side - Form */}
-            <div className="md:col-span-3 p-8 flex flex-col justify-center">
+            <div className="md:col-span-3 p-6 sm:p-8 pb-20 sm:pb-8 flex flex-col justify-center">
               <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
                 {/* Name */}
@@ -237,24 +240,26 @@ export function ContactForm() {
                   {errorHint(errors.phone)}
                 </div>
 
-                {/* VIN */}
-                <div className="space-y-1">
-                  <Label htmlFor="vin" className="text-gray-700">
-                    {t("parts.contact.vinLabel")}
-                  </Label>
-                  <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      id="vin"
-                      name="vin"
-                      value={formData.vin}
-                      onChange={handleChange}
-                      placeholder={t("parts.contact.vinPlaceholder")}
-                      className="pl-10 uppercase text-gray-900 placeholder:text-gray-400"
-                      maxLength={17}
-                    />
+                {/* VIN — only for "Подбор по VIN" */}
+                {showVin && (
+                  <div className="space-y-1">
+                    <Label htmlFor="vin" className="text-gray-700">
+                      {t("parts.contact.vinLabel")}
+                    </Label>
+                    <div className="relative">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="vin"
+                        name="vin"
+                        value={formData.vin}
+                        onChange={handleChange}
+                        placeholder={t("parts.contact.vinPlaceholder")}
+                        className="pl-10 uppercase text-gray-900 placeholder:text-gray-400 placeholder:text-xs placeholder:normal-case"
+                        maxLength={17}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Part type chips — required */}
                 <div className="space-y-1">
@@ -297,27 +302,29 @@ export function ContactForm() {
                   usernamePlaceholder={t("contact.tgUsernamePlaceholder")}
                 />
 
-                {/* Part description — required */}
-                <div className="space-y-1">
-                  <Label htmlFor="message" className="text-gray-700">
-                    {t("parts.contact.messageLabel")} <span className="text-[var(--pn-orange)]">*</span>
-                  </Label>
-                  <div className="relative">
-                    <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      id="message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder={t("parts.contact.messagePlaceholder")}
-                      className={cn(
-                        "pl-10 text-gray-900 placeholder:text-gray-400",
-                        errors.message && "border-red-500 focus-visible:ring-red-500"
-                      )}
-                    />
+                {/* Part description — only for "Конкретная деталь" */}
+                {showMessage && (
+                  <div className="space-y-1">
+                    <Label htmlFor="message" className="text-gray-700">
+                      {t("parts.contact.messageLabel")} <span className="text-[var(--pn-orange)]">*</span>
+                    </Label>
+                    <div className="relative">
+                      <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="message"
+                        name="message"
+                        value={formData.message}
+                        onChange={handleChange}
+                        placeholder={t("parts.contact.messagePlaceholder")}
+                        className={cn(
+                          "pl-10 text-gray-900 placeholder:text-gray-400",
+                          errors.message && "border-red-500 focus-visible:ring-red-500"
+                        )}
+                      />
+                    </div>
+                    {errorHint(errors.message)}
                   </div>
-                  {errorHint(errors.message)}
-                </div>
+                )}
 
                 <Button
                   type="submit"

@@ -46,19 +46,19 @@ export function About() {
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--pn-deep-navy)]/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-8">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
                 <div className="grid grid-cols-3 gap-4 text-white">
                   <div className="text-center">
-                    <div className="text-3xl font-bold">2015</div>
-                    <div className="text-sm text-white/70">{t("parts.about.statFounded")}</div>
+                    <div className="text-2xl sm:text-3xl font-bold">2015</div>
+                    <div className="text-xs sm:text-sm text-white/70">{t("parts.about.statFounded")}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold">2000+</div>
-                    <div className="text-sm text-white/70">{t("parts.about.statClients")}</div>
+                    <div className="text-2xl sm:text-3xl font-bold">2000+</div>
+                    <div className="text-xs sm:text-sm text-white/70">{t("parts.about.statClients")}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold">50+</div>
-                    <div className="text-sm text-white/70">{t("parts.about.statCountries")}</div>
+                    <div className="text-2xl sm:text-3xl font-bold">50+</div>
+                    <div className="text-xs sm:text-sm text-white/70">{t("parts.about.statCountries")}</div>
                   </div>
                 </div>
               </div>
@@ -105,7 +105,7 @@ export function About() {
         </div>
 
         {/* Advantages Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mt-20">
           {ADV_KEYS.map((key, index) => {
             const Icon = ADV_ICONS[index];
             return (
