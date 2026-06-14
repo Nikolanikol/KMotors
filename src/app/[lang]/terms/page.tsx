@@ -285,30 +285,19 @@ export default async function TermsPage({ params }: Props) {
     ar: "اتفاقية المستخدم",
   };
 
-  const updatedLabels: Record<string, string> = {
-    ru: "Последнее обновление:",
-    en: "Last updated:",
-    ko: "최종 업데이트:",
-    ka: "ბოლო განახლება:",
-    ar: "آخر تحديث:",
-  };
-
   return (
-    <main className="min-h-screen bg-[#F5F7FA]">
+    <main className="min-h-screen bg-gradient-to-b from-[#001f45] to-[#0d1b2a]">
       <section className="bg-gradient-to-br from-[#002C5F] to-[#001f45] py-14 px-4">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold text-white">
             {headings[lang] || headings.ru}
           </h1>
-          <p className="text-white/50 text-sm mt-3">
-            {updatedLabels[lang] || updatedLabels.ru} {content.lastUpdated}
-          </p>
-          <p className="text-white/60 text-sm mt-1">{meta.description}</p>
+          <p className="text-white/60 text-sm mt-2">{meta.description}</p>
         </div>
       </section>
 
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <article className="rounded-2xl p-6 md:p-10 space-y-6" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
+        <article className="rounded-2xl p-6 md:p-10 space-y-6" style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
           {content.sections.map((section) => (
             <section key={section.title} className="space-y-2 pb-6 border-b last:border-0 last:pb-0" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
               <h2 className="text-base font-semibold" style={{ color: "var(--axis-white)" }}>

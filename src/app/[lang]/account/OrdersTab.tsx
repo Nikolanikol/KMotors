@@ -118,14 +118,14 @@ const L: Record<string, Record<string, string>> = {
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS: Record<string, { ru: string; en: string; color: string }> = {
-  pending_payment:    { ru: "Ожидает оплаты",         en: "Awaiting payment",     color: "bg-amber-50 text-amber-700 border-amber-200" },
-  paid:               { ru: "Оплачен",                 en: "Paid",                 color: "bg-green-50 text-green-700 border-green-200" },
-  payment_submitted:  { ru: "Оплата отправлена",       en: "Payment submitted",    color: "bg-blue-50 text-blue-700 border-blue-200" },
-  payment_confirmed:  { ru: "Оплата подтверждена",     en: "Payment confirmed",    color: "bg-green-50 text-green-700 border-green-200" },
-  processing:         { ru: "В обработке",             en: "Processing",           color: "bg-blue-50 text-blue-700 border-blue-200" },
-  shipped:            { ru: "Отправлен",               en: "Shipped",              color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  delivered:          { ru: "Доставлен",               en: "Delivered",            color: "bg-green-50 text-green-700 border-green-200" },
-  cancelled:          { ru: "Отменён",                 en: "Cancelled",            color: "bg-red-50 text-red-700 border-red-200" },
+  pending_payment:    { ru: "Ожидает оплаты",         en: "Awaiting payment",     color: "bg-orange-100 text-orange-800 border-orange-300" },
+  paid:               { ru: "Оплачен",                 en: "Paid",                 color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  payment_submitted:  { ru: "Оплата отправлена",       en: "Payment submitted",    color: "bg-blue-100 text-blue-800 border-blue-300" },
+  payment_confirmed:  { ru: "Оплата подтверждена",     en: "Payment confirmed",    color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  processing:         { ru: "В обработке",             en: "Processing",           color: "bg-blue-100 text-blue-800 border-blue-300" },
+  shipped:            { ru: "Отправлен",               en: "Shipped",              color: "bg-indigo-100 text-indigo-800 border-indigo-300" },
+  delivered:          { ru: "Доставлен",               en: "Delivered",            color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  cancelled:          { ru: "Отменён",                 en: "Cancelled",            color: "bg-red-100 text-red-800 border-red-300" },
 };
 
 const SHIP_LABEL: Record<string, { ru: string; en: string }> = {
@@ -135,6 +135,15 @@ const SHIP_LABEL: Record<string, { ru: string; en: string }> = {
 };
 
 const usdFmt = new Intl.NumberFormat("en-US");
+
+function ruPlural(n: number, one: string, few: string, many: string) {
+  const abs = Math.abs(n) % 100;
+  if (abs >= 11 && abs <= 19) return many;
+  const last = abs % 10;
+  if (last === 1) return one;
+  if (last >= 2 && last <= 4) return few;
+  return many;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -269,7 +278,7 @@ export default function OrdersTab({ lang, userId }: Props) {
                     className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#002C5F] transition border border-gray-200 rounded-lg px-2.5 py-1.5"
                   >
                     {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    {itemCount} {l.items}
+                    {itemCount} {lang === "ru" ? ruPlural(itemCount, "позиция", "позиции", "позиций") : l.items}
                   </button>
                 )}
               </div>
