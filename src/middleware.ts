@@ -64,8 +64,9 @@ function isExcluded(path: string): boolean {
 export async function middleware(request: NextRequest) {
   const ua = request.headers.get("user-agent") || "";
 
-  // --- Блокируем Electron-ботов/скраперов ---
-  if (/electron/i.test(ua)) {
+  // --- Блокируем Electron-ботов/скраперов (кроме localhost) ---
+  const host = request.headers.get("host") || "";
+  if (/electron/i.test(ua) && !host.startsWith("localhost")) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

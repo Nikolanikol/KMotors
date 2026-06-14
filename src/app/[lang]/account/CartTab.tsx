@@ -193,30 +193,37 @@ export default function CartTab({ lang, userId, profileCountry }: Props) {
   }
 
   const renderItem = (item: CartProduct) => (
-    <div key={item.cart_item_id} className="flex gap-3 p-3 border border-gray-100 rounded-xl hover:border-gray-200 transition">
-      {/* Фото */}
-      <Link
-        href={`/${lang}/parts/${generatePartSlug(item.part_number, item.name_ru || item.name_en, lang as "ru" | "en" | "ko", item.product_id)}`}
-        className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 hover:border-[#002C5F] transition"
-      >
-        {item.image_url ? (
-          <Image src={item.image_url} alt={item.name_en} width={64} height={64} className="object-contain w-full h-full p-1" unoptimized />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
-        )}
-      </Link>
-
-      {/* Инфо */}
-      <div className="flex-1 min-w-0">
+    <div key={item.cart_item_id} className="p-3 border border-gray-100 rounded-xl hover:border-gray-200 transition space-y-2">
+      {/* Row 1: Image + Name + Delete */}
+      <div className="flex gap-3">
         <Link
           href={`/${lang}/parts/${generatePartSlug(item.part_number, item.name_ru || item.name_en, lang as "ru" | "en" | "ko", item.product_id)}`}
-          className="text-sm font-semibold text-[#002C5F] line-clamp-2 hover:underline"
+          className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 hover:border-[#002C5F] transition"
         >
-          {displayName(item)}
+          {item.image_url ? (
+            <Image src={item.image_url} alt={item.name_en} width={56} height={56} className="object-contain w-full h-full p-1" unoptimized />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
+          )}
         </Link>
-        <p className="text-xs text-gray-400 mt-0.5">{item.part_number}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-gray-400">{l.weight} {item.billed_weight_kg} {l.kg}</span>
+        <div className="flex-1 min-w-0">
+          <Link
+            href={`/${lang}/parts/${generatePartSlug(item.part_number, item.name_ru || item.name_en, lang as "ru" | "en" | "ko", item.product_id)}`}
+            className="text-sm font-semibold text-[#002C5F] line-clamp-2 hover:underline"
+          >
+            {displayName(item)}
+          </Link>
+          <p className="text-xs text-gray-400 mt-0.5">{item.part_number}</p>
+        </div>
+        <button onClick={() => removeItem(item.cart_item_id)} className="text-gray-300 hover:text-red-500 transition shrink-0 self-start">
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Row 2: Weight/badge + Price + Qty */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">{item.billed_weight_kg} {l.kg}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium inline-flex items-center gap-0.5 ${
             item.ship_method === "SEA" || item.ship_method === "CLARIFY"
               ? "bg-blue-50 text-blue-600"
@@ -229,20 +236,8 @@ export default function CartTab({ lang, userId, profileCountry }: Props) {
               : <Plane className="w-2.5 h-2.5" />}
             {item.ship_method === "EMS" || item.ship_method === "EMS_PREMIUM" ? "EMS" : "SEA"}
           </span>
+          <span className="text-sm font-bold text-[#BB162B]">{formatUsd(item.price_krw, krwToUsd)}</span>
         </div>
-        <p className="text-sm font-bold text-[#BB162B] mt-1">
-          {formatUsd(item.price_krw, krwToUsd)}
-          {item.quantity > 1 && (
-            <span className="text-xs font-normal text-gray-400 ml-1">× {item.quantity}</span>
-          )}
-        </p>
-      </div>
-
-      {/* Количество + удалить */}
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <button onClick={() => removeItem(item.cart_item_id)} className="text-gray-300 hover:text-red-500 transition">
-          <Trash2 className="w-4 h-4" />
-        </button>
         <div className="flex items-center gap-1 border border-gray-200 rounded-lg">
           <button onClick={() => updateQty(item.cart_item_id, item.quantity - 1)} className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg leading-none">−</button>
           <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>

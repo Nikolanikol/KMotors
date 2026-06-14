@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Hero } from "@/app/parts/sections/Hero";
-import { FloatingButtons } from "@/app/parts/sections/FloatingButtons";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
 
 // Lazy load — грузятся после Hero
@@ -143,7 +142,6 @@ export default async function PartsPage({ params }: Props) {
         <PartsCatalog />
         <About />
         <ContactForm />
-        <FloatingButtons />
       </div>
     </>
   );

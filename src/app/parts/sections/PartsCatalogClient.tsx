@@ -31,7 +31,9 @@ import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
 import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE_DESKTOP = 24;
+const PAGE_SIZE_MOBILE = 10;
+const MOBILE_BREAKPOINT = 640;
 const BRAND_ORDER: Record<string, number> = { hyundai: 0, kia: 1, genesis: 2 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -105,15 +107,18 @@ function pendingReducer(state: PendingFilters, action: PendingAction): PendingFi
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function getPageNumbers(current: number, total: number): (number | "…")[] {
-  if (total <= 10) return Array.from({ length: total }, (_, i) => i + 1);
+function getPageNumbers(current: number, total: number, siblings = 3): (number | "…")[] {
+  const threshold = siblings <= 1 ? 4 : 10;
+  if (total <= threshold) return Array.from({ length: total }, (_, i) => i + 1);
   const show = new Set<number>([1, total, current]);
-  for (let d = 1; d <= 3; d++) {
+  for (let d = 1; d <= siblings; d++) {
     if (current - d >= 1) show.add(current - d);
     if (current + d <= total) show.add(current + d);
   }
-  if (current <= 5) for (let i = 2; i <= 8; i++) show.add(i);
-  if (current >= total - 4) for (let i = total - 7; i < total; i++) if (i > 0) show.add(i);
+  if (siblings >= 3) {
+    if (current <= 5) for (let i = 2; i <= 8; i++) show.add(i);
+    if (current >= total - 4) for (let i = total - 7; i < total; i++) if (i > 0) show.add(i);
+  }
   const sorted = Array.from(show).sort((a, b) => a - b);
   const result: (number | "…")[] = [];
   let prev = 0;
@@ -335,6 +340,17 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
   // ── Quick view modal ──────────────────────────────────────────────────────
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
+  // ── Mobile page size ──────────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+  const pageSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP;
+
   // ── Mobile drawer ─────────────────────────────────────────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false);
   useEffect(() => {
@@ -384,6 +400,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
     if (priceMax !== undefined)  params.set("max", String(Math.round(priceMax / (krwToUsd * PRICE_MARKUP))));
     if (sort !== "default")      params.set("sort", sort);
     params.set("page", String(apiPage));
+    params.set("limit", String(pageSize));
 
     const cacheKey = params.toString();
     const cached = fetchCache.current.get(cacheKey);
@@ -424,7 +441,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
       });
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandsParam, brandParam, catsParam, catParam, subSlug, searchQ, priceMin, priceMax, sort, apiPage]);
+  }, [brandsParam, brandParam, catsParam, catParam, subSlug, searchQ, priceMin, priceMax, sort, apiPage, pageSize]);
 
   // ── Scroll to product after auth redirect ─────────────────────────────────
   useEffect(() => {
@@ -457,9 +474,9 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
   );
   const selectedSub = useMemo(() => allSubs.find((s) => s.slug === subSlug), [allSubs, subSlug]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const pageStart  = total > 0 ? (apiPage - 1) * PAGE_SIZE + 1 : 0;
-  const pageEnd    = Math.min(apiPage * PAGE_SIZE, total);
+  const totalPages = Math.ceil(total / pageSize);
+  const pageStart  = total > 0 ? (apiPage - 1) * pageSize + 1 : 0;
+  const pageEnd    = Math.min(apiPage * pageSize, total);
 
   const getLocalName = useCallback(
     (ru: string, en: string) => (i18n.language === "ru" ? ru : en || ru),
@@ -671,9 +688,9 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
             {/* Results bar */}
             <div
               ref={resultsRef}
-              className={`flex items-center justify-between mb-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+              className={`flex flex-wrap items-center justify-between mb-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 w-full sm:w-auto mb-2 sm:mb-0">
                 {isLoading && products.length === 0
                   ? "…"
                   : total === 0
@@ -711,13 +728,13 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
             {/* Product grid / list */}
             <div style={{ minHeight: isLoading ? "600px" : undefined }}>
               {isLoading ? (
-                <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
-                  {Array.from({ length: PAGE_SIZE }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
+                <div className={cn(view === "grid" ? "grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+                  {Array.from({ length: pageSize }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
                 </div>
               ) : products.length === 0 ? (
                 <EmptyState onReset={handleReset} t={t} />
               ) : (
-                <div className={cn(view === "grid" ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+                <div className={cn(view === "grid" ? "grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
                   {products.map((product, index) => {
                     const productName = getProductName(product, lang);
                     return (
@@ -744,7 +761,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
 
               {/* Pagination */}
               {!isLoading && totalPages > 1 && (
-                <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} isPending={isPending} />
+                <Pagination page={apiPage} totalPages={totalPages} onPageChange={goToPage} isPending={isPending} isMobile={isMobile} />
               )}
             </div>
           </div>
@@ -791,11 +808,11 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
 // ─── Pagination ──────────────────────────────────────────────────────────────
 
 function Pagination({
-  page, totalPages, onPageChange, isPending,
+  page, totalPages, onPageChange, isPending, isMobile,
 }: {
-  page: number; totalPages: number; onPageChange: (page: number) => void; isPending: boolean;
+  page: number; totalPages: number; onPageChange: (page: number) => void; isPending: boolean; isMobile: boolean;
 }) {
-  const pages = getPageNumbers(page, totalPages);
+  const pages = getPageNumbers(page, totalPages, isMobile ? 1 : 3);
   return (
     <nav className={cn("flex items-center justify-center gap-1 mt-10", isPending && "opacity-60 pointer-events-none")} aria-label="Pagination">
       <button

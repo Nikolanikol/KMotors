@@ -45,9 +45,10 @@ export function PhoneInput({ value, onChange, placeholder, disabled, required, c
       }}
       className={cn(
         "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 gap-2",
-        "[&_.PhoneInputCountrySelect]:border-none [&_.PhoneInputCountrySelect]:outline-none [&_.PhoneInputCountrySelect]:text-sm",
-        "[&_.PhoneInputCountrySelect]:bg-white [&_.PhoneInputCountrySelect]:text-gray-900",
-        "[&_.PhoneInputCountrySelectArrow]:opacity-50",
+        "[&_.PhoneInputCountry]:relative [&_.PhoneInputCountry]:flex [&_.PhoneInputCountry]:items-center [&_.PhoneInputCountry]:shrink-0",
+        "[&_.PhoneInputCountrySelect]:!absolute [&_.PhoneInputCountrySelect]:!inset-0 [&_.PhoneInputCountrySelect]:!opacity-0 [&_.PhoneInputCountrySelect]:!cursor-pointer [&_.PhoneInputCountrySelect]:!z-[1]",
+        "[&_.PhoneInputCountrySelectArrow]:opacity-50 [&_.PhoneInputCountrySelectArrow]:ml-1",
+        "[&_input::placeholder]:!text-gray-400 [&_input::placeholder]:!opacity-100",
         error
           ? "border-red-500 focus-within:ring-red-500"
           : "border-input focus-within:ring-ring"
