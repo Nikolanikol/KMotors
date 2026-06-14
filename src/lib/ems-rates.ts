@@ -8,6 +8,9 @@
 /** Markup applied to shipping cost (packaging, insurance, labor, post office trip) */
 export const SHIPPING_MARKUP = 1.35;
 
+/** Korea Post 추가운송수수료 (fuel surcharge) — 6,300₩ per kg, applied to billed weight */
+export const FUEL_SURCHARGE_PER_KG = 6300;
+
 // ─── Weight steps (kg) ────────────────────────────────────────────────────────
 // Billing rounds UP to the next step.
 const WEIGHT_STEPS = [
@@ -168,7 +171,10 @@ export function calcEmsUsd(
 ): number | null {
   const krw = calcEmsKrw(countryCode, billedWeightKg);
   if (krw === null) return null;
-  return Math.ceil(krw * krwToUsd * SHIPPING_MARKUP);
+  const stepIndex = WEIGHT_STEPS.findIndex((s) => s >= billedWeightKg);
+  const steppedKg = WEIGHT_STEPS[stepIndex];
+  const surcharge = Math.ceil(steppedKg) * FUEL_SURCHARGE_PER_KG;
+  return Math.ceil((krw + surcharge) * krwToUsd * SHIPPING_MARKUP);
 }
 
 export function isEmsAvailable(countryCode: string): boolean {
@@ -274,7 +280,10 @@ export function calcEmspUsd(
 ): number | null {
   const krw = calcEmspKrw(countryCode, billedWeightKg);
   if (krw === null) return null;
-  return Math.ceil(krw * krwToUsd * SHIPPING_MARKUP);
+  const stepIndex = EMSP_WEIGHT_STEPS.findIndex((s) => s >= billedWeightKg);
+  const steppedKg = EMSP_WEIGHT_STEPS[stepIndex];
+  const surcharge = Math.ceil(steppedKg) * FUEL_SURCHARGE_PER_KG;
+  return Math.ceil((krw + surcharge) * krwToUsd * SHIPPING_MARKUP);
 }
 
 export function isEmspAvailable(countryCode: string): boolean {

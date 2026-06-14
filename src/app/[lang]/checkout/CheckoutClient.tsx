@@ -24,7 +24,6 @@ import {
   COUNTRY_NAMES,
   COUNTRY_SELECTOR_ORDER,
 } from "@/lib/ems-rates";
-import { packItems, type PackResult } from "@/lib/matryoshka";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -361,19 +360,10 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
     () => items.filter((i) => i.shipMethod === "SEA" || i.shipMethod === "CLARIFY"),
     [items]
   );
-  // ── Matryoshka: pack EMS items into Korea Post boxes ──
-  const packResult: PackResult = useMemo(
-    () =>
-      packItems(
-        airItems.map((i) => ({
-          weightKg: i.weightKg,
-          quantity: i.quantity,
-          billedWeightKg: i.billedWeightKg,
-        }))
-      ),
+  const totalAirWeight = useMemo(
+    () => airItems.reduce((s, i) => s + i.billedWeightKg * i.quantity, 0),
     [airItems]
   );
-  const totalAirWeight = packResult.finalBilled;
   const hasForcedEmsP = airItems.some((i) => i.shipMethod === "EMS_PREMIUM");
 
   const emsOk = !!country && isEmsAvailable(country) && totalAirWeight > 0 && totalAirWeight <= 30;
@@ -769,27 +759,6 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
                 </div>
               )}
 
-              {/* Matryoshka packing info */}
-              {packResult.boxes.length > 0 && shippingCostUsd !== null && (
-                <div className="flex items-start gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
-                  <span className="text-base mt-0.5">📦</span>
-                  <div className="text-xs text-emerald-700">
-                    <span className="font-medium">
-                      {packResult.boxes.length}{" "}
-                      {lang === "ru"
-                        ? (packResult.boxes.length === 1 ? "коробка" : packResult.boxes.length < 5 ? "коробки" : "коробок")
-                        : (packResult.boxes.length === 1 ? "box" : "boxes")}
-                      {" · "}{totalAirWeight.toFixed(2)} {l.kg}
-                    </span>
-                    {packResult.savings > 0 && (
-                      <span className="ml-1.5 text-emerald-600 font-semibold">
-                        — {lang === "ru" ? "экономия" : "you save"}{" "}
-                        {((packResult.savings / packResult.simpleBilled) * 100).toFixed(0)}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

@@ -8,6 +8,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 import { generatePartSlug } from "@/utils/partSlug";
+import {
+  calcEmsUsd,
+  calcEmspUsd,
+  isEmsAvailable,
+  isEmspAvailable,
+  COUNTRY_NAMES,
+  COUNTRY_SELECTOR_ORDER,
+} from "@/lib/ems-rates";
 
 interface CartProduct {
   cart_item_id: string;
@@ -25,20 +33,21 @@ interface CartProduct {
 interface Props {
   lang: string;
   userId: string;
+  profileCountry: string | null;
 }
 
 const FALLBACK_KRW_TO_USD = 0.00066; // June 2026
 const usdFmt = new Intl.NumberFormat("en-US");
 
 const L: Record<string, Record<string, string>> = {
-  ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", total: "Итого", checkout: "Оформить заказ", remove: "Удалить", loading: "Загрузка...", air: "Авиадоставка", sea: "Морская доставка", weight: "расч. вес", kg: "кг" },
-  en: { title: "Cart", empty: "Cart is empty", emptyDesc: "Add parts from the catalog", toCatalog: "Go to catalog", total: "Total", checkout: "Checkout", remove: "Remove", loading: "Loading...", air: "Air Shipping", sea: "Sea Freight", weight: "billed wt.", kg: "kg" },
-  ko: { title: "장바구니", empty: "장바구니가 비어있습니다", emptyDesc: "카탈로그에서 부품을 추가하세요", toCatalog: "카탈로그로 이동", total: "합계", checkout: "주문하기", remove: "삭제", loading: "로딩 중...", air: "항공 배송", sea: "해상 배송", weight: "청구 중량", kg: "kg" },
-  ka: { title: "კალათა", empty: "კალათა ცარიელია", emptyDesc: "დაამატეთ ნაწილები კატალოგიდან", toCatalog: "კატალოგში გადასვლა", total: "სულ", checkout: "შეკვეთა", remove: "წაშლა", loading: "იტვირთება...", air: "საჰაერო მიტანა", sea: "საზღვაო მიტანა", weight: "ანგარიშ. წონა", kg: "კგ" },
-  ar: { title: "السلة", empty: "السلة فارغة", emptyDesc: "أضف قطعًا من الكتالوج", toCatalog: "الذهاب إلى الكتالوج", total: "الإجمالي", checkout: "إتمام الطلب", remove: "حذف", loading: "جارٍ التحميل...", air: "الشحن الجوي", sea: "الشحن البحري", weight: "الوزن المحسوب", kg: "كغ" },
+  ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", total: "Итого", checkout: "Оформить заказ", remove: "Удалить", loading: "Загрузка...", air: "Авиадоставка", sea: "Морская доставка", weight: "расч. вес", kg: "кг", shipTo: "Доставка в", change: "изменить", subtotal: "Товары", shipping: "Доставка", seaTbd: "уточнит менеджер", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 дн.", daysEmsp: "5–10 дн.", selectCountry: "Выберите страну" },
+  en: { title: "Cart", empty: "Cart is empty", emptyDesc: "Add parts from the catalog", toCatalog: "Go to catalog", total: "Total", checkout: "Checkout", remove: "Remove", loading: "Loading...", air: "Air Shipping", sea: "Sea Freight", weight: "billed wt.", kg: "kg", shipTo: "Ship to", change: "change", subtotal: "Items", shipping: "Shipping", seaTbd: "TBD by manager", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 days", daysEmsp: "5–10 days", selectCountry: "Select country" },
+  ko: { title: "장바구니", empty: "장바구니가 비어있습니다", emptyDesc: "카탈로그에서 부품을 추가하세요", toCatalog: "카탈로그로 이동", total: "합계", checkout: "주문하기", remove: "삭제", loading: "로딩 중...", air: "항공 배송", sea: "해상 배송", weight: "청구 중량", kg: "kg", shipTo: "배송지", change: "변경", subtotal: "상품", shipping: "배송비", seaTbd: "담당자 확인", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20일", daysEmsp: "5–10일", selectCountry: "국가 선택" },
+  ka: { title: "კალათა", empty: "კალათა ცარიელია", emptyDesc: "დაამატეთ ნაწილები კატალოგიდან", toCatalog: "კატალოგში გადასვლა", total: "სულ", checkout: "შეკვეთა", remove: "წაშლა", loading: "იტვირთება...", air: "საჰაერო მიტანა", sea: "საზღვაო მიტანა", weight: "ანგარიშ. წონა", kg: "კგ", shipTo: "მიტანა", change: "შეცვლა", subtotal: "საქონელი", shipping: "მიტანა", seaTbd: "მენეჯერი", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 დღე", daysEmsp: "5–10 დღე", selectCountry: "ქვეყანა" },
+  ar: { title: "السلة", empty: "السلة فارغة", emptyDesc: "أضف قطعًا من الكتالوج", toCatalog: "الذهاب إلى الكتالوج", total: "الإجمالي", checkout: "إتمام الطلب", remove: "حذف", loading: "جارٍ التحميل...", air: "الشحن الجوي", sea: "الشحن البحري", weight: "الوزن المحسوب", kg: "كغ", shipTo: "الشحن إلى", change: "تغيير", subtotal: "المنتجات", shipping: "الشحن", seaTbd: "يحدده المدير", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 يوم", daysEmsp: "5–10 أيام", selectCountry: "اختر الدولة" },
 };
 
-export default function CartTab({ lang, userId }: Props) {
+export default function CartTab({ lang, userId, profileCountry }: Props) {
   const l = L[lang] ?? L.ru;
   const supabase = createClient();
   const [items, setItems] = useState<CartProduct[]>([]);
@@ -130,10 +139,24 @@ export default function CartTab({ lang, userId }: Props) {
     notifyCartUpdate();
   };
 
-  const totalUsd = items.reduce(
+  const [shipCountry, setShipCountry] = useState(profileCountry ?? "");
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+
+  const airItems = items.filter(i => i.ship_method === "EMS" || i.ship_method === "EMS_PREMIUM");
+  const seaItems = items.filter(i => i.ship_method === "SEA" || i.ship_method === "CLARIFY");
+  const totalAirWeight = airItems.reduce((s, i) => s + i.billed_weight_kg * i.quantity, 0);
+
+  const emsOk = !!shipCountry && isEmsAvailable(shipCountry) && totalAirWeight > 0 && totalAirWeight <= 30;
+  const emspOk = !!shipCountry && isEmspAvailable(shipCountry) && totalAirWeight > 0 && totalAirWeight <= 20;
+  const emsUsd = emsOk ? calcEmsUsd(shipCountry, totalAirWeight, krwToUsd) : null;
+  const emspUsd = emspOk ? calcEmspUsd(shipCountry, totalAirWeight, krwToUsd) : null;
+  const shippingUsd = emsUsd ?? emspUsd ?? null;
+
+  const subtotalUsd = items.reduce(
     (sum, i) => sum + krwToDisplayUsd(i.price_krw, krwToUsd) * i.quantity,
     0
   );
+  const totalUsd = subtotalUsd + (shippingUsd ?? 0);
   const displayName = (item: CartProduct) => {
     const name = lang === "en" ? (item.name_en || item.name_ru) : (item.name_ru || item.name_en);
     return name || item.part_number || `#${item.product_id}`;
@@ -166,9 +189,6 @@ export default function CartTab({ lang, userId }: Props) {
       </div>
     );
   }
-
-  const airItems = items.filter(i => i.ship_method === "EMS" || i.ship_method === "EMS_PREMIUM");
-  const seaItems = items.filter(i => i.ship_method === "SEA" || i.ship_method === "CLARIFY");
 
   const renderItem = (item: CartProduct) => (
     <div key={item.cart_item_id} className="flex gap-3 p-3 border border-gray-100 rounded-xl hover:border-gray-200 transition">
@@ -264,19 +284,95 @@ export default function CartTab({ lang, userId }: Props) {
         </div>
       )}
 
-      {/* Итого */}
-      <div className="border-t border-gray-100 pt-4 flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{l.total}</p>
-          <p className="text-2xl font-bold text-[#002C5F]">${usdFmt.format(totalUsd)}</p>
+      {/* Доставка + Итого */}
+      <div className="border-t border-gray-100 pt-4 space-y-3">
+        {/* Страна доставки */}
+        <div className="flex items-center justify-between">
+          {shipCountry ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">{l.shipTo}</span>
+              <span className="font-semibold text-[#002C5F]">
+                {lang === "en" ? COUNTRY_NAMES[shipCountry]?.en : COUNTRY_NAMES[shipCountry]?.ru}
+              </span>
+              <button
+                onClick={() => setShowCountryPicker(!showCountryPicker)}
+                className="text-xs text-[#002C5F] underline underline-offset-2 hover:no-underline"
+              >
+                {l.change}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowCountryPicker(!showCountryPicker)}
+              className="text-sm text-[#002C5F] font-semibold underline underline-offset-2 hover:no-underline"
+            >
+              {l.selectCountry}
+            </button>
+          )}
         </div>
-        <Link
-          href={`/${lang}/checkout`}
-          className="flex items-center gap-2 px-6 py-3 bg-[#BB162B] hover:bg-[#9a1122] text-white font-semibold rounded-xl transition text-sm"
-        >
-          {l.checkout}
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+
+        {/* Country picker inline */}
+        {showCountryPicker && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 p-3 rounded-xl bg-gray-50 border border-gray-100">
+            {COUNTRY_SELECTOR_ORDER.map((code) => (
+              <button
+                key={code}
+                onClick={() => { setShipCountry(code); setShowCountryPicker(false); }}
+                className={`text-left px-2.5 py-2 rounded-lg text-sm transition ${
+                  shipCountry === code
+                    ? "bg-[#002C5F] text-white font-semibold"
+                    : "hover:bg-gray-100 text-gray-700"
+                }`}
+              >
+                {lang === "en" ? COUNTRY_NAMES[code]?.en : COUNTRY_NAMES[code]?.ru}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Разбивка */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-500">{l.subtotal}</span>
+            <span className="font-semibold">${usdFmt.format(subtotalUsd)}</span>
+          </div>
+          {airItems.length > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">
+                {l.shipping}
+                {shipCountry && totalAirWeight > 0 && (
+                  <span className="text-xs text-gray-400 ml-1">
+                    ({emsUsd ? l.ems : l.emsp} · {totalAirWeight.toFixed(1)} {l.kg})
+                  </span>
+                )}
+              </span>
+              <span className="font-semibold">
+                {shippingUsd !== null ? `$${usdFmt.format(shippingUsd)}` : <span className="text-gray-400 italic">{l.selectCountry}</span>}
+              </span>
+            </div>
+          )}
+          {seaItems.length > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">{l.sea}</span>
+              <span className="text-gray-400 italic text-xs">{l.seaTbd}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Total + checkout */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div>
+            <p className="text-sm text-gray-500">{l.total}</p>
+            <p className="text-2xl font-bold text-[#002C5F]">${usdFmt.format(totalUsd)}</p>
+          </div>
+          <Link
+            href={`/${lang}/checkout`}
+            className="flex items-center gap-2 px-6 py-3 bg-[#BB162B] hover:bg-[#9a1122] text-white font-semibold rounded-xl transition text-sm"
+          >
+            {l.checkout}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </div>
   );

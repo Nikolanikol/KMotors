@@ -117,7 +117,7 @@ export default function AccountClient({ lang, user, profile }: Props) {
             <ProfileForm lang={lang} user={user} profile={profile} />
           )}
           {activeTab === "cart" && (
-            <CartTab lang={lang} userId={user.id} />
+            <CartTab lang={lang} userId={user.id} profileCountry={profile?.country ?? null} />
           )}
           {activeTab === "orders" && (
             <OrdersTab lang={lang} userId={user.id} />

@@ -161,9 +161,8 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
           return;
         }
         setSuccess(l.successRegister);
-        // Сразу логиним после регистрации
         await supabase.auth.signInWithPassword({ email, password });
-        router.push(redirectTo);
+        router.push(`/${lang}/account`);
         router.refresh();
       }
     } finally {
