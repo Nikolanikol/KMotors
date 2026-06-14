@@ -210,7 +210,8 @@
     "socialMedia": "Мы в соцсетях",
     "scrollToTop": "Наверх",
     "copyright": "Все права защищены",
-    "privacy": "Политика конфиденциальности"
+    "privacy": "Политика конфиденциальности",
+    "terms": "Пользовательское соглашение"
   },
   "cta": {
     "title": "Готовы найти свой автомобиль?",
@@ -326,6 +327,10 @@
       "filterSearch": "Артикул",
       "filterSearchPlaceholder": "Например: 26300-35505",
       "filterModelPlaceholder": "Выберите модель",
+      "filtersTitle": "Фильтры",
+      "filterBrand": "Марка",
+      "filterCategory": "Категория",
+      "filterApply": "Применить",
       "priceFrom": "от",
       "priceTo": "до",
       "resetFilters": "Сбросить фильтры",
@@ -419,6 +424,7 @@
       "p4": "Радиатор охлаждения",
       "p5": "Генератор в сборе",
       "inStock": "В наличии",
+      "inCart": "В корзине",
       "onOrder": "Под заказ",
       "article": "Артикул",
       "orderBtn": "Заказать",
@@ -490,6 +496,7 @@
       "subcategory": "Подкатегория",
       "fitsTitle": "Совместимые модели",
       "orderBtn": "Заказать деталь",
+      "addToCart": "В корзину",
       "noPhoto": "Нет фото",
       "newBadge": "НОВИНКА",
       "viewOnMobis": "Смотреть на Mobis",
@@ -499,7 +506,12 @@
       "breadcrumbHome": "Главная",
       "breadcrumbParts": "Запчасти",
       "copySuccess": "Скопировано!",
-      "viewAll": "Смотреть все"
+      "viewAll": "Смотреть все",
+      "shippingCalcTitle": "Стоимость доставки EMS Korea",
+      "shippingCalcSelect": "Выберите страну",
+      "shippingCalcResult": "Примерно {price} USD",
+      "shippingCalcUnavailable": "EMS недоступен для этой страны",
+      "shippingCalcNote": "* Указана стоимость доставки. Итоговая цена может отличаться."
     },
     "order": {
       "partNumber": "Артикул",

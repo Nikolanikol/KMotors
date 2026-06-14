@@ -128,21 +128,21 @@ export function ContactForm() {
 
   return (
     <section
-      id="contacts"
+      id="contact"
       ref={sectionRef}
-      className="py-24 bg-gradient-to-br from-[#002C5F] to-[#001f45] relative overflow-hidden"
+      className="py-24 bg-gradient-to-br from-[var(--pn-deep-navy)] to-[#162535] relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#BB162B]/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--pn-orange)]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
 
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#BB162B]" />
-            <span className="text-[#BB162B] text-sm font-medium tracking-wider uppercase">
+            <div className="h-px w-12 bg-[var(--pn-orange)]" />
+            <span className="text-[var(--pn-orange)] text-sm font-medium tracking-wider uppercase">
               {t("parts.contact.badge")}
             </span>
-            <div className="h-px w-12 bg-[#BB162B]" />
+            <div className="h-px w-12 bg-[var(--pn-orange)]" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
             {t("parts.contact.title")}
@@ -159,7 +159,7 @@ export function ContactForm() {
         >
           <div className="grid md:grid-cols-5">
             {/* Left side */}
-            <div className="md:col-span-2 bg-[#002C5F] p-8 text-white">
+            <div className="md:col-span-2 bg-[var(--pn-deep-navy)] p-8 text-white">
               <h3 className="text-xl font-semibold mb-6">{t("parts.contact.contactsTitle")}</h3>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
@@ -168,7 +168,7 @@ export function ContactForm() {
                   </div>
                   <div>
                     <div className="text-sm text-white/60 mb-1">{t("parts.contact.phoneLabel")}</div>
-                    <a href="tel:+821058654344" className="font-medium hover:text-[#BB162B] transition-colors">
+                    <a href="tel:+821058654344" className="font-medium hover:text-[var(--pn-orange)] transition-colors">
                       +8210 5865 4344
                     </a>
                   </div>
@@ -183,7 +183,7 @@ export function ContactForm() {
                       href="https://t.me/avto_korea_nikolai"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium hover:text-[#BB162B] transition-colors"
+                      className="font-medium hover:text-[var(--pn-orange)] transition-colors"
                     >
                       @avto_korea_nikolai
                     </a>
@@ -204,7 +204,7 @@ export function ContactForm() {
                 {/* Name */}
                 <div className="space-y-1">
                   <Label htmlFor="name" className="text-gray-700">
-                    {t("parts.contact.nameLabel")} <span className="text-[#BB162B]">*</span>
+                    {t("parts.contact.nameLabel")} <span className="text-[var(--pn-orange)]">*</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
@@ -226,7 +226,7 @@ export function ContactForm() {
                 {/* Phone */}
                 <div className="space-y-1">
                   <Label className="text-gray-700">
-                    {t("parts.contact.phoneLabel")} <span className="text-[#BB162B]">*</span>
+                    {t("parts.contact.phoneLabel")} <span className="text-[var(--pn-orange)]">*</span>
                   </Label>
                   <PhoneInput
                     value={phone}
@@ -259,7 +259,7 @@ export function ContactForm() {
                 {/* Part type chips — required */}
                 <div className="space-y-1">
                   <Label className="text-gray-700">
-                    {t("parts.contact.partTypeLabel")} <span className="text-[#BB162B]">*</span>
+                    {t("parts.contact.partTypeLabel")} <span className="text-[var(--pn-orange)]">*</span>
                   </Label>
                   <div className="grid grid-cols-2 gap-2">
                     {PART_TYPES.map(({ key, emoji }) => {
@@ -272,7 +272,7 @@ export function ContactForm() {
                           className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all text-left"
                           style={
                             active
-                              ? { borderColor: "#BB162B", color: "#BB162B", backgroundColor: "#BB162B12" }
+                              ? { borderColor: "var(--pn-orange)", color: "var(--pn-orange)", backgroundColor: "rgba(245,124,0,0.07)" }
                               : errors.partType
                                 ? { borderColor: "#ef4444", color: "#6b7280" }
                                 : { borderColor: "#e5e7eb", color: "#6b7280" }
@@ -300,7 +300,7 @@ export function ContactForm() {
                 {/* Part description — required */}
                 <div className="space-y-1">
                   <Label htmlFor="message" className="text-gray-700">
-                    {t("parts.contact.messageLabel")} <span className="text-[#BB162B]">*</span>
+                    {t("parts.contact.messageLabel")} <span className="text-[var(--pn-orange)]">*</span>
                   </Label>
                   <div className="relative">
                     <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -322,7 +322,7 @@ export function ContactForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#BB162B] hover:bg-[#9B1220] text-white py-6 text-base font-semibold"
+                  className="w-full bg-[var(--pn-orange)] hover:brightness-110 text-white py-6 text-base font-semibold"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

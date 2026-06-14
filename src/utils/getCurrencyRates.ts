@@ -1,5 +1,5 @@
-const FALLBACK_KRW_TO_RUB = 0.065; // ~1 KRW = 0.065 RUB
-const FALLBACK_KRW_TO_USD = 0.00072; // ~1 KRW = 0.00072 USD
+const FALLBACK_KRW_TO_RUB = 0.058; // ~1 KRW = 0.058 RUB (June 2026)
+const FALLBACK_KRW_TO_USD = 0.00066; // ~1 KRW = 0.00066 USD (June 2026)
 
 export interface CurrencyRates {
   krwToRub: number;
@@ -10,7 +10,7 @@ export interface CurrencyRates {
 export async function getCurrencyRates(): Promise<CurrencyRates> {
   try {
     const res = await fetch(
-      "https://api.frankfurter.app/latest?from=KRW&to=RUB,USD",
+      "https://api.frankfurter.dev/v1/latest?from=KRW&to=RUB,USD",
       { next: { revalidate: 86400 } } // кеш 24 часа
     );
 

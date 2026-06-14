@@ -45,7 +45,7 @@ export function About() {
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#002C5F]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--pn-deep-navy)]/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-8">
                 <div className="grid grid-cols-3 gap-4 text-white">
                   <div className="text-center">
@@ -63,8 +63,6 @@ export function About() {
                 </div>
               </div>
             </div>
-            <div className="absolute -top-6 -left-6 w-32 h-32 border-2 border-[#BB162B]/20 rounded-2xl -z-10" />
-            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-[#002C5F]/10 rounded-2xl -z-10" />
           </div>
 
           {/* Right Column - Content */}
@@ -74,32 +72,32 @@ export function About() {
             }`}
           >
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-px w-12 bg-[#BB162B]" />
-              <span className="text-[#BB162B] text-sm font-medium tracking-wider uppercase">
+              <div className="h-px w-12 bg-[var(--pn-orange)]" />
+              <span className="text-[var(--pn-orange)] text-sm font-medium tracking-wider uppercase">
                 {t("parts.about.badge")}
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#002C5F] mb-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--pn-deep-navy)] mb-6">
               {t("parts.about.title")}
               <br />
-              <span className="text-[#BB162B]">{t("parts.about.titleHighlight")}</span>
+              <span className="text-[var(--pn-orange)]">{t("parts.about.titleHighlight")}</span>
             </h2>
 
-            <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+            <p className="text-[var(--pn-dark-gray)] text-lg mb-6 leading-relaxed">
               {t("parts.about.para1")}
             </p>
-            <p className="text-gray-600 mb-8 leading-relaxed">
+            <p className="text-[var(--pn-dark-gray)] mb-8 leading-relaxed">
               {t("parts.about.para2")}
             </p>
 
             <div className="space-y-3 mb-10">
               {FEATURE_KEYS.map((key) => (
                 <div key={key} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-green-600" />
+                  <div className="w-5 h-5 rounded-full bg-[var(--pn-success)]/20 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-[var(--pn-success)]" />
                   </div>
-                  <span className="text-gray-700">{t(`parts.about.${key}`)}</span>
+                  <span className="text-[var(--pn-deep-navy)]">{t(`parts.about.${key}`)}</span>
                 </div>
               ))}
             </div>
@@ -113,18 +111,18 @@ export function About() {
             return (
               <div
                 key={key}
-                className={`bg-[#F5F7FA] rounded-xl p-6 text-center hover:bg-[#002C5F] group transition-all duration-300 ${
+                className={`bg-[var(--pn-light-gray)] rounded-xl p-6 text-center hover:bg-[var(--pn-deep-navy)] group transition-all duration-300 ${
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                 }`}
                 style={{ transitionDelay: isVisible ? `${400 + index * 100}ms` : "0ms" }}
               >
-                <div className="w-14 h-14 rounded-full bg-[#002C5F] flex items-center justify-center mx-auto mb-4 group-hover:bg-[#BB162B] transition-colors">
+                <div className="w-14 h-14 rounded-full bg-[var(--pn-deep-navy)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--pn-orange)] transition-colors">
                   <Icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#002C5F] mb-2 group-hover:text-white transition-colors">
+                <h3 className="text-lg font-semibold text-[var(--pn-deep-navy)] mb-2 group-hover:text-white transition-colors">
                   {t(`parts.about.${key}title`)}
                 </h3>
-                <p className="text-sm text-gray-600 group-hover:text-white/80 transition-colors">
+                <p className="text-sm text-[var(--pn-dark-gray)] group-hover:text-white/80 transition-colors">
                   {t(`parts.about.${key}desc`)}
                 </p>
               </div>

@@ -134,7 +134,7 @@ export async function PartsCatalog() {
     <Suspense
       fallback={
         <section id="catalog" className="py-24 bg-[#F5F7FA]">
-          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
+          <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
             <div className="animate-pulse space-y-6">
               <div className="h-8 bg-gray-200 rounded w-48 mx-auto" />
               <div className="h-4 bg-gray-200 rounded w-96 mx-auto" />

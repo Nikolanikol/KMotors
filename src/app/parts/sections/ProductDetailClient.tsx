@@ -15,7 +15,20 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { generatePartSlug } from "@/utils/partSlug";
-import { OrderModal } from "./OrderModal";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+import { createClient } from "@/lib/supabase/client";
+import { formatUsd } from "@/lib/pricing";
+import { ShoppingCart } from "lucide-react";
+import { notifyCartUpdate, useCartProductIds } from "@/hooks/useCartCount";
+import {
+  calcEmsUsd,
+  calcEmspUsd,
+  isEmsAvailable,
+  isEmspAvailable,
+  COUNTRY_NAMES,
+  COUNTRY_SELECTOR_ORDER,
+} from "@/lib/ems-rates";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -34,6 +47,22 @@ export type ProductDetail = {
   detail_url: string | null;
   category_id: number | null;
   subcategory_id: number | null;
+  weight_kg: number | null;
+};
+
+export type ProductLogistics = {
+  weight_avg_kg: number | null;
+  packed_weight_kg: number | null;
+  vol_weight_kg: number | null;
+  billed_weight_kg: number | null;
+  ship_method: "EMS" | "EMS_PREMIUM" | "SEA" | null;
+  size_formula_cm: number | null;
+  logistics_notes: string | null;
+  // debug fields
+  length_cm: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+  name_ru: string | null;
 };
 
 export type CompatibleBrand = {
@@ -48,10 +77,25 @@ interface Props {
   categoryName: { ru: string; en: string; slug: string } | null;
   subcategoryName: { ru: string; en: string } | null;
   compatibleBrands: CompatibleBrand[];
+  logistics: ProductLogistics | null;
   lang: string;
   krwToUsd: number;
   description?: string;
+  logisticsCatId?: number | null;
 }
+
+const MANUFACTURER_NAMES: Record<string, string> = {
+  "현대모비스": "Hyundai Mobis",
+  "기아모비스": "Kia Mobis",
+  "현대자동차": "Hyundai Motor",
+  "기아자동차": "Kia Motors",
+  "만도": "Mando",
+  "한온시스템": "Hanon Systems",
+  "현대위아": "Hyundai Wia",
+  "에스엘": "SL Corporation",
+  "현대트랜시스": "Hyundai Transys",
+  "현대케피코": "Hyundai Kefico",
+};
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
@@ -60,24 +104,37 @@ export function ProductDetailClient({
   categoryName,
   subcategoryName,
   compatibleBrands,
+  logistics,
   lang,
   krwToUsd,
   description,
+  logisticsCatId,
 }: Props) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const { user } = useAuth();
+  const supabase = createClient();
+  const { cartProductIds, addOptimistic } = useCartProductIds();
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [cartAdded, setCartAdded] = useState(false);
+  const [cartError, setCartError] = useState("");
+  const [qty, setQty] = useState(1);
   const [backSearch, setBackSearch] = useState("");
-  useScrollDepth(`part_${product.partNumber}`);
+  const [profileCountry, setProfileCountry] = useState("");
+  useScrollDepth(`part_${product.part_number}`);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("parts:filters");
     if (saved) setBackSearch(saved);
+    if (user) {
+      supabase.from("profiles").select("country").eq("id", user.id).single()
+        .then(({ data }) => { if (data?.country) setProfileCountry(data.country); });
+    }
     // Track product view
     trackEvent("view_item", {
       item_id: String(product.id),
-      item_name: product.name_en || product.name_ru,
+      item_name: product.name_en || product.name_ru || product.name_ko,
       part_number: product.part_number,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,10 +143,10 @@ export function ProductDetailClient({
   // Localised product name
   const productName =
     i18n.language === "ru"
-      ? product.name_ru
+      ? product.name_ru || product.name_en || product.name_ko
       : i18n.language === "ko"
       ? product.name_ko || product.name_en || product.name_ru
-      : product.name_en || product.name_ru;
+      : product.name_en || product.name_ru || product.name_ko;
 
   const catName = categoryName
     ? i18n.language === "ru"
@@ -103,8 +160,7 @@ export function ProductDetailClient({
       : subcategoryName.en
     : null;
 
-  const formatUsd = (priceKrw: number) =>
-    "$" + new Intl.NumberFormat("en-US").format(Math.ceil(priceKrw * krwToUsd * 1.23));
+  const fmtUsd = (priceKrw: number) => formatUsd(priceKrw, krwToUsd);
 
   const copyPartNumber = async () => {
     try {
@@ -118,15 +174,46 @@ export function ProductDetailClient({
 
   const backHref = `/${lang}/parts${backSearch}`;
 
-  const handleOrder = () => setIsOrderOpen(true);
+  const handleAddToCart = async () => {
+    if (!user) {
+      const returnUrl = window.location.pathname;
+      router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    setCartError("");
+    try {
+      let { data: cart, error: cartErr } = await supabase.from("carts").select("id").eq("user_id", user.id).single();
+      if (!cart && cartErr?.code === "PGRST116") {
+        const { data: newCart, error: insertErr } = await supabase.from("carts").insert({ user_id: user.id }).select("id").single();
+        if (insertErr) throw insertErr;
+        cart = newCart;
+      } else if (cartErr && cartErr.code !== "PGRST116") {
+        throw cartErr;
+      }
+      if (!cart) throw new Error("Cart not found");
+      const { error: upsertErr } = await supabase.from("cart_items").upsert(
+        { cart_id: cart.id, product_id: product.id, quantity: qty },
+        { onConflict: "cart_id,product_id" }
+      );
+      if (upsertErr) throw upsertErr;
+      addOptimistic(product.id);
+      notifyCartUpdate(qty);
+      setCartAdded(true);
+      setTimeout(() => setCartAdded(false), 2500);
+    } catch (err: unknown) {
+      console.error("Add to cart failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setCartError(lang === "ru" ? "Не удалось добавить в корзину" : "Failed to add to cart");
+    }
+  };
 
   const partSlug = generatePartSlug(
     product.part_number,
     lang === "ko"
       ? product.name_ko || product.name_en || product.name_ru
       : lang === "ru"
-      ? product.name_ru
-      : product.name_en || product.name_ru,
+      ? product.name_ru || product.name_en || product.name_ko
+      : product.name_en || product.name_ru || product.name_ko,
     lang as "ru" | "en" | "ko",
     product.id
   );
@@ -136,13 +223,6 @@ export function ProductDetailClient({
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
-      <OrderModal
-        isOpen={isOrderOpen}
-        onClose={() => setIsOrderOpen(false)}
-        productName={productName}
-        partNumber={product.part_number}
-        productUrl={productUrl}
-      />
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -241,50 +321,89 @@ export function ProductDetailClient({
                 {t("parts.detail.partNumber")}:
               </span>
               <code className="text-sm font-mono font-semibold text-[#002C5F] bg-[#002C5F]/5 px-2.5 py-1 rounded-md">
-                {product.part_number}
+                {product.part_number || product.product_no || "—"}
               </code>
-              <button
-                onClick={copyPartNumber}
-                title={t("parts.detail.copySuccess")}
-                className="p-1.5 text-gray-400 hover:text-[#002C5F] transition-colors rounded-md hover:bg-gray-50"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-              {copied && (
-                <span className="text-xs text-green-500">
-                  {t("parts.detail.copySuccess")}
-                </span>
+              {(product.part_number || product.product_no) && (
+                <>
+                  <button
+                    onClick={copyPartNumber}
+                    title={t("parts.detail.copySuccess")}
+                    className="p-1.5 text-gray-400 hover:text-[#002C5F] transition-colors rounded-md hover:bg-gray-50"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                  {copied && (
+                    <span className="text-xs text-green-500">
+                      {t("parts.detail.copySuccess")}
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
             {/* Price */}
-            <div className="mb-6">
+            <div className="mb-4">
               <span className="text-xs text-gray-500 uppercase tracking-widest">
                 {t("parts.detail.priceLabel")}
               </span>
               <div className="text-4xl font-bold text-[#BB162B] mt-1">
-                {formatUsd(product.price_krw)}
+                {fmtUsd(product.price_krw)}
               </div>
             </div>
 
-            {/* Order CTA */}
-            <Button
-              onClick={handleOrder}
-              size="lg"
-              className="bg-[#002C5F] hover:bg-[#001f45] text-white h-12 text-base font-semibold w-full mb-6"
-            >
-              {t("parts.detail.orderBtn")}
-            </Button>
+            {/* Shipping method badge + calculator */}
+            <div className="mb-6">
+              <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} profileCountry={profileCountry} />
+            </div>
+
+            {/* Quantity + Add to cart */}
+            <div className="flex gap-3 mb-6">
+              <div className="flex items-center border border-gray-200 rounded-xl">
+                <button
+                  onClick={() => setQty(q => Math.max(1, q - 1))}
+                  className="w-10 h-12 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg"
+                >
+                  −
+                </button>
+                <span className="w-10 text-center text-sm font-semibold">{qty}</span>
+                <button
+                  onClick={() => setQty(q => q + 1)}
+                  className="w-10 h-12 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg"
+                >
+                  +
+                </button>
+              </div>
+              <Button
+                onClick={handleAddToCart}
+                size="lg"
+                disabled={cartProductIds.has(product.id)}
+                className={`h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all ${
+                  cartAdded || cartProductIds.has(product.id)
+                    ? "bg-green-500 hover:bg-green-500 text-white"
+                    : cartError
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-[#BB162B] hover:bg-[#9a1122] text-white"
+                }`}
+              >
+                {cartAdded || cartProductIds.has(product.id)
+                  ? <><Check className="w-5 h-5" />{cartAdded ? "✓ Добавлено" : t("parts.products.inCart")}</>
+                  : <><ShoppingCart className="w-5 h-5" />{t("parts.detail.addToCart")}</>
+                }
+              </Button>
+            </div>
+            {cartError && (
+              <p className="text-sm text-red-500 -mt-4 mb-2">{cartError}</p>
+            )}
 
             {/* Specifications */}
             <div className="border-t border-gray-100 pt-5 space-y-3 flex-1">
               <SpecRow
                 label={t("parts.detail.manufacturer")}
-                value={product.manufacturer || "Hyundai Mobis"}
+                value={MANUFACTURER_NAMES[product.manufacturer ?? ""] ?? product.manufacturer ?? "Hyundai Mobis"}
               />
               {catName && (
                 <SpecRow
@@ -298,6 +417,7 @@ export function ProductDetailClient({
                   value={subName}
                 />
               )}
+
 
             </div>
           </div>
@@ -367,11 +487,15 @@ export function ProductDetailClient({
             <p className="text-white font-bold text-xl">{productName}</p>
           </div>
           <Button
-            onClick={handleOrder}
+            onClick={handleAddToCart}
             size="lg"
-            className="bg-[#BB162B] hover:bg-[#9B1220] text-white font-semibold shrink-0 h-12 px-8"
+            disabled={cartProductIds.has(product.id)}
+            className={`font-semibold shrink-0 h-12 px-8 flex items-center gap-2 transition-all ${cartAdded || cartProductIds.has(product.id) ? "bg-green-500 hover:bg-green-500 text-white" : "bg-[#BB162B] hover:bg-[#9B1220] text-white"}`}
           >
-            {t("parts.detail.orderBtn")}
+            {cartAdded || cartProductIds.has(product.id)
+              ? <><Check className="w-4 h-4" />{"✓"}</>
+              : <><ShoppingCart className="w-4 h-4" />{t("parts.detail.addToCart")}</>
+            }
           </Button>
         </div>
       </div>
@@ -403,5 +527,160 @@ function BrandDot({ slug }: { slug: string }) {
       className="w-2.5 h-2.5 rounded-full shrink-0"
       style={{ backgroundColor: color }}
     />
+  );
+}
+
+const SHIP_CONFIG = {
+  EMS: {
+    label: { ru: "EMS Korea", en: "EMS Korea" },
+    sublabel: { ru: "≤ 30 кг", en: "≤ 30 kg" },
+    bg: "bg-green-50",
+    border: "border-green-200",
+    text: "text-green-700",
+    dot: "bg-green-500",
+  },
+  EMS_PREMIUM: {
+    label: { ru: "EMS Korea", en: "EMS Korea" },
+    sublabel: { ru: "≤ 70 кг", en: "≤ 70 kg" },
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    text: "text-blue-700",
+    dot: "bg-blue-500",
+  },
+  SEA: {
+    label: { ru: "Только морем", en: "Sea freight only" },
+    sublabel: { ru: "Крупногабаритный груз", en: "Oversized cargo" },
+    bg: "bg-red-50",
+    border: "border-red-200",
+    text: "text-red-700",
+    dot: "bg-red-500",
+  },
+} as const;
+
+function ShippingBadge({
+  logistics,
+  lang,
+  krwToUsd,
+  profileCountry,
+}: {
+  logistics: ProductLogistics | null;
+  lang: string;
+  krwToUsd: number;
+  profileCountry?: string;
+}) {
+  const { t } = useTranslation();
+  const isRu = lang === "ru";
+  const [country, setCountry] = useState(profileCountry || "");
+
+  useEffect(() => {
+    if (profileCountry && !country) setCountry(profileCountry);
+  }, [profileCountry]);
+
+  if (!logistics?.ship_method) {
+    return (
+      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200">
+        <span className="w-2 h-2 rounded-full bg-gray-400 shrink-0" />
+        <span className="text-xs text-gray-500">
+          {isRu ? "Доставка: уточнить у менеджера" : "Shipping: ask manager"}
+        </span>
+      </div>
+    );
+  }
+
+  const cfg = SHIP_CONFIG[logistics.ship_method];
+  const label = isRu ? cfg.label.ru : cfg.label.en;
+  const sublabel = isRu ? cfg.sublabel.ru : cfg.sublabel.en;
+
+  const avgKg = logistics.weight_avg_kg;
+  const packedKg = avgKg !== null
+    ? Math.round((avgKg > 30 ? avgKg + 15 : avgKg * 1.05 + 0.3) * 1000) / 1000
+    : null;
+  const volKg = (logistics.length_cm && logistics.width_cm && logistics.height_cm)
+    ? Math.round((logistics.length_cm * logistics.width_cm * logistics.height_cm / 6000) * 1000) / 1000
+    : null;
+
+  const emsPackedKg = logistics.billed_weight_kg ?? packedKg;
+  const emspBilledKg = logistics.billed_weight_kg
+    ?? (packedKg !== null ? Math.max(packedKg, volKg ?? 0) : null);
+
+  const showCalculator =
+    (logistics.ship_method === "EMS" || logistics.ship_method === "EMS_PREMIUM") &&
+    (emsPackedKg !== null || emspBilledKg !== null);
+
+  const displayKg = logistics.billed_weight_kg
+    ?? (logistics.ship_method === "EMS" ? emsPackedKg : emspBilledKg);
+
+  const emsPrice =
+    country && emsPackedKg !== null
+      ? calcEmsUsd(country, emsPackedKg, krwToUsd)
+      : null;
+
+  const emspPrice =
+    country && emspBilledKg !== null
+      ? calcEmspUsd(country, emspBilledKg, krwToUsd)
+      : null;
+
+  const bestPrice = emsPrice !== null && emspPrice !== null
+    ? Math.min(emsPrice, emspPrice)
+    : emsPrice ?? emspPrice;
+
+  const countryName = (code: string) =>
+    isRu
+      ? COUNTRY_NAMES[code]?.ru ?? code
+      : COUNTRY_NAMES[code]?.en ?? code;
+
+  return (
+    <div className="space-y-3">
+      {/* Method badge */}
+      <div className={cn("inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border", cfg.bg, cfg.border)}>
+        <span className={cn("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
+        <div>
+          <span className={cn("text-xs font-semibold", cfg.text)}>{label}</span>
+          <span className={cn("text-xs ml-1.5 opacity-70", cfg.text)}>{sublabel}</span>
+          {displayKg && (
+            <span className={cn("text-xs ml-1.5 opacity-60", cfg.text)}>
+              · ~{displayKg} {isRu ? "кг" : "kg"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Shipping cost calculator */}
+      {showCalculator && (
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2">
+          <p className="text-xs font-semibold text-gray-600">
+            {t("parts.detail.shippingCalcTitle")}
+          </p>
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-[#002C5F] focus:outline-none focus:ring-2 focus:ring-[#002C5F]/20"
+          >
+            <option value="">{t("parts.detail.shippingCalcSelect")}</option>
+            {COUNTRY_SELECTOR_ORDER.map((code) => (
+              <option key={code} value={code}>
+                {countryName(code)}
+              </option>
+            ))}
+          </select>
+
+          {country && (
+            <div className="space-y-1.5">
+              {bestPrice !== null ? (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">EMS Korea</span>
+                  <span className="text-sm font-bold text-green-700">~${bestPrice}</span>
+                </div>
+              ) : (
+                <p className="text-xs text-red-500">
+                  {t("parts.detail.shippingCalcUnavailable")}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">{t("parts.detail.shippingCalcNote")}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

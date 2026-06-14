@@ -210,7 +210,8 @@
     "socialMedia": "ჩვენ სოციალურ ქსელებში",
     "scrollToTop": "ზევით",
     "copyright": "ყველა უფლება დაცულია",
-    "privacy": "კონფიდენციალურობის პოლიტიკა"
+    "privacy": "კონფიდენციალურობის პოლიტიკა",
+    "terms": "მომხმარებლის შეთანხმება"
   },
   "cta": {
     "title": "მზად ხართ იპოვოთ თქვენი ავტომობილი?",
@@ -322,6 +323,10 @@
       "filterSearch": "საქონლის ნომერი",
       "filterSearchPlaceholder": "მაგ: 26300-35505",
       "filterModelPlaceholder": "აირჩიეთ მოდელი",
+      "filtersTitle": "ფილტრები",
+      "filterBrand": "მარკა",
+      "filterCategory": "კატეგორია",
+      "filterApply": "გამოყენება",
       "priceFrom": "დან",
       "priceTo": "მდე",
       "resetFilters": "ფილტრების გასუფთავება",
@@ -486,6 +491,7 @@
       "subcategory": "ქვეკატეგორია",
       "fitsTitle": "თავსებადი მოდელები",
       "orderBtn": "ნაწილის შეკვეთა",
+      "addToCart": "კალათაში დამატება",
       "noPhoto": "ფოტო არ არის",
       "newBadge": "ახალი",
       "viewOnMobis": "Mobis-ზე ნახვა",

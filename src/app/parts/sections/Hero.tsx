@@ -1,125 +1,115 @@
 "use client";
-import { useEffect, useRef } from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export function Hero() {
   const { t } = useTranslation();
-  const heroRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (heroRef.current) {
-        const scrolled = window.scrollY;
-        const parallaxElement = heroRef.current.querySelector(
-          ".parallax-bg",
-        ) as HTMLElement;
-        if (parallaxElement) {
-          parallaxElement.style.transform = `translateY(${scrolled * 0.5}px)`;
-        }
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const timer = setTimeout(() => setVisible(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+  const scrollTo = (id: string) => {
+    document.querySelector(`#${id}`)?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <section
-      ref={heroRef}
-      className="relative min-h-screen flex items-center overflow-hidden"
+      id="hero"
+      className="min-h-[50vh] bg-[var(--pn-deep-navy)] flex items-center"
     >
-      {/* Parallax Background */}
-      <div className="parallax-bg absolute inset-0 w-full h-[120%] -top-[10%]">
-        <Image
-          src="/hero-bg.jpg"
-          alt="Auto parts warehouse"
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#002C5F]/95 via-[#002C5F]/90 to-[#002C5F]/80" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-32">
-        <div className="max-w-3xl">
-          {/* Left Column - Text */}
-          <div className="space-y-8 animate-slide-up">
-            <div className="flex items-center gap-4">
-              <div className="h-px w-12 bg-[#BB162B]" />
-              <span className="text-white/80 text-sm font-medium tracking-wider uppercase">
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-12 lg:py-0">
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-4">
+          {/* Left content */}
+          <div className="flex-1 max-w-xl">
+            <div
+              className={`flex items-center gap-3 mb-6 transition-all duration-600 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+              }`}
+            >
+              <span className="w-10 h-0.5 bg-[var(--pn-orange)]" />
+              <span className="text-[11px] font-semibold text-[var(--pn-orange)] uppercase tracking-[0.1em]">
                 {t("parts.hero.badge")}
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+            <h1
+              className={`text-4xl sm:text-5xl lg:text-[48px] font-extrabold text-white leading-[1.1] tracking-tight mb-6 transition-all duration-700 delay-100 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+              }`}
+            >
               {t("parts.hero.title1")}{" "}
-              <span className="text-[#BB162B]">{t("parts.hero.titleHighlight")}</span>
-              <br />
+              <span className="text-[var(--pn-orange)]">{t("parts.hero.titleHighlight")}</span>{" "}
               {t("parts.hero.title2")}
             </h1>
 
-            <p className="text-lg text-white/80 max-w-xl">
+            <p
+              className={`text-base text-white/70 leading-relaxed max-w-[440px] mb-8 transition-all duration-600 delay-200 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+              }`}
+            >
               {t("parts.hero.subtitle")}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                onClick={() => scrollToSection("contacts")}
-                className="bg-[#BB162B] hover:bg-[#9B1220] text-white px-8 py-6 text-base font-semibold group"
+            <div
+              className={`flex flex-wrap gap-3 mb-10 transition-all duration-600 delay-300 ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+              }`}
+            >
+              <button
+                onClick={() => scrollTo("contact")}
+                className="pn-btn-primary flex items-center gap-2 text-sm"
               >
                 {t("parts.hero.ctaRequest")}
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => scrollToSection("catalog")}
-                className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-base font-semibold"
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollTo("catalog")}
+                className="pn-btn-outline text-sm"
               >
                 {t("parts.hero.ctaCatalog")}
-              </Button>
+              </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
-              <div>
-                <div className="text-3xl font-bold text-white">10+</div>
-                <div className="text-sm text-white/60">{t("parts.hero.statYears")}</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">5000+</div>
-                <div className="text-sm text-white/60">{t("parts.hero.statParts")}</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">100%</div>
-                <div className="text-sm text-white/60">{t("parts.hero.statOriginal")}</div>
-              </div>
+            <div
+              className={`flex gap-8 sm:gap-12 transition-all duration-600 delay-[400ms] ${
+                visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
+              }`}
+            >
+              {[
+                { value: "10+", label: t("parts.hero.statYears") },
+                { value: "5000+", label: t("parts.hero.statParts") },
+                { value: "100%", label: t("parts.hero.statOriginal") },
+              ].map((stat) => (
+                <div key={stat.value}>
+                  <div className="text-[28px] font-bold text-[var(--pn-orange)] leading-none">
+                    {stat.value}
+                  </div>
+                  <div className="text-xs text-white/60 mt-1">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
 
+          {/* Right image */}
+          <div className="flex-1 flex justify-center lg:justify-end">
+            <div
+              className={`relative w-full max-w-[560px] transition-all duration-1000 delay-200 ${
+                visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+              }`}
+            >
+              <img
+                src="/hero-bg.jpg"
+                alt="Original Korean auto parts"
+                className="w-full h-auto rounded-lg shadow-2xl object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--pn-deep-navy)]/20 to-transparent rounded-lg pointer-events-none" />
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <button
-          onClick={() => scrollToSection("catalog")}
-          className="text-white/60 hover:text-white transition-colors"
-        >
-          <ChevronDown className="w-8 h-8" />
-        </button>
       </div>
     </section>
   );

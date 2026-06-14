@@ -210,7 +210,8 @@
     "socialMedia": "Follow Us",
     "scrollToTop": "To Top",
     "copyright": "All rights reserved",
-    "privacy": "Privacy Policy"
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "cta": {
     "title": "Ready to find your car?",
@@ -322,6 +323,10 @@
       "filterSearch": "Part number",
       "filterSearchPlaceholder": "E.g. 26300-35505",
       "filterModelPlaceholder": "Select model",
+      "filtersTitle": "Filters",
+      "filterBrand": "Brand",
+      "filterCategory": "Category",
+      "filterApply": "Apply",
       "priceFrom": "from",
       "priceTo": "to",
       "resetFilters": "Reset filters",
@@ -415,6 +420,7 @@
       "p4": "Cooling Radiator",
       "p5": "Alternator Assembly",
       "inStock": "In Stock",
+      "inCart": "In Cart",
       "onOrder": "On Order",
       "article": "Part No.",
       "orderBtn": "Order",
@@ -486,6 +492,7 @@
       "subcategory": "Subcategory",
       "fitsTitle": "Compatible models",
       "orderBtn": "Order this part",
+      "addToCart": "Add to Cart",
       "noPhoto": "No photo",
       "newBadge": "NEW",
       "viewOnMobis": "View on Mobis",
@@ -495,7 +502,12 @@
       "breadcrumbHome": "Home",
       "breadcrumbParts": "Parts",
       "copySuccess": "Copied!",
-      "viewAll": "View all"
+      "viewAll": "View all",
+      "shippingCalcTitle": "EMS Korea shipping cost",
+      "shippingCalcSelect": "Select country",
+      "shippingCalcResult": "Approx. {price} USD",
+      "shippingCalcUnavailable": "EMS not available for this country",
+      "shippingCalcNote": "* Shipping cost only. Final price may vary."
     },
     "order": {
       "partNumber": "Part number",

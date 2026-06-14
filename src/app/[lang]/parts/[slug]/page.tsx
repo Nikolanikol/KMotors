@@ -8,6 +8,7 @@ import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
   CompatibleBrand,
+  ProductLogistics,
 } from "@/app/parts/sections/ProductDetailClient";
 
 // Страницы продуктов рендерятся по требованию и кэшируются навсегда.
@@ -32,7 +33,7 @@ async function fetchProduct(slug: string) {
   let query = supabase
     .from("parts_products")
     .select(
-      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id"
+      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method"
     );
 
   // Ищем по part_number или по ID
@@ -58,6 +59,43 @@ async function fetchProduct(slug: string) {
   const catIds = [product.category_id, product.subcategory_id].filter(
     (x): x is number => !!x
   );
+
+  // Fetch logistics: subcategory_id (L2/L3) has priority over category_id (L1)
+  const logisticsCatId = product.subcategory_id ?? product.category_id;
+
+  const logisticsResult = logisticsCatId
+    ? await supabase
+        .from("v_category_logistics")
+        .select("weight_avg_kg, packed_weight_kg, vol_weight_kg, billed_weight_kg, ship_method, size_formula_cm, logistics_notes, length_cm, width_cm, height_cm, name_ru")
+        .eq("id", logisticsCatId)
+        .single()
+    : null;
+
+  const catLogistics = logisticsResult?.data ?? null;
+
+  // Per-product fields override category-level logistics
+  const logistics: ProductLogistics | null = catLogistics
+    ? {
+        ...catLogistics,
+        weight_avg_kg: product.weight_kg ?? catLogistics.weight_avg_kg,
+        billed_weight_kg: product.billed_weight_kg ?? catLogistics.billed_weight_kg,
+        ship_method: product.ship_method ?? catLogistics.ship_method,
+      }
+    : product.billed_weight_kg
+      ? {
+          weight_avg_kg: product.weight_kg,
+          packed_weight_kg: null,
+          vol_weight_kg: null,
+          billed_weight_kg: product.billed_weight_kg,
+          ship_method: product.ship_method as ProductLogistics["ship_method"],
+          size_formula_cm: null,
+          logistics_notes: null,
+          length_cm: null,
+          width_cm: null,
+          height_cm: null,
+          name_ru: null,
+        }
+      : null;
 
   // Fetch models, brands, categories in parallel
   const [modelsResult, brandsResult, catsResult] = await Promise.all([
@@ -119,6 +157,8 @@ async function fetchProduct(slug: string) {
     categoryName,
     subcategoryName,
     compatibleBrands,
+    logistics,
+    logisticsCatId: logisticsCatId ?? null,
   };
 }
 
@@ -199,8 +239,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
   // Генерируем правильный slug для каждого языка
-  const ru = p.name_ru;
-  const en = p.name_en || p.name_ru;
+  const ru = p.name_ru || p.name_en || p.name_ko;
+  const en = p.name_en || p.name_ru || p.name_ko;
   const ko = p.name_ko || p.name_en || p.name_ru;
 
   const slugRu = generatePartSlug(p.part_number, ru, "ru", p.id);
@@ -249,8 +289,8 @@ export default async function ProductDetailPage({ params }: Props) {
     lang === "ko"
       ? product.name_ko || product.name_en || product.name_ru
       : lang === "ru"
-      ? product.name_ru
-      : product.name_en || product.name_ru;
+      ? product.name_ru || product.name_en || product.name_ko
+      : product.name_en || product.name_ru || product.name_ko;
 
   const productSchema = {
     "@context": "https://schema.org",
@@ -301,35 +341,35 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const descriptionMap: Record<string, string> = {
     ru: [
-      `${product.name_ru}${product.part_number ? ` (артикул ${product.part_number})` : ""} — оригинальная запчасть Hyundai Mobis.`,
+      `${product.name_ru || product.name_en || product.name_ko}${product.part_number ? ` (артикул ${product.part_number})` : ""} — оригинальная запчасть Hyundai Mobis.`,
       catRu ? `Категория: ${catRu}.` : "",
       brandNames ? `Подходит для автомобилей ${brandNames}.` : "",
       `Прямые поставки из Южной Кореи. Доставка по всему миру. Гарантия качества Hyundai Mobis.`,
     ].filter(Boolean).join(" "),
 
     en: [
-      `${product.name_en || product.name_ru}${product.part_number ? ` (part number ${product.part_number})` : ""} — genuine Hyundai Mobis spare part.`,
+      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (part number ${product.part_number})` : ""} — genuine Hyundai Mobis spare part.`,
       catEn ? `Category: ${catEn}.` : "",
       brandNames ? `Compatible with ${brandNames} vehicles.` : "",
       `Direct supply from South Korea. Worldwide delivery. Hyundai Mobis quality guarantee.`,
     ].filter(Boolean).join(" "),
 
     ko: [
-      `${product.name_ko || product.name_en || product.name_ru}${product.part_number ? ` (부품 번호 ${product.part_number})` : ""} — 현대모비스 정품 부품입니다.`,
+      `${product.name_ko || product.name_en || product.name_ru || ""}${product.part_number ? ` (부품 번호 ${product.part_number})` : ""} — 현대모비스 정품 부품입니다.`,
       catEn ? `카테고리: ${catEn}.` : "",
       brandNames ? `${brandNames} 차량에 적합합니다.` : "",
       `한국에서 직접 공급. 전 세계 배송. 현대모비스 품질 보증.`,
     ].filter(Boolean).join(" "),
 
     ka: [
-      `${product.name_en || product.name_ru}${product.part_number ? ` (ნომერი ${product.part_number})` : ""} — Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი.`,
+      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (ნომერი ${product.part_number})` : ""} — Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი.`,
       catEn ? `კატეგორია: ${catEn}.` : "",
       brandNames ? `შესაფერისია ${brandNames} მანქანებისთვის.` : "",
       `პირდაპირი მიწოდება სამხრეთ კორეიდან. მიტანა მსოფლიოს ნებისმიერ ქვეყანაში. Hyundai Mobis-ის ხარისხის გარანტია.`,
     ].filter(Boolean).join(" "),
 
     ar: [
-      `${product.name_en || product.name_ru}${product.part_number ? ` (رقم القطعة ${product.part_number})` : ""} — قطعة غيار أصلية من Hyundai Mobis.`,
+      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (رقم القطعة ${product.part_number})` : ""} — قطعة غيار أصلية من Hyundai Mobis.`,
       catEn ? `الفئة: ${catEn}.` : "",
       brandNames ? `متوافقة مع سيارات ${brandNames}.` : "",
       `توريد مباشر من كوريا الجنوبية. توصيل إلى جميع أنحاء العالم. ضمان جودة Hyundai Mobis.`,
@@ -342,7 +382,7 @@ export default async function ProductDetailPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} />
+      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} logistics={data.logistics} />
     </>
   );
 }

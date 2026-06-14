@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
 
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -51,6 +52,7 @@ function isExcluded(path: string): boolean {
   return (
     path.startsWith("/admin") ||
     path.startsWith("/api") ||
+    path.startsWith("/auth") ||
     path.startsWith("/_next") ||
     path.includes(".xml") ||
     path.includes("robots") ||
@@ -59,7 +61,7 @@ function isExcluded(path: string): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const ua = request.headers.get("user-agent") || "";
 
   // --- Блокируем Electron-ботов/скраперов ---
@@ -80,7 +82,7 @@ export function middleware(request: NextRequest) {
 
     const adminPassword = process.env.ADMIN_PASSWORD;
     const cookie = request.cookies.get("admin_session");
-if (!adminPassword || !cookie || cookie.value !== "1") {
+    if (!adminPassword || !cookie || cookie.value !== "1") {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
     return NextResponse.next();
@@ -91,13 +93,31 @@ if (!adminPassword || !cookie || cookie.value !== "1") {
     return NextResponse.next();
   }
 
+  // --- Supabase: refresh сессии ---
+  let response = NextResponse.next({ request });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll(); },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+  await supabase.auth.getUser();
+
   // --- Определяем lang из URL ---
   const segments = path.split("/").filter(Boolean); // ['ru', 'catalog'] или ['catalog']
   const pathLang = segments[0];
 
   if (LANGS.includes(pathLang)) {
     // URL уже содержит валидный lang — ставим cookie и трекаем
-    const response = NextResponse.next();
     response.cookies.set("kmotors-lang", pathLang, {
       path: "/",
       sameSite: "lax",

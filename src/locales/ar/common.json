@@ -210,7 +210,8 @@
     "socialMedia": "نحن على وسائل التواصل الاجتماعي",
     "scrollToTop": "أعلى الصفحة",
     "copyright": "جميع الحقوق محفوظة",
-    "privacy": "سياسة الخصوصية"
+    "privacy": "سياسة الخصوصية",
+    "terms": "اتفاقية المستخدم"
   },
   "cta": {
     "title": "هل أنت مستعد للعثور على سيارتك؟",
@@ -322,6 +323,10 @@
       "filterSearch": "رقم القطعة",
       "filterSearchPlaceholder": "مثال: 26300-35505",
       "filterModelPlaceholder": "اختر الموديل",
+      "filtersTitle": "الفلاتر",
+      "filterBrand": "العلامة التجارية",
+      "filterCategory": "الفئة",
+      "filterApply": "تطبيق",
       "priceFrom": "من",
       "priceTo": "إلى",
       "resetFilters": "إعادة تعيين الفلاتر",
@@ -486,6 +491,7 @@
       "subcategory": "الفئة الفرعية",
       "fitsTitle": "الموديلات المتوافقة",
       "orderBtn": "طلب هذه القطعة",
+      "addToCart": "أضف إلى السلة",
       "noPhoto": "لا توجد صورة",
       "newBadge": "جديد",
       "viewOnMobis": "عرض على موبيس",

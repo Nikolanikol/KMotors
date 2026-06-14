@@ -210,7 +210,8 @@
     "socialMedia": "소셜 미디어",
     "scrollToTop": "맨 위로",
     "copyright": "모든 권리 보유",
-    "privacy": "개인정보 보호정책"
+    "privacy": "개인정보 보호정책",
+    "terms": "이용약관"
   },
   "cta": {
     "title": "자동차를 찾을 준비가 되셨나요?",
@@ -322,6 +323,10 @@
       "filterSearch": "부품 번호",
       "filterSearchPlaceholder": "예: 26300-35505",
       "filterModelPlaceholder": "모델 선택",
+      "filtersTitle": "필터",
+      "filterBrand": "브랜드",
+      "filterCategory": "카테고리",
+      "filterApply": "적용",
       "priceFrom": "최소",
       "priceTo": "최대",
       "resetFilters": "필터 초기화",
@@ -415,6 +420,7 @@
       "p4": "냉각 라디에이터",
       "p5": "발전기 어셈블리",
       "inStock": "재고 있음",
+      "inCart": "장바구니에 담김",
       "onOrder": "주문 제작",
       "article": "부품 번호",
       "orderBtn": "주문하기",
@@ -486,6 +492,7 @@
       "subcategory": "세부 카테고리",
       "fitsTitle": "적용 차종",
       "orderBtn": "이 부품 주문하기",
+      "addToCart": "장바구니에 추가",
       "noPhoto": "사진 없음",
       "newBadge": "신제품",
       "viewOnMobis": "모비스에서 보기",
