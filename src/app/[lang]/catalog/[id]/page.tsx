@@ -68,6 +68,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `Авто из Кореи`,
     description: "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
     openGraph: { title: "Авто из Кореи", description: "Купить автомобиль из Южной Кореи.", type: "website" },
+    alternates: { canonical: `https://www.kmotors.shop/${lang}/catalog/${id}` },
   };
 
   const carName = [
@@ -376,20 +377,18 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       </div>
 
       {/* Блок описания модели — виден пользователям и индексируется Google */}
-      {lang === "ru" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
-          <CarDescription
-            lang={lang}
-            manufacturer={data.category.manufacturerEnglishName ?? ""}
-            model={data.category.modelGroupEnglishName ?? ""}
-            yearMonth={data?.category?.yearMonth ?? ""}
-            mileage={data.spec?.mileage ?? 0}
-            displacement={data.spec?.displacement ?? 0}
-            fuelName={data.spec?.fuelName ?? ""}
-            catalogFilter={catalogFilter}
-          />
-        </div>
-      )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
+        <CarDescription
+          lang={lang}
+          manufacturer={data.category.manufacturerEnglishName ?? ""}
+          model={data.category.modelGroupEnglishName ?? ""}
+          yearMonth={data?.category?.yearMonth ?? ""}
+          mileage={data.spec?.mileage ?? 0}
+          displacement={data.spec?.displacement ?? 0}
+          fuelName={data.spec?.fuelName ?? ""}
+          catalogFilter={catalogFilter}
+        />
+      </div>
 
       <StickyMobileCTA carId={id} carName={fullCarName} />
       <CarViewTracker carId={id} carName={fullCarName} price={krwPrice ?? undefined} />

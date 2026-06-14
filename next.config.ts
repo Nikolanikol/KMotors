@@ -31,7 +31,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   async redirects() {
-    return [];
+    return [
+    ];
   },
 };
 

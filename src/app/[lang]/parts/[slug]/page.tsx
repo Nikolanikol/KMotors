@@ -188,9 +188,9 @@ function buildMeta(
   lang: string,
   p: { part_number: string | null; name_ru: string; name_en: string; name_ko: string | null }
 ) {
-  const ru = truncateName(p.name_ru || p.name_en || "", p.part_number || "");
-  const en = truncateName(p.name_en || p.name_ru || "", p.part_number || "");
-  const ko = truncateName(p.name_ko || p.name_en || p.name_ru || "", p.part_number || "");
+  const ru = truncateName(p.name_ru || p.name_en || p.name_ko || "Запчасть", p.part_number || "");
+  const en = truncateName(p.name_en || p.name_ru || p.name_ko || "Part", p.part_number || "");
+  const ko = truncateName(p.name_ko || p.name_en || p.name_ru || "부품", p.part_number || "");
   const pn = p.part_number || "";
 
   const map: Record<string, { title: string; description: string }> = {

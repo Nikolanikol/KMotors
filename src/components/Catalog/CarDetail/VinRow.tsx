@@ -55,7 +55,7 @@ function VinMileageSection({ vin, vehicleNo, mileage }: VinMileageSectionProps) 
           <span className="text-xs font-medium text-white/80">{t("car.mileage")}</span>
         </div>
         <div className="flex items-baseline gap-1">
-          <p className="text-2xl font-bold text-white">{mileage?.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-white">{mileage?.toLocaleString("ru-RU")}</p>
           <p className="text-white/70 text-sm">{t("common.km")}</p>
         </div>
         <p className="text-white/60 text-xs mt-1">{t("car.mileageNote")}</p>

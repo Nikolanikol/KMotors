@@ -26,7 +26,6 @@ function shouldTrack(request: NextRequest): boolean {
   const adminSession = request.cookies.get("admin_session");
   if (adminSession?.value) return false;
   const ip =
-    request.headers.get("x-vercel-forwarded-for") ||
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "";
   if (EXCLUDED_IPS.includes(ip)) return false;
@@ -63,7 +62,19 @@ function isExcluded(path: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const ua = request.headers.get("user-agent") || "";
+
+  // --- Блокируем Electron-ботов/скраперов ---
+  if (/electron/i.test(ua)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
   const path = request.nextUrl.pathname;
+
+  // --- 410 для старых Encar CDN путей (проиндексированных Google по ошибке) ---
+  if (/^\/carpicture\d/.test(path)) {
+    return new NextResponse(null, { status: 410 });
+  }
 
   // --- Защита /admin ---
   if (path.startsWith("/admin")) {
@@ -116,7 +127,7 @@ export async function middleware(request: NextRequest) {
     // Страна пользователя — от Cloudflare (cf-ipcountry) или Vercel fallback
     const country =
       request.headers.get("cf-ipcountry") ||
-      request.headers.get("x-vercel-ip-country") ||
+      request.headers.get("x-country") ||
       "";
     response.cookies.set("x-user-country", country, {
       path: "/",
@@ -129,7 +140,7 @@ export async function middleware(request: NextRequest) {
       const referrer = request.headers.get("referer") || "";
       const origin = request.nextUrl.origin;
       // Страна — бесплатный заголовок Vercel, на localhost будет пустым
-      const country = request.headers.get("x-vercel-ip-country") || "";
+      const country = request.headers.get("cf-ipcountry") || request.headers.get("x-country") || "";
       // Устройство — определяем по User-Agent
       const ua = request.headers.get("user-agent") || "";
       const device = /mobile|android|iphone|ipad|ipod/i.test(ua)
