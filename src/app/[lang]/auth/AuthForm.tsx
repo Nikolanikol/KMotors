@@ -162,7 +162,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         }
         setSuccess(l.successRegister);
         await supabase.auth.signInWithPassword({ email, password });
-        router.push(`/${lang}/account`);
+        router.push(redirectTo);
         router.refresh();
       }
     } finally {

@@ -129,8 +129,8 @@ const STATUS: Record<string, { ru: string; en: string; color: string }> = {
 };
 
 const SHIP_LABEL: Record<string, { ru: string; en: string }> = {
-  ems:         { ru: "EMS Корейская почта", en: "EMS Korea Post" },
-  ems_premium: { ru: "EMS Premium (DHL/FedEx)", en: "EMS Premium (DHL/FedEx)" },
+  ems:         { ru: "EMS Korea", en: "EMS Korea" },
+  ems_premium: { ru: "EMS Korea", en: "EMS Korea" },
   sea:         { ru: "Морская доставка", en: "Sea freight" },
 };
 

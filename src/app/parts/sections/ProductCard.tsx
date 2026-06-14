@@ -11,6 +11,9 @@ import type { Product } from "./PartsCatalogClient";
 const CART_LABELS: Record<string, string> = {
   ru: "В корзину", en: "Add to cart", ko: "장바구니", ka: "კალათაში", ar: "للسلة",
 };
+const IN_CART_LABELS: Record<string, string> = {
+  ru: "В корзине", en: "In cart", ko: "담김", ka: "კალათაში", ar: "في السلة",
+};
 
 interface ProductCardProps {
   product: Product;
@@ -25,15 +28,17 @@ interface ProductCardProps {
   lang: string;
   t: (key: string) => string;
   krwToUsd: number;
+  inCart?: boolean;
 }
 
-export function ProductCard({ product, productName, view, isVisible, index, href, onAddToCart, onQuickView, onNavigate, lang, t, krwToUsd }: ProductCardProps) {
+export function ProductCard({ product, productName, view, isVisible, index, href, onAddToCart, onQuickView, onNavigate, lang, t, krwToUsd, inCart }: ProductCardProps) {
   const delay = `${Math.min(index * 20, 400)}ms`;
   const [cartAdded, setCartAdded] = useState(false);
 
   const handleCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (inCart) return;
     const added = await onAddToCart();
     if (added) {
       setCartAdded(true);
@@ -41,11 +46,13 @@ export function ProductCard({ product, productName, view, isVisible, index, href
     }
   };
 
-  const cartLabel = CART_LABELS[lang] ?? CART_LABELS.ru;
+  const isInCart = inCart || cartAdded;
+  const cartLabel = isInCart ? (IN_CART_LABELS[lang] ?? IN_CART_LABELS.ru) : (CART_LABELS[lang] ?? CART_LABELS.ru);
 
   if (view === "list") {
     return (
       <div
+        id={`product-${product.id}`}
         className={cn("bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-4 p-4", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
         style={{ transitionDelay: delay }}
       >
@@ -63,10 +70,10 @@ export function ProductCard({ product, productName, view, isVisible, index, href
           <Button
             size="sm"
             onClick={handleCart}
-            className={`text-white text-xs h-8 flex items-center gap-1.5 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500" : "bg-[var(--pn-orange)] hover:brightness-110"}`}
+            className={`text-white text-xs h-8 flex items-center gap-1.5 transition-all ${isInCart ? "bg-green-500 hover:bg-green-500 cursor-default" : "bg-[var(--pn-orange)] hover:brightness-110"}`}
           >
-            {cartAdded ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
-            {cartAdded ? "✓" : cartLabel}
+            {isInCart ? <Check className="w-3 h-3" /> : <ShoppingCart className="w-3 h-3" />}
+            {cartLabel}
           </Button>
         </div>
       </div>
@@ -75,6 +82,7 @@ export function ProductCard({ product, productName, view, isVisible, index, href
 
   return (
     <div
+      id={`product-${product.id}`}
       className={cn("bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group flex flex-col", isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4")}
       style={{ transitionDelay: delay }}
     >
@@ -112,9 +120,10 @@ export function ProductCard({ product, productName, view, isVisible, index, href
           <Button
             size="sm"
             onClick={handleCart}
-            className={`h-8 w-8 p-0 rounded-full text-white transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500" : "bg-[var(--pn-orange)] hover:brightness-110"}`}
+            className={`h-8 w-8 p-0 rounded-full text-white transition-all ${isInCart ? "bg-green-500 hover:bg-green-500 cursor-default" : "bg-[var(--pn-orange)] hover:brightness-110"}`}
+            title={cartLabel}
           >
-            {cartAdded ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
+            {isInCart ? <Check className="w-3.5 h-3.5" /> : <ShoppingCart className="w-3.5 h-3.5" />}
           </Button>
         </div>
       </div>

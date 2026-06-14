@@ -40,11 +40,11 @@ const FALLBACK_KRW_TO_USD = 0.00066; // June 2026
 const usdFmt = new Intl.NumberFormat("en-US");
 
 const L: Record<string, Record<string, string>> = {
-  ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", total: "Итого", checkout: "Оформить заказ", remove: "Удалить", loading: "Загрузка...", air: "Авиадоставка", sea: "Морская доставка", weight: "расч. вес", kg: "кг", shipTo: "Доставка в", change: "изменить", subtotal: "Товары", shipping: "Доставка", seaTbd: "уточнит менеджер", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 дн.", daysEmsp: "5–10 дн.", selectCountry: "Выберите страну" },
-  en: { title: "Cart", empty: "Cart is empty", emptyDesc: "Add parts from the catalog", toCatalog: "Go to catalog", total: "Total", checkout: "Checkout", remove: "Remove", loading: "Loading...", air: "Air Shipping", sea: "Sea Freight", weight: "billed wt.", kg: "kg", shipTo: "Ship to", change: "change", subtotal: "Items", shipping: "Shipping", seaTbd: "TBD by manager", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 days", daysEmsp: "5–10 days", selectCountry: "Select country" },
-  ko: { title: "장바구니", empty: "장바구니가 비어있습니다", emptyDesc: "카탈로그에서 부품을 추가하세요", toCatalog: "카탈로그로 이동", total: "합계", checkout: "주문하기", remove: "삭제", loading: "로딩 중...", air: "항공 배송", sea: "해상 배송", weight: "청구 중량", kg: "kg", shipTo: "배송지", change: "변경", subtotal: "상품", shipping: "배송비", seaTbd: "담당자 확인", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20일", daysEmsp: "5–10일", selectCountry: "국가 선택" },
-  ka: { title: "კალათა", empty: "კალათა ცარიელია", emptyDesc: "დაამატეთ ნაწილები კატალოგიდან", toCatalog: "კატალოგში გადასვლა", total: "სულ", checkout: "შეკვეთა", remove: "წაშლა", loading: "იტვირთება...", air: "საჰაერო მიტანა", sea: "საზღვაო მიტანა", weight: "ანგარიშ. წონა", kg: "კგ", shipTo: "მიტანა", change: "შეცვლა", subtotal: "საქონელი", shipping: "მიტანა", seaTbd: "მენეჯერი", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 დღე", daysEmsp: "5–10 დღე", selectCountry: "ქვეყანა" },
-  ar: { title: "السلة", empty: "السلة فارغة", emptyDesc: "أضف قطعًا من الكتالوج", toCatalog: "الذهاب إلى الكتالوج", total: "الإجمالي", checkout: "إتمام الطلب", remove: "حذف", loading: "جارٍ التحميل...", air: "الشحن الجوي", sea: "الشحن البحري", weight: "الوزن المحسوب", kg: "كغ", shipTo: "الشحن إلى", change: "تغيير", subtotal: "المنتجات", shipping: "الشحن", seaTbd: "يحدده المدير", ems: "EMS", emsp: "EMS Premium", daysEms: "10–20 يوم", daysEmsp: "5–10 أيام", selectCountry: "اختر الدولة" },
+  ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", total: "Итого", checkout: "Оформить заказ", remove: "Удалить", loading: "Загрузка...", air: "EMS Korea", sea: "Морская доставка", weight: "расч. вес", kg: "кг", shipTo: "Доставка в", change: "изменить", subtotal: "Товары", shipping: "Доставка", seaTbd: "уточнит менеджер", ems: "EMS Korea", emsp: "EMS Korea", daysEms: "10–20 дн.", daysEmsp: "5–10 дн.", selectCountry: "Выберите страну" },
+  en: { title: "Cart", empty: "Cart is empty", emptyDesc: "Add parts from the catalog", toCatalog: "Go to catalog", total: "Total", checkout: "Checkout", remove: "Remove", loading: "Loading...", air: "EMS Korea", sea: "Sea Freight", weight: "billed wt.", kg: "kg", shipTo: "Ship to", change: "change", subtotal: "Items", shipping: "Shipping", seaTbd: "TBD by manager", ems: "EMS Korea", emsp: "EMS Korea", daysEms: "10–20 days", daysEmsp: "5–10 days", selectCountry: "Select country" },
+  ko: { title: "장바구니", empty: "장바구니가 비어있습니다", emptyDesc: "카탈로그에서 부품을 추가하세요", toCatalog: "카탈로그로 이동", total: "합계", checkout: "주문하기", remove: "삭제", loading: "로딩 중...", air: "EMS Korea", sea: "해상 배송", weight: "청구 중량", kg: "kg", shipTo: "배송지", change: "변경", subtotal: "상품", shipping: "배송비", seaTbd: "담당자 확인", ems: "EMS Korea", emsp: "EMS Korea", daysEms: "10–20일", daysEmsp: "5–10일", selectCountry: "국가 선택" },
+  ka: { title: "კალათა", empty: "კალათა ცარიელია", emptyDesc: "დაამატეთ ნაწილები კატალოგიდან", toCatalog: "კატალოგში გადასვლა", total: "სულ", checkout: "შეკვეთა", remove: "წაშლა", loading: "იტვირთება...", air: "EMS Korea", sea: "საზღვაო მიტანა", weight: "ანგარიშ. წონა", kg: "კგ", shipTo: "მიტანა", change: "შეცვლა", subtotal: "საქონელი", shipping: "მიტანა", seaTbd: "მენეჯერი", ems: "EMS Korea", emsp: "EMS Korea", daysEms: "10–20 დღე", daysEmsp: "5–10 დღე", selectCountry: "ქვეყანა" },
+  ar: { title: "السلة", empty: "السلة فارغة", emptyDesc: "أضف قطعًا من الكتالوج", toCatalog: "الذهاب إلى الكتالوج", total: "الإجمالي", checkout: "إتمام الطلب", remove: "حذف", loading: "جارٍ التحميل...", air: "EMS Korea", sea: "الشحن البحري", weight: "الوزن المحسوب", kg: "كغ", shipTo: "الشحن إلى", change: "تغيير", subtotal: "المنتجات", shipping: "الشحن", seaTbd: "يحدده المدير", ems: "EMS Korea", emsp: "EMS Korea", daysEms: "10–20 يوم", daysEmsp: "5–10 أيام", selectCountry: "اختر الدولة" },
 };
 
 export default function CartTab({ lang, userId, profileCountry }: Props) {
@@ -127,16 +127,18 @@ export default function CartTab({ lang, userId, profileCountry }: Props) {
   useEffect(() => { fetchCart(); }, [userId]);
 
   const removeItem = async (cartItemId: string) => {
+    const removed = items.find(i => i.cart_item_id === cartItemId);
     await supabase.from("cart_items").delete().eq("id", cartItemId);
     setItems(prev => prev.filter(i => i.cart_item_id !== cartItemId));
-    notifyCartUpdate();
+    notifyCartUpdate(-(removed?.quantity ?? 0));
   };
 
   const updateQty = async (cartItemId: string, qty: number) => {
     if (qty < 1) return;
+    const prev = items.find(i => i.cart_item_id === cartItemId);
     await supabase.from("cart_items").update({ quantity: qty }).eq("id", cartItemId);
-    setItems(prev => prev.map(i => i.cart_item_id === cartItemId ? { ...i, quantity: qty } : i));
-    notifyCartUpdate();
+    setItems(p => p.map(i => i.cart_item_id === cartItemId ? { ...i, quantity: qty } : i));
+    notifyCartUpdate(qty - (prev?.quantity ?? 0));
   };
 
   const [shipCountry, setShipCountry] = useState(profileCountry ?? "");
@@ -225,7 +227,7 @@ export default function CartTab({ lang, userId, profileCountry }: Props) {
             {item.ship_method === "SEA" || item.ship_method === "CLARIFY"
               ? <Ship className="w-2.5 h-2.5" />
               : <Plane className="w-2.5 h-2.5" />}
-            {item.ship_method === "EMS" ? "EMS" : item.ship_method === "EMS_PREMIUM" ? "EMS+" : "SEA"}
+            {item.ship_method === "EMS" || item.ship_method === "EMS_PREMIUM" ? "EMS" : "SEA"}
           </span>
         </div>
         <p className="text-sm font-bold text-[#BB162B] mt-1">

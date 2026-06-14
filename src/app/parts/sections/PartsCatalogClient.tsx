@@ -26,6 +26,7 @@ import { clarityEvent } from "@/utils/clarity";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { PRICE_MARKUP } from "@/lib/pricing";
+import { notifyCartUpdate, useCartProductIds } from "@/hooks/useCartCount";
 import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
 import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
@@ -105,12 +106,14 @@ function pendingReducer(state: PendingFilters, action: PendingAction): PendingFi
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getPageNumbers(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (total <= 10) return Array.from({ length: total }, (_, i) => i + 1);
   const show = new Set<number>([1, total, current]);
-  if (current > 1) show.add(current - 1);
-  if (current < total) show.add(current + 1);
-  if (current > 2) show.add(current - 2);
-  if (current < total - 1) show.add(current + 2);
+  for (let d = 1; d <= 3; d++) {
+    if (current - d >= 1) show.add(current - d);
+    if (current + d <= total) show.add(current + d);
+  }
+  if (current <= 5) for (let i = 2; i <= 8; i++) show.add(i);
+  if (current >= total - 4) for (let i = total - 7; i < total; i++) if (i > 0) show.add(i);
   const sorted = Array.from(show).sort((a, b) => a - b);
   const result: (number | "…")[] = [];
   let prev = 0;
@@ -170,11 +173,14 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
   const lang = pathname.split("/")[1] || "ru";
   const { user } = useAuth();
   const supabase = useMemo(() => createClient(), []);
+  const { cartProductIds, addOptimistic } = useCartProductIds();
 
   // ── Cart ──────────────────────────────────────────────────────────────────
   const handleAddToCart = useCallback(async (product: Product): Promise<boolean> => {
     if (!user) {
-      router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
+      const returnUrl = `/${lang}/parts${window.location.search}`;
+      sessionStorage.setItem("parts:pendingCartProduct", String(product.id));
+      router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
       return false;
     }
     try {
@@ -194,12 +200,14 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
         { onConflict: "cart_id,product_id" }
       );
       if (upsertErr) throw upsertErr;
+      addOptimistic(product.id);
+      notifyCartUpdate(1);
       return true;
     } catch (err) {
       console.error("Add to cart failed:", err);
       return false;
     }
-  }, [user, supabase, router, lang]);
+  }, [user, supabase, router, lang, addOptimistic]);
 
   // ── Fade-in observer ──────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -417,6 +425,18 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brandsParam, brandParam, catsParam, catParam, subSlug, searchQ, priceMin, priceMax, sort, apiPage]);
+
+  // ── Scroll to product after auth redirect ─────────────────────────────────
+  useEffect(() => {
+    if (isLoading || products.length === 0) return;
+    const pendingId = sessionStorage.getItem("parts:pendingCartProduct");
+    if (!pendingId) return;
+    sessionStorage.removeItem("parts:pendingCartProduct");
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`product-${pendingId}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [isLoading, products]);
 
   // ── Derived UI state ──────────────────────────────────────────────────────
   const sortedBrands = useMemo(
@@ -715,6 +735,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
                         lang={lang}
                         t={t}
                         krwToUsd={krwToUsd}
+                        inCart={cartProductIds.has(product.id)}
                       />
                     );
                   })}
@@ -761,6 +782,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
         onClose={() => setQuickViewProduct(null)}
         krwToUsd={krwToUsd}
         lang={lang}
+        inCart={!!quickViewProduct && cartProductIds.has(quickViewProduct.id)}
       />
     </section>
   );

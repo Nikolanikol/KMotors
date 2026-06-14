@@ -20,7 +20,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { formatUsd } from "@/lib/pricing";
 import { ShoppingCart } from "lucide-react";
-import { notifyCartUpdate } from "@/hooks/useCartCount";
+import { notifyCartUpdate, useCartProductIds } from "@/hooks/useCartCount";
 import {
   calcEmsUsd,
   calcEmspUsd,
@@ -114,17 +114,23 @@ export function ProductDetailClient({
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
+  const { cartProductIds, addOptimistic } = useCartProductIds();
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [cartAdded, setCartAdded] = useState(false);
   const [cartError, setCartError] = useState("");
   const [qty, setQty] = useState(1);
   const [backSearch, setBackSearch] = useState("");
-  useScrollDepth(`part_${product.partNumber}`);
+  const [profileCountry, setProfileCountry] = useState("");
+  useScrollDepth(`part_${product.part_number}`);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("parts:filters");
     if (saved) setBackSearch(saved);
+    if (user) {
+      supabase.from("profiles").select("country").eq("id", user.id).single()
+        .then(({ data }) => { if (data?.country) setProfileCountry(data.country); });
+    }
     // Track product view
     trackEvent("view_item", {
       item_id: String(product.id),
@@ -170,7 +176,8 @@ export function ProductDetailClient({
 
   const handleAddToCart = async () => {
     if (!user) {
-      router.push(`/${lang}/auth?mode=login&from=/${lang}/parts`);
+      const returnUrl = window.location.pathname;
+      router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
       return;
     }
     setCartError("");
@@ -189,7 +196,8 @@ export function ProductDetailClient({
         { onConflict: "cart_id,product_id" }
       );
       if (upsertErr) throw upsertErr;
-      notifyCartUpdate();
+      addOptimistic(product.id);
+      notifyCartUpdate(qty);
       setCartAdded(true);
       setTimeout(() => setCartAdded(false), 2500);
     } catch (err: unknown) {
@@ -349,7 +357,7 @@ export function ProductDetailClient({
 
             {/* Shipping method badge + calculator */}
             <div className="mb-6">
-              <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} />
+              <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} profileCountry={profileCountry} />
             </div>
 
             {/* Quantity + Add to cart */}
@@ -372,16 +380,19 @@ export function ProductDetailClient({
               <Button
                 onClick={handleAddToCart}
                 size="lg"
+                disabled={cartProductIds.has(product.id)}
                 className={`h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all ${
-                  cartAdded
+                  cartAdded || cartProductIds.has(product.id)
                     ? "bg-green-500 hover:bg-green-500 text-white"
                     : cartError
                     ? "bg-red-500 hover:bg-red-600 text-white"
                     : "bg-[#BB162B] hover:bg-[#9a1122] text-white"
                 }`}
               >
-                <ShoppingCart className="w-5 h-5" />
-                {cartAdded ? "✓ Добавлено" : t("parts.detail.addToCart")}
+                {cartAdded || cartProductIds.has(product.id)
+                  ? <><Check className="w-5 h-5" />{cartAdded ? "✓ Добавлено" : t("parts.products.inCart")}</>
+                  : <><ShoppingCart className="w-5 h-5" />{t("parts.detail.addToCart")}</>
+                }
               </Button>
             </div>
             {cartError && (
@@ -478,10 +489,13 @@ export function ProductDetailClient({
           <Button
             onClick={handleAddToCart}
             size="lg"
-            className={`font-semibold shrink-0 h-12 px-8 flex items-center gap-2 transition-all ${cartAdded ? "bg-green-500 hover:bg-green-500 text-white" : "bg-[#BB162B] hover:bg-[#9B1220] text-white"}`}
+            disabled={cartProductIds.has(product.id)}
+            className={`font-semibold shrink-0 h-12 px-8 flex items-center gap-2 transition-all ${cartAdded || cartProductIds.has(product.id) ? "bg-green-500 hover:bg-green-500 text-white" : "bg-[#BB162B] hover:bg-[#9B1220] text-white"}`}
           >
-            <ShoppingCart className="w-4 h-4" />
-            {cartAdded ? "✓" : t("parts.detail.addToCart")}
+            {cartAdded || cartProductIds.has(product.id)
+              ? <><Check className="w-4 h-4" />{"✓"}</>
+              : <><ShoppingCart className="w-4 h-4" />{t("parts.detail.addToCart")}</>
+            }
           </Button>
         </div>
       </div>
@@ -518,7 +532,7 @@ function BrandDot({ slug }: { slug: string }) {
 
 const SHIP_CONFIG = {
   EMS: {
-    label: { ru: "Авиа EMS", en: "Air EMS" },
+    label: { ru: "EMS Korea", en: "EMS Korea" },
     sublabel: { ru: "≤ 30 кг", en: "≤ 30 kg" },
     bg: "bg-green-50",
     border: "border-green-200",
@@ -526,7 +540,7 @@ const SHIP_CONFIG = {
     dot: "bg-green-500",
   },
   EMS_PREMIUM: {
-    label: { ru: "Авиа EMS Premium", en: "Air EMS Premium" },
+    label: { ru: "EMS Korea", en: "EMS Korea" },
     sublabel: { ru: "≤ 70 кг", en: "≤ 70 kg" },
     bg: "bg-blue-50",
     border: "border-blue-200",
@@ -547,14 +561,20 @@ function ShippingBadge({
   logistics,
   lang,
   krwToUsd,
+  profileCountry,
 }: {
   logistics: ProductLogistics | null;
   lang: string;
   krwToUsd: number;
+  profileCountry?: string;
 }) {
   const { t } = useTranslation();
   const isRu = lang === "ru";
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState(profileCountry || "");
+
+  useEffect(() => {
+    if (profileCountry && !country) setCountry(profileCountry);
+  }, [profileCountry]);
 
   if (!logistics?.ship_method) {
     return (
@@ -591,7 +611,7 @@ function ShippingBadge({
     ?? (logistics.ship_method === "EMS" ? emsPackedKg : emspBilledKg);
 
   const emsPrice =
-    country && emsPackedKg !== null && logistics.ship_method === "EMS"
+    country && emsPackedKg !== null
       ? calcEmsUsd(country, emsPackedKg, krwToUsd)
       : null;
 
@@ -599,6 +619,10 @@ function ShippingBadge({
     country && emspBilledKg !== null
       ? calcEmspUsd(country, emspBilledKg, krwToUsd)
       : null;
+
+  const bestPrice = emsPrice !== null && emspPrice !== null
+    ? Math.min(emsPrice, emspPrice)
+    : emsPrice ?? emspPrice;
 
   const countryName = (code: string) =>
     isRu
@@ -642,21 +666,12 @@ function ShippingBadge({
 
           {country && (
             <div className="space-y-1.5">
-              {/* EMS Standard row */}
-              {emsPrice !== null && (
+              {bestPrice !== null ? (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">EMS Standard</span>
-                  <span className="text-sm font-bold text-green-700">~${emsPrice}</span>
+                  <span className="text-xs text-gray-500">EMS Korea</span>
+                  <span className="text-sm font-bold text-green-700">~${bestPrice}</span>
                 </div>
-              )}
-              {/* EMS Premium row */}
-              {emspPrice !== null && (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">EMS Premium</span>
-                  <span className="text-sm font-bold text-blue-700">~${emspPrice}</span>
-                </div>
-              )}
-              {emsPrice === null && emspPrice === null && (
+              ) : (
                 <p className="text-xs text-red-500">
                   {t("parts.detail.shippingCalcUnavailable")}
                 </p>
