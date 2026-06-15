@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Search,
+  Loader2,
   LayoutGrid,
   List,
   X,
@@ -582,19 +583,23 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
 
         {/* Search bar */}
         <div className={`relative mb-6 max-w-2xl mx-auto transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-deep-navy)]/50 pointer-events-none" />
+          {isLoading && searchQ ? (
+            <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-orange)] animate-spin pointer-events-none" />
+          ) : (
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-deep-navy)]/50 pointer-events-none" />
+          )}
           <Input
+            type="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t("parts.catalog.filterSearchPlaceholder")}
-            className="pl-12 h-13 text-base text-gray-900 placeholder:text-gray-400 border-2 border-[var(--pn-deep-navy)]/20 focus-visible:border-[var(--pn-deep-navy)] focus-visible:ring-[var(--pn-deep-navy)]/20 focus-visible:ring-2 rounded-xl bg-[var(--pn-deep-navy)]/[0.02] shadow-none"
-            style={{ height: "52px" }}
+            className="pl-12 h-11 sm:h-[52px] text-sm sm:text-base text-gray-900 placeholder:text-gray-400 border-2 border-[var(--pn-deep-navy)]/20 focus-visible:border-[var(--pn-deep-navy)] focus-visible:ring-[var(--pn-deep-navy)]/20 focus-visible:ring-2 rounded-xl bg-[var(--pn-deep-navy)]/[0.02] shadow-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           />
           {searchInput && (
             <button
               type="button"
               onClick={() => { setSearchInput(""); setSearchQ(""); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
