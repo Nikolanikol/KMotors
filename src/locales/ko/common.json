@@ -7,7 +7,8 @@
     "parts": "부품",
     "blog": "블로그",
     "calculator": "관세 계산기",
-    "favorites": "즐겨찾기"
+    "favorites": "즐겨찾기",
+    "about": "소개"
   },
   "catalog": {
     "title": "한국 자동차 카탈로그",
@@ -321,7 +322,7 @@
       "subtitle": "한국에서 직접 배송되는 Hyundai, Kia, Genesis 정품 부품",
       "filterPrice": "가격",
       "filterSearch": "부품 번호",
-      "filterSearchPlaceholder": "예: 26300-35505",
+      "filterSearchPlaceholder": "부품번호 또는 이름, 예: 26300-35505",
       "filterModelPlaceholder": "모델 선택",
       "filtersTitle": "필터",
       "filterBrand": "브랜드",

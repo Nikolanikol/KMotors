@@ -7,7 +7,8 @@
     "parts": "قطع الغيار",
     "blog": "المدونة",
     "calculator": "الآلة الحاسبة",
-    "favorites": "المفضلة"
+    "favorites": "المفضلة",
+    "about": "عنّا"
   },
   "catalog": {
     "title": "كتالوج السيارات الكورية",
@@ -321,7 +322,7 @@
       "subtitle": "قطع غيار أصلية لـ Hyundai وKia وGenesis شحن مباشر من كوريا",
       "filterPrice": "السعر",
       "filterSearch": "رقم القطعة",
-      "filterSearchPlaceholder": "مثال: 26300-35505",
+      "filterSearchPlaceholder": "رقم القطعة أو الاسم، مثال: 26300-35505",
       "filterModelPlaceholder": "اختر الموديل",
       "filtersTitle": "الفلاتر",
       "filterBrand": "العلامة التجارية",

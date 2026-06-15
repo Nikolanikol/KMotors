@@ -7,7 +7,8 @@
     "parts": "Parts",
     "blog": "Blog",
     "calculator": "Calculator",
-    "favorites": "Favorites"
+    "favorites": "Favorites",
+    "about": "About"
   },
   "catalog": {
     "title": "Korean Cars Catalog",
@@ -321,7 +322,7 @@
       "subtitle": "Genuine Hyundai, Kia and Genesis parts shipped directly from Korea",
       "filterPrice": "Price",
       "filterSearch": "Part number",
-      "filterSearchPlaceholder": "E.g. 26300-35505",
+      "filterSearchPlaceholder": "Part number or name, e.g. 26300-35505",
       "filterModelPlaceholder": "Select model",
       "filtersTitle": "Filters",
       "filterBrand": "Brand",

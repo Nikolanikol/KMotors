@@ -7,7 +7,8 @@
     "parts": "სათადარიგო ნაწილები",
     "blog": "ბლოგი",
     "calculator": "კალკულატორი",
-    "favorites": "რჩეულები"
+    "favorites": "რჩეულები",
+    "about": "ჩვენ შესახებ"
   },
   "catalog": {
     "title": "კორეული ავტომობილების კატალოგი",
@@ -321,7 +322,7 @@
       "subtitle": "Hyundai, Kia და Genesis ორიგინალი ნაწილები პირდაპირ კორეიდან",
       "filterPrice": "ფასი",
       "filterSearch": "საქონლის ნომერი",
-      "filterSearchPlaceholder": "მაგ: 26300-35505",
+      "filterSearchPlaceholder": "ნაწილის ნომერი ან სახელი, მაგ: 26300-35505",
       "filterModelPlaceholder": "აირჩიეთ მოდელი",
       "filtersTitle": "ფილტრები",
       "filterBrand": "მარკა",

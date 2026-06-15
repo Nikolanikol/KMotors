@@ -7,7 +7,8 @@
     "parts": "Запчасти",
     "blog": "Блог",
     "calculator": "Калькулятор",
-    "favorites": "Избранное"
+    "favorites": "Избранное",
+    "about": "О нас"
   },
   "catalog": {
     "title": "Каталог корейских автомобилей",
@@ -325,7 +326,7 @@
       "subtitle": "Оригинальные запчасти Hyundai, Kia и Genesis с прямой поставкой из Кореи",
       "filterPrice": "Цена",
       "filterSearch": "Артикул",
-      "filterSearchPlaceholder": "Например: 26300-35505",
+      "filterSearchPlaceholder": "Артикул или название, напр. 26300-35505",
       "filterModelPlaceholder": "Выберите модель",
       "filtersTitle": "Фильтры",
       "filterBrand": "Марка",

@@ -51,6 +51,7 @@ export default function Footer() {
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },
+    { href: `/${lang}/about`, labelKey: "nav.about" },
     { href: `/${lang}/contact`, labelKey: "nav.contact" },
   ];
 
