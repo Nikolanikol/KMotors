@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
-import { Package, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, Loader2, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { krwToDisplayUsd } from "@/lib/pricing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -31,6 +31,8 @@ interface Order {
   exchange_rate: number;
   total_usd: number;
   payment_status: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
   created_at: string;
   items?: OrderItem[];
 }
@@ -56,6 +58,7 @@ const L: Record<string, Record<string, string>> = {
     showItems: "Показать состав",
     hideItems: "Скрыть состав",
     qty: "×",
+    tracking: "Трек-номер",
   },
   en: {
     title: "Order History",
@@ -70,6 +73,7 @@ const L: Record<string, Record<string, string>> = {
     showItems: "Show items",
     hideItems: "Hide items",
     qty: "×",
+    tracking: "Tracking",
   },
   ko: {
     title: "주문 내역",
@@ -84,6 +88,7 @@ const L: Record<string, Record<string, string>> = {
     showItems: "주문 내역 보기",
     hideItems: "주문 내역 숨기기",
     qty: "×",
+    tracking: "운송장번호",
   },
   ka: {
     title: "შეკვეთების ისტორია",
@@ -98,6 +103,7 @@ const L: Record<string, Record<string, string>> = {
     showItems: "შემადგენლობა",
     hideItems: "დამალვა",
     qty: "×",
+    tracking: "თვალთვალის ნომერი",
   },
   ar: {
     title: "سجل الطلبات",
@@ -112,6 +118,7 @@ const L: Record<string, Record<string, string>> = {
     showItems: "عرض العناصر",
     hideItems: "إخفاء العناصر",
     qty: "×",
+    tracking: "رقم التتبع",
   },
 };
 
@@ -166,7 +173,7 @@ export default function OrdersTab({ lang, userId }: Props) {
 
     const { data: ordersData } = await supabase
       .from("orders")
-      .select("id, order_number, status, subtotal_krw, shipping_method, shipping_country, shipping_cost_usd, exchange_rate, total_usd, payment_status, created_at")
+      .select("id, order_number, status, subtotal_krw, shipping_method, shipping_country, shipping_cost_usd, exchange_rate, total_usd, payment_status, tracking_number, tracking_url, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -263,6 +270,17 @@ export default function OrdersTab({ lang, userId }: Props) {
                 <p className="text-xs text-gray-400 mt-0.5">
                   {formatDate(order.created_at)} · {shipLabel(order.shipping_method)} · {order.shipping_country}
                 </p>
+                {order.tracking_number && (
+                  <a
+                    href={order.tracking_url || `https://service.epost.go.kr/trace.RetrieveEmsRigiTraceList.comm?POST_CODE=${order.tracking_number}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    {l.tracking}: {order.tracking_number}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </div>
 
               <div className="flex items-center gap-4 shrink-0">
