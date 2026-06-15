@@ -5,6 +5,7 @@ import { getCars } from "@/components/Catalog/Row/utils/service";
 import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 import { Metadata } from "next";
 import { Suspense } from "react";
+import { makeAlternates } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -64,7 +65,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     : meta.description;
 
   const hasFilters = !!(manufacture || yearMin || yearMax || priceMax || sp.page);
-  const canonical = `https://www.kmotors.shop/${lang}/catalog`;
 
   return {
     title,
@@ -73,20 +73,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       title,
       description,
-      url: canonical,
+      url: `https://www.kmotors.shop/${lang}/catalog`,
       images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
-    alternates: {
-      canonical,
-      languages: {
-        ru: "https://www.kmotors.shop/ru/catalog",
-        en: "https://www.kmotors.shop/en/catalog",
-        ko: "https://www.kmotors.shop/ko/catalog",
-        ka: "https://www.kmotors.shop/ka/catalog",
-        ar: "https://www.kmotors.shop/ar/catalog",
-        "x-default": "https://www.kmotors.shop/ru/catalog",
-      },
-    },
+    alternates: makeAlternates(lang, "/catalog"),
   };
 }
 

@@ -72,8 +72,8 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // --- 410 для старых Encar CDN путей (проиндексированных Google по ошибке) ---
-  if (/^\/carpicture\d/.test(path)) {
+  // --- 410 для мусорных путей (проиндексированных Google по ошибке) ---
+  if (/^\/carpicture\d/.test(path) || path.startsWith("/cdn-cgi/")) {
     return new NextResponse(null, { status: 410 });
   }
 

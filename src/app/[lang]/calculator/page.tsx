@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import CalculatorPage from "@/components/Calculator/CalculatorPage";
+import { makeAlternates } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ lang: string }>;
@@ -58,17 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: meta.description,
       images: ["https://www.kmotors.shop/preview/preview.png"],
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/calculator`,
-      languages: {
-        ru: "https://www.kmotors.shop/ru/calculator",
-        en: "https://www.kmotors.shop/en/calculator",
-        ko: "https://www.kmotors.shop/ko/calculator",
-        ka: "https://www.kmotors.shop/ka/calculator",
-        ar: "https://www.kmotors.shop/ar/calculator",
-        "x-default": "https://www.kmotors.shop/ru/calculator",
-      },
-    },
+    alternates: makeAlternates(lang, "/calculator"),
   };
 }
 

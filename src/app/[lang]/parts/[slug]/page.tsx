@@ -4,12 +4,13 @@ import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
-import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
+import { parsePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
   CompatibleBrand,
   ProductLogistics,
 } from "@/app/parts/sections/ProductDetailClient";
+import { makeAlternates } from "@/lib/seo";
 
 // Страницы продуктов рендерятся по требованию и кэшируются навсегда.
 // generateStaticParams убран: 50k × 5 langs = 250k страниц при сборке — неприемлемо.
@@ -238,15 +239,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { title, description } = buildMeta(lang, p);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
-  // Генерируем правильный slug для каждого языка
-  const ru = p.name_ru || p.name_en || p.name_ko;
-  const en = p.name_en || p.name_ru || p.name_ko;
-  const ko = p.name_ko || p.name_en || p.name_ru;
-
-  const slugRu = generatePartSlug(p.part_number, ru, "ru", p.id);
-  const slugEn = generatePartSlug(p.part_number, en, "en", p.id);
-  const slugKo = generatePartSlug(p.part_number, ko, "ko", p.id);
-
   return {
     title,
     description,
@@ -256,17 +248,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
       url: `${BASE}/${lang}/parts/${slug}`,
     },
-    alternates: {
-      canonical: `${BASE}/${lang}/parts/${slug}`,
-      languages: {
-        ru: `${BASE}/ru/parts/${slugRu}`,
-        en: `${BASE}/en/parts/${slugEn}`,
-        ko: `${BASE}/ko/parts/${slugKo}`,
-        ka: `${BASE}/ka/parts/${slug}`,
-        ar: `${BASE}/ar/parts/${slug}`,
-        "x-default": `${BASE}/ru/parts/${slugRu}`,
-      },
-    },
+    alternates: makeAlternates(lang, `/parts/${slug}`),
   };
 }
 

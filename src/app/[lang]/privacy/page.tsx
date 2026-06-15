@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { makeAlternates } from "@/lib/seo";
 
 const PRIVACY_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -206,9 +207,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: meta.title,
     description: meta.description,
     robots: { index: false },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/privacy`,
-    },
+    alternates: makeAlternates(lang, "/privacy"),
   };
 }
 

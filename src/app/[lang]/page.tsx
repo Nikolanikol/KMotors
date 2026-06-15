@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { cookies } from "next/headers";
 import Main from "@/components/Home/Main";
 import NavCards from "@/components/Home/NavCards";
+import { makeAlternates } from "@/lib/seo";
 
 // Выше fold — SSR для LCP
 import Brands from "@/components/Home/Brands/Brands";
@@ -77,17 +78,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: meta.description,
       images: ["https://www.kmotors.shop/preview/preview.png"],
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/`,
-      languages: {
-        ru: "https://www.kmotors.shop/ru/",
-        en: "https://www.kmotors.shop/en/",
-        ko: "https://www.kmotors.shop/ko/",
-        ka: "https://www.kmotors.shop/ka/",
-        ar: "https://www.kmotors.shop/ar/",
-        "x-default": "https://www.kmotors.shop/ru/",
-      },
-    },
+    alternates: makeAlternates(lang, "/"),
   };
 }
 

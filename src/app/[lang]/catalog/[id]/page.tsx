@@ -8,6 +8,7 @@ import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
+import { makeAlternates } from "@/lib/seo";
 
 // Lazy load — не нужны сразу при загрузке
 const DetailInfo = dynamic(() => import("@/components/Catalog/CarDetail/DetailInfo"));
@@ -68,7 +69,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `Авто из Кореи`,
     description: "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
     openGraph: { title: "Авто из Кореи", description: "Купить автомобиль из Южной Кореи.", type: "website" },
-    alternates: { canonical: `https://www.kmotors.shop/${lang}/catalog/${id}` },
+    alternates: makeAlternates(lang, `/catalog/${id}`),
   };
 
   const carName = [
@@ -136,17 +137,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/catalog/${id}`,
-      languages: {
-        ru: `https://www.kmotors.shop/ru/catalog/${id}`,
-        en: `https://www.kmotors.shop/en/catalog/${id}`,
-        ko: `https://www.kmotors.shop/ko/catalog/${id}`,
-        ka: `https://www.kmotors.shop/ka/catalog/${id}`,
-        ar: `https://www.kmotors.shop/ar/catalog/${id}`,
-        "x-default": `https://www.kmotors.shop/ru/catalog/${id}`,
-      },
-    },
+    alternates: makeAlternates(lang, `/catalog/${id}`),
   };
 }
 

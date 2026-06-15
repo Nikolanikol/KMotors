@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import BuyClientPage from "@/app/buy/BuyClientPage";
+import { makeAlternates } from "@/lib/seo";
 
 const BUY_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -69,17 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `https://www.kmotors.shop/${lang}/buy`,
       images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/buy`,
-      languages: {
-        ru: "https://www.kmotors.shop/ru/buy",
-        en: "https://www.kmotors.shop/en/buy",
-        ko: "https://www.kmotors.shop/ko/buy",
-        ka: "https://www.kmotors.shop/ka/buy",
-        ar: "https://www.kmotors.shop/ar/buy",
-        "x-default": "https://www.kmotors.shop/ru/buy",
-      },
-    },
+    alternates: makeAlternates(lang, "/buy"),
   };
 }
 

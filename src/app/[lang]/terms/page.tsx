@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { makeAlternates } from "@/lib/seo";
 
 const TERMS_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -266,9 +267,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: meta.title,
     description: meta.description,
     robots: { index: true },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/terms`,
-    },
+    alternates: makeAlternates(lang, "/terms"),
   };
 }
 

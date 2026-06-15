@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
+import { makeAlternates } from "@/lib/seo";
 
 export const revalidate = 86400;
 
@@ -37,15 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [{ url: `https://www.kmotors.shop${model.coverImage}`, alt: content.title }],
       type: "website",
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/models/${slug}`,
-      languages: {
-        ...Object.fromEntries(
-          LANGS.map((l) => [l, `https://www.kmotors.shop/${l}/models/${slug}`])
-        ),
-        "x-default": `https://www.kmotors.shop/ru/models/${slug}`,
-      },
-    },
+    alternates: makeAlternates(lang, `/models/${slug}`),
   };
 }
 

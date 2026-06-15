@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ContactClientPage from "@/app/contact/ContactClientPage";
+import { makeAlternates } from "@/lib/seo";
 
 const CONTACT_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -69,17 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `https://www.kmotors.shop/${lang}/contact`,
       images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/contact`,
-      languages: {
-        ru: "https://www.kmotors.shop/ru/contact",
-        en: "https://www.kmotors.shop/en/contact",
-        ko: "https://www.kmotors.shop/ko/contact",
-        ka: "https://www.kmotors.shop/ka/contact",
-        ar: "https://www.kmotors.shop/ar/contact",
-        "x-default": "https://www.kmotors.shop/ru/contact",
-      },
-    },
+    alternates: makeAlternates(lang, "/contact"),
   };
 }
 
