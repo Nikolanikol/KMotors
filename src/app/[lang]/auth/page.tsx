@@ -14,11 +14,11 @@ export default async function AuthPage({ params, searchParams }: Props) {
   // Если уже авторизован — редирект
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirect(`/${lang}/parts`);
+  if (user && mode !== "reset") redirect(`/${lang}/parts`);
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center px-4 py-12">
-      <AuthForm lang={lang} initialMode={mode as "login" | "register"} from={from} />
+      <AuthForm lang={lang} initialMode={mode as "login" | "register" | "reset"} from={from} />
     </div>
   );
 }
