@@ -222,15 +222,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
   // ── Fade-in observer ──────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
-      { threshold: 0.05 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const [isVisible] = useState(true);
 
   // ── URL params (source of truth for what's fetched) ───────────────────────
   const brandsParam = searchParams.get("brands") ?? "";

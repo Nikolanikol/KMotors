@@ -52,6 +52,8 @@ export default async function RootLayout({
         {/* Preconnect — только для ресурсов загружаемых в браузере (не SSR) */}
         <link rel="preconnect" href="https://ci.encar.com" />
         <link rel="dns-prefetch" href="https://ci.encar.com" />
+        {/* SEO: make content visible for bots that don't execute JS */}
+        <noscript><style>{`.opacity-0{opacity:1!important}.translate-y-4,.translate-y-5,.translate-y-7,.translate-y-8,.-translate-x-8,.translate-x-8{transform:none!important}.scale-95{transform:none!important}`}</style></noscript>
         <link rel="manifest" href="/favicon_io/site.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" sizes="192x192" />

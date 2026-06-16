@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { Check, Truck, Shield, Clock, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -11,21 +11,7 @@ const FEATURE_KEYS = ["f0", "f1", "f2", "f3"] as const;
 export function About() {
   const { t } = useTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const [isVisible] = useState(true);
 
   return (
     <section id="about" ref={sectionRef} className="py-24 bg-white">

@@ -1,16 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export function Hero() {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
+  const [visible] = useState(true);
 
   const scrollTo = (id: string) => {
     document.querySelector(`#${id}`)?.scrollIntoView({ behavior: "smooth" });
