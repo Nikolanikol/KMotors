@@ -73,6 +73,10 @@ interface Props {
   categories: Category[];
   brandModelChipsMap: Record<string, ModelChip[]>;
   krwToUsd: number;
+  initialProducts: Product[];
+  initialTotal: number;
+  initialBrandCounts: Record<number, number>;
+  initialCatCounts: Record<number, number>;
 }
 
 // ─── Pending filter reducer ──────────────────────────────────────────────────
@@ -169,7 +173,7 @@ function ProductSkeleton({ view }: { view: "grid" | "list" }) {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
+export function PartsCatalogClient({ brands, categories, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts }: Props) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -361,12 +365,15 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
   }, [drawerOpen]);
 
   // ── Server-fetched state ──────────────────────────────────────────────────
-  const [products, setProducts]       = useState<Product[]>([]);
-  const [total, setTotal]             = useState(0);
-  const [catCounts, setCatCounts]     = useState<Record<number, number>>({});
+  // Use SSR data when URL has no filters (products visible in initial HTML for SEO)
+  const ssrReady = initialProducts.length > 0 && !brandsParam && !brandParam && !catsParam && !catParam && !subSlug && !searchParams.get("q") && !urlMinStr && !urlMaxStr && sort === "default" && apiPage === 1;
+
+  const [products, setProducts]       = useState<Product[]>(ssrReady ? initialProducts : []);
+  const [total, setTotal]             = useState(ssrReady ? initialTotal : 0);
+  const [catCounts, setCatCounts]     = useState<Record<number, number>>(ssrReady ? initialCatCounts : {});
   const [subCounts, setSubCounts]     = useState<Record<number, number>>({});
-  const [brandCounts, setBrandCounts] = useState<Record<number, number>>({});
-  const [isLoading, setIsLoading]     = useState(true);
+  const [brandCounts, setBrandCounts] = useState<Record<number, number>>(ssrReady ? initialBrandCounts : {});
+  const [isLoading, setIsLoading]     = useState(!ssrReady);
 
   type CacheEntry = {
     products: Product[];
@@ -376,7 +383,17 @@ export function PartsCatalogClient({ brands, categories, krwToUsd }: Props) {
     brandCounts: Record<number, number>;
   };
   const MAX_CACHE = 30;
-  const fetchCache = useRef<Map<string, CacheEntry>>(new Map());
+  const fetchCache = useRef<Map<string, CacheEntry>>(new Map(
+    ssrReady
+      ? [[`page=1&limit=${PAGE_SIZE_DESKTOP}`, {
+          products: initialProducts,
+          total: initialTotal,
+          catCounts: initialCatCounts,
+          subCounts: {},
+          brandCounts: initialBrandCounts,
+        }]]
+      : []
+  ));
   const setCacheEntry = (key: string, value: CacheEntry) => {
     if (fetchCache.current.size >= MAX_CACHE) {
       const firstKey = fetchCache.current.keys().next().value;

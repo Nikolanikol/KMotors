@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { PartsCatalogClient } from "./PartsCatalogClient";
-import type { Brand, Category, VehicleModel, ModelChip } from "./PartsCatalogClient";
+import type { Brand, Category, VehicleModel, ModelChip, Product } from "./PartsCatalogClient";
 
 type Fitment = { product_id: number; vehicle_model_id: number };
 
@@ -26,9 +26,8 @@ async function fetchAllRows<T>(
 async function fetchCatalogData() {
   const supabase = createServerClient();
 
-  // Step 1: small tables + model count + exchange rate — all in parallel
-  // Products are NO LONGER fetched here — the API route handles that per request.
-  const [brands, categories, fitment, modelCount, { krwToUsd }] = await Promise.all([
+  // Step 1: small tables + model count + exchange rate + initial products — all in parallel
+  const [brands, categories, fitment, modelCount, { krwToUsd }, initialProducts, initialTotal] = await Promise.all([
     supabase.from("parts_brands").select("id, name, slug").order("name")
       .then((r) => (r.data ?? []) as Brand[]),
 
@@ -51,6 +50,19 @@ async function fetchCatalogData() {
       .then((r) => r.count ?? 0),
 
     getCurrencyRates(),
+
+    // SSR: first page of products for search engine indexing
+    supabase
+      .from("parts_products")
+      .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, is_new")
+      .order("name_ru", { ascending: true })
+      .range(0, 23)
+      .then((r) => (r.data ?? []) as Product[]),
+
+    supabase
+      .from("parts_products")
+      .select("*", { count: "exact", head: true })
+      .then((r) => r.count ?? 0),
   ]);
 
   // Step 2: all vehicle models + brand_id for fitment-linked products only (~230 rows)
@@ -58,7 +70,7 @@ async function fetchCatalogData() {
   // Now we load only the ~230 products that appear in fitment — 200× smaller.
   const fitmentProductIds = [...new Set(fitment.map((f) => f.product_id))];
 
-  const [models, fitmentProductBrands] = await Promise.all([
+  const [models, fitmentProductBrands, brandCountEntries, catCountEntries] = await Promise.all([
     fetchAllRows<VehicleModel>(
       (from, to) =>
         supabase
@@ -76,7 +88,32 @@ async function fetchCatalogData() {
           .in("id", fitmentProductIds)
           .then((r) => (r.data ?? []) as { id: number; brand_id: number | null }[])
       : Promise.resolve([] as { id: number; brand_id: number | null }[]),
+
+    // SSR: unfiltered brand counts for sidebar
+    Promise.all(
+      brands.map(async (b) => {
+        const { count } = await supabase
+          .from("parts_products")
+          .select("*", { count: "exact", head: true })
+          .eq("brand_id", b.id);
+        return [b.id, count ?? 0] as const;
+      })
+    ),
+
+    // SSR: unfiltered parent-category counts for sidebar
+    Promise.all(
+      categories.filter((c) => c.parent_id === null).map(async (c) => {
+        const { count } = await supabase
+          .from("parts_products")
+          .select("*", { count: "exact", head: true })
+          .eq("category_id", c.id);
+        return [c.id, count ?? 0] as const;
+      })
+    ),
   ]);
+
+  const initialBrandCounts = Object.fromEntries(brandCountEntries) as Record<number, number>;
+  const initialCatCounts = Object.fromEntries(catCountEntries) as Record<number, number>;
 
   // ── Server-side pre-computation: brandModelChipsMap ───────────────────────
   // Build fitment index: model_id → Set<product_id>
@@ -117,8 +154,7 @@ async function fetchCatalogData() {
     );
   });
 
-  // Only 4 fields sent to client: brands (~200B), categories (~2KB), chips (~3KB), rate
-  return { brands, categories, brandModelChipsMap, krwToUsd };
+  return { brands, categories, brandModelChipsMap, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts };
 }
 
 const getCachedCatalogData = unstable_cache(
