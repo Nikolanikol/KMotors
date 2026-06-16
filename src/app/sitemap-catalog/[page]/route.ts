@@ -7,12 +7,20 @@ const PAGE_SIZE = 20;
 const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
 const QUERY = "(And.Hidden.N._.CarType.Y.)";
 
-async function fetchCars(offset: number) {
+interface CatalogCar {
+  Id: string;
+  Manufacturer?: string;
+  Price?: string;
+  Photo?: string;
+  ModifiedDate?: string;
+}
+
+async function fetchCars(offset: number): Promise<CatalogCar[]> {
   const url = `${PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C${offset}%7C${PAGE_SIZE}`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error(`proxy status ${res.status}`);
   const json = await res.json();
-  return json.SearchResults as { Id: string; LastModified?: string }[];
+  return json.SearchResults as CatalogCar[];
 }
 
 function alternates(id: string) {
@@ -49,18 +57,17 @@ export async function GET(
     const urlBlocks: string[] = [];
 
     for (const car of cars) {
+      if (!car.Price || !car.Manufacturer) continue;
       const id = String(car.Id);
-      const lastmod = car.LastModified || now;
+      const lastmod = car.ModifiedDate || now;
 
-      for (const lang of LANGS) {
-        urlBlocks.push(`  <url>
-    <loc>${BASE}/${lang}/catalog/${id}</loc>
+      urlBlocks.push(`  <url>
+    <loc>${BASE}/ru/catalog/${id}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
 ${alternates(id)}
   </url>`);
-      }
     }
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
