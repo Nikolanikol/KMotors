@@ -52,6 +52,7 @@ export default function Footer() {
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },
     { href: `/${lang}/about`, labelKey: "nav.about" },
+    { href: `/${lang}/partners`, labelKey: "nav.partners" },
     { href: `/${lang}/contact`, labelKey: "nav.contact" },
   ];
 
