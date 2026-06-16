@@ -67,5 +67,27 @@ export async function PUT(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  if (body.published === true) {
+    const { data: post } = await supabase
+      .from("blog_posts")
+      .select("slug")
+      .eq("id", id)
+      .single();
+
+    if (post?.slug) {
+      const INDEXNOW_KEY = "f0a070ba837a4a414a58457c67b26450";
+      fetch("https://api.indexnow.org/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({
+          host: "www.kmotors.shop",
+          key: INDEXNOW_KEY,
+          keyLocation: `https://www.kmotors.shop/${INDEXNOW_KEY}.txt`,
+          urlList: [`https://www.kmotors.shop/ru/blog/${post.slug}`],
+        }),
+      }).catch(() => {});
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }
