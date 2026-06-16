@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const KEY = "53c31aeaa2814186b7f3922b24e9ca08";
+const KEY = "f0a070ba837a4a414a58457c67b26450";
 const HOST = "https://www.kmotors.shop";
 const ENDPOINT = "https://api.indexnow.org/indexnow";
 
