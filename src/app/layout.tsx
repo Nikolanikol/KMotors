@@ -115,6 +115,7 @@ export default async function RootLayout({
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
                 gtag('config', 'G-ZMRTQCD8SF', { send_page_view: true });
+                gtag('config', 'AW-18196150435');
                 window.gtag = gtag;
               `}
             </Script>
