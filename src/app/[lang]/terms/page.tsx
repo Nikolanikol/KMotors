@@ -90,7 +90,7 @@ const TERMS_CONTENT: Record<string, {
       },
       {
         title: "4. Prices and payment",
-        text: "All prices on the website are listed in US Dollars (USD) and include the cost of the product, excluding shipping. Shipping costs are calculated separately and displayed at checkout. Payment is processed via PayPal. The Seller reserves the right to add additional payment methods. Prices may change depending on the Korean Won (KRW) to US Dollar exchange rate.",
+        text: "All prices on the website are listed in US Dollars (USD) and include the cost of the product, excluding shipping. Shipping costs are calculated separately and displayed at checkout. Payment is processed via credit/debit cards and other available payment methods at checkout. Prices may change depending on the Korean Won (KRW) to US Dollar exchange rate.",
       },
       {
         title: "5. Shipping",
@@ -135,7 +135,7 @@ const TERMS_CONTENT: Record<string, {
       },
       {
         title: "4. 가격 및 결제",
-        text: "웹사이트의 모든 가격은 미국 달러(USD)로 표시되며 배송비를 제외한 상품 가격입니다. 배송비는 별도로 계산되며 결제 시 표시됩니다. 결제는 PayPal을 통해 처리됩니다. 판매자는 추가 결제 수단을 추가할 권리가 있습니다. 가격은 원화(KRW) 대 미국 달러 환율에 따라 변동될 수 있습니다.",
+        text: "웹사이트의 모든 가격은 미국 달러(USD)로 표시되며 배송비를 제외한 상품 가격입니다. 배송비는 별도로 계산되며 결제 시 표시됩니다. 결제는 결제 시 이용 가능한 신용/직불카드 및 기타 결제 수단을 통해 처리됩니다. 가격은 원화(KRW) 대 미국 달러 환율에 따라 변동될 수 있습니다.",
       },
       {
         title: "5. 배송",
@@ -180,7 +180,7 @@ const TERMS_CONTENT: Record<string, {
       },
       {
         title: "4. ფასები და გადახდა",
-        text: "ვებსაიტზე ყველა ფასი მითითებულია აშშ დოლარში (USD) და მოიცავს საქონლის ღირებულებას მიტანის გარეშე. მიტანის ღირებულება ცალკე გამოითვლება. გადახდა ხორციელდება PayPal-ით.",
+        text: "ვებსაიტზე ყველა ფასი მითითებულია აშშ დოლარში (USD) და მოიცავს საქონლის ღირებულებას მიტანის გარეშე. მიტანის ღირებულება ცალკე გამოითვლება. გადახდა ხორციელდება საკრედიტო/სადებეტო ბარათებით და სხვა ხელმისაწვდომი გადახდის მეთოდებით.",
       },
       {
         title: "5. მიტანა",
@@ -225,7 +225,7 @@ const TERMS_CONTENT: Record<string, {
       },
       {
         title: "4. الأسعار والدفع",
-        text: "جميع الأسعار على الموقع مُدرجة بالدولار الأمريكي (USD) ولا تشمل تكاليف الشحن. تُحسب تكاليف الشحن بشكل منفصل وتُعرض عند إتمام الطلب. يتم الدفع عبر PayPal. يحتفظ البائع بالحق في إضافة طرق دفع إضافية.",
+        text: "جميع الأسعار على الموقع مُدرجة بالدولار الأمريكي (USD) ولا تشمل تكاليف الشحن. تُحسب تكاليف الشحن بشكل منفصل وتُعرض عند إتمام الطلب. يتم الدفع عبر بطاقات الائتمان/الخصم وطرق الدفع الأخرى المتاحة عند إتمام الطلب.",
       },
       {
         title: "5. الشحن",

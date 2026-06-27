@@ -63,7 +63,7 @@ const L: Record<string, Record<string, string>> = {
     step2title: "Подбор и расчёт",
     step2desc: "Подбираем оригинальную запчасть и рассчитываем стоимость с доставкой до вашей двери",
     step3title: "Оплата",
-    step3desc: "Безопасная оплата через PayPal с защитой покупателя",
+    step3desc: "Безопасная оплата банковской картой или другими доступными способами",
     step4title: "Доставка",
     step4desc: "Отправляем EMS Korea — от 7 дней. Вы получаете трекинг-номер для отслеживания",
 
@@ -77,7 +77,7 @@ const L: Record<string, Record<string, string>> = {
     adv4title: "Подбор по VIN",
     adv4desc: "Не знаете артикул? Пришлите VIN — подберём нужную деталь с гарантией совместимости.",
     adv5title: "Безопасная оплата",
-    adv5desc: "PayPal с защитой покупателя. Ваши деньги в безопасности до получения товара.",
+    adv5desc: "Безопасная оплата с защитой покупателя. Ваши деньги в безопасности до получения товара.",
     adv6title: "Поддержка 24/7",
     adv6desc: "Менеджеры на связи в Telegram и WhatsApp. Отвечаем на вашем языке.",
 
@@ -128,7 +128,7 @@ const L: Record<string, Record<string, string>> = {
     step2title: "Selection & Quote",
     step2desc: "We source the genuine part and calculate the total cost including delivery",
     step3title: "Payment",
-    step3desc: "Secure payment via PayPal with buyer protection",
+    step3desc: "Secure payment via credit/debit card or other available methods",
     step4title: "Delivery",
     step4desc: "Shipped via EMS Korea — from 7 days. You receive a tracking number",
 
@@ -142,7 +142,7 @@ const L: Record<string, Record<string, string>> = {
     adv4title: "VIN Matching",
     adv4desc: "Don't know the part number? Send your VIN — we'll find the exact part.",
     adv5title: "Secure Payment",
-    adv5desc: "PayPal buyer protection. Your money is safe until you receive the goods.",
+    adv5desc: "Secure payment with buyer protection. Your money is safe until you receive the goods.",
     adv6title: "24/7 Support",
     adv6desc: "Managers available on Telegram and WhatsApp. We reply in your language.",
 
@@ -193,7 +193,7 @@ const L: Record<string, Record<string, string>> = {
     step2title: "선정 및 견적",
     step2desc: "정품 부품을 찾고 배송비 포함 총 비용을 계산합니다",
     step3title: "결제",
-    step3desc: "PayPal을 통한 안전한 결제 (구매자 보호)",
+    step3desc: "신용/직불카드 또는 기타 이용 가능한 결제 수단으로 안전하게 결제",
     step4title: "배송",
     step4desc: "EMS Korea로 발송 — 7일부터. 추적 번호를 제공합니다",
 
@@ -207,7 +207,7 @@ const L: Record<string, Record<string, string>> = {
     adv4title: "VIN 매칭",
     adv4desc: "부품 번호를 모르시나요? VIN을 보내주시면 정확한 부품을 찾아드립니다.",
     adv5title: "안전한 결제",
-    adv5desc: "PayPal 구매자 보호. 상품을 받을 때까지 안전합니다.",
+    adv5desc: "구매자 보호가 있는 안전한 결제. 상품을 받을 때까지 안전합니다.",
     adv6title: "24/7 지원",
     adv6desc: "텔레그램과 WhatsApp으로 상담 가능. 한국어로 답변해 드립니다.",
 
@@ -258,7 +258,7 @@ const L: Record<string, Record<string, string>> = {
     step2title: "შერჩევა და ფასი",
     step2desc: "ვარჩევთ ორიგინალურ ნაწილს და ვითვლით ფასს მიტანით",
     step3title: "გადახდა",
-    step3desc: "უსაფრთხო გადახდა PayPal-ით მყიდველის დაცვით",
+    step3desc: "უსაფრთხო გადახდა ბარათით ან სხვა ხელმისაწვდომი მეთოდით",
     step4title: "მიტანა",
     step4desc: "EMS Korea-ით გაგზავნა — 7 დღიდან. თვალთვალის ნომერს მიიღებთ",
 
@@ -272,7 +272,7 @@ const L: Record<string, Record<string, string>> = {
     adv4title: "VIN შერჩევა",
     adv4desc: "არ იცით ნაწილის ნომერი? გამოგვიგზავნეთ VIN — ზუსტ ნაწილს მოვძებნით.",
     adv5title: "უსაფრთხო გადახდა",
-    adv5desc: "PayPal მყიდველის დაცვით.",
+    adv5desc: "უსაფრთხო გადახდა მყიდველის დაცვით.",
     adv6title: "24/7 მხარდაჭერა",
     adv6desc: "მენეჯერები ხელმისაწვდომია Telegram-სა და WhatsApp-ში.",
 
@@ -323,7 +323,7 @@ const L: Record<string, Record<string, string>> = {
     step2title: "الاختيار والتسعير",
     step2desc: "نختار القطعة الأصلية ونحسب التكلفة الإجمالية شاملة التوصيل",
     step3title: "الدفع",
-    step3desc: "دفع آمن عبر PayPal مع حماية المشتري",
+    step3desc: "دفع آمن عبر بطاقة الائتمان/الخصم أو طرق الدفع الأخرى المتاحة",
     step4title: "التوصيل",
     step4desc: "شحن عبر EMS Korea — من 7 أيام. تحصل على رقم تتبع",
 
@@ -337,7 +337,7 @@ const L: Record<string, Record<string, string>> = {
     adv4title: "مطابقة VIN",
     adv4desc: "لا تعرف رقم القطعة؟ أرسل رقم VIN وسنجد القطعة المناسبة.",
     adv5title: "دفع آمن",
-    adv5desc: "حماية المشتري عبر PayPal. أموالك آمنة حتى استلام البضاعة.",
+    adv5desc: "دفع آمن مع حماية المشتري. أموالك آمنة حتى استلام البضاعة.",
     adv6title: "دعم 24/7",
     adv6desc: "المديرون متاحون على Telegram وWhatsApp. نرد بلغتك.",
 
