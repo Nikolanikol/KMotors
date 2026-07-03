@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import dynamic from "next/dynamic";
 import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
@@ -23,12 +24,14 @@ interface PageProps {
   params: Promise<{ lang: string; id: string }>;
 }
 
-export async function fetchData(id: string): Promise<any> {
+async function fetchData(id: string): Promise<any> {
   // Основной источник — прямой Encar API, кэш 1 час
   try {
     const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {
       next: { revalidate: 3600 },
     });
+    // 404 от Encar = машина продана/удалена — это настоящий notFound
+    if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Encar ${res.status}`);
     return await res.json();
   } catch {
@@ -38,10 +41,13 @@ export async function fetchData(id: string): Promise<any> {
         `https://encar-proxy-main.onrender.com/api/vehicle/${id}`,
         { next: { revalidate: 3600 } }
       );
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error(`proxy ${res.status}`);
       return await res.json();
     } catch {
-      return undefined;
+      // Оба источника недоступны — это сбой апстрима, а не отсутствие машины.
+      // Отдаём 5xx вместо 404, чтобы Google не выкидывал живые страницы из индекса.
+      throw new Error(`vehicle ${id}: upstream unavailable`);
     }
   }
 }
@@ -60,9 +66,23 @@ async function fetchDataFast(id: string) {
   }
 }
 
+// Мессенджеры/соцсети обрывают превью по таймауту — только им отдаём быстрый
+// generic-фоллбек. Googlebot должен получить полные метаданные, иначе тысячи
+// страниц с одинаковым title склеиваются в GSC как «копии без canonical».
+const SOCIAL_BOT_RE =
+  /whatsapp|telegram|facebookexternalhit|facebot|twitterbot|slack|linkedin|discord|viber|skype|vkshare|pinterest/i;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lang, id } = await params;
-  const data = await fetchDataFast(id);
+  const ua = (await headers()).get("user-agent") ?? "";
+  const isSocialBot = SOCIAL_BOT_RE.test(ua);
+
+  // Соц-краулер — быстрый фетч с жёстким таймаутом; все остальные (включая
+  // Googlebot) ждут полные данные. fetchData кэшируется, поэтому страница
+  // ниже переиспользует тот же ответ без второго запроса.
+  const data = isSocialBot
+    ? await fetchDataFast(id)
+    : await fetchData(id).catch(() => null);
 
   // If API is slow → return fast generic metadata, WhatsApp gets it instantly
   if (!data) return {

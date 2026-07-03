@@ -3,7 +3,13 @@ import { NextResponse } from "next/server";
 
 const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ko", "ka", "ar"];
-const PAGE_SIZE = 20;
+// Прокси отдаёт максимум 20 записей за запрос, поэтому один sitemap-файл
+// собирается из нескольких параллельных запросов по 20 машин
+const CHUNK_SIZE = 20;
+const CHUNKS_PER_PAGE = 10;
+const PAGE_SIZE = CHUNK_SIZE * CHUNKS_PER_PAGE; // 200 URL на файл
+// Encar не отдаёт результаты глубже ~10 000 — дальше пустая выдача
+const MAX_OFFSET = 10_000;
 const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
 const QUERY = "(And.Hidden.N._.CarType.Y.)";
 
@@ -15,12 +21,27 @@ interface CatalogCar {
   ModifiedDate?: string;
 }
 
-async function fetchCars(offset: number): Promise<CatalogCar[]> {
-  const url = `${PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C${offset}%7C${PAGE_SIZE}`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
-  if (!res.ok) throw new Error(`proxy status ${res.status}`);
-  const json = await res.json();
-  return json.SearchResults as CatalogCar[];
+async function fetchChunk(offset: number): Promise<CatalogCar[]> {
+  try {
+    const url = `${PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C${offset}%7C${CHUNK_SIZE}`;
+    const res = await fetch(url, { next: { revalidate: 3600 } });
+    if (!res.ok) throw new Error(`proxy status ${res.status}`);
+    const json = await res.json();
+    return (json.SearchResults as CatalogCar[]) ?? [];
+  } catch {
+    // Упавший чанк не должен ронять весь sitemap-файл
+    return [];
+  }
+}
+
+async function fetchCars(baseOffset: number): Promise<CatalogCar[]> {
+  const offsets = Array.from(
+    { length: CHUNKS_PER_PAGE },
+    (_, i) => baseOffset + i * CHUNK_SIZE
+  ).filter((o) => o <= MAX_OFFSET);
+
+  const chunks = await Promise.all(offsets.map(fetchChunk));
+  return chunks.flat();
 }
 
 function alternates(id: string) {

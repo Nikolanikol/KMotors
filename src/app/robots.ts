@@ -8,7 +8,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/admin/", "/api/", "/carpicture", "/cdn-cgi/"],
+        // /carpicture НЕ блокируем: middleware отдаёт для них 410,
+        // Google должен это увидеть, чтобы навсегда выкинуть URL из индекса
+        disallow: ["/admin", "/admin/", "/api/", "/cdn-cgi/"],
       },
     ],
     // sitemap.xml is the master index — it includes all sub-sitemaps

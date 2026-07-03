@@ -3,7 +3,10 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
 const BASE = "https://www.kmotors.shop";
-const CATALOG_PAGE_SIZE = 20;
+// Должно совпадать с sitemap-catalog/[page]: 200 URL на файл,
+// глубже ~10 000 машин Encar выдачу не отдаёт
+const CATALOG_PAGE_SIZE = 200;
+const CATALOG_MAX_CARS = 10_000;
 const PARTS_PAGE_SIZE = 1_000;
 const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
 const QUERY = "(And.Hidden.N._.CarType.Y.)";
@@ -41,7 +44,7 @@ export async function GET() {
   ]);
 
   const catalogPages = catalogCount > 0
-    ? Math.min(Math.ceil(catalogCount / CATALOG_PAGE_SIZE), 200)
+    ? Math.ceil(Math.min(catalogCount, CATALOG_MAX_CARS) / CATALOG_PAGE_SIZE)
     : 50;
 
   const partsPages = Math.ceil(partsCount / PARTS_PAGE_SIZE) || 49;
