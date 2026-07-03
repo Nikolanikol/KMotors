@@ -1,10 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
-import { parsePartSlug } from "@/utils/partSlug";
+import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
   CompatibleBrand,
@@ -46,7 +46,10 @@ async function fetchProduct(slug: string) {
     return null;
   }
 
-  const { data: product, error } = await query.single();
+  // Не .single(): при дубле артикула в базе он падает с ошибкой,
+  // а страница должна открыть первый товар, а не отдать 404
+  const { data: rows, error } = await query.limit(1);
+  const product = rows?.[0];
 
   if (error || !product) return null;
 
@@ -237,6 +240,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const p = data.product;
   const { title, description } = buildMeta(lang, p);
+  // Canonical всегда указывает на чистый URL по артикулу — независимо от того,
+  // по какому slug-варианту открыли страницу
+  const canonicalSlug = generatePartSlug(p.part_number, null, "ru", p.id);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
   return {
@@ -246,9 +252,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: "website",
-      url: `${BASE}/${lang}/parts/${slug}`,
+      url: `${BASE}/${lang}/parts/${canonicalSlug}`,
     },
-    alternates: makeAlternates(lang, `/parts/${slug}`),
+    alternates: makeAlternates(lang, `/parts/${canonicalSlug}`),
   };
 }
 
@@ -263,8 +269,20 @@ export default async function ProductDetailPage({ params }: Props) {
   ]);
   if (!data) notFound();
 
-  // ── Product JSON-LD (Google Rich Results) ──────────────────────────────────
   const { product } = data;
+
+  // 301 со старых URL "PN--name" (и любых slug-вариантов) на канонический "PN".
+  // Сравниваем и декодированный slug, чтобы не зациклить редирект на кодированных символах.
+  const canonicalSlug = generatePartSlug(product.part_number, null, "ru", product.id);
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch {}
+  if (slug !== canonicalSlug && decodedSlug !== canonicalSlug) {
+    permanentRedirect(`/${lang}/parts/${canonicalSlug}`);
+  }
+
+  // ── Product JSON-LD (Google Rich Results) ──────────────────────────────────
   const priceUsd = Math.ceil(product.price_krw * krwToUsd * 1.23);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
   const productName =
@@ -288,7 +306,7 @@ export default async function ProductDetailPage({ params }: Props) {
     },
     offers: {
       "@type": "Offer",
-      url: `${BASE}/${lang}/parts/${slug}`,
+      url: `${BASE}/${lang}/parts/${canonicalSlug}`,
       priceCurrency: "USD",
       price: priceUsd,
       availability: "https://schema.org/InStock",
@@ -312,7 +330,7 @@ export default async function ProductDetailPage({ params }: Props) {
       ...(data.categoryName
         ? [{ "@type": "ListItem", position: 3, name: lang === "ru" ? data.categoryName.ru : data.categoryName.en, item: `${BASE}/${lang}/parts?cat=${data.categoryName.slug}` }]
         : []),
-      { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${BASE}/${lang}/parts/${slug}` },
+      { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${BASE}/${lang}/parts/${canonicalSlug}` },
     ],
   };
 

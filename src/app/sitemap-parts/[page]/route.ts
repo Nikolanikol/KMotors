@@ -1,5 +1,5 @@
 // /sitemap-parts/[page] — paginated parts sitemap
-// 5 000 products × 5 langs = 25 000 URLs per file (well under Google's 50k limit)
+// 1 000 products per file, canonical URL = part number (no name slug)
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { generatePartSlug } from "@/utils/partSlug";
@@ -14,30 +14,14 @@ const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"></urlset>`;
 
-function alternates(
-  partNumber: string | null,
-  name_ru: string,
-  name_en: string,
-  name_ko: string | null,
-  id: number
-) {
-  const ru = generatePartSlug(partNumber, name_ru, "ru", id);
-  const en = generatePartSlug(partNumber, name_en, "en", id);
-  const ko = generatePartSlug(partNumber, name_ko || name_en || name_ru, "ko", id);
-
+// Slug канонический (только артикул) — одинаковый для всех языков
+function alternates(slug: string) {
   return [
-    ...LANGS.map((lang) => {
-      const slug =
-        lang === "ru"
-          ? ru
-          : lang === "en"
-          ? en
-          : lang === "ko"
-          ? ko
-          : ru; // fallback для ka, ar
-      return `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}/parts/${slug}"/>`;
-    }),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/parts/${ru}"/>`,
+    ...LANGS.map(
+      (lang) =>
+        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}/parts/${slug}"/>`
+    ),
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/parts/${slug}"/>`,
   ].join("\n");
 }
 
@@ -91,28 +75,19 @@ export async function GET(
           continue;
         }
 
-        // Use fallbacks if names missing
-        const name_ru = product.name_ru || product.name_en || product.name_ko || 'part';
-        const name_en = product.name_en || product.name_ru || product.name_ko || 'part';
-        const name_ko = product.name_ko || product.name_en || product.name_ru || 'part';
-
         const lastmod = product.scraped_at
           ? new Date(product.scraped_at).toISOString().slice(0, 10)
           : fallbackDate;
 
-        const slugRu = generatePartSlug(product.part_number, name_ru, "ru", product.id);
-        const slugEn = generatePartSlug(product.part_number, name_en, "en", product.id);
-        const slugKo = generatePartSlug(product.part_number, name_ko, "ko", product.id);
-
-        const alts = alternates(product.part_number, name_ru, name_en, name_ko, product.id);
+        const slug = generatePartSlug(product.part_number, null, "ru", product.id);
 
         // Only add RU as primary (one per product, with alternates)
         urlBlocks.push(`  <url>
-    <loc>${BASE}/ru/parts/${slugRu}</loc>
+    <loc>${BASE}/ru/parts/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-${alts}
+${alternates(slug)}
   </url>`);
       } catch (err) {
         console.error(`[sitemap-parts] Error at index ${i}:`, err instanceof Error ? err.message : String(err));

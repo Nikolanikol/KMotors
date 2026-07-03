@@ -77,6 +77,16 @@ export async function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 410 });
   }
 
+  // --- 308: старые URL запчастей "PN--name-slug" → канонический "PN" ---
+  // Редирект должен быть настоящим HTTP (не из page.tsx: там loading.tsx
+  // запускает стриминг и статус уже отправлен как 200)
+  const oldPartsSlug = path.match(/^\/(ru|en|ko|ka|ar)\/parts\/([^/]+?)--[^/]+$/);
+  if (oldPartsSlug) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${oldPartsSlug[1]}/parts/${oldPartsSlug[2]}`;
+    return NextResponse.redirect(url, 308);
+  }
+
   // --- Защита /admin ---
   if (path.startsWith("/admin")) {
     if (path === "/admin/login") return NextResponse.next();

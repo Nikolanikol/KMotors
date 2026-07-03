@@ -1,19 +1,14 @@
+// Канонический slug — только идентификатор (артикул или id-N), без названия.
+// Названия нестабильны (переводы правятся) и в URL почти не влияют на ранжирование,
+// а запчасти ищут по каталожному номеру. Старые URL вида "PN--name" получают 301.
+// Сигнатура сохранена для совместимости со старыми вызовами (name/lang игнорируются).
 export function generatePartSlug(
   partNumber: string | null,
-  name: string | null | undefined,
-  lang: "ru" | "en" | "ko" = "ru",
+  _name?: string | null,
+  _lang?: "ru" | "en" | "ko",
   id?: number
 ): string {
-  const nameToSlug = name ?? "";
-
-  // Конвертируем в ASCII-slug (кириллица → транслит вручную)
-  const slug = slugify(nameToSlug);
-
-  // Если part_number отсутствует, используем ID как fallback
-  const identifier = partNumber || (id ? `id-${id}` : "unknown");
-
-  // Формат: "51712-B4000--tormoznoy-disk" или "id-25--k8-..."
-  return `${identifier}--${slug}`;
+  return partNumber || (id ? `id-${id}` : "unknown");
 }
 
 export function parsePartSlug(slug: string): {
@@ -21,15 +16,14 @@ export function parsePartSlug(slug: string): {
   productId: number | null;
   nameSlug: string;
 } {
-  // "51712-B4000--tormoznoy-disk" → { partNumber: "51712-B4000", nameSlug: "tormoznoy-disk" }
-  // "id-25--k8-..." → { productId: 25, nameSlug: "k8-..." }
-  const parts = slug.split("--");
-  if (parts.length < 2) {
+  // Канонический формат: "51712-B4000" или "id-25"
+  // Старый формат (301 на канонический): "51712-B4000--tormoznoy-disk", "id-25--k8-..."
+  const [identifier, ...rest] = slug.split("--");
+  const nameSlug = rest.join("--");
+
+  if (!identifier) {
     return { partNumber: null, productId: null, nameSlug: "" };
   }
-
-  const identifier = parts[0];
-  const nameSlug = parts.slice(1).join("--");
 
   // Проверяем это ID или part_number
   if (identifier.startsWith("id-")) {
