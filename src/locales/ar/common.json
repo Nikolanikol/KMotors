@@ -503,7 +503,8 @@
       "breadcrumbHome": "الرئيسية",
       "breadcrumbParts": "قطع الغيار",
       "copySuccess": "تم النسخ!",
-      "viewAll": "عرض الكل"
+      "viewAll": "عرض الكل",
+      "similarTitle": "قطع غيار لهذا الموديل"
     },
     "order": {
       "partNumber": "رقم القطعة",

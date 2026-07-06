@@ -41,7 +41,11 @@ export async function GET(req: NextRequest) {
     const catsParam  = sp.get("cats")   ?? "";
     const subSlug    = sp.get("sub")    ?? "";
     const modelName  = sp.get("model")  ?? "";
-    const q          = sp.get("q")      ?? "";
+    const q          = (sp.get("q") ?? "").trim();
+    // Part numbers are stored uppercase, without spaces or hyphens (e.g.
+    // "2630035505"), but users type the catalog format "26300-35505".
+    // Strip spaces/hyphens for the part-number match; ilike handles case.
+    const qPart      = q.replace(/[\s-]+/g, "");
     const minPrice   = sp.get("min") ? Number(sp.get("min")) : null;
     const maxPrice   = sp.get("max") ? Number(sp.get("max")) : null;
     const sort       = sp.get("sort")   ?? "default";
@@ -122,7 +126,7 @@ export async function GET(req: NextRequest) {
       if (minPrice !== null)   query = query.gte("price_krw", minPrice);
       if (maxPrice !== null)   query = query.lte("price_krw", maxPrice);
       if (q) query = query.or(
-        `part_number.ilike.%${q}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
+        `part_number.ilike.%${qPart}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
       );
       return query;
     }
@@ -141,7 +145,7 @@ export async function GET(req: NextRequest) {
       if (minPrice !== null)  query = query.gte("price_krw", minPrice);
       if (maxPrice !== null)  query = query.lte("price_krw", maxPrice);
       if (q) query = query.or(
-        `part_number.ilike.%${q}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
+        `part_number.ilike.%${qPart}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
       );
       if (catIds.length > 0) query = query.in("category_id", catIds);
       if (subId !== null)     query = query.eq("subcategory_id", subId);

@@ -513,7 +513,8 @@
       "shippingCalcSelect": "Выберите страну",
       "shippingCalcResult": "Примерно {price} USD",
       "shippingCalcUnavailable": "EMS недоступен для этой страны",
-      "shippingCalcNote": "* Указана стоимость доставки. Итоговая цена может отличаться."
+      "shippingCalcNote": "* Указана стоимость доставки. Итоговая цена может отличаться.",
+      "similarTitle": "Запчасти для этой модели"
     },
     "order": {
       "partNumber": "Артикул",

@@ -503,7 +503,8 @@
       "breadcrumbHome": "მთავარი",
       "breadcrumbParts": "სათადარიგო ნაწილები",
       "copySuccess": "დაკოპირდა!",
-      "viewAll": "ყველა ნახვა"
+      "viewAll": "ყველა ნახვა",
+      "similarTitle": "ამ მოდელის ნაწილები"
     },
     "order": {
       "partNumber": "არტიკული",

@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { generatePartSlug } from "@/utils/partSlug";
+import { FitmentProductsGrid } from "./FitmentProductsGrid";
+import type { Product } from "./PartsCatalogClient";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -69,7 +71,7 @@ export type CompatibleBrand = {
   id: number;
   name: string;
   slug: string;
-  models: { id: number; name_en: string; name_ko: string | null }[];
+  models: { id: number; name_en: string; name_ko: string | null; years: string; brand: string; vehicleSlug: string }[];
 };
 
 interface Props {
@@ -77,6 +79,7 @@ interface Props {
   categoryName: { ru: string; en: string; slug: string } | null;
   subcategoryName: { ru: string; en: string } | null;
   compatibleBrands: CompatibleBrand[];
+  similarProducts?: Product[];
   logistics: ProductLogistics | null;
   lang: string;
   krwToUsd: number;
@@ -104,6 +107,7 @@ export function ProductDetailClient({
   categoryName,
   subcategoryName,
   compatibleBrands,
+  similarProducts,
   logistics,
   lang,
   krwToUsd,
@@ -461,20 +465,32 @@ export function ProductDetailClient({
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {brand.models.map((m) => (
-                      <span
-                        key={m.id}
-                        className="px-3 py-1.5 rounded-full bg-[#F5F7FA] text-[#002C5F] text-xs font-medium border border-[#002C5F]/8 hover:border-[#002C5F]/25 transition-colors"
-                      >
-                        {i18n.language === "ko"
-                          ? m.name_ko || m.name_en
-                          : m.name_en}
-                      </span>
-                    ))}
+                    {brand.models.map((m) => {
+                      const label = `${i18n.language === "ko" ? m.name_ko || m.name_en : m.name_en}${m.years ? ` (${m.years})` : ""}`;
+                      return (
+                        <Link
+                          key={m.id}
+                          href={`/${lang}/fitment/${m.brand}/${m.vehicleSlug}`}
+                          className="px-3 py-1.5 rounded-full bg-[#F5F7FA] text-[#002C5F] text-xs font-medium border border-[#002C5F]/8 hover:border-[#002C5F]/25 hover:bg-white transition-colors"
+                        >
+                          {label}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Similar parts ──────────────────────────────────────────────────── */}
+        {similarProducts && similarProducts.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-[#002C5F] mb-6">
+              {t("parts.detail.similarTitle")}
+            </h2>
+            <FitmentProductsGrid products={similarProducts} lang={lang} krwToUsd={krwToUsd} />
           </div>
         )}
 

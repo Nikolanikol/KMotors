@@ -10,6 +10,7 @@ import type {
   CompatibleBrand,
   ProductLogistics,
 } from "@/app/parts/sections/ProductDetailClient";
+import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import { makeAlternates } from "@/lib/seo";
 
 // Страницы продуктов рендерятся по требованию и кэшируются навсегда.
@@ -53,13 +54,19 @@ async function fetchProduct(slug: string) {
 
   if (error || !product) return null;
 
-  // Теперь ищем fitment по product.id
-  const { data: fitmentRows } = await supabase
-    .from("parts_fitment")
-    .select("vehicle_model_id")
-    .eq("product_id", product.id);
+  // Совместимость из vehicles/part_vehicles (213k связей, поколения с годами)
+  const { data: pvRows } = await supabase
+    .from("part_vehicles")
+    .select("vehicles(id, name_en, brand, year_from, year_to, open_ended, slug, parts_count)")
+    .eq("part_id", product.id);
 
-  const modelIds = (fitmentRows ?? []).map((f) => f.vehicle_model_id);
+  const compatVehicles = (pvRows ?? [])
+    .map((row) => row.vehicles as unknown as {
+      id: number; name_en: string; brand: string; year_from: string | null;
+      year_to: string | null; open_ended: boolean; slug: string; parts_count: number;
+    } | null)
+    .filter((v): v is NonNullable<typeof v> => !!v);
+
   const catIds = [product.category_id, product.subcategory_id].filter(
     (x): x is number => !!x
   );
@@ -101,47 +108,58 @@ async function fetchProduct(slug: string) {
         }
       : null;
 
-  // Fetch models, brands, categories in parallel
-  const [modelsResult, brandsResult, catsResult] = await Promise.all([
-    modelIds.length > 0
-      ? supabase
-          .from("parts_vehicle_models")
-          .select("id, brand_id, name_en, name_ko")
-          .in("id", modelIds)
-          .order("name_en")
-      : Promise.resolve({ data: [] as { id: number; brand_id: number; name_en: string; name_ko: string | null }[] }),
-    supabase.from("parts_brands").select("id, name, slug"),
-    catIds.length > 0
-      ? supabase
-          .from("parts_categories")
-          .select("id, name_ru, name_en, slug, parent_id")
-          .in("id", catIds)
-      : Promise.resolve({ data: [] as { id: number; name_ru: string; name_en: string; slug: string; parent_id: number | null }[] }),
-  ]);
-
-  const models = modelsResult.data ?? [];
-  const brands = brandsResult.data ?? [];
+  const catsResult = catIds.length > 0
+    ? await supabase
+        .from("parts_categories")
+        .select("id, name_ru, name_en, slug, parent_id")
+        .in("id", catIds)
+    : { data: [] as { id: number; name_ru: string; name_en: string; slug: string; parent_id: number | null }[] };
   const cats = catsResult.data ?? [];
 
-  // Build compatibleBrands: group models by brand, sort Hyundai→Kia→Genesis
-  const brandMap: Record<number, CompatibleBrand> = {};
-  brands.forEach((b) => {
-    brandMap[b.id] = { id: b.id, name: b.name, slug: b.slug, models: [] };
-  });
-  models.forEach((m) => {
-    if (brandMap[m.brand_id]) {
-      brandMap[m.brand_id].models.push({
-        id: m.id,
-        name_en: m.name_en,
-        name_ko: m.name_ko,
-      });
-    }
-  });
+  // Build compatibleBrands from vehicle generations, grouped by brand.
+  const BRAND_META: Record<string, { id: number; name: string }> = {
+    hyundai: { id: 1, name: "Hyundai" },
+    kia: { id: 2, name: "Kia" },
+    genesis: { id: 3, name: "Genesis" },
+    ssangyong: { id: 4, name: "SsangYong" },
+    audi: { id: 5, name: "Audi" },
+  };
+  const yearsOf = (v: { year_from: string | null; year_to: string | null; open_ended: boolean }) => {
+    const yf = v.year_from ? String(v.year_from).split(".")[0] : "";
+    const yt = v.year_to ? String(v.year_to).split(".")[0] : v.open_ended ? "…" : "";
+    return yf || yt ? `${yf}${yt ? "–" + yt : ""}` : "";
+  };
+  const brandMap: Record<string, CompatibleBrand> = {};
+  for (const v of compatVehicles) {
+    const meta = BRAND_META[v.brand] ?? { id: 99, name: v.brand };
+    if (!brandMap[v.brand]) brandMap[v.brand] = { id: meta.id, name: meta.name, slug: v.brand, models: [] };
+    brandMap[v.brand].models.push({
+      id: v.id, name_en: v.name_en, name_ko: null,
+      years: yearsOf(v), brand: v.brand, vehicleSlug: v.slug,
+    });
+  }
   const compatibleBrands = Object.values(brandMap)
-    .filter((b) => b.models.length > 0)
-    .sort(
-      (a, b) => (BRAND_ORDER[a.slug] ?? 99) - (BRAND_ORDER[b.slug] ?? 99)
-    );
+    .map((b) => ({
+      ...b,
+      models: b.models.sort((a, z) => (z.years || "").localeCompare(a.years || "")),
+    }))
+    .sort((a, b) => (BRAND_ORDER[a.slug] ?? 99) - (BRAND_ORDER[b.slug] ?? 99));
+
+  // Similar parts: same category, from the vehicle this part fits most broadly
+  let similarProducts: Product[] = [];
+  if (compatVehicles.length && product.category_id) {
+    const topVehicle = [...compatVehicles].sort((a, b) => b.parts_count - a.parts_count)[0];
+    const { data: sameVehicle } = await supabase
+      .from("part_vehicles").select("part_id").eq("vehicle_id", topVehicle.id).neq("part_id", product.id).limit(400);
+    const ids = (sameVehicle ?? []).map((r) => r.part_id);
+    if (ids.length) {
+      const { data: sim } = await supabase
+        .from("parts_products")
+        .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, is_new")
+        .in("id", ids).eq("category_id", product.category_id).limit(8);
+      similarProducts = (sim ?? []) as Product[];
+    }
+  }
 
   // Resolve category / subcategory names
   const catInfo = cats.find(
@@ -161,6 +179,7 @@ async function fetchProduct(slug: string) {
     categoryName,
     subcategoryName,
     compatibleBrands,
+    similarProducts,
     logistics,
     logisticsCatId: logisticsCatId ?? null,
   };

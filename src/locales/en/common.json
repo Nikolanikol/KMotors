@@ -509,7 +509,8 @@
       "shippingCalcSelect": "Select country",
       "shippingCalcResult": "Approx. {price} USD",
       "shippingCalcUnavailable": "EMS not available for this country",
-      "shippingCalcNote": "* Shipping cost only. Final price may vary."
+      "shippingCalcNote": "* Shipping cost only. Final price may vary.",
+      "similarTitle": "Parts for this model"
     },
     "order": {
       "partNumber": "Part number",

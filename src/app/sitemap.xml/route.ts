@@ -52,6 +52,7 @@ export async function GET() {
   const staticSitemaps = [
     `${BASE}/sitemap-main.xml`,
     `${BASE}/sitemap-blog.xml`,
+    `${BASE}/sitemap-fitment.xml`,
   ];
 
   const partsSitemaps = Array.from(

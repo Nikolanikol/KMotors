@@ -504,7 +504,8 @@
       "breadcrumbHome": "홈",
       "breadcrumbParts": "부품",
       "copySuccess": "복사됨!",
-      "viewAll": "전체 보기"
+      "viewAll": "전체 보기",
+      "similarTitle": "이 차종의 부품"
     },
     "order": {
       "partNumber": "부품 번호",
