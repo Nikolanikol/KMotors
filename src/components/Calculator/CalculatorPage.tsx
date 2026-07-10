@@ -5,6 +5,7 @@ import Link from "next/link";
 import { calcCustomsRU, calcCustomsKZ, calcCustomsUZ } from "@/utils/customsCalculator";
 import type { CustomsResultRU, CustomsResultKZ, CustomsResultUZ } from "@/utils/customsCalculator";
 import { trackEvent } from "@/utils/gtag";
+import { getCalcStrings } from "@/data/calcTranslations";
 
 interface Rates {
   EUR: number;
@@ -22,23 +23,19 @@ type FuelType = "gasoline" | "diesel" | "hybrid" | "electric";
 
 function fmtRUB(n: number) { return n.toLocaleString("ru-RU") + " ₽"; }
 function fmtKZT(n: number) { return n.toLocaleString("ru-RU") + " ₸"; }
-function fmtUZS(n: number) { return n.toLocaleString("ru-RU") + " сум"; }
 function fmtUSD(n: number) { return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 }); }
 
-const MONTHS = [
-  "Январь","Февраль","Март","Апрель","Май","Июнь",
-  "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь",
-];
 const CUR_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 12 }, (_, i) => CUR_YEAR - i);
 
-const TABS: { id: Country; flag: string; label: string }[] = [
-  { id: "ru", flag: "🇷🇺", label: "Россия" },
-  { id: "kz", flag: "🇰🇿", label: "Казахстан" },
-  { id: "uz", flag: "🇺🇿", label: "Узбекистан" },
-];
-
 export default function CalculatorPage({ lang }: { lang: string }) {
+  const t = getCalcStrings(lang);
+  const fmtUZS = (n: number) => n.toLocaleString("ru-RU") + " " + t.unitSum;
+  const TABS: { id: Country; flag: string; label: string }[] = [
+    { id: "ru", flag: "🇷🇺", label: t.countryRU },
+    { id: "kz", flag: "🇰🇿", label: t.countryKZ },
+    { id: "uz", flag: "🇺🇿", label: t.countryUZ },
+  ];
   const [country, setCountry]       = useState<Country>("ru");
   const [rates, setRates]           = useState<Rates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(true);
@@ -73,12 +70,12 @@ export default function CalculatorPage({ lang }: { lang: string }) {
   function validate(): boolean {
     const e: Record<string, string> = {};
     if (!priceUSD || isNaN(+priceUSD) || +priceUSD <= 0)
-      e.priceUSD = "Введите стоимость авто";
+      e.priceUSD = t.errPrice;
     if (!engineVolume || isNaN(+engineVolume) || +engineVolume <= 0)
-      e.engineVolume = "Введите объём двигателя";
+      e.engineVolume = t.errVolume;
     if (country === "ru" && fuelType !== "electric") {
       if (!horsePower || isNaN(+horsePower) || +horsePower <= 0)
-        e.horsePower = "Введите мощность двигателя";
+        e.horsePower = t.errPower;
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -130,16 +127,16 @@ export default function CalculatorPage({ lang }: { lang: string }) {
         {/* ── Заголовок ── */}
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight mb-3">
-            🧮 Калькулятор растаможки{" "}
-            <span style={{ color: "var(--axis-orange)" }}>авто из Кореи</span>
+            🧮 {t.title}{" "}
+            <span style={{ color: "var(--axis-orange)" }}>{t.titleAccent}</span>
           </h1>
           <p className="text-gray-400 text-lg">
-            Актуальные ставки 2026 — Россия, Казахстан, Узбекистан. Для физических лиц.
+            {t.pageSubtitle}
           </p>
           {rates && (
             <p className="text-xs text-gray-600 mt-2">
-              1 EUR = {rates.EUR} ₽ · 1 USD = {rates.KZT.toLocaleString("ru-RU")} ₸ · 1 USD = {rates.UZS.toLocaleString("ru-RU")} сум
-              {rates.source === "fallback" && <span className="text-yellow-600 ml-2">(приблизительный)</span>}
+              1 EUR = {rates.EUR} ₽ · 1 USD = {rates.KZT.toLocaleString("ru-RU")} ₸ · 1 USD = {rates.UZS.toLocaleString("ru-RU")} {t.unitSum}
+              {rates.source === "fallback" && <span className="text-yellow-600 ml-2">{t.approx}</span>}
             </p>
           )}
         </div>
@@ -172,11 +169,11 @@ export default function CalculatorPage({ lang }: { lang: string }) {
 
               {/* ── ЛЕВАЯ — Поля ввода ── */}
               <div className="space-y-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Параметры автомобиля</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t.carParams}</p>
 
                 {/* Цена */}
                 <div>
-                  <label className={lbl}>Стоимость авто (USD)</label>
+                  <label className={lbl}>{t.priceLabel}</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">$</span>
                     <input type="number" min="1" placeholder="25 000" value={priceUSD}
@@ -189,13 +186,13 @@ export default function CalculatorPage({ lang }: { lang: string }) {
 
                 {/* Объём */}
                 <div>
-                  <label className={lbl}>Объём двигателя</label>
+                  <label className={lbl}>{t.volumeLabel}</label>
                   <div className="relative">
                     <input type="number" min="1" placeholder="1 600" value={engineVolume}
                       onChange={e => setEngineVolume(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && handleCalculate()}
                       className={inp("engineVolume") + " pr-14"} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">см³</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{t.cc}</span>
                   </div>
                   {errors.engineVolume && <p className="text-xs text-red-400 mt-1">{errors.engineVolume}</p>}
                 </div>
@@ -203,7 +200,7 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                 {/* Год + Месяц */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={lbl}>Год выпуска</label>
+                    <label className={lbl}>{t.yearLabel}</label>
                     <select value={year} onChange={e => setYear(e.target.value)} className={inp("year")}>
                       {YEARS.map(y => (
                         <option key={y} value={y} style={{ backgroundColor: "#1a1a1a" }}>{y}</option>
@@ -211,9 +208,9 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                     </select>
                   </div>
                   <div>
-                    <label className={lbl}>Месяц выпуска</label>
+                    <label className={lbl}>{t.monthLabel}</label>
                     <select value={month} onChange={e => setMonth(e.target.value)} className={inp("month")}>
-                      {MONTHS.map((m, i) => (
+                      {t.monthNames.map((m, i) => (
                         <option key={i} value={String(i + 1).padStart(2, "0")} style={{ backgroundColor: "#1a1a1a" }}>
                           {String(i + 1).padStart(2, "0")} — {m}
                         </option>
@@ -224,25 +221,25 @@ export default function CalculatorPage({ lang }: { lang: string }) {
 
                 {/* Тип топлива */}
                 <div>
-                  <label className={lbl}>Тип двигателя</label>
+                  <label className={lbl}>{t.fuelLabel}</label>
                   <select value={fuelType} onChange={e => setFuelType(e.target.value as FuelType)} className={inp("fuelType")}>
-                    <option value="gasoline" style={{ backgroundColor: "#1a1a1a" }}>Бензин</option>
-                    <option value="diesel"   style={{ backgroundColor: "#1a1a1a" }}>Дизель</option>
-                    <option value="hybrid"   style={{ backgroundColor: "#1a1a1a" }}>Гибрид (HEV / PHEV)</option>
-                    <option value="electric" style={{ backgroundColor: "#1a1a1a" }}>Электромобиль (EV)</option>
+                    <option value="gasoline" style={{ backgroundColor: "#1a1a1a" }}>{t.fuelGasoline}</option>
+                    <option value="diesel"   style={{ backgroundColor: "#1a1a1a" }}>{t.fuelDiesel}</option>
+                    <option value="hybrid"   style={{ backgroundColor: "#1a1a1a" }}>{t.fuelHybrid}</option>
+                    <option value="electric" style={{ backgroundColor: "#1a1a1a" }}>{t.fuelElectric}</option>
                   </select>
                 </div>
 
                 {/* Мощность — только для РФ и не электро */}
                 {country === "ru" && fuelType !== "electric" && (
                   <div>
-                    <label className={lbl}>Мощность двигателя</label>
+                    <label className={lbl}>{t.powerLabel}</label>
                     <div className="relative">
                       <input type="number" min="1" placeholder="150" value={horsePower}
                         onChange={e => setHorsePower(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && handleCalculate()}
                         className={inp("horsePower") + " pr-14"} />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">л.с.</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{t.hp}</span>
                     </div>
                     {errors.horsePower && <p className="text-xs text-red-400 mt-1">{errors.horsePower}</p>}
                   </div>
@@ -255,11 +252,11 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                   className="w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200 mt-2"
                   style={{ backgroundColor: "var(--axis-orange)", color: "white", opacity: ratesLoading ? 0.6 : 1 }}
                 >
-                  {ratesLoading ? "Загрузка курсов..." : "Рассчитать →"}
+                  {ratesLoading ? t.calculating : t.calculate}
                 </button>
 
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  💡 Расчёт ориентировочный. Доставка не включена. Актуальные ставки уточняйте у брокера.
+                  {t.formHint}
                 </p>
               </div>
 
@@ -270,7 +267,7 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                 {!hasResult && (
                   <div className="h-full flex flex-col items-center justify-center text-center py-16">
                     <div className="text-5xl mb-4 opacity-30">🧮</div>
-                    <p className="text-gray-600 text-sm">Заполните параметры слева<br />и нажмите «Рассчитать»</p>
+                    <p className="text-gray-600 text-sm whitespace-pre-line">{t.emptyState}</p>
                   </div>
                 )}
 
@@ -278,17 +275,17 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                 {country === "ru" && resultRU && (
                   <div className="space-y-3">
                     <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(0,44,95,0.25)", border: "1px solid rgba(0,44,95,0.5)" }}>
-                      <div className="text-xs text-gray-500 mb-1">Итого таможенных платежей</div>
+                      <div className="text-xs text-gray-500 mb-1">{t.totalCustomsShort}</div>
                       <div className="text-3xl font-bold text-white">{fmtRUB(resultRU.totalRUB)}</div>
                       <div className="text-xs text-gray-500 mt-1">
-                        Авто ≈ {fmtRUB(resultRU.priceRUB)} ({resultRU.priceEUR.toLocaleString("ru-RU")} €) · {resultRU.carAgeYears} {resultRU.carAgeYears < 2 ? "год" : resultRU.carAgeYears < 5 ? "года" : "лет"}
+                        {t.car} ≈ {fmtRUB(resultRU.priceRUB)} ({resultRU.priceEUR.toLocaleString("ru-RU")} €) · {resultRU.carAgeYears} {t.ageYearsWord(resultRU.carAgeYears)}
                       </div>
                     </div>
                     <div className="space-y-1">
                       {[
-                        { label: "Таможенная пошлина",   value: fmtRUB(resultRU.dutyRUB) },
-                        { label: "Таможенный сбор",       value: fmtRUB(resultRU.customsFeeRUB) },
-                        { label: `Утилсбор${resultRU.recyclingIsApprox ? " (прибл.)" : ""}`, value: fmtRUB(resultRU.recyclingFeeRUB) },
+                        { label: t.duty,   value: fmtRUB(resultRU.dutyRUB) },
+                        { label: t.customsFee,       value: fmtRUB(resultRU.customsFeeRUB) },
+                        { label: `${t.recyclingFeeShort}${resultRU.recyclingIsApprox ? " (≈)" : ""}`, value: fmtRUB(resultRU.recyclingFeeRUB) },
                       ].map(r => (
                         <div key={r.label} className="flex justify-between text-sm py-1.5 border-b border-white/5">
                           <span className="text-gray-400">{r.label}</span>
@@ -297,7 +294,7 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                       ))}
                     </div>
                     <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(0,100,0,0.15)", border: "1px solid rgba(0,150,0,0.25)" }}>
-                      <div className="text-xs text-gray-400 mb-1">Итоговая стоимость в России</div>
+                      <div className="text-xs text-gray-400 mb-1">{t.finalCostInShort} {t.countryRUgen}</div>
                       <div className="text-2xl font-bold text-green-400">{fmtRUB(resultRU.priceRUB + resultRU.totalRUB)}</div>
                       <div className="text-sm text-green-600 mt-0.5">≈ {fmtUSD(Math.round((resultRU.priceRUB + resultRU.totalRUB) / (rates!.KRW / rates!.KRW_USD)))}</div>
                     </div>
@@ -309,34 +306,34 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                   <div className="space-y-3">
                     {resultKZ.isOldCar && (
                       <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(180,0,0,0.15)", border: "1px solid rgba(180,0,0,0.3)" }}>
-                        <p className="text-sm text-red-300">⚠️ Авто старше 7 лет — ввоз нецелесообразен</p>
+                        <p className="text-sm text-red-300">{t.warnOld7}</p>
                       </div>
                     )}
                     {resultKZ.carAgeMonths > 36 && !resultKZ.isOldCar && (
                       <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(180,130,0,0.15)", border: "1px solid rgba(180,130,0,0.3)" }}>
-                        <p className="text-sm text-yellow-300">⚠️ Возраст {resultKZ.carAgeMonths} мес. — регистрация 500 МРП ({fmtKZT(resultKZ.registrationFeeKZT)})</p>
+                        <p className="text-sm text-yellow-300">⚠️ {t.age} {resultKZ.carAgeMonths} {t.warnReg36Prefix} ({fmtKZT(resultKZ.registrationFeeKZT)})</p>
                       </div>
                     )}
                     {resultKZ.isLuxury && (
                       <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(180,80,0,0.15)", border: "1px solid rgba(180,80,0,0.3)" }}>
-                        <p className="text-sm text-orange-300">💎 Акциз на роскошь +10%</p>
+                        <p className="text-sm text-orange-300">{t.exciseLuxury}</p>
                       </div>
                     )}
                     <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(0,44,95,0.25)", border: "1px solid rgba(0,44,95,0.5)" }}>
-                      <div className="text-xs text-gray-500 mb-1">Итого таможенных платежей</div>
+                      <div className="text-xs text-gray-500 mb-1">{t.totalCustomsShort}</div>
                       <div className="text-3xl font-bold text-white">{fmtKZT(resultKZ.totalKZT)}</div>
-                      <div className="text-xs text-gray-500 mt-1">Возраст: {resultKZ.carAgeMonths} мес. · {fmtUSD(resultKZ.priceUSD)}</div>
+                      <div className="text-xs text-gray-500 mt-1">{t.age} {resultKZ.carAgeMonths} {t.months} · {fmtUSD(resultKZ.priceUSD)}</div>
                     </div>
                     <div className="space-y-1">
                       {[
-                        { label: "Таможенный сбор (6 МРП)",         value: fmtKZT(resultKZ.customsFeeKZT) },
-                        { label: "Таможенная пошлина",               value: fmtKZT(resultKZ.dutyKZT) },
-                        ...(resultKZ.exciseEngineKZT > 0 ? [{ label: "Акциз (объём >3 000 см³)", value: fmtKZT(resultKZ.exciseEngineKZT) }] : []),
-                        ...(resultKZ.exciseLuxuryKZT > 0 ? [{ label: "Акциз на роскошь (10%)",  value: fmtKZT(resultKZ.exciseLuxuryKZT) }] : []),
-                        { label: "НДС 16%",                          value: fmtKZT(resultKZ.vatKZT) },
-                        { label: "Первичная регистрация (ЦОН)",      value: fmtKZT(resultKZ.registrationFeeKZT) },
-                        { label: `Утилизационный сбор${resultKZ.isElectric ? " (0 ₸ — электро)" : ""}`, value: fmtKZT(resultKZ.recyclingFeeKZT) },
-                        { label: "Доп. расходы (СБКТС, брокер)",     value: "≈ " + fmtKZT(resultKZ.additionalKZT) },
+                        { label: t.customsFeeMRP,         value: fmtKZT(resultKZ.customsFeeKZT) },
+                        { label: t.duty,               value: fmtKZT(resultKZ.dutyKZT) },
+                        ...(resultKZ.exciseEngineKZT > 0 ? [{ label: t.exciseEngine, value: fmtKZT(resultKZ.exciseEngineKZT) }] : []),
+                        ...(resultKZ.exciseLuxuryKZT > 0 ? [{ label: t.exciseLuxury,  value: fmtKZT(resultKZ.exciseLuxuryKZT) }] : []),
+                        { label: t.vat16,                          value: fmtKZT(resultKZ.vatKZT) },
+                        { label: t.registrationTson,      value: fmtKZT(resultKZ.registrationFeeKZT) },
+                        { label: `${t.recyclingFee}${resultKZ.isElectric ? " " + t.electricTenge0 : ""}`, value: fmtKZT(resultKZ.recyclingFeeKZT) },
+                        { label: t.additionalKZ,     value: "≈ " + fmtKZT(resultKZ.additionalKZT) },
                       ].map(r => (
                         <div key={r.label} className="flex justify-between text-sm py-1.5 border-b border-white/5">
                           <span className="text-gray-400">{r.label}</span>
@@ -345,7 +342,7 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                       ))}
                     </div>
                     <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(0,100,0,0.15)", border: "1px solid rgba(0,150,0,0.25)" }}>
-                      <div className="text-xs text-gray-400 mb-1">Итоговая стоимость в Казахстане</div>
+                      <div className="text-xs text-gray-400 mb-1">{t.finalCostInShort} {t.countryKZgen}</div>
                       <div className="text-2xl font-bold text-green-400">{fmtKZT(resultKZ.customsValueKZT + resultKZ.totalKZT)}</div>
                       <div className="text-sm text-green-600 mt-0.5">≈ {fmtUSD(Math.round((resultKZ.customsValueKZT + resultKZ.totalKZT) / rates!.KZT))}</div>
                     </div>
@@ -357,25 +354,25 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                   <div className="space-y-3">
                     {resultUZ.isUsedCar && (
                       <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(180,130,0,0.15)", border: "1px solid rgba(180,130,0,0.3)" }}>
-                        <p className="text-sm text-yellow-300">⚠️ Авто старше 1 года — заградительные пошлины</p>
+                        <p className="text-sm text-yellow-300">{t.warnUsed1y}</p>
                       </div>
                     )}
                     {resultUZ.isElectric && (
                       <div className="rounded-xl px-4 py-3" style={{ backgroundColor: "rgba(0,120,0,0.15)", border: "1px solid rgba(0,150,0,0.3)" }}>
-                        <p className="text-sm text-green-300">⚡ Электромобиль: пошлина 0%, утильсбор 0 сум</p>
+                        <p className="text-sm text-green-300">{t.bonusElectricUZ}</p>
                       </div>
                     )}
                     <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(0,44,95,0.25)", border: "1px solid rgba(0,44,95,0.5)" }}>
-                      <div className="text-xs text-gray-500 mb-1">Итого таможенных платежей</div>
+                      <div className="text-xs text-gray-500 mb-1">{t.totalCustomsShort}</div>
                       <div className="text-3xl font-bold text-white">{fmtUZS(resultUZ.totalUZS)}</div>
                       <div className="text-xs text-gray-500 mt-1">≈ {fmtUSD(resultUZ.totalUSD)} · {fmtUSD(resultUZ.priceUSD)}</div>
                     </div>
                     <div className="space-y-1">
                       {[
-                        { label: "Таможенный сбор (ПКМ №700)",  value: fmtUZS(resultUZ.customsFeeUZS) },
-                        { label: "Таможенная пошлина",           value: fmtUZS(resultUZ.dutyUZS) },
-                        { label: "НДС 12%",                      value: fmtUZS(resultUZ.vatUZS) },
-                        { label: `Утилизационный сбор${resultUZ.isElectric ? " (0 сум)" : ""}`, value: fmtUZS(resultUZ.recyclingFeeUZS) },
+                        { label: t.customsFeePKM,  value: fmtUZS(resultUZ.customsFeeUZS) },
+                        { label: t.duty,           value: fmtUZS(resultUZ.dutyUZS) },
+                        { label: t.vat12,                      value: fmtUZS(resultUZ.vatUZS) },
+                        { label: `${t.recyclingFee}${resultUZ.isElectric ? " " + t.electricSum0 : ""}`, value: fmtUZS(resultUZ.recyclingFeeUZS) },
                       ].map(r => (
                         <div key={r.label} className="flex justify-between text-sm py-1.5 border-b border-white/5">
                           <span className="text-gray-400">{r.label}</span>
@@ -384,7 +381,7 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                       ))}
                     </div>
                     <div className="rounded-xl px-5 py-4" style={{ backgroundColor: "rgba(0,100,0,0.15)", border: "1px solid rgba(0,150,0,0.25)" }}>
-                      <div className="text-xs text-gray-400 mb-1">Итоговая стоимость в Узбекистане</div>
+                      <div className="text-xs text-gray-400 mb-1">{t.finalCostInShort} {t.countryUZgen}</div>
                       <div className="text-2xl font-bold text-green-400">{fmtUZS(resultUZ.priceUZS + resultUZ.totalUZS)}</div>
                       <div className="text-sm text-green-600 mt-0.5">≈ {fmtUSD(resultUZ.priceUSD + resultUZ.totalUSD)}</div>
                     </div>
@@ -399,43 +396,28 @@ export default function CalculatorPage({ lang }: { lang: string }) {
         <div className="mt-6 rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
           style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(255,69,0,0.2)" }}>
           <div>
-            <p className="font-semibold text-white">Нашли подходящую стоимость?</p>
-            <p className="text-sm text-gray-400 mt-0.5">Подберём авто под ваш бюджет из каталога Encar</p>
+            <p className="font-semibold text-white">{t.catalogCtaTitle}</p>
+            <p className="text-sm text-gray-400 mt-0.5">{t.catalogCtaText}</p>
           </div>
           <Link href={`/${lang}/catalog`}
             className="flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
             style={{ backgroundColor: "var(--axis-orange)", color: "white" }}>
-            Перейти в каталог →
+            {t.catalogCtaBtn}
           </Link>
         </div>
 
         {/* ── SEO-блок ── */}
         <div className="mt-14 space-y-10 text-gray-400 text-sm leading-relaxed">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-4">Как рассчитывается растаможка авто из Кореи в 2026 году</h2>
-            <p>
-              Калькулятор учитывает актуальные ставки таможенных пошлин ЕАЭС, утилизационного сбора и НДС для трёх стран.
-              Расчёт производится для физических лиц при самостоятельном ввозе автомобиля.
-            </p>
+            <h2 className="text-2xl font-bold text-white mb-4">{t.seoH2}</h2>
+            <p>{t.seoIntro}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              {
-                flag: "🇷🇺",
-                title: "Россия",
-                text: "Пошлина по комбинированной ставке ЕАЭС (% от стоимости + €/см³). Утилизационный сбор от 3 400 ₽ (льготная ставка для физлиц до 160 л.с.) до нескольких миллионов. Таможенный сбор — ступенчатая шкала по стоимости.",
-              },
-              {
-                flag: "🇰🇿",
-                title: "Казахстан",
-                text: "Пошлина 15%. НДС 16% с 01.01.2026. Утильсбор привязан к МРП (4 325 ₸ в 2026). Первичная регистрация: от 1 081 ₸ (до 2 лет) до 2 162 500 ₸ (старше 3 лет). Электромобили: нулевой утильсбор.",
-              },
-              {
-                flag: "🇺🇿",
-                title: "Узбекистан",
-                text: "С 01.01.2026 льготы на малолитражки отменены. Пошлина = 15% + фикс. доплата в USD за каждый см³. НДС 12%. Утильсбор 30–300 БРВ. Электромобили: нулевая пошлина и утильсбор.",
-              },
+              { flag: "🇷🇺", title: t.countryRU, text: t.seoCardRU },
+              { flag: "🇰🇿", title: t.countryKZ, text: t.seoCardKZ },
+              { flag: "🇺🇿", title: t.countryUZ, text: t.seoCardUZ },
             ].map(item => (
               <div key={item.title} className="rounded-xl p-5 space-y-2" style={{ backgroundColor: "var(--axis-charcoal)" }}>
                 <h3 className="text-white font-semibold">{item.flag} {item.title}</h3>
@@ -445,30 +427,9 @@ export default function CalculatorPage({ lang }: { lang: string }) {
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-white mb-5">Частые вопросы</h2>
+            <h2 className="text-2xl font-bold text-white mb-5">{t.faqH2}</h2>
             <div className="space-y-3">
-              {[
-                {
-                  q: "Включена ли доставка в расчёт?",
-                  a: "Нет. Стоимость доставки из Кореи до таможни рассчитывается отдельно и зависит от маршрута, веса и габаритов автомобиля. Уточняйте у менеджера.",
-                },
-                {
-                  q: "Для каких лиц работает калькулятор?",
-                  a: "Только для физических лиц. Для юридических лиц и ИП ставки существенно отличаются.",
-                },
-                {
-                  q: "Насколько точен расчёт?",
-                  a: "Расчёт ориентировочный. Итоговая сумма может незначительно отличаться из-за актуального курса валют на дату оформления и индивидуальных параметров автомобиля.",
-                },
-                {
-                  q: "Какие авто выгоднее всего ввозить в Казахстан?",
-                  a: "Новые электромобили (до 1 года): нулевой утильсбор и льготная пошлина. Новые бензиновые до 2 лет с объёмом до 2 000 см³ — оптимальное соотношение таможенной нагрузки к стоимости.",
-                },
-                {
-                  q: "Почему в Узбекистане так дорого растаможивать ДВС?",
-                  a: "С 1 января 2026 года Узбекистан отменил льготы на малолитражки. Теперь все бензиновые и дизельные авто платят 15% пошлины плюс фиксированную доплату за каждый кубический сантиметр объёма. Это делает электромобили значительно выгоднее.",
-                },
-              ].map((faq, i) => (
+              {t.faq.map((faq, i) => (
                 <div key={i} className="rounded-xl p-5" style={{ backgroundColor: "var(--axis-charcoal)" }}>
                   <p className="text-white font-medium mb-2">{faq.q}</p>
                   <p>{faq.a}</p>

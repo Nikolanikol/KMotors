@@ -333,6 +333,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
                 fuelType={data?.spec?.fuelName}
                 carId={id}
                 carName={fullCarName}
+                lang={lang}
               />
             </div>
           )}
