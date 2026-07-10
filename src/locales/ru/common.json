@@ -95,7 +95,9 @@
     "privateSeller": "Частное лицо",
     "wantThisCar": "Хочу эту машину — оставить заявку",
     "wantThisCarShort": "Хочу эту машину",
-    "managerContact": "Менеджер свяжется в течение 1 часа"
+    "managerContact": "Менеджер свяжется в течение 1 часа",
+    "sellerInfo": "Информация о продавце",
+    "encarReport": "Отчёт на Encar"
   },
   "filter": {
     "all": "Все",

@@ -223,6 +223,7 @@ export function ContactForm() {
                     onChange={setPhone}
                     placeholder={t("parts.contact.phonePlaceholder")}
                     error={errors.phone}
+                    className="text-gray-900 placeholder:text-gray-400"
                   />
                   {errorHint(errors.phone)}
                 </div>

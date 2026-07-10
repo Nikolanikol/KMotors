@@ -206,6 +206,7 @@ export function OrderModal({
                   placeholder={t("parts.order.phonePlaceholder")}
                   required
                   error={errors.phone}
+                  className="text-gray-900 placeholder:text-gray-400"
                 />
                 {errors.phone && (
                   <p className="text-xs text-red-500">{t("parts.order.phoneRequired")}</p>

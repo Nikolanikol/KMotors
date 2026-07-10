@@ -182,6 +182,13 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     ru: "Каталог", en: "Catalog", ko: "카탈로그", ka: "კატალოგი", ar: "الكتالوج",
   };
 
+  const BUY_PRICE_LABEL: Record<string, string> = {
+    ru: "Цена покупки", en: "Purchase price", ko: "구매 가격", ka: "ყიდვის ფასი", ar: "سعر الشراء",
+  };
+  const WON_LABEL: Record<string, string> = {
+    ru: "вон", en: "won", ko: "원", ka: "ვონი", ar: "وون",
+  };
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -352,9 +359,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
             {data?.advertisement?.price && (
               <div className="lg:hidden rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 4px 20px rgba(255,69,0,0.25)" }}>
                 <div>
-                  <p className="text-white/70 text-xs mb-0.5">Цена покупки</p>
+                  <p className="text-white/70 text-xs mb-0.5">{BUY_PRICE_LABEL[lang] ?? BUY_PRICE_LABEL.ru}</p>
                   <p className="text-white text-2xl font-bold leading-tight">
-                    {(data.advertisement.price * 10000).toLocaleString("ru-RU")} <span className="text-base font-normal">вон</span>
+                    {(data.advertisement.price * 10000).toLocaleString("ru-RU")} <span className="text-base font-normal">{WON_LABEL[lang] ?? WON_LABEL.ru}</span>
                   </p>
                   {rates.krwToRub && (
                     <p className="text-white/80 text-sm mt-0.5">

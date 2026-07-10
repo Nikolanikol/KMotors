@@ -64,16 +64,16 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
             </span>
-            <p className="font-bold text-base" style={{ color: "var(--axis-white)" }}>Хочу эту машину</p>
+            <p className="font-bold text-base" style={{ color: "var(--axis-white)" }}>{t("common:car.wantThisCarShort")}</p>
           </div>
-          <p className="text-xs mb-4" style={{ color: "var(--axis-gray)" }}>Менеджер свяжется в течение 1 часа</p>
+          <p className="text-xs mb-4" style={{ color: "var(--axis-gray)" }}>{t("common:car.managerContact")}</p>
           <CarRequestForm carId={id} carName={carName} />
         </div>
       </div>
 
       {/* Seller info */}
       <div className="rounded-2xl p-5 space-y-3" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
-        <p className="text-xs font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>Информация о продавце</p>
+        <p className="text-xs font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("common:car.sellerInfo")}</p>
 
         <a href={`tel:${data.contact.no}`} className="flex items-center gap-3 group">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)" }}>
@@ -117,7 +117,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.2)" }}
       >
         <ExternalLink className="w-4 h-4" />
-        Отчёт на Encar
+        {t("common:car.encarReport")}
       </a>
     </div>
   );

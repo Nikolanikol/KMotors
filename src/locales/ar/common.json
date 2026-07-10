@@ -95,7 +95,9 @@
     "privateSeller": "فرد خاص",
     "wantThisCar": "أريد هذه السيارة — اترك طلباً",
     "wantThisCarShort": "أريد هذه السيارة",
-    "managerContact": "سيتواصل معك المدير خلال ساعة واحدة"
+    "managerContact": "سيتواصل معك المدير خلال ساعة واحدة",
+    "sellerInfo": "معلومات البائع",
+    "encarReport": "تقرير على Encar"
   },
   "filter": {
     "all": "الكل",

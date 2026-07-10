@@ -95,7 +95,9 @@
     "privateSeller": "개인",
     "wantThisCar": "이 차를 원합니다 — 신청하기",
     "wantThisCarShort": "이 차를 원합니다",
-    "managerContact": "매니저가 1시간 내에 연락드립니다"
+    "managerContact": "매니저가 1시간 내에 연락드립니다",
+    "sellerInfo": "판매자 정보",
+    "encarReport": "Encar 리포트 보기"
   },
   "filter": {
     "all": "전체",

@@ -95,7 +95,9 @@
     "privateSeller": "Private Seller",
     "wantThisCar": "I want this car — leave a request",
     "wantThisCarShort": "I want this car",
-    "managerContact": "Manager will contact you within 1 hour"
+    "managerContact": "Manager will contact you within 1 hour",
+    "sellerInfo": "Seller information",
+    "encarReport": "Report on Encar"
   },
   "filter": {
     "all": "All",
