@@ -44,8 +44,10 @@ export default async function RootLayout({
   const lang = cookieStore.get("kmotors-lang")?.value || "ru";
   const isAdmin = cookieStore.get("admin_session")?.value === "1";
 
+  // RTL-переворот отключён намеренно: макет всегда LTR даже на арабском
+  // (браузер сам корректно рендерит арабский текст внутри строк по bidi)
   return (
-    <html lang={lang} dir={lang === "ar" ? "rtl" : "ltr"} className={inter.className}>
+    <html lang={lang} dir="ltr" className={inter.className}>
       <head>
         <meta name="robots" content="index, follow" />
 

@@ -322,7 +322,7 @@ const usdFmt = new Intl.NumberFormat("en-US");
 
 export default function CheckoutClient({ lang, userId, items, profile }: Props) {
   const l = L[lang] ?? L.ru;
-  const isRTL = lang === "ar";
+  const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 
   const [country, setCountry] = useState(profile.country ?? "");
   const [form, setForm] = useState({

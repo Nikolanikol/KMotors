@@ -441,7 +441,7 @@ const CAR_BRANDS: { name: string; from: string; to: string; models: string[]; im
 
 export default function AboutClient({ lang }: Props) {
   const l = L[lang] ?? L.ru;
-  const isRTL = lang === "ar";
+  const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
   const [imgError, setImgError] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);

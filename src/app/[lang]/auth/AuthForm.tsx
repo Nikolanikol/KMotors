@@ -201,7 +201,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const isRTL = lang === "ar";
+  const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 
   const redirectTo = from || `/${lang}/parts`;
 

@@ -64,7 +64,7 @@ export default function AccountClient({ lang, user, profile }: Props) {
       setActiveTab(tab);
     }
   }, [searchParams]);
-  const isRTL = lang === "ar";
+  const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 
   const tabs = [
     { id: "profile" as Tab, label: labels.profile, icon: User },

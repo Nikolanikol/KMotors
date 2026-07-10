@@ -91,7 +91,7 @@ export default function NotFound() {
   const segments = pathname?.split("/") ?? [];
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
   const t = T[lang as keyof typeof T] || T.ru;
-  const dir = lang === "ar" ? "rtl" : "ltr";
+  const dir = "ltr"; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12" dir={dir}

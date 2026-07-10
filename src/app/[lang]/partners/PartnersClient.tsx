@@ -388,7 +388,7 @@ const TIER_COLORS = [
 
 export default function PartnersClient({ lang }: Props) {
   const l = L[lang] ?? L.ru;
-  const isRTL = lang === "ar";
+  const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 
   const tiers = [
     { name: l.tier1name, volume: l.tier1volume, features: [l.tier1f1, l.tier1f2, l.tier1f3, l.tier1f4] },
