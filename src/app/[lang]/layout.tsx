@@ -8,6 +8,7 @@ import ProgressBar from "@/components/ProgressBar";
 import FavoritePriceAlert from "@/components/FavoritePriceAlert";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/server";
+import { loadResources } from "@/lib/loadLocale";
 
 const LANGS = ["ru", "en", "ka", "ar"];
 
@@ -26,8 +27,11 @@ export default async function LangLayout({ children, params }: Props) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Только активный язык + en (фолбэк) — грузится на сервере, не в клиентском бандле.
+  const resources = loadResources(lang);
+
   return (
-    <I18nProvider lang={lang}>
+    <I18nProvider lang={lang} resources={resources}>
       <AuthProvider initialUser={user}>
         <ProgressBar />
         <Header />

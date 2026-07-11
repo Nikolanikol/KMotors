@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import type { Resource } from 'i18next';
 import { createI18nInstance } from '@/lib/i18n';
 
 interface Props {
   children: React.ReactNode;
   lang: string;
+  // Ресурсы (активный язык + en) приходят пропом с сервера — сериализуются в HTML,
+  // поэтому доступны синхронно и на сервере, и на клиенте. Клиентский бандл больше
+  // не содержит JSON-локалей.
+  resources: Resource;
 }
 
-export default function I18nProvider({ children, lang }: Props) {
+export default function I18nProvider({ children, lang, resources }: Props) {
   // Инстанс создаётся внутри рендер-дерева → на сервере он свой на каждый запрос
   // (не шарится между конкурентными запросами), на клиенте — один на монтирование.
   // Инициализируется правильным языком синхронно, поэтому серверный HTML и первый
   // клиентский рендер совпадают.
-  const [i18n] = useState(() => createI18nInstance(lang));
+  const [i18n] = useState(() => createI18nInstance(lang, resources));
 
   useEffect(() => {
     // «Догоняющий» механизм для клиентской смены языка: layout под сегментом [lang]
