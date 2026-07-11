@@ -4,52 +4,41 @@ import dynamic from "next/dynamic";
 import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
+import RecommendedCars from "@/components/Catalog/CarDetail/Recommended/RecommendedCars";
 import { FC } from "react";
 import { formatDate } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { makeAlternates } from "@/lib/seo";
+import { fetchVehicleData as fetchData } from "@/lib/vehicle";
 
 // Lazy load — не нужны сразу при загрузке
-const DetailInfo = dynamic(() => import("@/components/Catalog/CarDetail/DetailInfo"));
-const OptionsRow = dynamic(() => import("@/components/Catalog/CarDetail/OptionsRow/OptionsRow"));
-const CustomsCalculator = dynamic(() => import("@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator"));
-const CarDetailSidebar = dynamic(() => import("@/components/Catalog/CarDetail/CarDetailSidebar"));
-const CarDescription = dynamic(() => import("@/components/Catalog/CarDetail/CarDescription"));
-const StickyMobileCTA = dynamic(() => import("@/components/Catalog/CarDetail/StickyMobileCTA"));
-const CarViewTracker = dynamic(() => import("@/components/Catalog/CarDetail/CarViewTracker"));
+const DetailInfo = dynamic(
+  () => import("@/components/Catalog/CarDetail/DetailInfo"),
+);
+const OptionsRow = dynamic(
+  () => import("@/components/Catalog/CarDetail/OptionsRow/OptionsRow"),
+);
+const CustomsCalculator = dynamic(
+  () =>
+    import("@/components/Catalog/CarDetail/CustomsCalculator/CustomsCalculator"),
+);
+const CarDetailSidebar = dynamic(
+  () => import("@/components/Catalog/CarDetail/CarDetailSidebar"),
+);
+const CarDescription = dynamic(
+  () => import("@/components/Catalog/CarDetail/CarDescription"),
+);
+const StickyMobileCTA = dynamic(
+  () => import("@/components/Catalog/CarDetail/StickyMobileCTA"),
+);
+const CarViewTracker = dynamic(
+  () => import("@/components/Catalog/CarDetail/CarViewTracker"),
+);
 
 interface PageProps {
   params: Promise<{ lang: string; id: string }>;
-}
-
-async function fetchData(id: string): Promise<any> {
-  // Основной источник — прямой Encar API, кэш 1 час
-  try {
-    const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {
-      next: { revalidate: 3600 },
-    });
-    // 404 от Encar = машина продана/удалена — это настоящий notFound
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Encar ${res.status}`);
-    return await res.json();
-  } catch {
-    // Fallback: тот же прокси что использует каталог
-    try {
-      const res = await fetch(
-        `https://encar-proxy-main.onrender.com/api/vehicle/${id}`,
-        { next: { revalidate: 3600 } }
-      );
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`proxy ${res.status}`);
-      return await res.json();
-    } catch {
-      // Оба источника недоступны — это сбой апстрима, а не отсутствие машины.
-      // Отдаём 5xx вместо 404, чтобы Google не выкидывал живые страницы из индекса.
-      throw new Error(`vehicle ${id}: upstream unavailable`);
-    }
-  }
 }
 
 // Separate fast fetch for metadata — strict 1.5s timeout so WhatsApp never waits too long
@@ -72,7 +61,9 @@ async function fetchDataFast(id: string) {
 const SOCIAL_BOT_RE =
   /whatsapp|telegram|facebookexternalhit|facebot|twitterbot|slack|linkedin|discord|viber|skype|vkshare|pinterest/i;
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { lang, id } = await params;
   const ua = (await headers()).get("user-agent") ?? "";
   const isSocialBot = SOCIAL_BOT_RE.test(ua);
@@ -85,19 +76,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : await fetchData(id).catch(() => null);
 
   // If API is slow → return fast generic metadata, WhatsApp gets it instantly
-  if (!data) return {
-    title: `Авто из Кореи`,
-    description: "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
-    openGraph: { title: "Авто из Кореи", description: "Купить автомобиль из Южной Кореи.", type: "website" },
-    alternates: makeAlternates(lang, `/catalog/${id}`),
-  };
+  if (!data)
+    return {
+      title: `Авто из Кореи`,
+      description:
+        "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
+      openGraph: {
+        title: "Авто из Кореи",
+        description: "Купить автомобиль из Южной Кореи.",
+        type: "website",
+      },
+      alternates: makeAlternates(lang, `/catalog/${id}`),
+    };
 
   const carName = [
     data.category.manufacturerEnglishName,
     data.category.modelGroupEnglishName,
     data.category.gradeDetailEnglishName,
     data.category.gradeEnglishName,
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const year = formatDate(data?.category?.yearMonth);
   const mileage = data?.spec.mileage?.toLocaleString("ru-RU") || "—";
@@ -106,10 +105,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : null;
 
   // Приблизительная цена в рублях для RU описания
-  const rubPrice = krwPrice ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU") : null;
+  const rubPrice = krwPrice
+    ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU")
+    : null;
 
   // Обрезаем carName если слишком длинный (лимит title ~60 символов)
-  const shortCarName = carName.length > 40 ? carName.slice(0, 38) + "…" : carName;
+  const shortCarName =
+    carName.length > 40 ? carName.slice(0, 38) + "…" : carName;
 
   const TITLE: Record<string, string> = {
     ru: `${shortCarName} ${year} из Кореи`,
@@ -137,7 +139,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const typeA = TYPE_ORDER[a.type] ?? 1;
     const typeB = TYPE_ORDER[b.type] ?? 1;
     if (typeA !== typeB) return typeA - typeB;
-    return (a.code || "").localeCompare(b.code || "", undefined, { numeric: true });
+    return (a.code || "").localeCompare(b.code || "", undefined, {
+      numeric: true,
+    });
   });
   const ogImage = sortedPhotos[0]?.path
     ? `https://ci.encar.com${sortedPhotos[0].path}?impolicy=heightRate&rh=630&cw=1200&ch=630&cg=Center`
@@ -150,7 +154,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       type: "website",
-      ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630, alt: carName }] }),
+      ...(ogImage && {
+        images: [{ url: ogImage, width: 1200, height: 630, alt: carName }],
+      }),
     },
     twitter: {
       card: "summary_large_image",
@@ -161,10 +167,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ params }) => {
+const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
+  params,
+}) => {
   const { lang, id } = await params;
   const data = await fetchData(id);
-  if (!data || !data.category?.manufacturerEnglishName || !data.advertisement?.price) notFound();
+  if (
+    !data ||
+    !data.category?.manufacturerEnglishName ||
+    !data.advertisement?.price
+  )
+    notFound();
 
   const carName = [
     data.category.manufacturerEnglishName,
@@ -179,43 +192,73 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     : null;
 
   const CATALOG_LABEL: Record<string, string> = {
-    ru: "Каталог", en: "Catalog", ko: "카탈로그", ka: "კატალოგი", ar: "الكتالوج",
+    ru: "Каталог",
+    en: "Catalog",
+    ko: "카탈로그",
+    ka: "კატალოგი",
+    ar: "الكتالوج",
   };
 
   const BUY_PRICE_LABEL: Record<string, string> = {
-    ru: "Цена покупки", en: "Purchase price", ko: "구매 가격", ka: "ყიდვის ფასი", ar: "سعر الشراء",
+    ru: "Цена покупки",
+    en: "Purchase price",
+    ko: "구매 가격",
+    ka: "ყიდვის ფასი",
+    ar: "سعر الشراء",
   };
   const WON_LABEL: Record<string, string> = {
-    ru: "вон", en: "won", ko: "원", ka: "ვონი", ar: "وون",
+    ru: "вон",
+    en: "won",
+    ko: "원",
+    ka: "ვონი",
+    ar: "وون",
   };
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://www.kmotors.shop/${lang}/catalog` },
-      { "@type": "ListItem", position: 3, name: carName, item: `https://www.kmotors.shop/${lang}/catalog/${id}` },
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "K-Axis",
+        item: `https://www.kmotors.shop/${lang}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: CATALOG_LABEL[lang] || "Catalog",
+        item: `https://www.kmotors.shop/${lang}/catalog`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: carName,
+        item: `https://www.kmotors.shop/${lang}/catalog/${id}`,
+      },
     ],
   };
 
   // Map Korean fuel names → schema.org vocabulary
   const fuelMap: Record<string, string> = {
-    "가솔린": "https://schema.org/Gasoline",
-    "디젤":   "https://schema.org/Diesel",
-    "전기":   "https://schema.org/Electric",
-    "LPG":    "https://schema.org/LPG",
-    "lpg":    "https://schema.org/LPG",
-    "하이브리드":     "https://schema.org/Hybrid",
-    "플러그인하이브리드": "https://schema.org/Hybrid",
-    "수소":   "https://schema.org/Hydrogen",
+    가솔린: "https://schema.org/Gasoline",
+    디젤: "https://schema.org/Diesel",
+    전기: "https://schema.org/Electric",
+    LPG: "https://schema.org/LPG",
+    lpg: "https://schema.org/LPG",
+    하이브리드: "https://schema.org/Hybrid",
+    플러그인하이브리드: "https://schema.org/Hybrid",
+    수소: "https://schema.org/Hydrogen",
   };
   const rawFuel: string = data?.spec?.fuelName ?? "";
-  const schemaFuel = Object.entries(fuelMap).find(([k]) => rawFuel.includes(k))?.[1];
+  const schemaFuel = Object.entries(fuelMap).find(([k]) =>
+    rawFuel.includes(k),
+  )?.[1];
 
   // vehicleModelDate: "YYYY-MM" from yearMonth "YYYYMM"
   const ym: string = data?.category?.yearMonth ?? "";
-  const vehicleModelDate = ym.length >= 6 ? `${ym.slice(0, 4)}-${ym.slice(4, 6)}` : undefined;
+  const vehicleModelDate =
+    ym.length >= 6 ? `${ym.slice(0, 4)}-${ym.slice(4, 6)}` : undefined;
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org/",
@@ -223,10 +266,13 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     name: carName,
     image: [mainPhoto],
     description: `${carName} ${carData} — ${data?.spec?.mileage?.toLocaleString("en-US")} km. South Korean car on K-Axis.`,
-    brand: { "@type": "Brand", name: data.category.manufacturerEnglishName || "Unknown" },
-    ...(data?.vin              && { vehicleIdentificationNumber: data.vin }),
-    ...(vehicleModelDate       && { vehicleModelDate }),
-    ...(data?.spec?.mileage    && {
+    brand: {
+      "@type": "Brand",
+      name: data.category.manufacturerEnglishName || "Unknown",
+    },
+    ...(data?.vin && { vehicleIdentificationNumber: data.vin }),
+    ...(vehicleModelDate && { vehicleModelDate }),
+    ...(data?.spec?.mileage && {
       mileageFromOdometer: {
         "@type": "QuantitativeValue",
         value: data.spec.mileage,
@@ -292,18 +338,30 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
   };
 
   const fullCarName = `${carName} ${carData}`;
-  const krwPrice = data?.advertisement?.price ? data.advertisement.price * 10000 : null;
+  const krwPrice = data?.advertisement?.price
+    ? data.advertisement.price * 10000
+    : null;
 
   // Ищем совпадение в MODEL_PAGES для правильного catalogFilter
   const mfrLower = (data.category.manufacturerEnglishName ?? "").toLowerCase();
   const mdlClean = (data.category.modelGroupEnglishName ?? "")
-    .split("(")[0].replace(/THE NEW |NEW |ALL NEW /gi, "").trim().toLowerCase();
-  const matchedModel = MODEL_PAGES.find((m) =>
-    mfrLower.includes(m.manufacturerEn.toLowerCase()) &&
-    mdlClean.includes(m.modelEn.toLowerCase())
+    .split("(")[0]
+    .replace(/THE NEW |NEW |ALL NEW /gi, "")
+    .trim()
+    .toLowerCase();
+  const matchedModel = MODEL_PAGES.find(
+    (m) =>
+      mfrLower.includes(m.manufacturerEn.toLowerCase()) &&
+      mdlClean.includes(m.modelEn.toLowerCase()),
   );
   const catalogFilter = matchedModel?.catalogFilter ?? "";
-  const photoLabel = ({ ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<string, string>)[lang] || "photo";
+  const photoLabel =
+    (
+      { ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<
+        string,
+        string
+      >
+    )[lang] || "photo";
 
   // Sort: OUTER → OPTION → INNER, within each group sort by code ascending
   const TYPE_ORDER: Record<string, number> = { OUTER: 0, OPTION: 1, INNER: 2 };
@@ -311,21 +369,34 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
     const typeA = TYPE_ORDER[a.type] ?? 1;
     const typeB = TYPE_ORDER[b.type] ?? 1;
     if (typeA !== typeB) return typeA - typeB;
-    return (a.code || "").localeCompare(b.code || "", undefined, { numeric: true });
+    return (a.code || "").localeCompare(b.code || "", undefined, {
+      numeric: true,
+    });
   });
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-0" style={{ backgroundColor: "var(--axis-black)" }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <div
+      className="min-h-screen pb-24 lg:pb-0"
+      style={{ backgroundColor: "var(--axis-black)" }}
+    >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Three column layout: [calculator] | [photos + specs] | [price + form + seller] */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_300px] gap-5">
-
           {/* Col 1 — Калькулятор (sticky) */}
           {data?.advertisement?.price && (
-            <div className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 car-detail-dark order-2 lg:order-1" style={{ scrollbarWidth: "none" }}>
+            <div
+              className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 car-detail-dark order-2 lg:order-1"
+              style={{ scrollbarWidth: "none" }}
+            >
               <CustomsCalculator
                 priceKRW={data.advertisement.price * 10000}
                 yearMonth={data?.category?.yearMonth || ""}
@@ -342,43 +413,84 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
           <div className="space-y-5 car-detail-dark min-w-0 overflow-hidden order-1 lg:order-2">
             {/* Car title — над фото, в центральной колонке */}
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
+              <h1
+                className="text-2xl lg:text-3xl font-bold leading-tight"
+                style={{ color: "var(--axis-white)" }}
+              >
                 {data.category.manufacturerEnglishName}{" "}
-                <span style={{ color: "var(--axis-orange)" }}>{data.category.modelGroupEnglishName}</span>{" "}
+                <span style={{ color: "var(--axis-orange)" }}>
+                  {data.category.modelGroupEnglishName}
+                </span>{" "}
                 {data.category.gradeEnglishName}
-                {data.category.gradeDetailEnglishName ? ` ${data.category.gradeDetailEnglishName}` : ""}
+                {data.category.gradeDetailEnglishName
+                  ? ` ${data.category.gradeDetailEnglishName}`
+                  : ""}
               </h1>
               <div className="flex items-center gap-3 mt-2">
-                <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.3)" }}>
+                <span
+                  className="px-3 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    backgroundColor: "rgba(255,69,0,0.12)",
+                    color: "var(--axis-orange)",
+                    border: "1px solid rgba(255,69,0,0.3)",
+                  }}
+                >
                   {carData}
                 </span>
               </div>
             </div>
-            <CarouselLight photos={sortedPhotos} carName={fullCarName} photoLabel={photoLabel} />
+            <CarouselLight
+              photos={sortedPhotos}
+              carName={fullCarName}
+              photoLabel={photoLabel}
+            />
 
             {/* Цена — только мобиль, сразу под фото */}
             {data?.advertisement?.price && (
-              <div className="lg:hidden rounded-2xl px-4 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 4px 20px rgba(255,69,0,0.25)" }}>
+              <div
+                className="lg:hidden rounded-2xl px-4 py-3 flex items-center justify-between"
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))",
+                  boxShadow: "0 4px 20px rgba(255,69,0,0.25)",
+                }}
+              >
                 <div>
-                  <p className="text-white/70 text-xs mb-0.5">{BUY_PRICE_LABEL[lang] ?? BUY_PRICE_LABEL.ru}</p>
+                  <p className="text-white/70 text-xs mb-0.5">
+                    {BUY_PRICE_LABEL[lang] ?? BUY_PRICE_LABEL.ru}
+                  </p>
                   <p className="text-white text-2xl font-bold leading-tight">
-                    {(data.advertisement.price * 10000).toLocaleString("ru-RU")} <span className="text-base font-normal">{WON_LABEL[lang] ?? WON_LABEL.ru}</span>
+                    {(data.advertisement.price * 10000).toLocaleString("ru-RU")}{" "}
+                    <span className="text-base font-normal">
+                      {WON_LABEL[lang] ?? WON_LABEL.ru}
+                    </span>
                   </p>
                   {rates.krwToRub && (
                     <p className="text-white/80 text-sm mt-0.5">
-                      ≈ {Math.round(data.advertisement.price * 10000 * rates.krwToRub).toLocaleString("ru-RU")} ₽
+                      ≈{" "}
+                      {Math.round(
+                        data.advertisement.price * 10000 * rates.krwToRub,
+                      ).toLocaleString("ru-RU")}{" "}
+                      ₽
                     </p>
                   )}
                 </div>
               </div>
             )}
-            <VinMileageSection vin={data.vin} vehicleNo={data.vehicleNo} mileage={data.spec.mileage} />
+            <VinMileageSection
+              vin={data.vin}
+              vehicleNo={data.vehicleNo}
+              mileage={data.spec.mileage}
+            />
             <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
             <OptionsRow data={data.options} />
           </div>
 
           {/* Col 3 — Цена, форма, продавец (sticky) */}
-          <div className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 order-3" style={{ scrollbarWidth: "none" }}>
+          <div
+            className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 order-3"
+            style={{ scrollbarWidth: "none" }}
+          >
             <CarDetailSidebar
               data={data}
               id={id}
@@ -395,6 +507,8 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
         </div>
       </div>
 
+      {/* Рекомендуемые авто */}
+      <RecommendedCars id={data?.vehicleId} lang={lang} />
       {/* Блок описания модели — виден пользователям и индексируется Google */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
         <CarDescription
@@ -410,7 +524,11 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({ par
       </div>
 
       <StickyMobileCTA carId={id} carName={fullCarName} />
-      <CarViewTracker carId={id} carName={fullCarName} price={krwPrice ?? undefined} />
+      <CarViewTracker
+        carId={id}
+        carName={fullCarName}
+        price={krwPrice ?? undefined}
+      />
     </div>
   );
 };
