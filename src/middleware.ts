@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
-
-const LANGS = ["ru", "en", "ka", "ar"];
-const DEFAULT_LANG = "ru";
+import { isLang, resolveLang } from "@/lib/lang";
 
 // IP адреса которые не трекаем (разработчики, владельцы)
 const EXCLUDED_IPS = ["14.5.115.104"];
@@ -136,7 +134,7 @@ export async function middleware(request: NextRequest) {
   const segments = path.split("/").filter(Boolean); // ['ru', 'catalog'] или ['catalog']
   const pathLang = segments[0];
 
-  if (LANGS.includes(pathLang)) {
+  if (isLang(pathLang)) {
     // URL уже содержит валидный lang — ставим cookie и трекаем
     response.cookies.set("kmotors-lang", pathLang, {
       path: "/",
@@ -180,14 +178,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // --- Нет lang-префикса — редирект на нужный язык ---
-  // Пробуем определить язык из cookie или Accept-Language
-  const cookieLang = request.cookies.get("kmotors-lang")?.value;
-  const acceptLang = request.headers.get("accept-language")?.split(",")[0]?.split("-")[0];
-
-  const targetLang =
-    (cookieLang && LANGS.includes(cookieLang) ? cookieLang : null) ||
-    (acceptLang && LANGS.includes(acceptLang) ? acceptLang : null) ||
-    DEFAULT_LANG;
+  // Вариант A: cookie → язык браузера (любая наша локаль) → страна (Cloudflare) → дефолт.
+  const targetLang = resolveLang({
+    cookie: request.cookies.get("kmotors-lang")?.value,
+    acceptLanguage: request.headers.get("accept-language"),
+    country:
+      request.headers.get("cf-ipcountry") || request.headers.get("x-country"),
+  });
 
   const url = request.nextUrl.clone();
   url.pathname = `/${targetLang}${path === "/" ? "" : path}`;
