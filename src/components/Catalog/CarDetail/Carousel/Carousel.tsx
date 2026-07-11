@@ -7,6 +7,11 @@ import { encarLoader, encarThumbLoader } from "@/utils/encarLoader";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
+// БЕЗ этих стилей лайтбокс рендерится position:static и фото вываливаются
+// в конец страницы (нет fixed-оверлея). Обязательны для полноэкранного режима.
+import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
+import "yet-another-react-lightbox/plugins/counter.css";
 
 // Lightbox грузим только когда пользователь кликнул на фото
 const Lightbox = dynamic(() => import("yet-another-react-lightbox"), {
@@ -48,14 +53,30 @@ const CarouselLight = ({
     },
     [mode],
   );
+  // URL для полноэкранного просмотра: раньше отдавался голый base → грузился
+  // оригинал encar (мегабайты). Ограничиваем размер политикой — экономит память.
+  const getLightboxUrl = useCallback(
+    (photo: Photo | string) => {
+      const base = getUrl(photo);
+      if (!base.startsWith("https://ci.encar.com")) return base;
+      return `${base}?impolicy=heightRate&rh=1200&cw=1920&ch=1200&cg=Center`;
+    },
+    [getUrl],
+  );
+
   const slides = (photos || []).map((photo, i) => ({
-    src: getUrl(photo),
+    src: getLightboxUrl(photo),
     alt: carName ? `${carName} — ${photoLabel} ${i + 1}` : `photo ${i + 1}`,
-    width: 1160,
-    height: 696,
+    width: 1920,
+    height: 1200,
   }));
 
-  const current = photos?.[index];
+  const total = photos?.length || 0;
+  // Окно предзагрузки: назад 1, вперёд 2. Соседние фото уже смонтированы и
+  // закэшированы → листание стрелками мгновенное, без «мелькания» и залипания.
+  const windowIdx = Array.from(
+    new Set([index - 1, index, index + 1, index + 2]),
+  ).filter((i) => i >= 0 && i < total);
 
   return (
     <>
@@ -68,21 +89,24 @@ const CarouselLight = ({
         }}
         onClick={() => setOpen(true)}
       >
-        {current && (
+        {windowIdx.map((i) => (
           <Image
+            key={i}
             loader={encarLoader}
-            src={getUrl(current)}
+            src={getUrl(photos[i])}
             alt={
               carName
-                ? `${carName} — ${photoLabel} ${index + 1}`
-                : `photo ${index + 1}`
+                ? `${carName} — ${photoLabel} ${i + 1}`
+                : `photo ${i + 1}`
             }
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover transition-opacity duration-300 pointer-events-none"
+            style={{ opacity: i === index ? 1 : 0 }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 60vw"
-            priority={index === 0}
+            priority={i === 0}
+            draggable={false}
           />
-        )}
+        ))}
 
         {/* Counter */}
         <div
