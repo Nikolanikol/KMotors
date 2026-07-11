@@ -6,7 +6,7 @@ import { createServerClient } from "@/lib/supabase";
 export const revalidate = 86400;
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 const MIN_PARTS = 10;
 
 const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>

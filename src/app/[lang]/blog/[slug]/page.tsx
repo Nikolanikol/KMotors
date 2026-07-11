@@ -6,7 +6,7 @@ import { BlogPost } from "@/types/blog";
 
 export const revalidate = 3600;
 
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 
 export async function generateStaticParams() {
   try {

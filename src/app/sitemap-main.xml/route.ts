@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { MODEL_PAGES } from "@/data/model-pages";
 
 const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 
 interface PageConfig {
   path: string; // e.g. "" for home, "catalog", "blog", etc.

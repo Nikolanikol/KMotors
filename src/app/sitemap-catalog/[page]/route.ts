@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 
 const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 // Прокси отдаёт максимум 20 записей за запрос, поэтому один sitemap-файл
 // собирается из нескольких параллельных запросов по 20 машин
 const CHUNK_SIZE = 20;

@@ -57,7 +57,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       languages: {
         ru: `https://www.kmotors.shop/blog/${slug}`,
         en: `https://www.kmotors.shop/blog/${slug}`,
-        ko: `https://www.kmotors.shop/blog/${slug}`,
         ka: `https://www.kmotors.shop/blog/${slug}`,
         ar: `https://www.kmotors.shop/blog/${slug}`,
         "x-default": `https://www.kmotors.shop/blog/${slug}`,

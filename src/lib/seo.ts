@@ -1,5 +1,5 @@
 const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 
 export function makeAlternates(lang: string, path: string) {
   const languages: Record<string, string> = {};

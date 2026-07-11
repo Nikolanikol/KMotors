@@ -8,7 +8,7 @@ const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").t
 const About = dynamic(() => import("@/app/parts/sections/About").then(m => ({ default: m.About })));
 const ContactForm = dynamic(() => import("@/app/parts/sections/ContactForm").then(m => ({ default: m.ContactForm })));
 
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
 // Полностью статично — пересобирается только при следующем деплое
@@ -80,7 +80,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       languages: {
         ru: `${BASE}/ru/parts`,
         en: `${BASE}/en/parts`,
-        ko: `${BASE}/ko/parts`,
         ka: `${BASE}/ka/parts`,
         ar: `${BASE}/ar/parts`,
         "x-default": `${BASE}/ru/parts`,

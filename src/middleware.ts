@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
 
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 const DEFAULT_LANG = "ru";
 
 // IP адреса которые не трекаем (разработчики, владельцы)
@@ -75,6 +75,15 @@ export async function middleware(request: NextRequest) {
   // --- 410 для мусорных путей (проиндексированных Google по ошибке) ---
   if (/^\/carpicture\d/.test(path) || path.startsWith("/cdn-cgi/")) {
     return new NextResponse(null, { status: 410 });
+  }
+
+  // --- 301: корейский язык отключён → переносим на английский ---
+  // Аудитория преимущественно англоязычная; проиндексированные /ko/* URL
+  // получают постоянный редирект на /en/*, вес страниц консолидируется.
+  if (path === "/ko" || path.startsWith("/ko/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/en" + path.slice(3); // "/ko" → "/en", "/ko/x" → "/en/x"
+    return NextResponse.redirect(url, 301);
   }
 
   // --- 308: старые URL запчастей "PN--name-slug" → канонический "PN" ---

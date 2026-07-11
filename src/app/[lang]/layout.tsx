@@ -9,7 +9,7 @@ import FavoritePriceAlert from "@/components/FavoritePriceAlert";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { createClient } from "@/lib/supabase/server";
 
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 
 interface Props {
   children: React.ReactNode;

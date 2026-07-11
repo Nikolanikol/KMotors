@@ -9,7 +9,7 @@ import { makeAlternates } from "@/lib/seo";
 
 export const revalidate = 86400;
 
-const LANGS = ["ru", "en", "ko", "ka", "ar"];
+const LANGS = ["ru", "en", "ka", "ar"];
 
 interface Props {
   params: Promise<{ lang: string; slug: string }>;

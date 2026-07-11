@@ -7,7 +7,7 @@ import { generatePartSlug } from "@/utils/partSlug";
 export const revalidate = 86400; // refresh daily
 
 const BASE      = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
-const LANGS     = ["ru", "en", "ko", "ka", "ar"];
+const LANGS     = ["ru", "en", "ka", "ar"];
 const PAGE_SIZE = 1_000; // Supabase limit is 1000 rows per request
 
 const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>

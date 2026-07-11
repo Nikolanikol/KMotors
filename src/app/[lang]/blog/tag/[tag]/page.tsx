@@ -86,7 +86,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: {
         ru: `https://www.kmotors.shop/ru/blog/tag/${tag}`,
         en: `https://www.kmotors.shop/en/blog/tag/${tag}`,
-        ko: `https://www.kmotors.shop/ko/blog/tag/${tag}`,
         ka: `https://www.kmotors.shop/ka/blog/tag/${tag}`,
         ar: `https://www.kmotors.shop/ar/blog/tag/${tag}`,
         "x-default": `https://www.kmotors.shop/ru/blog/tag/${tag}`,

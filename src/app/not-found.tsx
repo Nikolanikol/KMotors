@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertCircle, Home, Search, MessageCircle } from "lucide-react";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+const SUPPORTED_LANGS = ["ru", "en", "ka", "ar"];
 
 const T = {
   ru: {
