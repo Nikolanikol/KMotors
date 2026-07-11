@@ -215,33 +215,38 @@ const CarouselLight = ({
         </div>
       )}
 
-      {/* Fullscreen lightbox */}
-      <Lightbox
-        open={open}
-        close={() => setOpen(false)}
-        index={index}
-        slides={slides}
-        plugins={[Thumbnails, Zoom, Counter]}
-        styles={{
-          root: { "--yarl__color_backdrop": "rgba(10,10,10,0.97)" },
-        }}
-        thumbnails={{
-          position: "bottom",
-          width: 80,
-          height: 50,
-          gap: 8,
-          border: 2,
-          borderRadius: 8,
-          borderColor: "var(--axis-orange)",
-        }}
-        counter={{
-          container: {
-            style: { top: 16, right: 16, left: "unset", fontSize: 13 },
-          },
-        }}
-        zoom={{ maxZoomPixelRatio: 3 }}
-        on={{ view: ({ index: i }) => setIndex(i) }}
-      />
+      {/* Fullscreen lightbox — монтируем только при открытии.
+          Это (а) убирает hydration-mismatch: ssr:false-компонент отсутствует в
+          дереве и на сервере, и на клиенте при гидрации, поэтому не сдвигает
+          radix useId у соседних компонентов; (б) не грузит JS/DOM лайтбокса до клика. */}
+      {open && (
+        <Lightbox
+          open={open}
+          close={() => setOpen(false)}
+          index={index}
+          slides={slides}
+          plugins={[Thumbnails, Zoom, Counter]}
+          styles={{
+            root: { "--yarl__color_backdrop": "rgba(10,10,10,0.97)" },
+          }}
+          thumbnails={{
+            position: "bottom",
+            width: 80,
+            height: 50,
+            gap: 8,
+            border: 2,
+            borderRadius: 8,
+            borderColor: "var(--axis-orange)",
+          }}
+          counter={{
+            container: {
+              style: { top: 16, right: 16, left: "unset", fontSize: 13 },
+            },
+          }}
+          zoom={{ maxZoomPixelRatio: 3 }}
+          on={{ view: ({ index: i }) => setIndex(i) }}
+        />
+      )}
     </>
   );
 };
