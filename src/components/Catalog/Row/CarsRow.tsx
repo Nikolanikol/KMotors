@@ -4,17 +4,21 @@ import { getCars } from "./utils/service";
 import { CarSearchParams } from "./utils/Types";
 import CarCard from "./CarCard";
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { catalogPageSize } from "@/utils/device";
 import { Search } from "lucide-react";
 
 const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page || "1"));
-  const offset = String((page - 1) * 20); // page=1→0, page=2→20, page=3→40
+  // На мобиле меньше карточек на страницу — легче HTML/DOM/JS.
+  const pageSize = catalogPageSize((await headers()).get("user-agent"));
+  const offset = String((page - 1) * pageSize); // page=1→0, page=2→pageSize, …
   const newString = getString(params);
 
   const [{ data, count }, rates] = await Promise.all([
-    getCars(newString, offset),
+    getCars(newString, offset, pageSize),
     getCurrencyRates(),
   ]);
 
@@ -71,7 +75,7 @@ const CarsRow = async ({ searchParams }: { searchParams: CarSearchParams }) => {
           )}
       </div>
       <div className="flex gap-2 mt-8 pb-8">
-        <Pagination count={count} />
+        <Pagination count={count} pageSize={pageSize} />
       </div>
     </div>
   );

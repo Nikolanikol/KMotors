@@ -2,12 +2,12 @@
 
 const isCarNoQuery = (query: string) => query.includes("Simple.keyword");
 
-export async function getCars(query: string, offset: string = "0") {
+export async function getCars(query: string, offset: string = "0", limit: number = 20) {
   const cache = isCarNoQuery(query) ? "no-store" : "force-cache";
 
   try {
     const res = await fetch(
-      `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20`,
+      `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C${limit}`,
       {
         cache,
         headers: {
@@ -22,7 +22,7 @@ export async function getCars(query: string, offset: string = "0") {
     };
   } catch {
     const fallbackRes = await fetch(
-      `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C20`,
+      `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=%7CModifiedDate%7C${offset}%7C${limit}`,
       { cache }
     );
     const fallbackData = await fallbackRes.json();

@@ -5,7 +5,9 @@ import { getCars } from "@/components/Catalog/Row/utils/service";
 import { CarSearchParams } from "@/components/Catalog/Row/utils/Types";
 import { Metadata } from "next";
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { makeAlternates } from "@/lib/seo";
+import { catalogPageSize } from "@/utils/device";
 
 export const revalidate = 300;
 
@@ -149,7 +151,9 @@ export default async function CatalogPage({ params, searchParams }: Props) {
   let itemListSchema = null;
   try {
     const query = getString(sp);
-    const { data } = await getCars(query, sp.page);
+    // Тот же размер страницы, что и в CarsRow, чтобы схема совпадала с видимым списком
+    const pageSize = catalogPageSize((await headers()).get("user-agent"));
+    const { data } = await getCars(query, sp.page, pageSize);
     if (data && data.length > 0) {
       itemListSchema = {
         "@context": "https://schema.org",

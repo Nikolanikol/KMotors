@@ -2,7 +2,7 @@
 import React, { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export const Pagination = ({ count }: { count: number }) => {
+export const Pagination = ({ count, pageSize = 20 }: { count: number; pageSize?: number }) => {
   const router = useRouter();
   const params = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -10,7 +10,7 @@ export const Pagination = ({ count }: { count: number }) => {
   // Синхронизируем с URL — читаем page из params
   const currentPage = Math.max(1, Number(params.get("page") || "1"));
 
-  const totalPages = Math.ceil(count / 20);
+  const totalPages = Math.ceil(count / pageSize);
 
   const goTo = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
