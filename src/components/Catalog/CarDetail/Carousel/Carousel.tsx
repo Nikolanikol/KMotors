@@ -53,23 +53,34 @@ const CarouselLight = ({
     },
     [mode],
   );
-  // URL для полноэкранного просмотра: раньше отдавался голый base → грузился
-  // оригинал encar (мегабайты). Ограничиваем размер политикой — экономит память.
-  const getLightboxUrl = useCallback(
-    (photo: Photo | string) => {
-      const base = getUrl(photo);
-      if (!base.startsWith("https://ci.encar.com")) return base;
-      return `${base}?impolicy=heightRate&rh=1200&cw=1920&ch=1200&cg=Center`;
-    },
-    [getUrl],
-  );
+  // Слайды полноэкранного просмотра с адаптивным srcSet: раньше отдавался
+  // голый base (оригинал encar, мегабайты). Даём набор ширин через encar-политику
+  // — браузер сам выбирает подходящий размер под экран и DPR (экономит трафик/память).
+  const LIGHTBOX_WIDTHS = [640, 960, 1280, 1600, 1920];
+  const sizedUrl = useCallback((base: string, w: number) => {
+    const h = Math.round(w * 0.625); // 16:10
+    return `${base}?impolicy=heightRate&rh=${h}&cw=${w}&ch=${h}&cg=Center`;
+  }, []);
 
-  const slides = (photos || []).map((photo, i) => ({
-    src: getLightboxUrl(photo),
-    alt: carName ? `${carName} — ${photoLabel} ${i + 1}` : `photo ${i + 1}`,
-    width: 1920,
-    height: 1200,
-  }));
+  const slides = (photos || []).map((photo, i) => {
+    const base = getUrl(photo);
+    const alt = carName ? `${carName} — ${photoLabel} ${i + 1}` : `photo ${i + 1}`;
+    // Не-encar источники (static/строки) отдаём как есть, без параметров размера.
+    if (!base.startsWith("https://ci.encar.com")) {
+      return { src: base, alt, width: 1920, height: 1200 };
+    }
+    return {
+      src: sizedUrl(base, 1280), // фолбэк для браузеров без srcSet
+      alt,
+      width: 1920,
+      height: 1200,
+      srcSet: LIGHTBOX_WIDTHS.map((w) => ({
+        src: sizedUrl(base, w),
+        width: w,
+        height: Math.round(w * 0.625),
+      })),
+    };
+  });
 
   const total = photos?.length || 0;
   // Окно предзагрузки: назад 1, вперёд 2. Соседние фото уже смонтированы и
