@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import {
+  approveBatch, rejectBatch, approveOne, rejectOne, sendItemMessages, sendSeoDigest,
+} from "@/lib/seo-telegram";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -154,6 +157,11 @@ export async function POST(req: NextRequest) {
       return ok();
     }
 
+    if (text === "/seo") {
+      await handleSeoCommand(chatId);
+      return ok();
+    }
+
     if (text === "/ping") {
       const r = await sendMessage(chatId, "🏓 pong");
       return NextResponse.json({ ok: true, telegram: r });
@@ -223,6 +231,27 @@ export async function POST(req: NextRequest) {
       return ok();
     }
     if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, "🗑 Удалено");
+
+  // ── SEO-гейт (Фаза 4) ──────────────────────────────────────────────────────
+  } else if (data.startsWith("seo_all:")) {
+    const n = await approveBatch(supabase, data.slice("seo_all:".length));
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, `✅ Одобрено ${n} — опубликуются на следующем шаге`);
+
+  } else if (data.startsWith("seo_none:")) {
+    const n = await rejectBatch(supabase, data.slice("seo_none:".length));
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, `❌ Отклонено ${n}`);
+
+  } else if (data.startsWith("seo_one:")) {
+    const n = await sendItemMessages(supabase, data.slice("seo_one:".length));
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, `📝 Разбор по одному (${n})`);
+
+  } else if (data.startsWith("seo_ok:")) {
+    await approveOne(supabase, Number(data.slice("seo_ok:".length)));
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, "✅ Одобрено");
+
+  } else if (data.startsWith("seo_no:")) {
+    await rejectOne(supabase, Number(data.slice("seo_no:".length)));
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, "❌ Отклонено");
   }
 
   return ok();
@@ -281,6 +310,38 @@ async function handleTopicsCommand(chatId: number) {
   ).join("\n\n");
 
   await sendMessage(chatId, `📋 <b>Ближайшие темы:</b>\n\n${lines}`);
+}
+
+// /seo — переслать дайджест последнего батча черновиков на ревью
+async function handleSeoCommand(chatId: number) {
+  const supabase = createServerClient();
+
+  const { count } = await supabase
+    .from("seo_suggestions")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "draft");
+
+  if (!count) {
+    await sendMessage(chatId, "📭 Черновиков на ревью нет. Запусти генерацию: <code>/api/seo/generate</code>");
+    return;
+  }
+
+  // последний батч с черновиками
+  const { data: latest } = await supabase
+    .from("seo_suggestions")
+    .select("batch_id")
+    .eq("status", "draft")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!latest?.batch_id) {
+    await sendMessage(chatId, "📭 Активного батча не найдено");
+    return;
+  }
+
+  const res = await sendSeoDigest(supabase, latest.batch_id);
+  if (!res.sent) await sendMessage(chatId, "⚠️ Не удалось собрать дайджест");
 }
 
 // /status — статистика блога
