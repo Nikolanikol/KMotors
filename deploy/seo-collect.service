@@ -1,0 +1,14 @@
+[Unit]
+Description=KMotors — сбор данных Search Console в seo_page_stats
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Поправь путь к репозиторию под свой сервер:
+WorkingDirectory=/var/www/kmotors
+ExecStart=/var/www/kmotors/scripts/seo-collect-cron.sh
+# Секрет и пути можно задать здесь вместо чтения из .env:
+# Environment=SEO_CRON_SECRET=...
+# Environment=SEO_ENDPOINT=https://www.kmotors.shop/api/seo/collect
+# Environment=ENV_FILE=/var/www/kmotors/.env

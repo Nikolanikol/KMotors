@@ -1,0 +1,12 @@
+[Unit]
+Description=KMotors — ежедневный сбор Search Console (04:15)
+
+[Timer]
+# Раз в сутки в 04:15 по времени сервера (низкий трафик).
+# GSC-данные отстают на 2–3 дня, поэтому чаще запускать смысла нет.
+OnCalendar=*-*-* 04:15:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
