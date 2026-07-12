@@ -53,7 +53,7 @@ import {
   TbCar,
   TbEngine,
 } from "react-icons/tb";
-import { catalog } from "./data";
+import { catalog, OPTION_EN } from "./data";
 
 interface OptionsRowProps {
   data: {
@@ -150,7 +150,13 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function OptionsRow({ data }: OptionsRowProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  // Русский — из catalog.translatedValue; остальные языки — англ. словарь
+  // (ka/ar пока фолбэк на en). Группировка ниже остаётся на translatedValue.
+  const optionLabel = (o: { code: string; translatedValue: string }) =>
+    i18n.language === "ru"
+      ? o.translatedValue
+      : (OPTION_EN[o.code] ?? o.translatedValue);
 
   const getOptionsWithDetails = (codes: string[]) => {
     return codes
@@ -261,7 +267,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
                       {OPTION_ICONS[option.code] ?? FALLBACK_ICON}
                     </span>
                     <span className="text-xs leading-tight" style={{ color: "var(--axis-white)" }}>
-                  {option.translatedValue}
+                  {optionLabel(option)}
                     </span>
                   </div>
                 ))}

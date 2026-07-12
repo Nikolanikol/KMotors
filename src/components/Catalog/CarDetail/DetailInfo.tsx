@@ -83,7 +83,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ id, carnumber }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const { t } = useTranslation(["common", "cars"]);
-  const [specsOpen, setSpecsOpen] = useState(false);
+  const [specsOpen, setSpecsOpen] = useState(true);
 
   useEffect(() => {
     fetch(`https://api.encar.com/v1/readside/record/vehicle/${id}/open?vehicleNo=${carnumber}`)
