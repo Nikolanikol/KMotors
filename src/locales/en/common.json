@@ -237,39 +237,56 @@
     "steps": {
       "step1": {
         "title": "Choose a Car",
-        "description": "Browse our catalog of cars from South Korea. Filter by brand, model, year, and price. Find the perfect option for you."
+        "description": "Browse our catalog of cars from South Korea. Filter by brand, model, year, and price. Our managers will help you find the perfect option that meets your country's import regulations."
       },
       "step2": {
         "title": "Make a Deposit",
-        "description": "Make a deposit of 2,000,000 won from the car's cost. We'll reserve the car for you and start the paperwork.",
-        "highlight": "All funds are insured and guaranteed to be returned if the car doesn't suit you."
+        "description": "Make a deposit of KRW 2,000,000 toward the car's total cost. We'll reserve the car for you and start preparing the documents.",
+        "highlight": "All funds are insured and guaranteed to be refunded if the car does not pass the initial inspection."
       },
       "step3": {
-        "title": "Inspection and Check",
-        "description": "Our specialist conducts a full inspection of the car in South Korea. You'll receive a photo and video report with all details."
+        "title": "Vehicle Inspection",
+        "description": "Our specialist performs a full technical inspection of the car in South Korea. You'll receive a detailed photo and video report, including full computer diagnostics and a paint-thickness measurement."
       },
       "step4": {
         "title": "Pay the Balance",
-        "description": "After confirmation, pay the remaining amount. We'll purchase the car and start preparing it for export."
+        "description": "After you approve the report, you pay the remaining cost of the car via international SWIFT transfer based on the issued invoice. We buy the car and prepare it for shipment."
       },
       "step5": {
-        "title": "Customs Processing",
-        "description": "Our team handles all customs procedures. The car is processed for export to Russia with all necessary documents."
+        "title": "Export Processing",
+        "description": "Our team fully handles deregistering the car in South Korea and preparing all the export documents required to ship it to your country."
       },
       "step6": {
-        "title": "Delivery to Russia",
-        "description": "The car is shipped to Russia by sea. We track every stage of delivery and keep you informed.",
-        "highlight": "Delivery to Vladivostok typically takes 7-14 days depending on the destination."
+        "title": "International Delivery",
+        "description": "We arrange ocean freight of the car to your destination port under CIF terms (insurance included). You receive a tracking number and a Bill of Lading (B/L) to track your shipment.",
+        "highlight": "Delivery time depends on the distance to your destination port and the chosen route."
       },
       "step7": {
         "title": "Customs Clearance",
-        "description": "Upon arrival in Russia, we assist with customs clearance. All fees and taxes are paid according to Russian legislation."
+        "description": "Upon the car's arrival at the destination port, you complete import customs clearance according to your country's laws. We provide a complete package of Korean documents for fast clearance. If needed, we can recommend trusted brokers in your region."
       },
       "step8": {
         "title": "Receive Your Car",
-        "description": "Your car is ready for pickup! We'll hand over the car with all necessary documents and keys.",
-        "highlight": "Congratulations! Your new car is now ready to use."
+        "description": "Your car is ready! Once customs procedures are complete, you pick up the car from the warehouse or your broker. All original documents and keys are handed over with the car.",
+        "highlight": "Congratulations! Your new car is ready for the road."
       }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": [
+        {
+          "q": "Which countries do you ship cars to?",
+          "a": "We export worldwide. Key destinations include the CIS countries (Russia, Kazakhstan, Kyrgyzstan, Belarus), the Middle East, Asia, and Europe. We'll choose the best delivery route to the nearest major sea port to you."
+        },
+        {
+          "q": "Who handles customs clearance in my country?",
+          "a": "Our company is responsible for the purchase, inspection, export processing in Korea, and CIF delivery to your country's port. Import customs clearance is handled by the buyer. We prepare a complete, fully compliant set of documents (invoice, export declaration, Bill of Lading) allowing any local broker to clear the vehicle efficiently. In many countries we also have trusted partner brokers we can recommend to you."
+        },
+        {
+          "q": "Is the car insured during transport?",
+          "a": "Yes, we ship all cars under CIF terms. This means the delivery cost already includes marine cargo insurance that protects your car throughout the entire journey until it arrives at the destination port."
+        }
+      ]
     }
   },
   "home": {

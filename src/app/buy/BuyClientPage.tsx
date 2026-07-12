@@ -20,6 +20,24 @@ export default function HowToBuyPage() {
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
+  const faqItems = t("buy.faq.items", { returnObjects: true }) as unknown as {
+    q: string;
+    a: string;
+  }[];
+  const faqList = Array.isArray(faqItems) ? faqItems : [];
+  const faqSchema =
+    faqList.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqList.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: { "@type": "Answer", text: item.a },
+          })),
+        }
+      : null;
+
   const steps = [
     {
       number: 1,
@@ -82,6 +100,9 @@ export default function HowToBuyPage() {
           <div className="space-y-6">
             {steps.map((step) => {
               const Icon = step.icon;
+              const highlightText = t(`buy.steps.step${step.number}.highlight`, {
+                defaultValue: "",
+              });
               return (
                 <div key={step.number} className="relative md:pl-28">
                   <div className="absolute left-0 top-0 w-16 h-16 rounded-full hidden md:flex items-center justify-center border-2 flex-shrink-0"
@@ -98,28 +119,28 @@ export default function HowToBuyPage() {
                     <div className="flex items-center gap-2 mb-1 md:hidden">
                       <span className="text-sm font-bold" style={{ color: "var(--axis-orange)" }}>{t('buy.step')} {step.number}</span>
                     </div>
-                    <h2 className="text-lg font-bold mb-2" style={{ color: "var(--axis-white)" }}>
+                    <h2 dir="auto" className="text-lg font-bold mb-2" style={{ color: "var(--axis-white)" }}>
                       {t(`buy.steps.step${step.number}.title`)}
                     </h2>
-                    <p className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>
+                    <p dir="auto" className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>
                       {t(`buy.steps.step${step.number}.description`)}
                     </p>
 
-                    {step.hasHighlight && step.highlightType === "important" && (
-                      <div className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(255,69,0,0.08)", borderColor: "var(--axis-orange)", color: "var(--axis-white)" }}>
+                    {step.hasHighlight && highlightText && step.highlightType === "important" && (
+                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(255,69,0,0.08)", borderColor: "var(--axis-orange)", color: "var(--axis-white)" }}>
                         <span className="font-bold" style={{ color: "var(--axis-orange)" }}>{t('buy.important')}: </span>
-                        {t(`buy.steps.step${step.number}.highlight`)}
+                        {highlightText}
                       </div>
                     )}
-                    {step.hasHighlight && step.highlightType === "note" && (
-                      <div className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(255,140,0,0.08)", borderColor: "var(--axis-amber)", color: "var(--axis-white)" }}>
+                    {step.hasHighlight && highlightText && step.highlightType === "note" && (
+                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(255,140,0,0.08)", borderColor: "var(--axis-amber)", color: "var(--axis-white)" }}>
                         <span className="font-bold" style={{ color: "var(--axis-amber)" }}>{t('buy.note')}: </span>
-                        {t(`buy.steps.step${step.number}.highlight`)}
+                        {highlightText}
                       </div>
                     )}
-                    {step.hasHighlight && step.highlightType === "success" && (
-                      <div className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderColor: "#22c55e", color: "#22c55e" }}>
-                        ✅ {t(`buy.steps.step${step.number}.highlight`)}
+                    {step.hasHighlight && highlightText && step.highlightType === "success" && (
+                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", borderColor: "#22c55e", color: "#22c55e" }}>
+                        ✅ {highlightText}
                       </div>
                     )}
                   </div>
@@ -132,6 +153,36 @@ export default function HowToBuyPage() {
             })}
           </div>
         </div>
+
+        {faqList.length > 0 && (
+          <div className="mt-16">
+            {faqSchema && (
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+              />
+            )}
+            <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--axis-white)" }}>
+              {t('buy.faq.title')}
+            </h2>
+            <div className="space-y-4">
+              {faqList.map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl p-5 md:p-6"
+                  style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}
+                >
+                  <h3 dir="auto" className="text-base font-bold mb-2" style={{ color: "var(--axis-white)" }}>
+                    {item.q}
+                  </h3>
+                  <p dir="auto" className="text-sm leading-relaxed" style={{ color: "var(--axis-gray)" }}>
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-12 p-8 rounded-2xl text-center" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))" }}>
           <h2 className="text-2xl font-bold text-white mb-2">{t('buy.ready')}</h2>
