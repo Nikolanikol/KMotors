@@ -50,6 +50,14 @@ export type ProductDetail = {
   category_id: number | null;
   subcategory_id: number | null;
   weight_kg: number | null;
+  // SEO-поля (заполняются автоматикой после апрува; могут быть null)
+  seo_title_ru: string | null;
+  seo_title_en: string | null;
+  seo_desc_ru: string | null;
+  seo_desc_en: string | null;
+  seo_body_ru: string | null;
+  seo_body_en: string | null;
+  cross_refs: string[] | null;
 };
 
 export type ProductLogistics = {
@@ -431,6 +439,25 @@ export function ProductDetailClient({
         {description && (
           <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8 mb-10">
             <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+          </div>
+        )}
+
+        {/* ── Cross-reference numbers (OEM-аналоги) ─────────────────────────── */}
+        {Array.isArray(product.cross_refs) && product.cross_refs.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8 mb-10">
+            <h2 className="text-base font-bold text-[#002C5F] mb-3">
+              {lang === "ru" ? "Кросс-номера (аналоги)" : "Cross-reference numbers"}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {product.cross_refs.map((cr) => (
+                <span
+                  key={cr}
+                  className="px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-sm font-mono"
+                >
+                  {cr}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

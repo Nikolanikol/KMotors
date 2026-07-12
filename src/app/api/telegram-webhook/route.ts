@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase";
 import {
   approveBatch, rejectBatch, approveOne, rejectOne, sendItemMessages, sendSeoDigest,
 } from "@/lib/seo-telegram";
+import { publishApproved } from "@/lib/seo-publish";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -234,8 +235,11 @@ export async function POST(req: NextRequest) {
 
   // ── SEO-гейт (Фаза 4) ──────────────────────────────────────────────────────
   } else if (data.startsWith("seo_all:")) {
-    const n = await approveBatch(supabase, data.slice("seo_all:".length));
-    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, `✅ Одобрено ${n} — опубликуются на следующем шаге`);
+    const batchId = data.slice("seo_all:".length);
+    const n = await approveBatch(supabase, batchId);
+    const pub = await publishApproved(supabase, { batch_id: batchId });
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId,
+      `✅ Опубликовано ${pub.published}/${n}${pub.indexnow ? " · IndexNow ✓" : ""}`);
 
   } else if (data.startsWith("seo_none:")) {
     const n = await rejectBatch(supabase, data.slice("seo_none:".length));
@@ -246,8 +250,11 @@ export async function POST(req: NextRequest) {
     if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, `📝 Разбор по одному (${n})`);
 
   } else if (data.startsWith("seo_ok:")) {
-    await approveOne(supabase, Number(data.slice("seo_ok:".length)));
-    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId, "✅ Одобрено");
+    const id = Number(data.slice("seo_ok:".length));
+    await approveOne(supabase, id);
+    const pub = await publishApproved(supabase, { id });
+    if (chatId && messageId) await editMessageRemoveButtons(chatId, messageId,
+      pub.published ? `✅ Опубликовано${pub.indexnow ? " · IndexNow ✓" : ""}` : "✅ Одобрено");
 
   } else if (data.startsWith("seo_no:")) {
     await rejectOne(supabase, Number(data.slice("seo_no:".length)));

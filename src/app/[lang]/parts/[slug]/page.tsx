@@ -35,7 +35,7 @@ async function fetchProduct(slug: string) {
   let query = supabase
     .from("parts_products")
     .select(
-      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method"
+      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs"
     );
 
   // Ищем по part_number или по ID
@@ -188,7 +188,7 @@ async function fetchProduct(slug: string) {
 const getCachedProduct = unstable_cache(
   (slug: string) => fetchProduct(slug),
   ["parts-product"],
-  { revalidate: 3600 }
+  { revalidate: 3600, tags: ["parts-product"] }
 );
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
@@ -209,7 +209,11 @@ function truncateName(name: string, pn: string, maxTotal = 50): string {
 
 function buildMeta(
   lang: string,
-  p: { part_number: string | null; name_ru: string; name_en: string; name_ko: string | null }
+  p: {
+    part_number: string | null; name_ru: string; name_en: string; name_ko: string | null;
+    seo_title_ru?: string | null; seo_title_en?: string | null;
+    seo_desc_ru?: string | null; seo_desc_en?: string | null;
+  }
 ) {
   const ru = truncateName(p.name_ru || p.name_en || p.name_ko || "Запчасть", p.part_number || "");
   const en = truncateName(p.name_en || p.name_ru || p.name_ko || "Part", p.part_number || "");
@@ -248,7 +252,15 @@ function buildMeta(
         : `قطعة غيار أصلية من Hyundai Mobis — ${en}. توريد مباشر من كوريا.`,
     },
   };
-  return map[lang] ?? map.ru;
+  // Override шаблона утверждённым SEO-контентом (ru/en — приоритетные языки)
+  const base = map[lang] ?? map.ru;
+  if (lang === "ru" && p.seo_title_ru) {
+    return { title: p.seo_title_ru, description: p.seo_desc_ru || base.description };
+  }
+  if (lang === "en" && p.seo_title_en) {
+    return { title: p.seo_title_en, description: p.seo_desc_en || base.description };
+  }
+  return base;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -395,7 +407,9 @@ export default async function ProductDetailPage({ params }: Props) {
     ].filter(Boolean).join(" "),
   };
 
-  const description = descriptionMap[lang] ?? descriptionMap.ru;
+  // Утверждённый seo_body (ru/en) заменяет авто-шаблон описания
+  const seoBody = lang === "ru" ? product.seo_body_ru : lang === "en" ? product.seo_body_en : null;
+  const description = seoBody || descriptionMap[lang] || descriptionMap.ru;
 
   return (
     <>

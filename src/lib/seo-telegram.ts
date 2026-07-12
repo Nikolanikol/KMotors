@@ -19,18 +19,22 @@ export async function buildDigest(
 ): Promise<{ text: string; reply_markup: object; count: number } | null> {
   const { data } = await supabase
     .from("seo_suggestions")
-    .select("part_number, snap_impressions, snap_position, proposed_title_ru")
+    .select("part_number, snap_impressions, snap_position, proposed_title_ru, proposed_desc_ru")
     .eq("batch_id", batchId)
     .eq("status", "draft")
     .order("snap_impressions", { ascending: false });
 
   if (!data?.length) return null;
 
-  const lines = data.slice(0, 20).map(
+  const snip = (s: string | null) => {
+    const t = String(s ?? "").trim();
+    return t.length > 90 ? t.slice(0, 88) + "…" : t;
+  };
+  const lines = data.slice(0, 15).map(
     (r, i) =>
-      `${i + 1}. <code>${esc(r.part_number)}</code> · поз ${r.snap_position?.toFixed(1) ?? "—"} · пок ${r.snap_impressions ?? 0}\n   → ${esc(r.proposed_title_ru)}`
+      `${i + 1}. <code>${esc(r.part_number)}</code> · поз ${r.snap_position?.toFixed(1) ?? "—"} · пок ${r.snap_impressions ?? 0}\n   <b>${esc(r.proposed_title_ru)}</b>\n   <i>${esc(snip(r.proposed_desc_ru))}</i>`
   );
-  const more = data.length > 20 ? `\n\n…и ещё ${data.length - 20}` : "";
+  const more = data.length > 15 ? `\n\n…и ещё ${data.length - 15}` : "";
   const text = `📋 <b>SEO-предложения</b> · ${data.length} карточек запчастей\n\n${lines.join("\n")}${more}`;
 
   const reply_markup = {
