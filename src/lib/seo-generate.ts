@@ -11,7 +11,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getLlm, QuotaError, type LlmClient } from "@/lib/llm";
 
 const RECENT_DAYS = 30;      // не предлагать повторно то, что уже предлагали недавно
-const THROTTLE_MS = 1200;    // пауза между вызовами LLM (щадим rate limit)
+// Пауза между вызовами LLM. Groq free = 12k токенов/мин (~10 карточек/мин),
+// одна карточка ~1–1.2k токенов → интервал ~5–6с держит нас под лимитом без 429.
+const THROTTLE_MS = Number(process.env.SEO_THROTTLE_MS) || 4500;
 
 export type Candidate = {
   product_id: number;
