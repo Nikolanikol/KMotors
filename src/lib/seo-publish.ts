@@ -28,22 +28,26 @@ export async function publishApproved(
   let published = 0;
 
   for (const s of rows) {
-    if (!s.product_id) continue;
+    if (!s.product_id && !s.part_number) continue;
 
-    const { error } = await supabase
-      .from("parts_products")
-      .update({
-        seo_title_ru: s.proposed_title_ru,
-        seo_title_en: s.proposed_title_en,
-        seo_desc_ru: s.proposed_desc_ru,
-        seo_desc_en: s.proposed_desc_en,
-        seo_body_ru: s.proposed_body_ru,
-        seo_body_en: s.proposed_body_en,
-        cross_refs: s.proposed_cross_refs,
-        seo_updated_at: new Date().toISOString(),
-        seo_content_hash: s.content_hash,
-      })
-      .eq("id", s.product_id);
+    const patch = {
+      seo_title_ru: s.proposed_title_ru,
+      seo_title_en: s.proposed_title_en,
+      seo_desc_ru: s.proposed_desc_ru,
+      seo_desc_en: s.proposed_desc_en,
+      seo_body_ru: s.proposed_body_ru,
+      seo_body_en: s.proposed_body_en,
+      cross_refs: s.proposed_cross_refs,
+      seo_updated_at: new Date().toISOString(),
+      seo_content_hash: s.content_hash,
+    };
+
+    // По part_number обновляем ВСЕ строки-дубли (страница тянет по part_number
+    // с limit(1) недетерминированно — иначе покажет необогащённый дубль).
+    const q = supabase.from("parts_products").update(patch);
+    const { error } = s.part_number
+      ? await q.eq("part_number", s.part_number)
+      : await q.eq("id", s.product_id);
     if (error) {
       console.error("[seo-publish]", s.product_id, error.message);
       continue;
