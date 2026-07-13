@@ -173,7 +173,7 @@ async function fetchProduct(slug: string) {
     ? { ru: catInfo.name_ru, en: catInfo.name_en, slug: catInfo.slug }
     : null;
   const subcategoryName = subInfo
-    ? { ru: subInfo.name_ru, en: subInfo.name_en }
+    ? { ru: subInfo.name_ru, en: subInfo.name_en, slug: subInfo.slug }
     : null;
 
   return {

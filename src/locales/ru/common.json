@@ -338,7 +338,8 @@
       "ctaCatalog": "Смотреть каталог",
       "statYears": "Лет опыта",
       "statParts": "Запчастей",
-      "statOriginal": "Оригинал"
+      "statOriginal": "Оригинал",
+      "searchButton": "Найти"
     },
     "catalog": {
       "badge": "КАТАЛОГ",

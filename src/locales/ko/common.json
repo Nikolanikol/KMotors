@@ -317,7 +317,8 @@
       "ctaCatalog": "카탈로그 보기",
       "statYears": "년 경력",
       "statParts": "개 부품",
-      "statOriginal": "정품"
+      "statOriginal": "정품",
+      "searchButton": "검색"
     },
     "catalog": {
       "badge": "카탈로그",

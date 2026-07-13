@@ -86,7 +86,6 @@ export function FitmentProductsGrid({
             key={product.id}
             product={product}
             productName={productName}
-            view="grid"
             isVisible
             index={index}
             href={href}

@@ -308,20 +308,53 @@ select.PhoneInputCountrySelect {
   display: block;
 }
 
-/* ── Parts page (kimi design system) ─────────────────────── */
+/* ── Parts page (Apex Industrial — dark) ─────────────────── */
 .parts-page {
-  --pn-deep-navy: #1B2B40;
-  --pn-dark-navy: #2D3E50;
-  --pn-orange: #F57C00;
-  --pn-warm-orange: #FF9800;
-  --pn-light-orange: #FFB74D;
-  --pn-light-gray: #F0F2F5;
-  --pn-medium-gray: #E0E4EA;
-  --pn-dark-gray: #5A6573;
-  --pn-success: #4CAF50;
-  --pn-error: #E53935;
-  background-color: var(--pn-light-gray);
-  color: var(--pn-deep-navy);
+  /* Surfaces */
+  --pn-bg: #131313;            /* page background */
+  --pn-surface: #1c1b1b;       /* cards, sidebar */
+  --pn-surface-2: #201f1f;     /* nested fills, inputs */
+  --pn-surface-3: #2a2a2a;     /* hover fills, toggles */
+  --pn-border: #333333;        /* 1px subtle borders */
+  --pn-glass: rgba(27, 27, 27, 0.8);
+
+  /* Text */
+  --pn-text: #e6e2e0;          /* primary text / headings */
+  --pn-text-muted: #a5a09c;    /* secondary text */
+  --pn-text-dim: #6f6b68;      /* tertiary / captions */
+
+  /* Accent */
+  --pn-orange: #ff7a00;        /* CTA, price, active */
+  --pn-orange-soft: #ffb68b;   /* part numbers, subtle accent */
+  --pn-warm-orange: #ff9800;
+  --pn-light-orange: #ffb74d;
+  --pn-success: #00c853;
+  --pn-error: #ff5449;
+
+  /* Legacy aliases → safe dark fallbacks (kept so non-migrated usages don't break) */
+  --pn-deep-navy: var(--pn-text);
+  --pn-dark-navy: #c8c6c5;
+  --pn-dark-gray: var(--pn-text-muted);
+  --pn-light-gray: var(--pn-surface-2);
+  --pn-medium-gray: var(--pn-border);
+
+  background-color: var(--pn-bg);
+  color: var(--pn-text);
+}
+
+/* Thin carbon texture for hero (subtle, non-noisy) */
+.parts-page .pn-carbon {
+  background-color: var(--pn-bg);
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(255, 122, 0, 0.06), transparent 55%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 6px);
+}
+
+/* Orange focus glow for search / inputs */
+.parts-page .pn-glow:focus,
+.parts-page .pn-glow:focus-within {
+  border-color: var(--pn-orange);
+  box-shadow: 0 0 0 1px var(--pn-orange), 0 0 18px rgba(255, 122, 0, 0.18);
 }
 
 .parts-page .pn-btn-primary {
@@ -350,21 +383,22 @@ select.PhoneInputCountrySelect {
 }
 
 .parts-page .pn-compact-card {
-  background: white;
+  background: var(--pn-surface);
   border-radius: 0.75rem;
-  border: 1px solid var(--pn-medium-gray);
+  border: 1px solid var(--pn-border);
   transition: all 0.2s;
 }
 .parts-page .pn-compact-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(27,43,64,0.08);
+  border-color: var(--pn-orange);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
 .parts-page .pn-cart-icon-btn {
   width: 2rem;
   height: 2rem;
   border-radius: 9999px;
-  background: var(--pn-light-gray);
+  background: var(--pn-surface-3);
   display: flex;
   align-items: center;
   justify-content: center;

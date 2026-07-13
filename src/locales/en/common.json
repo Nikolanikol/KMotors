@@ -334,7 +334,8 @@
       "ctaCatalog": "Browse Catalog",
       "statYears": "Years of Experience",
       "statParts": "Parts Available",
-      "statOriginal": "Genuine"
+      "statOriginal": "Genuine",
+      "searchButton": "Search"
     },
     "catalog": {
       "badge": "CATALOG",

@@ -334,7 +334,8 @@
       "ctaCatalog": "კატალოგის ნახვა",
       "statYears": "წლის გამოცდილება",
       "statParts": "სათადარიგო ნაწილი",
-      "statOriginal": "ორიგინალი"
+      "statOriginal": "ორიგინალი",
+      "searchButton": "ძებნა"
     },
     "catalog": {
       "badge": "კატალოგი",

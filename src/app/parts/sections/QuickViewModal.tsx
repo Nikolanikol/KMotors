@@ -105,23 +105,23 @@ export function QuickViewModal({
       }`}
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/70" />
       <div
-        className={`relative bg-white rounded-xl shadow-2xl max-w-[700px] w-full max-h-[90vh] overflow-y-auto transition-transform duration-300 ${
+        className={`relative bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-xl shadow-2xl max-w-[700px] w-full max-h-[90vh] overflow-y-auto transition-transform duration-300 ${
           isOpen ? "scale-100" : "scale-95"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--pn-light-gray)] flex items-center justify-center hover:bg-[var(--pn-medium-gray)] transition-colors z-10"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center hover:bg-[var(--pn-border)] transition-colors z-10"
         >
-          <X className="w-4 h-4 text-[var(--pn-dark-gray)]" />
+          <X className="w-4 h-4 text-[var(--pn-text-muted)]" />
         </button>
 
         <div className="flex flex-col sm:flex-row gap-6 p-6">
           {/* Image */}
-          <div className="sm:w-[280px] flex-shrink-0 bg-[var(--pn-light-gray)] rounded-lg flex items-center justify-center aspect-square overflow-hidden">
+          <div className="sm:w-[280px] flex-shrink-0 bg-white rounded-lg flex items-center justify-center aspect-square overflow-hidden">
             {product.image_url ? (
               <Image
                 src={product.image_url}
@@ -138,7 +138,7 @@ export function QuickViewModal({
 
           {/* Details */}
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-[var(--pn-dark-gray)] font-mono mb-1">
+            <div className="text-xs text-[var(--pn-orange-soft)] font-mono uppercase tracking-wider mb-1">
               {product.part_number}
             </div>
             <h3 className="text-lg font-bold text-[var(--pn-deep-navy)] mb-4 leading-tight">

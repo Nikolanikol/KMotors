@@ -14,7 +14,7 @@ export function About() {
   const [isVisible] = useState(true);
 
   return (
-    <section id="about" ref={sectionRef} className="py-24 bg-white">
+    <section id="about" ref={sectionRef} className="py-24 bg-[var(--pn-bg)]">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Column - Image */}
@@ -31,7 +31,7 @@ export function About() {
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--pn-deep-navy)]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
                 <div className="grid grid-cols-3 gap-4 text-white">
                   <div className="text-center">
@@ -97,18 +97,18 @@ export function About() {
             return (
               <div
                 key={key}
-                className={`bg-[var(--pn-light-gray)] rounded-xl p-6 text-center hover:bg-[var(--pn-deep-navy)] group transition-all duration-300 ${
+                className={`bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-xl p-6 text-center hover:border-[var(--pn-orange)] group transition-all duration-300 ${
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                 }`}
                 style={{ transitionDelay: isVisible ? `${400 + index * 100}ms` : "0ms" }}
               >
-                <div className="w-14 h-14 rounded-full bg-[var(--pn-deep-navy)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--pn-orange)] transition-colors">
+                <div className="w-14 h-14 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--pn-orange)] transition-colors">
                   <Icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-[var(--pn-deep-navy)] mb-2 group-hover:text-white transition-colors">
+                <h3 className="text-lg font-semibold text-[var(--pn-text)] mb-2">
                   {t(`parts.about.${key}title`)}
                 </h3>
-                <p className="text-sm text-[var(--pn-dark-gray)] group-hover:text-white/80 transition-colors">
+                <p className="text-sm text-[var(--pn-text-muted)]">
                   {t(`parts.about.${key}desc`)}
                 </p>
               </div>

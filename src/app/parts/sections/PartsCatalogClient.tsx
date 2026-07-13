@@ -16,8 +16,6 @@ import { cn } from "@/lib/utils";
 import {
   Search,
   Loader2,
-  LayoutGrid,
-  List,
   X,
   ChevronLeft,
   ChevronRight,
@@ -143,29 +141,14 @@ function mergeUrlParam(multi: string, single: string): string[] {
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
-function ProductSkeleton({ view }: { view: "grid" | "list" }) {
-  if (view === "list") {
-    return (
-      <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 animate-pulse">
-        <div className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded-lg" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3 bg-gray-200 rounded w-1/3" />
-          <div className="h-4 bg-gray-200 rounded w-2/3" />
-        </div>
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <div className="h-5 bg-gray-200 rounded w-20" />
-          <div className="h-8 bg-gray-200 rounded w-16" />
-        </div>
-      </div>
-    );
-  }
+function ProductSkeleton() {
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm animate-pulse">
-      <div className="aspect-square bg-gray-200" />
-      <div className="p-3 space-y-2">
-        <div className="h-3 bg-gray-200 rounded w-1/2" />
-        <div className="h-4 bg-gray-200 rounded" />
-        <div className="h-8 bg-gray-200 rounded mt-2" />
+    <div className="bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-xl overflow-hidden animate-pulse">
+      <div className="aspect-square bg-white/90" />
+      <div className="p-4 space-y-2">
+        <div className="h-3 bg-[var(--pn-surface-3)] rounded w-1/2" />
+        <div className="h-4 bg-[var(--pn-surface-3)] rounded" />
+        <div className="h-9 bg-[var(--pn-surface-3)] rounded mt-3" />
       </div>
     </div>
   );
@@ -331,8 +314,12 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
-  // ── View toggle ───────────────────────────────────────────────────────────
-  const [view, setView] = useState<"grid" | "list">("grid");
+  // Hero pill-search → fill catalog search
+  useEffect(() => {
+    const handler = (e: Event) => setSearchInput((e as CustomEvent<string>).detail ?? "");
+    window.addEventListener("parts:hero-search", handler);
+    return () => window.removeEventListener("parts:hero-search", handler);
+  }, []);
 
   // ── Quick view modal ──────────────────────────────────────────────────────
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
@@ -572,7 +559,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <section id="catalog" ref={sectionRef} className="py-16 lg:py-24 bg-[var(--pn-light-gray)]">
+    <section id="catalog" ref={sectionRef} className="py-16 lg:py-24 bg-[var(--pn-bg)]">
       <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
@@ -584,31 +571,31 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
             </span>
             <div className="h-px w-12 bg-[var(--pn-orange)]" />
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--pn-deep-navy)] mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--pn-text)] mb-4">
             {t("parts.catalog.title")}
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">{t("parts.catalog.subtitle")}</p>
+          <p className="text-[var(--pn-text-muted)] max-w-2xl mx-auto">{t("parts.catalog.subtitle")}</p>
         </div>
 
         {/* Search bar */}
         <div className={`relative mb-6 max-w-2xl mx-auto transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           {isLoading && searchQ ? (
-            <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-orange)] animate-spin pointer-events-none" />
+            <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-orange)] animate-spin pointer-events-none z-10" />
           ) : (
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-deep-navy)]/50 pointer-events-none" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-text-dim)] pointer-events-none z-10" />
           )}
           <Input
             type="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={t("parts.catalog.filterSearchPlaceholder")}
-            className="pl-12 h-11 sm:h-[52px] text-sm sm:text-base text-gray-900 placeholder:text-gray-400 border-2 border-[var(--pn-deep-navy)]/20 focus-visible:border-[var(--pn-deep-navy)] focus-visible:ring-[var(--pn-deep-navy)]/20 focus-visible:ring-2 rounded-xl bg-[var(--pn-deep-navy)]/[0.02] shadow-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+            className="pn-glow pl-12 h-11 sm:h-[52px] text-sm sm:text-base text-[var(--pn-text)] placeholder:text-[var(--pn-text-dim)] border border-[var(--pn-border)] focus-visible:ring-0 rounded-xl bg-[var(--pn-surface-2)] shadow-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           />
           {searchInput && (
             <button
               type="button"
               onClick={() => { setSearchInput(""); setSearchQ(""); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-[var(--pn-text-dim)] hover:text-[var(--pn-text)] transition-colors z-10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -636,10 +623,10 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
             <button
               onClick={() => setDrawerOpen(true)}
               className={cn(
-                "lg:hidden flex items-center gap-2 px-4 py-2.5 mb-4 rounded-xl border-2 text-sm font-medium transition-all w-full justify-center",
+                "lg:hidden flex items-center gap-2 px-4 py-2.5 mb-4 rounded-xl border text-sm font-medium transition-all w-full justify-center",
                 hasFilters
-                  ? "border-[var(--pn-orange)] bg-[var(--pn-orange)]/5 text-[var(--pn-orange)]"
-                  : "border-gray-200 text-gray-600 hover:border-[var(--pn-deep-navy)]/30"
+                  ? "border-[var(--pn-orange)] bg-[var(--pn-orange)]/10 text-[var(--pn-orange)]"
+                  : "border-[var(--pn-border)] bg-[var(--pn-surface)] text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)]/50"
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -667,10 +654,10 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
                         empty
-                          ? "bg-gray-50 text-gray-300 border-transparent cursor-not-allowed opacity-50"
+                          ? "bg-[var(--pn-surface)] text-[var(--pn-text-dim)] border-transparent cursor-not-allowed opacity-50"
                           : active
-                          ? "bg-[var(--pn-deep-navy)] text-white border-[var(--pn-deep-navy)]"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-[var(--pn-deep-navy)]/30",
+                          ? "bg-[var(--pn-orange)] text-white border-[var(--pn-orange)]"
+                          : "bg-[var(--pn-surface)] text-[var(--pn-text-muted)] border-[var(--pn-border)] hover:border-[var(--pn-orange)]/50",
                         isPending && !empty && "opacity-60 cursor-wait"
                       )}
                     >
@@ -704,7 +691,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
               ref={resultsRef}
               className={`flex flex-wrap items-center justify-between mb-4 transition-all duration-700 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
             >
-              <span className="text-sm text-gray-500 w-full sm:w-auto mb-2 sm:mb-0">
+              <span className="text-sm text-[var(--pn-text-muted)] w-full sm:w-auto mb-2 sm:mb-0">
                 {isLoading && products.length === 0
                   ? "…"
                   : total === 0
@@ -718,37 +705,29 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                   disabled={isPending}
                   onValueChange={(val) => updateFilters({ sort: val === "default" ? undefined : val })}
                 >
-                  <SelectTrigger className={cn("h-9 w-44 bg-white text-gray-700 border-gray-300 text-sm shadow-sm", isPending && "opacity-60 cursor-wait")}>
+                  <SelectTrigger className={cn("h-9 w-44 bg-[var(--pn-surface-2)] text-[var(--pn-text)] border-[var(--pn-border)] text-sm shadow-none focus:ring-[var(--pn-orange)]", isPending && "opacity-60 cursor-wait")}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white text-gray-900 border-gray-200">
+                  <SelectContent className="bg-[var(--pn-surface-2)] text-[var(--pn-text)] border-[var(--pn-border)]">
                     <SelectItem value="default">{t("parts.catalog.sortDefault")}</SelectItem>
                     <SelectItem value="price_asc">{t("parts.catalog.sortPriceAsc")}</SelectItem>
                     <SelectItem value="price_desc">{t("parts.catalog.sortPriceDesc")}</SelectItem>
                     <SelectItem value="name_asc">{t("parts.catalog.sortNameAsc")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-                  <button onClick={() => setView("grid")} className={cn("p-2 transition-colors", view === "grid" ? "bg-[var(--pn-deep-navy)] text-white" : "bg-white text-gray-400 hover:text-[var(--pn-deep-navy)]")} title={t("parts.catalog.gridView")}>
-                    <LayoutGrid className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => setView("list")} className={cn("p-2 transition-colors", view === "list" ? "bg-[var(--pn-deep-navy)] text-white" : "bg-white text-gray-400 hover:text-[var(--pn-deep-navy)]")} title={t("parts.catalog.listView")}>
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
             </div>
 
             {/* Product grid / list */}
             <div style={{ minHeight: isLoading ? "600px" : undefined }}>
               {isLoading ? (
-                <div className={cn(view === "grid" ? "grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
-                  {Array.from({ length: pageSize }).map((_, i) => <ProductSkeleton key={i} view={view} />)}
+                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {Array.from({ length: pageSize }).map((_, i) => <ProductSkeleton key={i} />)}
                 </div>
               ) : products.length === 0 ? (
                 <EmptyState onReset={handleReset} t={t} />
               ) : (
-                <div className={cn(view === "grid" ? "grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" : "grid grid-cols-1 gap-3")}>
+                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {products.map((product, index) => {
                     const productName = getProductName(product, lang);
                     return (
@@ -756,7 +735,6 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                         key={product.id}
                         product={product}
                         productName={productName}
-                        view={view}
                         isVisible={isVisible}
                         index={index}
                         href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
@@ -785,15 +763,15 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
       {/* Mobile filter drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setDrawerOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-[85vw] max-w-sm bg-[var(--pn-light-gray)] shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 z-10 bg-[var(--pn-light-gray)] px-4 pt-4 pb-2 flex items-center justify-between border-b border-gray-200">
-              <h3 className="text-lg font-bold text-[var(--pn-deep-navy)]">{t("parts.catalog.filtersTitle")}</h3>
+          <div className="absolute inset-0 bg-black/70" onClick={() => setDrawerOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-[85vw] max-w-sm bg-[var(--pn-surface)] border-r border-[var(--pn-border)] shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-[var(--pn-surface)] px-4 pt-4 pb-2 flex items-center justify-between border-b border-[var(--pn-border)]">
+              <h3 className="text-lg font-bold text-[var(--pn-text)]">{t("parts.catalog.filtersTitle")}</h3>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-8 h-8 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center hover:bg-[var(--pn-border)] transition-colors"
               >
-                <X className="w-4 h-4 text-gray-600" />
+                <X className="w-4 h-4 text-[var(--pn-text-muted)]" />
               </button>
             </div>
             <div className="p-4">
@@ -833,23 +811,23 @@ function Pagination({
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1 || isPending}
         className={cn(
-          "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
-          page === 1 ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-white hover:shadow-sm"
+          "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all border border-transparent",
+          page === 1 ? "text-[var(--pn-text-dim)] cursor-not-allowed" : "text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
         )}
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
       {pages.map((p, i) =>
         p === "…" ? (
-          <span key={`e${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">…</span>
+          <span key={`e${i}`} className="w-9 h-9 flex items-center justify-center text-[var(--pn-text-dim)] text-sm select-none">…</span>
         ) : (
           <button
             key={p}
             disabled={isPending}
             onClick={() => onPageChange(p as number)}
             className={cn(
-              "w-9 h-9 rounded-lg text-sm font-medium transition-all",
-              p === page ? "bg-[var(--pn-deep-navy)] text-white shadow-sm" : "text-gray-600 hover:bg-white hover:shadow-sm"
+              "w-9 h-9 rounded-lg text-sm font-medium transition-all border",
+              p === page ? "bg-[var(--pn-orange)] text-white border-[var(--pn-orange)] shadow-lg shadow-[var(--pn-orange)]/20" : "text-[var(--pn-text-muted)] border-[var(--pn-border)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
             )}
           >
             {p}
@@ -860,8 +838,8 @@ function Pagination({
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages || isPending}
         className={cn(
-          "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all",
-          page === totalPages ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-white hover:shadow-sm"
+          "flex items-center gap-1 px-3 h-9 rounded-lg text-sm font-medium transition-all border border-transparent",
+          page === totalPages ? "text-[var(--pn-text-dim)] cursor-not-allowed" : "text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
         )}
       >
         <ChevronRight className="w-4 h-4" />
@@ -874,9 +852,9 @@ function Pagination({
 
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--pn-deep-navy)]/10 text-[var(--pn-deep-navy)] text-xs font-medium">
+    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--pn-orange)]/10 border border-[var(--pn-orange)]/20 text-[var(--pn-orange)] text-xs font-semibold uppercase tracking-wide">
       {label}
-      <button onClick={onRemove} className="ml-0.5 hover:text-[var(--pn-orange)] transition-colors" aria-label="Remove filter">
+      <button onClick={onRemove} className="ml-0.5 hover:text-white transition-colors" aria-label="Remove filter">
         <X className="w-3 h-3" />
       </button>
     </span>
@@ -888,11 +866,11 @@ function FilterTag({ label, onRemove }: { label: string; onRemove: () => void })
 function EmptyState({ onReset, t }: { onReset: () => void; t: (key: string) => string }) {
   return (
     <div className="text-center py-24">
-      <div className="w-16 h-16 rounded-full bg-[var(--pn-deep-navy)]/5 flex items-center justify-center mx-auto mb-4">
-        <Search className="w-8 h-8 text-[var(--pn-deep-navy)]/30" />
+      <div className="w-16 h-16 rounded-full bg-[var(--pn-surface-2)] border border-[var(--pn-border)] flex items-center justify-center mx-auto mb-4">
+        <Search className="w-8 h-8 text-[var(--pn-text-dim)]" />
       </div>
-      <p className="text-gray-600 font-medium mb-1">{t("parts.catalog.noResults")}</p>
-      <p className="text-sm text-gray-400 mb-4">{t("parts.catalog.noResultsHint")}</p>
+      <p className="text-[var(--pn-text)] font-medium mb-1">{t("parts.catalog.noResults")}</p>
+      <p className="text-sm text-[var(--pn-text-muted)] mb-4">{t("parts.catalog.noResultsHint")}</p>
       <button onClick={onReset} className="text-sm text-[var(--pn-orange)] underline hover:brightness-110 transition-colors">
         {t("parts.catalog.resetFilters")}
       </button>

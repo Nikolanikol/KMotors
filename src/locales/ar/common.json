@@ -334,7 +334,8 @@
       "ctaCatalog": "تصفح الكتالوج",
       "statYears": "سنوات خبرة",
       "statParts": "قطعة غيار",
-      "statOriginal": "أصلية"
+      "statOriginal": "أصلية",
+      "searchButton": "بحث"
     },
     "catalog": {
       "badge": "الكتالوج",

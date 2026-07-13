@@ -120,7 +120,7 @@ export function ContactForm() {
     <section
       id="contact"
       ref={sectionRef}
-      className="py-24 bg-gradient-to-br from-[var(--pn-deep-navy)] to-[#162535] relative overflow-hidden"
+      className="py-24 bg-gradient-to-br from-[var(--pn-surface)] to-[var(--pn-bg)] relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--pn-orange)]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
@@ -149,7 +149,7 @@ export function ContactForm() {
         >
           <div className="grid md:grid-cols-5">
             {/* Left side */}
-            <div className="md:col-span-2 bg-[var(--pn-deep-navy)] p-8 text-white">
+            <div className="md:col-span-2 bg-[#141414] p-8 text-white">
               <h3 className="text-xl font-semibold mb-6">{t("parts.contact.contactsTitle")}</h3>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
