@@ -114,8 +114,9 @@ async function fetchContext(supabase: SupabaseClient, productId: number) {
 // ── Промпт ──────────────────────────────────────────────────────────────────
 function buildPrompt(ctx: NonNullable<Awaited<ReturnType<typeof fetchContext>>>): string {
   const { p, vehicles, cats } = ctx;
+  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
   const compat = vehicles
-    .map((v) => `${v.brand} ${v.name_en}${v.year_from ? ` (${v.year_from}${v.year_to ? `–${v.year_to}` : "+"})` : ""}`)
+    .map((v) => `${cap(v.brand)} ${v.name_en}${v.year_from ? ` (${v.year_from}${v.year_to ? `–${v.year_to}` : "+"})` : ""}`)
     .join("; ");
   const category = cats.map((c) => c.name_ru || c.name_en).filter(Boolean).join(" / ");
 
@@ -130,8 +131,14 @@ function buildPrompt(ctx: NonNullable<Awaited<ReturnType<typeof fetchContext>>>)
 - Категория: ${category || "—"}
 - Совместимость (модели/годы): ${compat || "нет данных"}
 
+ГЛАВНОЕ ПРАВИЛО РУССКОГО ТЕКСТА (title_ru, desc_ru, body_ru):
+- Название детали ВСЕГДА переводи на правильный русский автотермин. НИКОГДА не оставляй английские слова в русском тексте и НЕ транслитерируй их («бучи», «Болт-Хаб» — недопустимо).
+- Переводи ТОЧНО, вот эталоны: brake disc = тормозной диск (НЕ барабан); brake drum = тормозной барабан; bushing = сайлентблок; O-ring = уплотнительное кольцо; wiring harness = жгут проводов; timing chain = цепь ГРМ; tensioner = натяжитель; connector = разъём; bracket = кронштейн; nut = гайка; bolt = болт; hub = ступица; canister = адсорбер; boot = пыльник; strip = молдинг; rack = держатель.
+- Если точного термина не знаешь — опиши деталь по-русски своими словами, БЕЗ единого английского слова.
+- Бренды и модели (Hyundai, Kia, Genesis, Sonata, Tucson…) оставляй латиницей, с заглавной буквы.
+
 ТРЕБОВАНИЯ:
-- title_ru / title_en: до 60 символов, включи каталожный номер и слово купить/buy. Естественно, без спама.
+- title_ru / title_en: до 60 символов, начни с русского названия детали, включи каталожный номер и слово купить/buy. Без спама.
 - desc_ru / desc_en: meta description до 155 символов, польза + номер + доставка из Кореи.
 - body_ru / body_en: 2–4 предложения живого текста: что за деталь, к каким моделям подходит (по данным выше). НЕ придумывай размеры/материалы, которых нет в данных.
 - cross_refs: массив кросс-номеров (OEM-аналогов) ТОЛЬКО если ты уверен, что это реальные общеизвестные аналоги именно этого номера. Если не уверен — верни []. НИКОГДА не выдумывай номера.
