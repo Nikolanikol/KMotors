@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
+import { withCleanImage } from "@/lib/partImage";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { PartsCatalogClient } from "./PartsCatalogClient";
 import type { Brand, Category, VehicleModel, ModelChip, Product } from "./PartsCatalogClient";
@@ -54,10 +55,10 @@ async function fetchCatalogData() {
     // SSR: first page of products for search engine indexing
     supabase
       .from("parts_products")
-      .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, is_new")
+      .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new")
       .order("name_ru", { ascending: true })
       .range(0, 23)
-      .then((r) => (r.data ?? []) as Product[]),
+      .then((r) => (r.data ?? []).map(withCleanImage) as Product[]),
 
     supabase
       .from("parts_products")

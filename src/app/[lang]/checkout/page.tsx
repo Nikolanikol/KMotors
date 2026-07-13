@@ -37,7 +37,7 @@ export default async function CheckoutPage({ params }: Props) {
   const { data: products } = await supabase
     .from("parts_products")
     .select(
-      "id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id"
+      "id, part_number, name_ru, name_en, price_krw, image_url, image_storage_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id"
     )
     .in("id", productIds);
 
@@ -78,7 +78,7 @@ export default async function CheckoutPage({ params }: Props) {
       nameRu: (p?.name_ru ?? "") as string,
       nameEn: (p?.name_en ?? "") as string,
       priceKrw: (p?.price_krw ?? 0) as number,
-      imageUrl: (p?.image_url ?? null) as string | null,
+      imageUrl: (p?.image_storage_url ?? p?.image_url ?? null) as string | null,
       weightKg: weight,
       billedWeightKg,
       shipMethod: (p?.ship_method ?? cat?.ship_method ?? "CLARIFY") as

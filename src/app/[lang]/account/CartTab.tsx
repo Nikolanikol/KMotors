@@ -83,7 +83,7 @@ export default function CartTab({ lang, userId, profileCountry }: Props) {
     const productIds = cartItems.map(i => i.product_id);
     const { data: products } = await supabase
       .from("parts_products")
-      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id")
+      .select("id, part_number, name_ru, name_en, price_krw, image_url, image_storage_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id")
       .in("id", productIds);
 
     if (!products) { setLoading(false); return; }
@@ -114,7 +114,7 @@ export default function CartTab({ lang, userId, profileCountry }: Props) {
         name_ru: product?.name_ru ?? "",
         name_en: product?.name_en ?? "",
         price_krw: product?.price_krw ?? 0,
-        image_url: product?.image_url ?? null,
+        image_url: product?.image_storage_url ?? product?.image_url ?? null,
         ship_method: (product?.ship_method ?? cat?.ship_method ?? "EMS") as "EMS" | "EMS_PREMIUM" | "SEA" | "CLARIFY",
         billed_weight_kg: billedWeight,
       };

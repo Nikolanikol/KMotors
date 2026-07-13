@@ -3,6 +3,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
+import { withCleanImage } from "@/lib/partImage";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { makeAlternates } from "@/lib/seo";
 import { generatePartSlug } from "@/utils/partSlug";
@@ -151,9 +152,9 @@ export default async function FitmentPage({ params, searchParams }: Props) {
   if (partIds.length) {
     const { data } = await supabase
       .from("parts_products")
-      .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, is_new")
+      .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new")
       .in("id", partIds);
-    products = (data ?? []) as Product[];
+    products = (data ?? []).map(withCleanImage) as Product[];
   }
 
   const totalPages = Math.max(1, Math.ceil((totalLinks ?? 0) / PAGE_SIZE));

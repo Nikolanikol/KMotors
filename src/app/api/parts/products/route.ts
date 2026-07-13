@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
+import { withCleanImage } from "@/lib/partImage";
 
 const PAGE_SIZE = 24;
 
@@ -158,7 +159,7 @@ export async function GET(req: NextRequest) {
     // Main product query
     let productQuery = withFullFilters(
       supabase.from("parts_products").select(
-        "id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, is_new"
+        "id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new"
       )
     );
     switch (sort) {
@@ -220,7 +221,11 @@ export async function GET(req: NextRequest) {
     const subCounts = Object.fromEntries(subCountEntries) as Record<number, number>;
 
     return NextResponse.json(
-      { products: productsRes.data ?? [], total: countRes.count ?? 0, catCounts, subCounts, brandCounts },
+      {
+        products: (productsRes.data ?? []).map(withCleanImage),
+        total: countRes.count ?? 0,
+        catCounts, subCounts, brandCounts,
+      },
       { headers: { "Cache-Control": cacheHeader } }
     );
   } catch (err) {

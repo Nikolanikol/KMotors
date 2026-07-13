@@ -19,7 +19,7 @@ async function fetchPartData(slug: string) {
 
     // Use fetch directly → Next.js кэширует автоматически на revalidate срок
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/parts_products?${filter}&select=id,part_number,name_ru,name_en,image_url&limit=1`,
+      `${supabaseUrl}/rest/v1/parts_products?${filter}&select=id,part_number,name_ru,name_en,image_url,image_storage_url&limit=1`,
       {
         headers: {
           apikey: supabaseKey,
@@ -52,7 +52,7 @@ export default async function Image({
   const part = await fetchPartData(slug);
 
   const title = part ? `${part.name_ru || part.name_en || "Запчасть"}` : "Запчасти K-Axis";
-  const imageUrl = part?.image_url;
+  const imageUrl = part?.image_storage_url || part?.image_url;
 
   if (imageUrl) {
     return new ImageResponse(

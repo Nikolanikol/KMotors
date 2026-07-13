@@ -2,6 +2,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
+import { withCleanImage } from "@/lib/partImage";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
 import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
@@ -35,7 +36,7 @@ async function fetchProduct(slug: string) {
   let query = supabase
     .from("parts_products")
     .select(
-      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs"
+      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, image_storage_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs"
     );
 
   // Ищем по part_number или по ID
@@ -50,9 +51,10 @@ async function fetchProduct(slug: string) {
   // Не .single(): при дубле артикула в базе он падает с ошибкой,
   // а страница должна открыть первый товар, а не отдать 404
   const { data: rows, error } = await query.limit(1);
-  const product = rows?.[0];
+  const rawProduct = rows?.[0];
 
-  if (error || !product) return null;
+  if (error || !rawProduct) return null;
+  const product = withCleanImage(rawProduct);
 
   // Совместимость из vehicles/part_vehicles (213k связей, поколения с годами)
   const { data: pvRows } = await supabase
@@ -155,9 +157,9 @@ async function fetchProduct(slug: string) {
     if (ids.length) {
       const { data: sim } = await supabase
         .from("parts_products")
-        .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, is_new")
+        .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new")
         .in("id", ids).eq("category_id", product.category_id).limit(8);
-      similarProducts = (sim ?? []) as Product[];
+      similarProducts = (sim ?? []).map(withCleanImage) as Product[];
     }
   }
 

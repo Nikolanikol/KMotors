@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     const { data: products } = await db
       .from("parts_products")
-      .select("id, part_number, name_ru, name_en, price_krw, image_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id")
+      .select("id, part_number, name_ru, name_en, price_krw, image_url, image_storage_url, weight_kg, billed_weight_kg, ship_method, category_id, subcategory_id")
       .in("id", productIds);
 
     // ── Load logistics via v_category_logistics (same as product detail page) ─
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
         part_number: (p?.part_number ?? "") as string,
         name_ru: (p?.name_ru ?? "") as string,
         name_en: (p?.name_en ?? "") as string,
-        image_url: (p?.image_url ?? null) as string | null,
+        image_url: (p?.image_storage_url ?? p?.image_url ?? null) as string | null,
         weight_kg: weight,
         billed_weight_kg: billedWeightKg,
         ship_method: itemShipMethod,
