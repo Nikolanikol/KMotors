@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       parts: "Страница /parts",
       parts_product: "Заказ детали",
       parts_fitment: "Проверка совместимости",
+      parts_cart: "Заказ из корзины",
       car_detail: "Карточка машины",
       car_calculator: "Калькулятор таможни",
       blog: "Блог",

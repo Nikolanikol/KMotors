@@ -1,11 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/providers/AuthProvider";
-import { createClient } from "@/lib/supabase/client";
-import { notifyCartUpdate, useCartProductIds } from "@/hooks/useCartCount";
+import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { generatePartSlug } from "@/utils/partSlug";
 import { ProductCard } from "./ProductCard";
 import type { Product } from "./PartsCatalogClient";
@@ -32,46 +29,23 @@ export function FitmentProductsGrid({
   krwToUsd: number;
 }) {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
-  const router = useRouter();
-  const supabase = createClient();
-  const { cartProductIds, addOptimistic } = useCartProductIds();
+  const { cartProductIds } = useCartProductIds();
   const language = i18n.language || lang;
 
   const handleAddToCart = useCallback(
     async (product: Product): Promise<boolean> => {
-      if (!user) {
-        const returnUrl = `/${lang}${window.location.pathname.replace(/^\/[a-z]{2}/, "")}`;
-        sessionStorage.setItem("parts:pendingCartProduct", String(product.id));
-        router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
-        return false;
-      }
-      try {
-        let { data: cart, error: cartErr } = await supabase
-          .from("carts").select("id").eq("user_id", user.id).single();
-        if (!cart && cartErr?.code === "PGRST116") {
-          const { data: newCart, error: insertErr } = await supabase
-            .from("carts").insert({ user_id: user.id }).select("id").single();
-          if (insertErr) throw insertErr;
-          cart = newCart;
-        } else if (cartErr && cartErr.code !== "PGRST116") {
-          throw cartErr;
-        }
-        if (!cart) throw new Error("Cart not found");
-        const { error: upsertErr } = await supabase.from("cart_items").upsert(
-          { cart_id: cart.id, product_id: product.id, quantity: 1 },
-          { onConflict: "cart_id,product_id" }
-        );
-        if (upsertErr) throw upsertErr;
-        addOptimistic(product.id);
-        notifyCartUpdate(1);
-        return true;
-      } catch (err) {
-        console.error("Add to cart failed:", err);
-        return false;
-      }
+      return addToPartsCart({
+        id: product.id,
+        name_ru: product.name_ru,
+        name_en: product.name_en,
+        name_ko: product.name_ko,
+        part_number: product.part_number,
+        price_krw: product.price_krw,
+        image_url: product.image_url,
+        is_new: product.is_new,
+      });
     },
-    [user, supabase, router, lang, addOptimistic]
+    []
   );
 
   if (!products.length) return null;

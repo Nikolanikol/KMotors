@@ -2,13 +2,10 @@
 import { useEffect, useState } from "react";
 import { X, Wrench, ShoppingCart, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { Product } from "./PartsCatalogClient";
 import { formatUsd } from "@/lib/pricing";
-import { useAuth } from "@/providers/AuthProvider";
-import { createClient } from "@/lib/supabase/client";
-import { notifyCartUpdate } from "@/hooks/useCartCount";
+import { addToPartsCart } from "@/hooks/useCartCount";
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -28,9 +25,6 @@ export function QuickViewModal({
   inCart,
 }: QuickViewModalProps) {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { user } = useAuth();
-  const supabase = createClient();
   const [qty, setQty] = useState(1);
   const [cartAdded, setCartAdded] = useState(false);
   const [cartError, setCartError] = useState("");
@@ -66,36 +60,20 @@ export function QuickViewModal({
 
   const price = formatUsd(product.price_krw, krwToUsd);
 
-  const handleAddToCart = async () => {
-    if (!user) {
-      const returnUrl = `/${lang}/parts${window.location.search}`;
-      sessionStorage.setItem("parts:pendingCartProduct", String(product.id));
-      router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
-      return;
-    }
+  const handleAddToCart = () => {
     setCartError("");
-    try {
-      let { data: cart, error: cartErr } = await supabase.from("carts").select("id").eq("user_id", user.id).single();
-      if (!cart && cartErr?.code === "PGRST116") {
-        const { data: newCart, error: insertErr } = await supabase.from("carts").insert({ user_id: user.id }).select("id").single();
-        if (insertErr) throw insertErr;
-        cart = newCart;
-      } else if (cartErr && cartErr.code !== "PGRST116") {
-        throw cartErr;
-      }
-      if (!cart) throw new Error("Cart not found");
-      const { error: upsertErr } = await supabase.from("cart_items").upsert(
-        { cart_id: cart.id, product_id: product.id, quantity: qty },
-        { onConflict: "cart_id,product_id" }
-      );
-      if (upsertErr) throw upsertErr;
-      notifyCartUpdate(qty);
-      setCartAdded(true);
-      setTimeout(() => setCartAdded(false), 2500);
-    } catch (err: unknown) {
-      console.error("Add to cart failed:", err);
-      setCartError(err instanceof Error ? err.message : String(err));
-    }
+    addToPartsCart({
+      id: product.id,
+      name_ru: product.name_ru,
+      name_en: product.name_en,
+      name_ko: product.name_ko,
+      part_number: product.part_number,
+      price_krw: product.price_krw,
+      image_url: product.image_url,
+      is_new: product.is_new,
+    }, qty);
+    setCartAdded(true);
+    setTimeout(() => setCartAdded(false), 2500);
   };
 
   return (

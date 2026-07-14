@@ -22,10 +22,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { clarityEvent } from "@/utils/clarity";
-import { useAuth } from "@/providers/AuthProvider";
-import { createClient } from "@/lib/supabase/client";
 import { PRICE_MARKUP } from "@/lib/pricing";
-import { notifyCartUpdate, useCartProductIds } from "@/hooks/useCartCount";
+import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
 import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
@@ -164,43 +162,21 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
   const [isPending, startTransition] = useTransition();
 
   const lang = pathname.split("/")[1] || "ru";
-  const { user } = useAuth();
-  const supabase = useMemo(() => createClient(), []);
-  const { cartProductIds, addOptimistic } = useCartProductIds();
+  const { cartProductIds } = useCartProductIds();
 
   // ── Cart ──────────────────────────────────────────────────────────────────
   const handleAddToCart = useCallback(async (product: Product): Promise<boolean> => {
-    if (!user) {
-      const returnUrl = `/${lang}/parts${window.location.search}`;
-      sessionStorage.setItem("parts:pendingCartProduct", String(product.id));
-      router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
-      return false;
-    }
-    try {
-      let { data: cart, error: cartErr } = await supabase
-        .from("carts").select("id").eq("user_id", user.id).single();
-      if (!cart && cartErr?.code === "PGRST116") {
-        const { data: newCart, error: insertErr } = await supabase
-          .from("carts").insert({ user_id: user.id }).select("id").single();
-        if (insertErr) throw insertErr;
-        cart = newCart;
-      } else if (cartErr && cartErr.code !== "PGRST116") {
-        throw cartErr;
-      }
-      if (!cart) throw new Error("Cart not found");
-      const { error: upsertErr } = await supabase.from("cart_items").upsert(
-        { cart_id: cart.id, product_id: product.id, quantity: 1 },
-        { onConflict: "cart_id,product_id" }
-      );
-      if (upsertErr) throw upsertErr;
-      addOptimistic(product.id);
-      notifyCartUpdate(1);
-      return true;
-    } catch (err) {
-      console.error("Add to cart failed:", err);
-      return false;
-    }
-  }, [user, supabase, router, lang, addOptimistic]);
+    return addToPartsCart({
+      id: product.id,
+      name_ru: product.name_ru,
+      name_en: product.name_en,
+      name_ko: product.name_ko,
+      part_number: product.part_number,
+      price_krw: product.price_krw,
+      image_url: product.image_url,
+      is_new: product.is_new,
+    });
+  }, []);
 
   // ── Fade-in observer ──────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLDivElement>(null);

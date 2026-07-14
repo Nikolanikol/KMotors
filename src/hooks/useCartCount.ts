@@ -1,92 +1,125 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/providers/AuthProvider";
+import { useCallback, useEffect, useState } from "react";
+import { trackEvent } from "@/utils/gtag";
 
+/**
+ * Parts cart — localStorage backed (no auth, no DB).
+ * Mirrors the usePartsFavorites approach. Checkout is a Telegram lead to a
+ * manager (see /cart), so no payment/order pipeline is involved.
+ */
+
+const STORAGE_KEY = "kmotors_parts_cart";
 const SYNC_EVENT = "kmotors_cart_sync";
 
-export function notifyCartUpdate(quantityDelta?: number) {
-  window.dispatchEvent(
-    new CustomEvent(SYNC_EVENT, { detail: { delta: quantityDelta ?? 0 } })
-  );
+export interface CartItem {
+  id: number;
+  name_ru: string;
+  name_en: string;
+  name_ko: string | null;
+  part_number: string;
+  price_krw: number;
+  image_url: string | null;
+  is_new: boolean;
+  quantity: number;
 }
 
-export function useCartCount() {
-  const { user } = useAuth();
-  const [count, setCount] = useState(0);
+export type CartProductInput = Omit<CartItem, "quantity">;
 
-  const fetchCount = useCallback(async () => {
-    if (!user) return;
-    const supabase = createClient();
-    const { data: cart } = await supabase
-      .from("carts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-    if (!cart) { setCount(0); return; }
+function read(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
+}
 
-    const { data: items } = await supabase
-      .from("cart_items")
-      .select("quantity")
-      .eq("cart_id", cart.id);
+function write(next: CartItem[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event(SYNC_EVENT));
+}
 
-    setCount(items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0);
-  }, [user]);
+// ── Imperative helpers (callable outside React render) ──────────────────────
 
+/** Add `qty` of a product; merges quantity if already in cart. */
+export function addToPartsCart(product: CartProductInput, qty = 1): boolean {
+  const prev = read();
+  const idx = prev.findIndex((i) => i.id === product.id);
+  const next =
+    idx >= 0
+      ? prev.map((i, k) => (k === idx ? { ...i, quantity: i.quantity + qty } : i))
+      : [...prev, { ...product, quantity: qty }];
+  write(next);
+  trackEvent("add_to_cart", {
+    item_id: String(product.id),
+    part_number: product.part_number,
+    quantity: qty,
+  });
+  return true;
+}
+
+export function setPartsCartQty(id: number, qty: number): void {
+  if (qty < 1) return;
+  write(read().map((i) => (i.id === id ? { ...i, quantity: qty } : i)));
+}
+
+export function removeFromPartsCart(id: number): void {
+  write(read().filter((i) => i.id !== id));
+}
+
+export function clearPartsCart(): void {
+  write([]);
+}
+
+/** Kept for backwards-compat with existing call sites; store already emits sync. */
+export function notifyCartUpdate(_quantityDelta?: number): void {
+  window.dispatchEvent(new Event(SYNC_EVENT));
+}
+
+// ── Reactive store ──────────────────────────────────────────────────────────
+
+function useCartStore(): CartItem[] {
+  const [items, setItems] = useState<CartItem[]>([]);
   useEffect(() => {
-    if (!user) { setCount(0); return; }
-
-    fetchCount();
-
-    const sync = (e: Event) => {
-      const delta = (e as CustomEvent).detail?.delta;
-      if (typeof delta === "number" && delta !== 0) {
-        setCount((prev) => Math.max(0, prev + delta));
-      }
-      fetchCount();
+    setItems(read());
+    const sync = () => setItems(read());
+    window.addEventListener(SYNC_EVENT, sync);
+    window.addEventListener("storage", sync); // cross-tab
+    return () => {
+      window.removeEventListener(SYNC_EVENT, sync);
+      window.removeEventListener("storage", sync);
     };
-    window.addEventListener(SYNC_EVENT, sync);
-    return () => window.removeEventListener(SYNC_EVENT, sync);
-  }, [user, fetchCount]);
-
-  return count;
+  }, []);
+  return items;
 }
 
+/** Full cart state + mutators. */
+export function usePartsCart() {
+  const items = useCartStore();
+  const count = items.reduce((sum, i) => sum + i.quantity, 0);
+  const isInCart = useCallback((id: number) => items.some((i) => i.id === id), [items]);
+  return {
+    items,
+    count,
+    isInCart,
+    addItem: addToPartsCart,
+    setQty: setPartsCartQty,
+    removeItem: removeFromPartsCart,
+    clear: clearPartsCart,
+  };
+}
+
+/** Total item count (for the header badge). */
+export function useCartCount(): number {
+  const items = useCartStore();
+  return items.reduce((sum, i) => sum + i.quantity, 0);
+}
+
+/** Set of product ids in the cart (+ no-op optimistic add kept for compat). */
 export function useCartProductIds() {
-  const { user } = useAuth();
-  const [ids, setIds] = useState<Set<number>>(new Set());
-
-  const fetchIds = useCallback(async () => {
-    if (!user) return;
-    const supabase = createClient();
-    const { data: cart } = await supabase
-      .from("carts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
-    if (!cart) { setIds(new Set()); return; }
-
-    const { data: items } = await supabase
-      .from("cart_items")
-      .select("product_id")
-      .eq("cart_id", cart.id);
-
-    setIds(new Set(items?.map((i) => i.product_id) ?? []));
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) { setIds(new Set()); return; }
-    fetchIds();
-
-    const sync = () => fetchIds();
-    window.addEventListener(SYNC_EVENT, sync);
-    return () => window.removeEventListener(SYNC_EVENT, sync);
-  }, [user, fetchIds]);
-
-  const addOptimistic = useCallback((productId: number) => {
-    setIds((prev) => new Set(prev).add(productId));
-  }, []);
-
-  return { cartProductIds: ids, addOptimistic };
+  const items = useCartStore();
+  const cartProductIds = new Set(items.map((i) => i.id));
+  const addOptimistic = useCallback((_productId: number) => {}, []);
+  return { cartProductIds, addOptimistic };
 }

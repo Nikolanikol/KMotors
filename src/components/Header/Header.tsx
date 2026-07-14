@@ -1,18 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { X, Menu, Heart, User, LogOut, Package, ShoppingCart } from "lucide-react";
+import { X, Menu, Heart, ShoppingCart } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCartCount } from "@/hooks/useCartCount";
 import { useCountry } from "@/hooks/useCountry";
-import { useAuth } from "@/providers/AuthProvider";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -31,28 +30,14 @@ const KAxisLogo = () => (
 
 export default function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
   const { favorites: favCars } = useFavorites();
   const { favorites: favParts } = usePartsFavorites();
   const favTotal = favCars.length + favParts.length;
   const { isCatalogBlocked } = useCountry();
-  const { user, signOut } = useAuth();
   const cartCount = useCartCount();
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
@@ -133,9 +118,8 @@ export default function Header() {
 
             {/* Cart + User — grouped together */}
             <div className="flex items-center gap-2">
-              {user && (
                 <Link
-                  href={`/${lang}/account?tab=cart`}
+                  href={`/${lang}/cart`}
                   className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
                   style={{
                     backgroundColor: cartCount > 0 ? "rgba(255,69,0,0.18)" : "rgba(255,255,255,0.08)",
@@ -154,56 +138,7 @@ export default function Header() {
                     </span>
                   )}
                 </Link>
-              )}
 
-              {/* Auth */}
-              {user ? (
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 cursor-pointer hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,69,0,0.18)"; e.currentTarget.style.color = "var(--axis-orange)"; e.currentTarget.style.borderColor = "rgba(255,69,0,0.4)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--axis-silver)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
-                  >
-                    <User className="w-5 h-5" strokeWidth={2.2} />
-                  </button>
-                  {userMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl shadow-xl border py-1 z-50"
-                      style={{ backgroundColor: "rgba(20,20,20,0.98)", borderColor: "rgba(255,255,255,0.08)" }}>
-                      <Link href={`/${lang}/account`} onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                        style={{ color: "var(--axis-gray)" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"}
-                      >
-                        <Package className="w-4 h-4" />
-                        Личный кабинет
-                      </Link>
-                      <div className="my-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
-                      <button
-                        onClick={async () => { setUserMenuOpen(false); await signOut(); router.push(`/${lang}/parts`); router.refresh(); }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                        style={{ color: "#FF4444" }}
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Выйти
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  href={`/${lang}/auth?mode=login`}
-                  className="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,69,0,0.18)"; e.currentTarget.style.color = "var(--axis-orange)"; e.currentTarget.style.borderColor = "rgba(255,69,0,0.4)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--axis-silver)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
-                  aria-label="Войти"
-                >
-                  <User className="w-5 h-5" strokeWidth={2.2} />
-                </Link>
-              )}
             </div>
           </div>
 
@@ -211,9 +146,8 @@ export default function Header() {
           <div className="flex lg:hidden items-center gap-2">
             <LanguageSwitcher />
             <div className="flex items-center gap-1.5">
-              {user && (
                 <Link
-                  href={`/${lang}/account?tab=cart`}
+                  href={`/${lang}/cart`}
                   className="relative flex items-center justify-center w-9 h-9 rounded-full"
                   style={{
                     backgroundColor: cartCount > 0 ? "rgba(255,69,0,0.18)" : "rgba(255,255,255,0.08)",
@@ -232,26 +166,6 @@ export default function Header() {
                     </span>
                   )}
                 </Link>
-              )}
-              {user ? (
-                <Link
-                  href={`/${lang}/account`}
-                  className="flex items-center justify-center w-9 h-9 rounded-full"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
-                  aria-label="Личный кабинет"
-                >
-                  <User className="w-[18px] h-[18px]" strokeWidth={2.2} />
-                </Link>
-              ) : (
-                <Link
-                  href={`/${lang}/auth?mode=login`}
-                  className="flex items-center justify-center w-9 h-9 rounded-full"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--axis-silver)", border: "1.5px solid rgba(255,255,255,0.12)" }}
-                  aria-label="Войти"
-                >
-                  <User className="w-[18px] h-[18px]" strokeWidth={2.2} />
-                </Link>
-              )}
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(true)}

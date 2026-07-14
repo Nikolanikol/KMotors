@@ -27,19 +27,9 @@ import { FitmentProductsGrid } from "./FitmentProductsGrid";
 import { OrderModal } from "./OrderModal";
 import type { Product } from "./PartsCatalogClient";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/providers/AuthProvider";
-import { createClient } from "@/lib/supabase/client";
 import { formatUsd } from "@/lib/pricing";
 import { ShoppingCart } from "lucide-react";
-import { notifyCartUpdate, useCartProductIds } from "@/hooks/useCartCount";
-import {
-  calcEmsUsd,
-  calcEmspUsd,
-  isEmsAvailable,
-  isEmspAvailable,
-  COUNTRY_NAMES,
-  COUNTRY_SELECTOR_ORDER,
-} from "@/lib/ems-rates";
+import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -153,24 +143,19 @@ export function ProductDetailClient({
   subcategoryName,
   compatibleBrands,
   similarProducts,
-  logistics,
   lang,
   krwToUsd,
   description,
-  logisticsCatId,
 }: Props) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { user } = useAuth();
-  const supabase = createClient();
-  const { cartProductIds, addOptimistic } = useCartProductIds();
+  const { cartProductIds } = useCartProductIds();
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [cartAdded, setCartAdded] = useState(false);
   const [cartError, setCartError] = useState("");
   const [qty, setQty] = useState(1);
   const [backSearch, setBackSearch] = useState("");
-  const [profileCountry, setProfileCountry] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
   const { isFavorite, toggleFavorite } = usePartsFavorites();
@@ -180,10 +165,6 @@ export function ProductDetailClient({
   useEffect(() => {
     const saved = sessionStorage.getItem("parts:filters");
     if (saved) setBackSearch(saved);
-    if (user) {
-      supabase.from("profiles").select("country").eq("id", user.id).single()
-        .then(({ data }) => { if (data?.country) setProfileCountry(data.country); });
-    }
     // Track product view
     trackEvent("view_item", {
       item_id: String(product.id),
@@ -240,49 +221,29 @@ export function ProductDetailClient({
 
   const backHref = `/${lang}/parts${backSearch}`;
 
-  const addToCartCore = async (): Promise<boolean> => {
-    if (!user) {
-      const returnUrl = window.location.pathname;
-      router.push(`/${lang}/auth?mode=login&from=${encodeURIComponent(returnUrl)}`);
-      return false;
-    }
+  const addToCartCore = (): boolean => {
     setCartError("");
-    try {
-      let { data: cart, error: cartErr } = await supabase.from("carts").select("id").eq("user_id", user.id).single();
-      if (!cart && cartErr?.code === "PGRST116") {
-        const { data: newCart, error: insertErr } = await supabase.from("carts").insert({ user_id: user.id }).select("id").single();
-        if (insertErr) throw insertErr;
-        cart = newCart;
-      } else if (cartErr && cartErr.code !== "PGRST116") {
-        throw cartErr;
-      }
-      if (!cart) throw new Error("Cart not found");
-      const { error: upsertErr } = await supabase.from("cart_items").upsert(
-        { cart_id: cart.id, product_id: product.id, quantity: qty },
-        { onConflict: "cart_id,product_id" }
-      );
-      if (upsertErr) throw upsertErr;
-      addOptimistic(product.id);
-      notifyCartUpdate(qty);
-      return true;
-    } catch (err: unknown) {
-      console.error("Add to cart failed:", err);
-      setCartError(lang === "ru" ? "Не удалось добавить в корзину" : "Failed to add to cart");
-      return false;
-    }
+    return addToPartsCart({
+      id: product.id,
+      name_ru: product.name_ru,
+      name_en: product.name_en,
+      name_ko: product.name_ko,
+      part_number: product.part_number,
+      price_krw: product.price_krw,
+      image_url: product.image_url,
+      is_new: product.is_new,
+    }, qty);
   };
 
-  const handleAddToCart = async () => {
-    const ok = await addToCartCore();
-    if (ok) {
+  const handleAddToCart = () => {
+    if (addToCartCore()) {
       setCartAdded(true);
       setTimeout(() => setCartAdded(false), 2500);
     }
   };
 
-  const handleBuyNow = async () => {
-    const ok = await addToCartCore();
-    if (ok) router.push(`/${lang}/checkout`);
+  const handleBuyNow = () => {
+    if (addToCartCore()) router.push(`/${lang}/cart`);
   };
 
   const handleWishlist = () => {
@@ -506,11 +467,6 @@ export function ProductDetailClient({
               <InfoTile icon={<ShieldCheck className="w-5 h-5 text-[var(--pn-orange)]" />} title={L(DL.warrantyTitle, lang)} desc={L(DL.warrantyDesc, lang)} />
             </div>
 
-            {/* Real shipping calculator */}
-            <div className="mb-5">
-              <ShippingBadge logistics={logistics} lang={lang} krwToUsd={krwToUsd} profileCountry={profileCountry} />
-            </div>
-
             {/* Wishlist + Share */}
             <div className="flex items-center gap-3 mb-6">
               <button
@@ -726,160 +682,5 @@ function BrandDot({ slug }: { slug: string }) {
       className="w-2.5 h-2.5 rounded-full shrink-0"
       style={{ backgroundColor: color }}
     />
-  );
-}
-
-const SHIP_CONFIG = {
-  EMS: {
-    label: { ru: "EMS Korea", en: "EMS Korea" },
-    sublabel: { ru: "≤ 30 кг", en: "≤ 30 kg" },
-    bg: "bg-green-500/10",
-    border: "border-green-500/25",
-    text: "text-green-400",
-    dot: "bg-green-500",
-  },
-  EMS_PREMIUM: {
-    label: { ru: "EMS Korea", en: "EMS Korea" },
-    sublabel: { ru: "≤ 70 кг", en: "≤ 70 kg" },
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/25",
-    text: "text-blue-400",
-    dot: "bg-blue-500",
-  },
-  SEA: {
-    label: { ru: "Только морем", en: "Sea freight only" },
-    sublabel: { ru: "Крупногабаритный груз", en: "Oversized cargo" },
-    bg: "bg-red-500/10",
-    border: "border-red-500/25",
-    text: "text-red-400",
-    dot: "bg-red-500",
-  },
-} as const;
-
-function ShippingBadge({
-  logistics,
-  lang,
-  krwToUsd,
-  profileCountry,
-}: {
-  logistics: ProductLogistics | null;
-  lang: string;
-  krwToUsd: number;
-  profileCountry?: string;
-}) {
-  const { t } = useTranslation();
-  const isRu = lang === "ru";
-  const [country, setCountry] = useState(profileCountry || "");
-
-  useEffect(() => {
-    if (profileCountry && !country) setCountry(profileCountry);
-  }, [profileCountry]);
-
-  if (!logistics?.ship_method) {
-    return (
-      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--pn-surface-2)] border border-[var(--pn-border)]">
-        <span className="w-2 h-2 rounded-full bg-[var(--pn-text-dim)] shrink-0" />
-        <span className="text-xs text-[var(--pn-text-muted)]">
-          {isRu ? "Доставка: уточнить у менеджера" : "Shipping: ask manager"}
-        </span>
-      </div>
-    );
-  }
-
-  const cfg = SHIP_CONFIG[logistics.ship_method];
-  const label = isRu ? cfg.label.ru : cfg.label.en;
-  const sublabel = isRu ? cfg.sublabel.ru : cfg.sublabel.en;
-
-  const avgKg = logistics.weight_avg_kg;
-  const packedKg = avgKg !== null
-    ? Math.round((avgKg > 30 ? avgKg + 15 : avgKg * 1.05 + 0.3) * 1000) / 1000
-    : null;
-  const volKg = (logistics.length_cm && logistics.width_cm && logistics.height_cm)
-    ? Math.round((logistics.length_cm * logistics.width_cm * logistics.height_cm / 6000) * 1000) / 1000
-    : null;
-
-  const emsPackedKg = logistics.billed_weight_kg ?? packedKg;
-  const emspBilledKg = logistics.billed_weight_kg
-    ?? (packedKg !== null ? Math.max(packedKg, volKg ?? 0) : null);
-
-  const showCalculator =
-    (logistics.ship_method === "EMS" || logistics.ship_method === "EMS_PREMIUM") &&
-    (emsPackedKg !== null || emspBilledKg !== null);
-
-  const displayKg = logistics.billed_weight_kg
-    ?? (logistics.ship_method === "EMS" ? emsPackedKg : emspBilledKg);
-
-  const emsPrice =
-    country && emsPackedKg !== null
-      ? calcEmsUsd(country, emsPackedKg, krwToUsd)
-      : null;
-
-  const emspPrice =
-    country && emspBilledKg !== null
-      ? calcEmspUsd(country, emspBilledKg, krwToUsd)
-      : null;
-
-  const bestPrice = emsPrice !== null && emspPrice !== null
-    ? Math.min(emsPrice, emspPrice)
-    : emsPrice ?? emspPrice;
-
-  const countryName = (code: string) =>
-    isRu
-      ? COUNTRY_NAMES[code]?.ru ?? code
-      : COUNTRY_NAMES[code]?.en ?? code;
-
-  return (
-    <div className="space-y-3">
-      {/* Method badge */}
-      <div className={cn("inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border", cfg.bg, cfg.border)}>
-        <span className={cn("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
-        <div>
-          <span className={cn("text-xs font-semibold", cfg.text)}>{label}</span>
-          <span className={cn("text-xs ml-1.5 opacity-70", cfg.text)}>{sublabel}</span>
-          {displayKg && (
-            <span className={cn("text-xs ml-1.5 opacity-60", cfg.text)}>
-              · ~{displayKg} {isRu ? "кг" : "kg"}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Shipping cost calculator */}
-      {showCalculator && (
-        <div className="bg-[var(--pn-surface-2)] border border-[var(--pn-border)] rounded-xl p-3 space-y-2">
-          <p className="text-xs font-semibold text-[var(--pn-text-muted)]">
-            {t("parts.detail.shippingCalcTitle")}
-          </p>
-          <select
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="w-full text-sm border border-[var(--pn-border)] rounded-lg px-3 py-2 bg-[var(--pn-surface-3)] text-[var(--pn-text)] focus:outline-none focus:ring-2 focus:ring-[var(--pn-orange)]/40"
-          >
-            <option value="">{t("parts.detail.shippingCalcSelect")}</option>
-            {COUNTRY_SELECTOR_ORDER.map((code) => (
-              <option key={code} value={code}>
-                {countryName(code)}
-              </option>
-            ))}
-          </select>
-
-          {country && (
-            <div className="space-y-1.5">
-              {bestPrice !== null ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--pn-text-muted)]">EMS Korea</span>
-                  <span className="text-sm font-bold text-green-400">~${bestPrice}</span>
-                </div>
-              ) : (
-                <p className="text-xs text-[var(--pn-error)]">
-                  {t("parts.detail.shippingCalcUnavailable")}
-                </p>
-              )}
-              <p className="text-xs text-[var(--pn-text-dim)]">{t("parts.detail.shippingCalcNote")}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
   );
 }

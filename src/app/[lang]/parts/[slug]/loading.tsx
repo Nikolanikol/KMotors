@@ -1,62 +1,68 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#F5F7FA] animate-pulse">
+    <div className="min-h-screen bg-[#131313] animate-pulse">
       {/* Breadcrumb */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="border-b border-[#333]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-2">
-            <div className="h-4 bg-gray-200 rounded w-12" />
-            <div className="h-4 bg-gray-200 rounded w-3" />
-            <div className="h-4 bg-gray-200 rounded w-16" />
-            <div className="h-4 bg-gray-200 rounded w-3" />
-            <div className="h-4 bg-gray-200 rounded w-40" />
+            <div className="h-4 bg-[#2a2a2a] rounded w-12" />
+            <div className="h-4 bg-[#242424] rounded w-3" />
+            <div className="h-4 bg-[#2a2a2a] rounded w-16" />
+            <div className="h-4 bg-[#242424] rounded w-3" />
+            <div className="h-4 bg-[#2a2a2a] rounded w-40" />
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Back link */}
-        <div className="h-4 bg-gray-200 rounded w-32 mb-7" />
+        <div className="h-4 bg-[#2a2a2a] rounded w-32 mb-7" />
 
         {/* Hero grid */}
-        <div className="grid lg:grid-cols-[1fr_1fr] gap-8 mb-10">
-          {/* Image card */}
-          <div className="bg-white rounded-2xl shadow-sm" style={{ minHeight: "320px" }} />
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+          {/* Framed image card */}
+          <div className="bg-[#1c1b1b] border border-[#333] rounded-2xl overflow-hidden self-start w-full">
+            <div className="bg-white/90 aspect-square" />
+            <div className="h-14 border-t border-[#333]" />
+          </div>
 
-          {/* Info card */}
-          <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8 flex flex-col gap-4">
-            <div className="h-7 bg-gray-200 rounded w-3/4" />
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
-            <div className="h-10 bg-gray-200 rounded w-36 mt-2" />
-            <div className="h-14 bg-gray-200 rounded w-full mt-1" />
-            <div className="h-12 bg-gray-200 rounded w-full" />
-            <div className="border-t border-gray-100 pt-4 space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-full" />
-              <div className="h-4 bg-gray-200 rounded w-4/5" />
-              <div className="h-4 bg-gray-200 rounded w-3/5" />
+          {/* Info column */}
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-2">
+              <div className="h-6 bg-[#2a2a2a] rounded w-28" />
+              <div className="h-6 bg-[#2a2a2a] rounded w-24" />
+            </div>
+            <div className="h-9 bg-[#2a2a2a] rounded w-4/5" />
+            <div className="h-9 bg-[#2a2a2a] rounded w-3/5" />
+            {/* part-number plate */}
+            <div className="h-12 bg-[#242424] rounded-xl w-64 mt-1" />
+            <div className="space-y-2">
+              <div className="h-4 bg-[#242424] rounded w-full" />
+              <div className="h-4 bg-[#242424] rounded w-5/6" />
+            </div>
+            {/* price card */}
+            <div className="bg-[#1c1b1b] border border-[#333] rounded-2xl p-5 space-y-4 mt-1">
+              <div className="h-10 bg-[#2a2a2a] rounded w-28" />
+              <div className="h-12 bg-[#2a2a2a] rounded-xl w-full" />
+              <div className="h-12 bg-[#242424] rounded-xl w-full" />
+            </div>
+            {/* info tiles */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-16 bg-[#1c1b1b] border border-[#333] rounded-xl" />
+              <div className="h-16 bg-[#1c1b1b] border border-[#333] rounded-xl" />
             </div>
           </div>
         </div>
 
-        {/* Compatible models */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8 mb-10">
-          <div className="h-6 bg-gray-200 rounded w-48 mb-6" />
-          <div className="grid sm:grid-cols-3 gap-6">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-24 mb-3" />
-                <div className="flex flex-wrap gap-2">
-                  {[0, 1, 2, 3].map((j) => (
-                    <div key={j} className="h-7 bg-gray-200 rounded-full w-20" />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Trust row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-28 bg-[#1c1b1b] border border-[#333] rounded-xl" />
+          ))}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="bg-gray-200 rounded-2xl h-24" />
+        {/* Banner */}
+        <div className="h-28 bg-[#2a2a2a] rounded-2xl" />
       </div>
     </div>
   );

@@ -23,6 +23,8 @@ interface OrderModalProps {
   /** Modal title / intent — e.g. fitment check. */
   title?: string;
   subtitle?: string;
+  /** Full custom message body (e.g. whole cart composition). Overrides the single-product lines. */
+  messageLines?: string[];
 }
 
 function projectLabel(): string {
@@ -46,6 +48,7 @@ export function OrderModal({
   source = "parts_product",
   title,
   subtitle,
+  messageLines,
 }: OrderModalProps) {
   const { t } = useTranslation();
 
@@ -105,14 +108,17 @@ export function OrderModal({
 
     setLoading(true);
     try {
-      const message = [
-        `🏷 Проект: ${projectLabel()}`,
-        `🔧 Деталь: ${productName}`,
-        `🔢 № по каталогу: ${partNumber}`,
-        priceText ? `💵 Цена: ${priceText}` : "",
-        categoryName ? `📂 Категория: ${categoryName}` : "",
-        `🔗 ${productUrl}`,
-      ].filter(Boolean).join("\n");
+      const message = (messageLines && messageLines.length
+        ? [`🏷 Проект: ${projectLabel()}`, ...messageLines]
+        : [
+            `🏷 Проект: ${projectLabel()}`,
+            `🔧 Деталь: ${productName}`,
+            `🔢 № по каталогу: ${partNumber}`,
+            priceText ? `💵 Цена: ${priceText}` : "",
+            categoryName ? `📂 Категория: ${categoryName}` : "",
+            `🔗 ${productUrl}`,
+          ]
+      ).filter(Boolean).join("\n");
       const res = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
