@@ -57,7 +57,7 @@ export function ProductCard({ product, productName, isVisible, index, href, onAd
       )}
       style={{ transitionDelay: delay }}
     >
-      <Link href={href} onClick={onNavigate} className="block relative bg-white overflow-hidden aspect-square">
+      <Link href={href} onClick={onNavigate} className="block relative bg-[var(--pn-image-bg,#e8e6e3)] overflow-hidden aspect-square">
         <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
           {product.image_url
             ? <Image src={product.image_url} alt={productName} fill unoptimized className="object-contain p-4 sm:p-6 group-hover:scale-105 transition-transform duration-500" />

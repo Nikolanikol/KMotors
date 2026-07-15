@@ -194,17 +194,17 @@ export default async function FitmentPage({ params, searchParams }: Props) {
     <div className="parts-page min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <nav className="text-sm text-gray-400 mb-4 flex flex-wrap gap-1.5">
-          <Link href={`/${lang}`} className="hover:text-[#002C5F]">K-Axis</Link>
+        <nav className="text-sm text-[var(--pn-text-dim)] mb-4 flex flex-wrap gap-1.5">
+          <Link href={`/${lang}`} className="hover:text-[var(--pn-orange)] transition-colors">K-Axis</Link>
           <span>/</span>
-          <Link href={`/${lang}/parts`} className="hover:text-[#002C5F]">{lang === "ru" ? "Запчасти" : "Parts"}</Link>
+          <Link href={`/${lang}/parts`} className="hover:text-[var(--pn-orange)] transition-colors">{lang === "ru" ? "Запчасти" : "Parts"}</Link>
           <span>/</span>
-          <span className="text-[#002C5F]">{full}</span>
+          <span className="text-[var(--pn-text-muted)]">{full}</span>
         </nav>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#002C5F] mb-3">{copy.h1}</h1>
-        <p className="text-sm text-gray-600 max-w-3xl mb-2 leading-relaxed">{copy.intro}</p>
-        <p className="text-sm text-gray-400 mb-8">{copy.count(totalLinks ?? 0)}</p>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--pn-text)] mb-3">{copy.h1}</h1>
+        <p className="text-[15px] text-[var(--pn-text-muted)] max-w-3xl mb-3 leading-relaxed">{copy.intro}</p>
+        <p className="text-sm font-medium text-[var(--pn-orange-soft)] mb-8">{copy.count(totalLinks ?? 0)}</p>
 
         <FitmentProductsGrid products={products} lang={lang} krwToUsd={krwToUsd} />
 
@@ -212,13 +212,13 @@ export default async function FitmentPage({ params, searchParams }: Props) {
           <nav className="mt-8 flex items-center justify-center gap-2 flex-wrap" aria-label="Pagination">
             {pageNums.map((p, idx, arr) => (
               <span key={p} className="flex items-center gap-2">
-                {idx > 0 && arr[idx - 1] !== p - 1 && <span className="text-gray-300">…</span>}
+                {idx > 0 && arr[idx - 1] !== p - 1 && <span className="text-[var(--pn-text-dim)]">…</span>}
                 {p === page ? (
-                  <span className="px-3 py-1.5 rounded-lg bg-[#002C5F] text-white text-sm">{p}</span>
+                  <span className="px-3 py-1.5 rounded-lg bg-[var(--pn-orange)] text-white text-sm font-semibold shadow-lg shadow-[rgba(255,122,0,0.25)]">{p}</span>
                 ) : (
                   <Link
                     href={`/${lang}${path}${p > 1 ? `?page=${p}` : ""}`}
-                    className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:border-[#002C5F]/30 hover:text-[#002C5F] transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-[var(--pn-border)] bg-[var(--pn-surface)] text-sm text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)] transition-colors"
                   >
                     {p}
                   </Link>
@@ -230,13 +230,13 @@ export default async function FitmentPage({ params, searchParams }: Props) {
 
         {siblings.length > 0 && (
           <nav aria-label={copy.others} className="mt-12">
-            <h2 className="text-lg font-semibold text-[#002C5F] mb-3">{copy.others}</h2>
+            <h2 className="text-lg font-semibold text-[var(--pn-text)] mb-3">{copy.others}</h2>
             <div className="flex flex-wrap gap-2">
               {siblings.map((s) => (
                 <Link
                   key={s.id}
                   href={`/${lang}/fitment/${s.brand}/${s.slug}`}
-                  className="text-sm px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-[#002C5F]/30 hover:text-[#002C5F] transition-colors"
+                  className="text-sm px-3 py-1.5 rounded-full bg-[var(--pn-surface)] border border-[var(--pn-border)] text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)] transition-colors"
                 >
                   {s.name_en.startsWith(brandName) ? s.name_en : s.name_en}{years(s) ? ` (${years(s)})` : ""}
                 </Link>

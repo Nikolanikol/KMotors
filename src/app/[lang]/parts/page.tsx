@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Hero } from "@/app/parts/sections/Hero";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
+import { PopularModels } from "@/app/parts/sections/PopularModels";
 
 // Lazy load — грузятся после Hero
 const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").then(m => ({ default: m.PartsCatalog })));
@@ -138,6 +139,7 @@ export default async function PartsPage({ params }: Props) {
       <div className="parts-page min-h-screen" style={{ position: "relative" }}>
         <PartsTopLinks lang={lang} />
         <Hero />
+        <PopularModels lang={lang} />
         <PartsCatalog />
         <About />
         <ContactForm />

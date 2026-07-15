@@ -323,6 +323,9 @@ select.PhoneInputCountrySelect {
   --pn-text-muted: #a5a09c;    /* secondary text */
   --pn-text-dim: #6f6b68;      /* tertiary / captions */
 
+  /* Product image tile — soft off-white so photos don't glare on the dark page */
+  --pn-image-bg: #e8e6e3;
+
   /* Accent */
   --pn-orange: #ff7a00;        /* CTA, price, active */
   --pn-orange-soft: #ffb68b;   /* part numbers, subtle accent */
