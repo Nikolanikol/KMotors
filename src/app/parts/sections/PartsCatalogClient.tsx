@@ -22,7 +22,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { clarityEvent } from "@/utils/clarity";
-import { PRICE_MARKUP } from "@/lib/pricing";
+import { displayUsdToKrw } from "@/lib/pricing";
 import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
@@ -369,8 +369,8 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
     if (fetchCats.length > 0)   params.set("cats", [...fetchCats].sort().join(","));
     if (subSlug)                 params.set("sub", subSlug);
     if (searchQ)                 params.set("q", searchQ);
-    if (priceMin !== undefined)  params.set("min", String(Math.round(priceMin / (krwToUsd * PRICE_MARKUP))));
-    if (priceMax !== undefined)  params.set("max", String(Math.round(priceMax / (krwToUsd * PRICE_MARKUP))));
+    if (priceMin !== undefined)  params.set("min", String(displayUsdToKrw(priceMin, krwToUsd)));
+    if (priceMax !== undefined)  params.set("max", String(displayUsdToKrw(priceMax, krwToUsd)));
     if (sort !== "default")      params.set("sort", sort);
     params.set("page", String(apiPage));
     params.set("limit", String(pageSize));
