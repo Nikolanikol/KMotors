@@ -3,6 +3,7 @@ import Script from "next/script";
 import { createServerClient } from "@/lib/supabase";
 import BlogPostClient from "@/app/blog/[slug]/BlogPostClient";
 import { BlogPost } from "@/types/blog";
+import { makeAlternates } from "@/lib/seo";
 
 export const revalidate = 3600;
 
@@ -63,22 +64,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) return { title: "Post not found" };
 
-  // Блог только на русском — остальные языки не индексируем
-  if (lang !== "ru") {
-    return {
-      title: post.title,
-      robots: { index: false, follow: true },
-      alternates: { canonical: `https://www.kmotors.shop/ru/blog/${slug}` },
-    };
-  }
+  // Индексируем основные языки (ru, en). ka/ar/ko — noindex до наполнения
+  // переводов (Фаза 4); каждый язык self-canonical + hreflang через makeAlternates.
+  const INDEXABLE = ["ru", "en"];
+  const isIndexable = INDEXABLE.includes(lang);
+  const selfUrl = `https://www.kmotors.shop/${lang}/blog/${slug}`;
 
   return {
     title: `${post.title}`,
     description: post.excerpt || post.title,
+    robots: isIndexable ? undefined : { index: false, follow: true },
     openGraph: {
       title: post.title,
       description: post.excerpt || post.title,
-      url: `https://www.kmotors.shop/ru/blog/${slug}`,
+      url: selfUrl,
       images: post.cover_url
         ? [{ url: post.cover_url, alt: post.title }]
         : [{ url: "https://www.kmotors.shop/preview/preview.png" }],
@@ -92,9 +91,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: post.excerpt || post.title,
       images: post.cover_url ? [post.cover_url] : ["https://www.kmotors.shop/preview/preview.png"],
     },
-    alternates: {
-      canonical: `https://www.kmotors.shop/ru/blog/${slug}`,
-    },
+    alternates: makeAlternates(lang, `/blog/${slug}`),
   };
 }
 

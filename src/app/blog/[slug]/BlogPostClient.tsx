@@ -11,6 +11,7 @@ import { BlogPost } from "@/types/blog";
 import { ArrowLeft, Calendar, Tag, ChevronDown, ChevronUp } from "lucide-react";
 import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
 import Breadcrumb from "@/components/Breadcrumb";
+import { useCountry } from "@/hooks/useCountry";
 
 interface Props {
   initialPost?: BlogPost | null;
@@ -39,6 +40,7 @@ export default function BlogPostPage({ initialPost }: Props) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const lang = i18n.language as "ru" | "en" | "ko";
+  const { isCatalogBlocked } = useCountry();
 
   const [post, setPost] = useState<BlogPost | null>(initialPost ?? null);
   const [loading, setLoading] = useState(!initialPost);
@@ -171,10 +173,19 @@ export default function BlogPostPage({ initialPost }: Props) {
                 Более 10 000 автомобилей из Кореи в каталоге. Бесплатная консультация по подбору и таможне.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link href={`/${lang}/catalog`}
-                  className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white transition-colors"
-                  style={{ backgroundColor: "var(--axis-orange)" }}>
-                  Смотреть каталог
+                {!isCatalogBlocked && (
+                  <Link href={`/${lang}/catalog`}
+                    className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white transition-colors"
+                    style={{ backgroundColor: "var(--axis-orange)" }}>
+                    Смотреть каталог
+                  </Link>
+                )}
+                <Link href={`/${lang}/calculator`}
+                  className="flex-1 text-center px-5 py-3 font-semibold rounded-xl transition-colors"
+                  style={isCatalogBlocked
+                    ? { backgroundColor: "var(--axis-orange)", color: "white" }
+                    : { border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
+                  🧮 Рассчитать растаможку
                 </Link>
                 <button
                   onClick={() => setCtaOpen((v) => !v)}
@@ -185,8 +196,8 @@ export default function BlogPostPage({ initialPost }: Props) {
                 </button>
               </div>
               {ctaOpen && (
-                <div className="mt-4">
-                  <CarRequestForm carId="" carName="Блог" source="blog" />
+                <div className="mt-4 bg-white rounded-xl p-4 sm:p-5 [&_input]:text-gray-900 [&_input]:border-gray-300 [&_input::placeholder]:text-gray-400">
+                  <CarRequestForm source="blog" />
                 </div>
               )}
             </div>

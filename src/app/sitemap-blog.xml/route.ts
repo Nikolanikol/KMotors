@@ -26,15 +26,24 @@ export async function GET() {
 
     const urlBlocks: string[] = [];
 
-    // Блог только на русском — переводов нет
+    // Индексируемые языки блога (ru + en). ka/ar/ko — noindex, в карту не кладём.
+    const INDEXABLE = ["ru", "en"];
     for (const post of posts) {
       const lastmod = post.published_at || new Date().toISOString();
-      urlBlocks.push(`  <url>
-    <loc>${BASE}/ru/blog/${post.slug}</loc>
+      const alts =
+        INDEXABLE.map(
+          (l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${BASE}/${l}/blog/${post.slug}"/>`
+        ).join("\n") +
+        `\n    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/blog/${post.slug}"/>`;
+      for (const lang of INDEXABLE) {
+        urlBlocks.push(`  <url>
+    <loc>${BASE}/${lang}/blog/${post.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+${alts}
   </url>`);
+      }
     }
 
     // Теги не включаем — они noindex
