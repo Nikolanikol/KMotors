@@ -11,8 +11,10 @@ import { trackEvent } from "@/utils/gtag";
 import { clarityEvent } from "@/utils/clarity";
 
 interface CarRequestFormProps {
-  carId: string;
-  carName: string;
+  carId?: string;
+  carName?: string;
+  /** Свободный комментарий → уходит в Telegram как «Комментарий» (напр. параметры расчёта калькулятора). */
+  message?: string;
   source?: string;
   onSuccess?: () => void;
 }
@@ -20,6 +22,7 @@ interface CarRequestFormProps {
 export default function CarRequestForm({
   carId,
   carName,
+  message,
   source = "car_detail",
   onSuccess,
 }: CarRequestFormProps) {
@@ -49,8 +52,9 @@ export default function CarRequestForm({
           messenger,
           tg_username: tgUsername || undefined,
           source,
-          carId,
-          carName,
+          carId: carId || undefined,
+          carName: carName || undefined,
+          message: message || undefined,
         }),
       });
 

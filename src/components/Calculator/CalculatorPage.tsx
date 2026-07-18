@@ -6,6 +6,7 @@ import { calcCustomsRU, calcCustomsKZ, calcCustomsUZ } from "@/utils/customsCalc
 import type { CustomsResultRU, CustomsResultKZ, CustomsResultUZ } from "@/utils/customsCalculator";
 import { trackEvent } from "@/utils/gtag";
 import { getCalcStrings } from "@/data/calcTranslations";
+import CarRequestForm from "@/components/Catalog/CarDetail/CarRequestForm";
 
 interface Rates {
   EUR: number;
@@ -119,6 +120,21 @@ export default function CalculatorPage({ lang }: { lang: string }) {
     (country === "ru" && !!resultRU) ||
     (country === "kz" && !!resultKZ) ||
     (country === "uz" && !!resultUZ);
+
+  // Сводка расчёта → уходит менеджеру в заявке (поле message)
+  function buildCalcSummary(): string {
+    const countryLabel =
+      country === "ru" ? t.countryRU : country === "kz" ? t.countryKZ : t.countryUZ;
+    const params = `${countryLabel}, $${priceUSD}, ${engineVolume} ${t.cc}, ${year}-${month}, ${t.fuelLabel.toLowerCase()}: ${fuelType}`;
+    let totals = "";
+    if (country === "ru" && resultRU)
+      totals = `${t.totalCustomsShort}: ${fmtRUB(resultRU.totalRUB)} · ${t.finalCostInShort} ${t.countryRUgen}: ${fmtRUB(resultRU.priceRUB + resultRU.totalRUB)}`;
+    else if (country === "kz" && resultKZ)
+      totals = `${t.totalCustomsShort}: ${fmtKZT(resultKZ.totalKZT)} · ${t.finalCostInShort} ${t.countryKZgen}: ${fmtKZT(resultKZ.customsValueKZT + resultKZ.totalKZT)}`;
+    else if (country === "uz" && resultUZ)
+      totals = `${t.totalCustomsShort}: ${fmtUZS(resultUZ.totalUZS)} · ${t.finalCostInShort} ${t.countryUZgen}: ${fmtUZS(resultUZ.priceUZS + resultUZ.totalUZS)}`;
+    return `🧮 ${params}. ${totals}`;
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--axis-black)" }}>
@@ -392,6 +408,15 @@ export default function CalculatorPage({ lang }: { lang: string }) {
           </div>
         </div>
 
+        {/* ── Lead-форма — появляется после расчёта ── */}
+        {hasResult && (
+          <div className="mt-6 rounded-2xl p-6 bg-white [&_input]:text-gray-900 [&_input]:border-gray-300 [&_input::placeholder]:text-gray-400">
+            <h2 className="text-lg font-bold text-gray-900">{t.leadTitle}</h2>
+            <p className="text-sm text-gray-500 mt-1 mb-4">{t.leadText}</p>
+            <CarRequestForm source="car_calculator" message={buildCalcSummary()} />
+          </div>
+        )}
+
         {/* ── CTA — каталог ── */}
         <div className="mt-6 rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
           style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(255,69,0,0.2)" }}>
@@ -424,6 +449,11 @@ export default function CalculatorPage({ lang }: { lang: string }) {
                 <p>{item.text}</p>
               </div>
             ))}
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-4">{t.deliveryH3}</h2>
+            <p>{t.deliveryText}</p>
           </div>
 
           <div>
