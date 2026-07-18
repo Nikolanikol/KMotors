@@ -87,8 +87,15 @@ export interface Inspection {
 }
 export interface EncarDetail {
   photos: string[];
+  optionCodes: string[]; // коды опций (standard ∪ choice) для хайлайтов в подписи
   record: AccidentRecord | null;
   inspection: Inspection | null;
+}
+
+function extractOptionCodes(vehicle: any): string[] {
+  const o = vehicle?.options ?? {};
+  const codes = [...(o.standard ?? []), ...(o.choice ?? [])].map(String);
+  return [...new Set(codes)];
 }
 
 function extractPhotos(vehicle: any, limit: number): string[] {
@@ -151,11 +158,12 @@ export async function fetchDetail(id: string, photoLimit: number): Promise<Encar
   const vehicle = await fetchVehicleData(id).catch(() => null);
   if (!vehicle) return null;
   const photos = extractPhotos(vehicle, photoLimit);
+  const optionCodes = extractOptionCodes(vehicle);
   const [record, inspection] = await Promise.all([
     fetchRecord(id, vehicle.vehicleNo ?? ''),
     fetchInspection(id),
   ]);
-  return { photos, record, inspection };
+  return { photos, optionCodes, record, inspection };
 }
 
 /** Ссылка на карточку авто в магазине KMotors (catalog/[id] рендерит любой encar id). */

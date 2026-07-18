@@ -4,6 +4,7 @@ import { PRESETS, POST_CONFIG, CHANNEL_ID } from './config';
 import { searchListings, fetchDetail, type Listing } from './encar';
 import { prefilter, deepGate } from './quality';
 import { buildCaption, usdLabel } from './caption';
+import { optionHighlights } from './options';
 import { filterUnposted, markPosted, totalCount } from './store';
 
 export interface RunResult {
@@ -54,7 +55,8 @@ export async function runOnce(opts: RunOptions = {}): Promise<RunResult> {
     }
 
     const { krwToUsd } = await getCurrencyRates();
-    const caption = buildCaption(l, usdLabel(l.priceMan, krwToUsd), gate.signals);
+    const options = optionHighlights(detail.optionCodes);
+    const caption = buildCaption(l, usdLabel(l.priceMan, krwToUsd), gate.signals, options);
 
     if (opts.dryRun) {
       return { posted: false, preset: preset.label, listing: l, caption, photos: detail.photos, scanned: listings.length, rejected };

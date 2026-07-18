@@ -24,6 +24,14 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** Переводит регион Кореи в русский; разбирает составные ("전남광주" → "Чолла-Намдо Кванджу"). */
+function translateRegion(city: string): string {
+  let r = city;
+  const keys = Object.keys(REGION_RU).sort((a, b) => b.length - a.length);
+  for (const ko of keys) r = r.split(ko).join(REGION_RU[ko] + ' ');
+  return r.replace(/\s+/g, ' ').trim();
+}
+
 /** Год YYYYMM → "2020.10". */
 function formatYear(ym: number): string {
   const s = String(ym);
@@ -34,7 +42,12 @@ function formatYear(ym: number): string {
  * @param usdLabel уже посчитанная цена в USD (напр. "$10,700")
  * @param signals плюс-сигналы доверия из квалити-гейта
  */
-export function buildCaption(l: Listing, usdLabel: string, signals: string[]): string {
+export function buildCaption(
+  l: Listing,
+  usdLabel: string,
+  signals: string[],
+  options: string[] = [],
+): string {
   const maker = MANUFACTURER_MAP[l.manufacturerKo] ?? translateModelName(l.manufacturerKo);
   // Убираем корейские слова топлива из названия — топливо показываем отдельной строкой
   const model = translateModelName(l.modelKo)
@@ -44,7 +57,7 @@ export function buildCaption(l: Listing, usdLabel: string, signals: string[]): s
   const grade = translateGradeText(l.badgeKo);
   const fuel = FUEL_RU[l.fuelKo] ?? l.fuelKo;
   const trans = TRANS_RU[l.transKo] ?? l.transKo;
-  const region = REGION_RU[l.city] ?? l.city;
+  const region = translateRegion(l.city);
   const km = l.mileage.toLocaleString('ru-RU').replace(/,/g, ' ');
 
   const lines: string[] = [];
@@ -59,6 +72,11 @@ export function buildCaption(l: Listing, usdLabel: string, signals: string[]): s
   lines.push('');
   for (const s of signals) lines.push(`✅ ${esc(s)}`);
   lines.push('✅ Пригон под ключ из Кореи');
+  if (options.length) {
+    lines.push('');
+    lines.push('✨ <b>Комплектация:</b>');
+    for (const o of options) lines.push(`• ${esc(o)}`);
+  }
   lines.push('');
   lines.push(`📩 Расчёт до Владивостока — @${POST_CONFIG.contactUsername}`);
   lines.push(`🔗 <a href="${kmotorsUrl(l.id)}">Подробнее на KMotors</a>`);
