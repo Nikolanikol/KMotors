@@ -1,0 +1,14 @@
+[Unit]
+Description=KMotors — автопостинг авто с Encar в Telegram-канал
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Поправь путь к репозиторию под свой сервер:
+WorkingDirectory=/var/www/kmotors
+ExecStart=/var/www/kmotors/scripts/poster-cron.sh
+# Секрет и пути можно задать здесь вместо чтения из .env:
+# Environment=POSTER_CRON_SECRET=...
+# Environment=POSTER_ENDPOINT=https://www.kmotors.shop/api/poster/run
+# Environment=ENV_FILE=/var/www/kmotors/.env
