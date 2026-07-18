@@ -124,6 +124,10 @@ export interface CalcStrings {
   seoCardRU: string;
   seoCardKZ: string;
   seoCardUZ: string;
+  deliveryH3: string;            // "Сколько стоит доставка авто из Кореи"
+  deliveryText: string;          // фрахт от $600 до Владивостока + расчёт у менеджера
+  leadTitle: string;             // заголовок lead-формы под результатом
+  leadText: string;              // подзаголовок lead-формы
   faqH2: string;                 // "Частые вопросы"
   faq: { q: string; a: string }[];
 
@@ -225,6 +229,10 @@ export const CALC_T: Record<CalcLang, CalcStrings> = {
     seoCardRU: "Пошлина по комбинированной ставке ЕАЭС (% от стоимости + €/см³). Утилизационный сбор от 3 400 ₽ (льготная ставка для физлиц до 160 л.с.) до нескольких миллионов. Таможенный сбор — ступенчатая шкала по стоимости.",
     seoCardKZ: "Пошлина 15%. НДС 16% с 01.01.2026. Утильсбор привязан к МРП (4 325 ₸ в 2026). Первичная регистрация: от 1 081 ₸ (до 2 лет) до 2 162 500 ₸ (старше 3 лет). Электромобили: нулевой утильсбор.",
     seoCardUZ: "С 01.01.2026 льготы на малолитражки отменены. Пошлина = 15% + фикс. доплата в USD за каждый см³. НДС 12%. Утильсбор 30–300 БРВ. Электромобили: нулевая пошлина и утильсбор.",
+    deliveryH3: "Сколько стоит доставка авто из Кореи",
+    deliveryText: "Калькулятор считает только таможенные платежи — морской фрахт оплачивается отдельно. Самый дешёвый маршрут — до Владивостока: морской фрахт от $600. Дальше стоимость зависит от конечного региона доставки и габаритов авто. Точную сумму по вашему маршруту рассчитает менеджер.",
+    leadTitle: "Получить точный расчёт с доставкой",
+    leadText: "Оставьте контакт — менеджер посчитает итог под вашу машину и регион и поможет подобрать авто под бюджет.",
     faqH2: "Частые вопросы",
     faq: [
       { q: "Включена ли доставка в расчёт?", a: "Нет. Стоимость доставки из Кореи до таможни рассчитывается отдельно и зависит от маршрута, веса и габаритов автомобиля. Уточняйте у менеджера." },
@@ -327,6 +335,10 @@ export const CALC_T: Record<CalcLang, CalcStrings> = {
     seoCardRU: "Duty at the combined EAEU rate (% of value + €/cc). Recycling fee from 3,400 ₽ (reduced rate for individuals up to 160 hp) to several million. Customs fee — a tiered scale based on value.",
     seoCardKZ: "Duty 15%. VAT 16% from 01.01.2026. Recycling fee tied to MRP (4,325 ₸ in 2026). Initial registration: from 1,081 ₸ (up to 2 years) to 2,162,500 ₸ (over 3 years). Electric cars: zero recycling fee.",
     seoCardUZ: "From 01.01.2026 the small-engine exemptions are cancelled. Duty = 15% + a fixed USD surcharge per cc. VAT 12%. Recycling fee 30–300 BRV. Electric cars: zero duty and recycling fee.",
+    deliveryH3: "How much does shipping a car from Korea cost",
+    deliveryText: "The calculator covers customs payments only — sea freight is paid separately. The cheapest route is to Vladivostok: sea freight from $600. Beyond that, the cost depends on the final delivery region and the car's dimensions. A manager will calculate the exact amount for your route.",
+    leadTitle: "Get an exact quote with delivery",
+    leadText: "Leave your contact — a manager will calculate the total for your specific car and region and help pick a car within budget.",
     faqH2: "Frequently asked questions",
     faq: [
       { q: "Is shipping included in the calculation?", a: "No. Shipping from Korea to customs is calculated separately and depends on the route, weight and dimensions of the car. Check with a manager." },
@@ -429,6 +441,10 @@ export const CALC_T: Record<CalcLang, CalcStrings> = {
     seoCardRU: "EAEU 복합 요율(가격의 % + €/cc) 관세. 폐차 부담금은 3,400 ₽(160마력 이하 개인 우대 요율)부터 수백만까지. 통관 수수료는 가격에 따른 단계별 요율.",
     seoCardKZ: "관세 15%. 2026.01.01부터 부가세 16%. 폐차 부담금은 MRP(2026년 4,325 ₸)에 연동. 최초 등록: 1,081 ₸(2년 이하)부터 2,162,500 ₸(3년 초과)까지. 전기차: 폐차 부담금 0.",
     seoCardUZ: "2026.01.01부터 소형 엔진 감면 폐지. 관세 = 15% + cc당 고정 USD 추가금. 부가세 12%. 폐차 부담금 30–300 BRV. 전기차: 관세와 폐차 부담금 0.",
+    deliveryH3: "How much does shipping a car from Korea cost",
+    deliveryText: "The calculator covers customs payments only — sea freight is paid separately. The cheapest route is to Vladivostok: sea freight from $600. Beyond that, the cost depends on the final delivery region and the car's dimensions. A manager will calculate the exact amount for your route.",
+    leadTitle: "Get an exact quote with delivery",
+    leadText: "Leave your contact — a manager will calculate the total for your specific car and region and help pick a car within budget.",
     faqH2: "자주 묻는 질문",
     faq: [
       { q: "배송비가 계산에 포함되나요?", a: "아니요. 한국에서 통관까지의 배송비는 별도로 계산되며 경로, 무게, 차량 크기에 따라 달라집니다. 담당자에게 확인하세요." },
@@ -531,6 +547,10 @@ export const CALC_T: Record<CalcLang, CalcStrings> = {
     seoCardRU: "გადასახადი EAEU-ს კომბინირებული განაკვეთით (% ღირებულებიდან + €/სმ³). უტილიზაციის მოსაკრებელი 3,400 ₽-დან (შეღავათიანი განაკვეთი ფიზიკური პირებისთვის 160 ცხ.ძ.-მდე) რამდენიმე მილიონამდე. საბაჟო მოსაკრებელი — საფეხურებრივი შკალა ღირებულების მიხედვით.",
     seoCardKZ: "გადასახადი 15%. დღგ 16% 01.01.2026-დან. უტილიზაცია მიბმულია MRP-ზე (4,325 ₸ 2026-ში). პირველადი რეგისტრაცია: 1,081 ₸-დან (2 წლამდე) 2,162,500 ₸-მდე (3 წელზე მეტი). ელექტრომობილები: ნულოვანი უტილიზაცია.",
     seoCardUZ: "01.01.2026-დან მცირე ძრავის შეღავათები გაუქმებულია. გადასახადი = 15% + ფიქსირებული USD დანამატი ყოველ სმ³-ზე. დღგ 12%. უტილიზაცია 30–300 BRV. ელექტრომობილები: ნულოვანი გადასახადი და უტილიზაცია.",
+    deliveryH3: "How much does shipping a car from Korea cost",
+    deliveryText: "The calculator covers customs payments only — sea freight is paid separately. The cheapest route is to Vladivostok: sea freight from $600. Beyond that, the cost depends on the final delivery region and the car's dimensions. A manager will calculate the exact amount for your route.",
+    leadTitle: "Get an exact quote with delivery",
+    leadText: "Leave your contact — a manager will calculate the total for your specific car and region and help pick a car within budget.",
     faqH2: "ხშირად დასმული კითხვები",
     faq: [
       { q: "შედის თუ არა მიწოდება გათვლაში?", a: "არა. მიწოდება კორეიდან საბაჟომდე იანგარიშება ცალკე და დამოკიდებულია მარშრუტზე, წონასა და ავტომობილის ზომებზე. დააზუსტეთ მენეჯერთან." },
@@ -633,6 +653,10 @@ export const CALC_T: Record<CalcLang, CalcStrings> = {
     seoCardRU: "الرسوم بالسعر المركّب للاتحاد الأوراسي (% من القيمة + €/سم³). رسوم إعادة التدوير من 3,400 ₽ (سعر مخفّض للأفراد حتى 160 حصانًا) إلى عدة ملايين. رسوم التخليص — جدول تدريجي حسب القيمة.",
     seoCardKZ: "الرسوم 15%. ضريبة القيمة المضافة 16% من 01.01.2026. رسوم إعادة التدوير مرتبطة بـ MRP (4,325 ₸ في 2026). التسجيل الأولي: من 1,081 ₸ (حتى سنتين) إلى 2,162,500 ₸ (أكثر من 3 سنوات). السيارات الكهربائية: رسوم إعادة تدوير صفرية.",
     seoCardUZ: "من 01.01.2026 أُلغيت إعفاءات المحركات الصغيرة. الرسوم = 15% + إضافة ثابتة بالدولار لكل سم³. ضريبة القيمة المضافة 12%. رسوم إعادة التدوير 30–300 BRV. السيارات الكهربائية: رسوم صفرية وإعادة تدوير صفرية.",
+    deliveryH3: "How much does shipping a car from Korea cost",
+    deliveryText: "The calculator covers customs payments only — sea freight is paid separately. The cheapest route is to Vladivostok: sea freight from $600. Beyond that, the cost depends on the final delivery region and the car's dimensions. A manager will calculate the exact amount for your route.",
+    leadTitle: "Get an exact quote with delivery",
+    leadText: "Leave your contact — a manager will calculate the total for your specific car and region and help pick a car within budget.",
     faqH2: "الأسئلة الشائعة",
     faq: [
       { q: "هل الشحن مشمول في الحساب؟", a: "لا. يُحسب الشحن من كوريا إلى الجمارك على حدة ويعتمد على المسار والوزن وأبعاد السيارة. تأكد مع المدير." },

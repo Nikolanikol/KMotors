@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createServerClient } from "@/lib/supabase";
+import { buildEncarGrounding } from "@/lib/encarModelPrices";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -28,6 +29,22 @@ async function fetchCoverImage(imageQuery: string): Promise<string | null> {
   return null;
 }
 
+// Курс KRW за 1 USD (для конвертации encar-цен в USD). Тот же бесплатный CDN,
+// что использует /api/exchange-rate. Фолбэк ~1350, если источник недоступен.
+async function fetchKrwPerUsd(): Promise<number> {
+  try {
+    const res = await fetch(
+      "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
+      { cache: "no-store" }
+    );
+    const data = await res.json();
+    const krw = Number(data?.usd?.krw);
+    return krw > 0 ? krw : 1350;
+  } catch {
+    return 1350;
+  }
+}
+
 interface BlogTopic {
   id: string;
   slug: string;
@@ -48,11 +65,25 @@ const TYPE_LABELS: Record<string, string> = {
   education: "образовательный материал об автомобилях, технологиях или рынке",
 };
 
-function buildGeneratePrompt(topic: BlogTopic): string {
+function buildGeneratePrompt(topic: BlogTopic, grounding = ""): string {
   const typeLabel = TYPE_LABELS[topic.type] || topic.type;
   const modelsLine = topic.models.length ? `Модели: ${topic.models.join(", ")}.` : "";
   const notesLine = topic.notes ? `Уточнение: ${topic.notes}` : "";
   const tagHints = [...topic.models, ...topic.tags, topic.type].filter(Boolean).join(", ");
+
+  // Вариативность структуры — анти-footprint при потоковой генерации.
+  const STRUCTURES = [
+    `- Вступление: 2–3 предложения, сразу суть
+- 4–5 разделов с ## заголовками, каждый раскрывает отдельный аспект
+- Финал "## Итог": **Брать если:** / **Не брать если:**`,
+    `- Зацепка: реальная ситуация покупателя (2–3 предложения)
+- 4–5 разделов ## по логике «проблема → разбор → что делать»
+- Финал "## Коротко": 3–4 пункта-вывода`,
+    `- Вступление с ключевым выводом статьи сразу
+- 4–6 разделов ## : обзор → детали → подводные камни → альтернативы
+- Финал "## Стоит ли": честный вывод «да/нет и почему»`,
+  ];
+  const structure = STRUCTURES[Math.floor(Math.random() * STRUCTURES.length)];
 
   return `Ты ведёшь блог для людей, которые покупают корейские авто из Кореи в СНГ. Пишешь как человек, который сам через это прошёл — знаешь реальные цены, знаешь что скрывают дилеры, знаешь какие машины гниют через три года а какие ходят без проблем.
 
@@ -60,18 +91,25 @@ function buildGeneratePrompt(topic: BlogTopic): string {
 Тип материала: ${typeLabel}
 ${modelsLine}
 ${notesLine}
-
+${grounding}
 Вот пример правильного тона (первый абзац реальной статьи из блога):
 "Kia Sportage четвёртого поколения на корейском рынке стоит от 18 до 26 тысяч долларов в зависимости от года и комплектации. Звучит неплохо, пока не начинаешь считать таможню. С учётом пошлин машина 2021 года с двигателем 2.0 выходит примерно в 2,4 миллиона рублей во Владивостоке — и это без доставки до вашего города."
 
-Пиши так же: конкретно, с цифрами, без восхвалений.
+Пиши так же: конкретно, с цифрами, без восхвалений и «воды».
+
+ФАКТЫ — критично, не выдумывай:
+- Правильно указывай марку модели. Hyundai: Staria, Palisade, Tucson, Santa Fe, Avante (Elantra), Sonata, Grandeur, Kona, Casper, Creta, Starex, Ioniq. Kia: Carnival, Sorento, Sportage, Telluride, Seltos, Stinger, K5, K7, K8, EV6, Mohave, Soul. Genesis — отдельный бренд (G70/G80/G90, GV70/GV80).
+- Если в теме марка модели указана неверно (например «Kia Staria» — на деле это Hyundai) — используй ПРАВИЛЬНУЮ марку, не повторяй ошибку из темы.
+- Не выдумывай несуществующие модели, комплектации, коды двигателей. Если не уверен в конкретной цифре — дай диапазон или напиши «уточняйте у продавца», но не подавай выдуманное точное значение как факт.
+- Доставка из Кореи: морской фрахт до Владивостока — ОТ $600 (самый дешёвый маршрут); дальше стоимость зависит от конечного региона и габаритов. Не завышай доставку. Точную сумму называть не надо — её считает менеджер.
+- Точную растаможку не выдумывай: она зависит от объёма двигателя, возраста и страны ввоза. Дай порядок величины и направь читателя рассчитать точно в калькуляторе растаможки на сайте.
 
 Структура:
-- Вступление: 2–3 предложения, сразу суть
-- Три раздела с ## заголовками
-- Финал "## Итог" с выводом: **Брать если:** / **Не брать если:**
+${structure}
 
-Объём: 500–600 слов. Markdown-форматирование.
+Обязательно: минимум одна таблица в Markdown с конкретными числами (сравнение по поколениям / комплектациям / ценам / платежам — что уместно теме).
+
+Объём: 900–1200 слов. Markdown-форматирование. Каждый раздел — по существу, без повторов ради объёма.
 
 Сгенерируй 5–8 тегов из: ${tagHints}
 Включи корейские названия моделей если применимо (Avante = Elantra, Tucson = ix35 и т.д.)
@@ -86,20 +124,48 @@ ${notesLine}
 }`;
 }
 
-function buildTranslatePrompt(title: string, excerpt: string, content: string): string {
-  return `Переведи этот автомобильный контент на 4 языка: английский, корейский, грузинский, арабский.
-Сохрани Markdown-форматирование в content.
+// Языки перевода. Нужны только ru + en → переводим лишь на английский
+// (одним вызовом на язык, чтобы длинные статьи не переполняли maxOutputTokens).
+// ko/ka/ar не генерируем — их страницы noindex.
+const TRANSLATE_LANGS: { code: string; name: string }[] = [
+  { code: "en", name: "английский" },
+];
+
+// Gemini иногда вставляет сырые control-символы (перевод строки и т.п.) ВНУТРЬ
+// строковых значений JSON — тогда JSON.parse падает («Bad control character» /
+// «Unterminated string»). Пытаемся распарсить как есть; при ошибке экранируем
+// control-символы только внутри строк (структурные пробелы/переводы строк не трогаем).
+function safeJsonParse<T = unknown>(text: string): T {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    let out = "";
+    let inStr = false;
+    let esc = false;
+    for (const ch of text) {
+      if (esc) { out += ch; esc = false; continue; }
+      if (ch === "\\") { out += ch; esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; out += ch; continue; }
+      if (inStr && ch.charCodeAt(0) <= 0x1f) {
+        out += ch === "\n" ? "\\n" : ch === "\r" ? "\\r" : ch === "\t" ? "\\t" : "";
+        continue;
+      }
+      out += ch;
+    }
+    return JSON.parse(out) as T;
+  }
+}
+
+function buildTranslatePrompt(langName: string, title: string, excerpt: string, content: string): string {
+  return `Переведи этот автомобильный контент на ${langName} язык.
+Сохрани Markdown-форматирование (включая таблицы) в поле content.
 
 Заголовок: ${title}
 Краткое описание: ${excerpt}
 Текст: ${content}
 
 Верни ТОЛЬКО валидный JSON без markdown-обёртки:
-{
-  "title_en": "...", "title_ko": "...", "title_ka": "...", "title_ar": "...",
-  "excerpt_en": "...", "excerpt_ko": "...", "excerpt_ka": "...", "excerpt_ar": "...",
-  "content_en": "...", "content_ko": "...", "content_ka": "...", "content_ar": "..."
-}`;
+{ "title": "...", "excerpt": "...", "content": "..." }`;
 }
 
 function escapeHtml(str: string) {
@@ -193,13 +259,23 @@ async function handleGenerate(req: NextRequest) {
     throw lastError;
   }
 
+  // Грунтинг реальными ценами с encar по моделям темы (не блокирует генерацию:
+  // если моделей нет или encar недоступен — grounding пустой).
+  const krwPerUsd = await fetchKrwPerUsd();
+  const grounding = await buildEncarGrounding(topic.models, krwPerUsd);
+
   // Запрос 1: генерация на русском
   let ruData: { title_ru: string; excerpt_ru: string; content_ru: string; tags?: string[]; image_query?: string };
   try {
     ruData = await withRetry(async () => {
-      const result = await model.generateContent(buildGeneratePrompt(topic));
-      const parsed = JSON.parse(result.response.text());
+      const result = await model.generateContent(buildGeneratePrompt(topic, grounding));
+      const parsed = safeJsonParse(result.response.text()) as { title_ru: string; excerpt_ru: string; content_ru: string; tags?: string[]; image_query?: string };
       if (!parsed.title_ru || !parsed.content_ru) throw new Error("Missing RU fields");
+      // Квалити-гейт: не пускаем тонкий контент (цель 900–1200 слов, порог 700).
+      const wordCount = (parsed.content_ru.match(/\S+/g) || []).length;
+      if (wordCount < 700) throw new Error(`Too short: ${wordCount} words (min 700)`);
+      // Требуем хотя бы одну Markdown-таблицу.
+      if (!/\|.*\|/.test(parsed.content_ru)) throw new Error("No markdown table in content");
       return parsed;
     }, "Gemini generate");
   } catch (err) {
@@ -208,20 +284,27 @@ async function handleGenerate(req: NextRequest) {
     return NextResponse.json({ error: "Failed to generate article after retries", details: String(err) }, { status: 500 });
   }
 
-  // Запрос 2: перевод на 4 языка
-  let translData: Record<string, string>;
-  try {
-    translData = await withRetry(async () => {
-      const result = await model.generateContent(
-        buildTranslatePrompt(ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
-      );
-      return JSON.parse(result.response.text());
-    }, "Gemini translate");
-  } catch (err) {
-    console.error("Gemini translate failed after 3 attempts:", err);
-    // Статья есть на русском — сохраняем без переводов, не теряем контент
-    console.warn("Saving article without translations");
-    translData = {};
+  // Запрос 2: перевод — по одному языку за вызов (иначе на длинных статьях
+  // JSON обрывается по maxOutputTokens). Сбой одного языка не рушит остальные;
+  // русский всегда сохраняется.
+  const translData: Record<string, string> = {};
+  for (const { code, name } of TRANSLATE_LANGS) {
+    try {
+      const parsed = await withRetry(async () => {
+        const result = await model.generateContent(
+          buildTranslatePrompt(name, ruData.title_ru, ruData.excerpt_ru, ruData.content_ru)
+        );
+        const p = safeJsonParse(result.response.text()) as { title?: string; excerpt?: string; content?: string };
+        if (!p.title || !p.content) throw new Error("Missing translated fields");
+        return p;
+      }, `Gemini translate ${code}`);
+      translData[`title_${code}`] = parsed.title ?? "";
+      translData[`excerpt_${code}`] = parsed.excerpt ?? "";
+      translData[`content_${code}`] = parsed.content ?? "";
+    } catch (err) {
+      console.error(`Gemini translate ${code} failed after retries:`, err);
+      // Пропускаем только этот язык — не теряем остальные и русский оригинал
+    }
   }
 
   // Теги: берём из ответа Gemini, fallback на теги из темы

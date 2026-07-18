@@ -34,9 +34,10 @@ export async function GET(
       published_at: data.published_at,
       cover_url: data.cover_url,
       tags: data.tags,
-      title: data[`title_${lang}`] || data.title_ru || "",
-      excerpt: data[`excerpt_${lang}`] || data.excerpt_ru || "",
-      content: data[`content_${lang}`] || data.content_ru || "",
+      // Фолбэк: запрошенный язык → английский → русский (ka/ar без контента → en).
+      title: data[`title_${lang}`] || data.title_en || data.title_ru || "",
+      excerpt: data[`excerpt_${lang}`] || data.excerpt_en || data.excerpt_ru || "",
+      content: data[`content_${lang}`] || data.content_en || data.content_ru || "",
     };
 
     return NextResponse.json(post);

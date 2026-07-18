@@ -56,8 +56,9 @@ export async function GET(req: NextRequest) {
       published_at: row.published_at,
       cover_url: row.cover_url,
       tags: row.tags,
-      title: row[`title_${lang}`] || row.title_ru || "",
-      excerpt: row[`excerpt_${lang}`] || row.excerpt_ru || "",
+      // Фолбэк: запрошенный язык → английский → русский (ka/ar без контента → en).
+      title: row[`title_${lang}`] || row.title_en || row.title_ru || "",
+      excerpt: row[`excerpt_${lang}`] || row.excerpt_en || row.excerpt_ru || "",
     }));
 
     const total = count ?? 0;
