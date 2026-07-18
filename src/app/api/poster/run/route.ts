@@ -22,11 +22,13 @@ export async function POST(req: NextRequest) {
 
   const url = new URL(req.url);
   const dryRun = url.searchParams.get("dry") === "1";
+  // force=1 — ручной пост в обход окна/лимита (админский «пост сейчас»); дедуп сохраняется
+  const force = url.searchParams.get("force") === "1";
   const presetParam = url.searchParams.get("preset");
   const presetIndex = presetParam !== null ? Number(presetParam) : undefined;
 
-  // Окно и дневной лимит (кроме dry-run)
-  if (!dryRun) {
+  // Окно и дневной лимит (кроме dry-run и ручного force)
+  if (!dryRun && !force) {
     if (!withinPostingWindow()) {
       return NextResponse.json({ posted: false, reason: "вне окна публикации (9–21 KST)" });
     }
