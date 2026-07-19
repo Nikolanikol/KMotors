@@ -1,6 +1,6 @@
 // Оркестрация одного тика постера: выбрать пресет → найти → отфильтровать → запостить.
 import { getCurrencyRates } from '@/utils/getCurrencyRates';
-import { PRESETS, POST_CONFIG, CHANNEL_ID } from './config';
+import { PRESETS, POST_CONFIG, CHANNEL_ID, rotationSequence } from './config';
 import { searchListings, fetchDetail, type Listing } from './encar';
 import { prefilter, deepGate } from './quality';
 import { buildCaption, usdLabel } from './caption';
@@ -24,8 +24,11 @@ export interface RunOptions {
 }
 
 export async function runOnce(opts: RunOptions = {}): Promise<RunResult> {
-  const idx =
-    opts.presetIndex ?? (await totalCount()) % PRESETS.length;
+  let idx = opts.presetIndex;
+  if (idx === undefined) {
+    const seq = rotationSequence();
+    idx = seq[(await totalCount()) % seq.length];
+  }
   const preset = PRESETS[idx];
   const rejected: { id: string; reason: string }[] = [];
 

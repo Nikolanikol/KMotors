@@ -36,10 +36,10 @@ export interface Listing {
 function buildQuery(p: Preset): string {
   const ranges: string[] = [];
   if (p.yearFrom) ranges.push(`Year.range(${p.yearFrom}00..).`);
-  if (p.priceMaxMan) ranges.push(`Price.range(..${p.priceMaxMan}).`);
   if (p.mileageMax) ranges.push(`Mileage.range(..${p.mileageMax}).`);
   const rangePart = ranges.join('_.');
-  const carPart = `(C.CarType.Y._.(C.Manufacturer.${p.manufacturerKo}._.ModelGroup.${p.modelGroupKo}.))`;
+  const carType = p.imported ? 'N' : 'Y'; // N = импорт (수입), Y = отечественная (국산)
+  const carPart = `(C.CarType.${carType}._.(C.Manufacturer.${p.manufacturerKo}._.ModelGroup.${p.modelGroupKo}.))`;
   return rangePart
     ? `(And.Hidden.N._.${rangePart}_.${carPart})`
     : `(And.Hidden.N._.${carPart})`;

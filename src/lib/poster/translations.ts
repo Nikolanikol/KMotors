@@ -162,6 +162,9 @@ const GRADE_TOKEN_MAP: Record<string, string> = {
   '5도어': '5-Door', '3도어': '3-Door',
   '롱': 'Long', '숏': 'Short', '컴팩트': 'Compact',
   '세이프티': 'Safety', '테크': 'Tech',
+  // EV-грейды
+  '롱레인지': 'Long Range', '스탠다드레인지': 'Standard Range',
+  '2WD': '2WD', '4WD': '4WD', 'AWD': 'AWD',
 };
 
 function escapeRegex(s: string): string {

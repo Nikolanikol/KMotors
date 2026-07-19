@@ -9,21 +9,64 @@ export const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID || '-1003889045726';
 // Марка/модель — корейскими названиями (как требует поиск Encar).
 export interface Preset {
   label: string;
-  manufacturerKo: string; // 현대, 기아, ...
-  modelGroupKo: string;   // 아반떼, K5, ...
+  manufacturerKo: string; // 현대, 기아, 벤츠, BMW, 아우디, 제네시스 ...
+  modelGroupKo: string;   // 아반떼, K5, E-클래스 ...
+  imported?: boolean;     // true → импорт (CarType.N); иначе отечественная (CarType.Y)
+  weight?: number;        // частота в ротации (1 = обычная, 2 = чаще); по умолчанию 1
   yearFrom?: number;      // YYYY (форм-год)
-  priceMaxMan?: number;   // 만원
-  mileageMax?: number;    // км
+  mileageMax?: number;    // км (потолка цены нет — постим любой ценник)
 }
 
-// Ротация: пресет выбирается по (число уже запощенных) % длины массива.
+// Ротация: взвешенная (см. rotationSequence). weight>1 = модель выходит чаще.
 export const PRESETS: Preset[] = [
-  { label: 'Hyundai Avante', manufacturerKo: '현대', modelGroupKo: '아반떼', yearFrom: 2018, priceMaxMan: 2000, mileageMax: 100000 },
-  { label: 'Kia K5',         manufacturerKo: '기아', modelGroupKo: 'K5',    yearFrom: 2019, priceMaxMan: 2500, mileageMax: 100000 },
-  { label: 'Hyundai Sonata', manufacturerKo: '현대', modelGroupKo: '쏘나타', yearFrom: 2019, priceMaxMan: 2500, mileageMax: 100000 },
-  { label: 'Hyundai Tucson', manufacturerKo: '현대', modelGroupKo: '투싼',  yearFrom: 2019, priceMaxMan: 3000, mileageMax: 100000 },
-  { label: 'Kia Sorento',    manufacturerKo: '기아', modelGroupKo: '쏘렌토', yearFrom: 2020, priceMaxMan: 4000, mileageMax: 100000 },
+  // ─── Корейские массовые (国産) ───
+  { label: 'Hyundai Avante',   manufacturerKo: '현대', modelGroupKo: '아반떼',   yearFrom: 2018, mileageMax: 130000 },
+  { label: 'Kia K5',           manufacturerKo: '기아', modelGroupKo: 'K5',       yearFrom: 2019, mileageMax: 130000 },
+  { label: 'Hyundai Sonata',   manufacturerKo: '현대', modelGroupKo: '쏘나타',   yearFrom: 2019, mileageMax: 130000 },
+  { label: 'Hyundai Grandeur', manufacturerKo: '현대', modelGroupKo: '그랜저',   yearFrom: 2018, mileageMax: 130000 },
+  { label: 'Kia K3',           manufacturerKo: '기아', modelGroupKo: 'K3',       yearFrom: 2019, mileageMax: 130000 },
+  { label: 'Kia K8',           manufacturerKo: '기아', modelGroupKo: 'K8',       yearFrom: 2021, mileageMax: 120000 },
+  { label: 'Kia Stinger',      manufacturerKo: '기아', modelGroupKo: '스팅어',   yearFrom: 2018, mileageMax: 130000 },
+  { label: 'Hyundai Tucson',   manufacturerKo: '현대', modelGroupKo: '투싼',     yearFrom: 2019, mileageMax: 130000 },
+  { label: 'Hyundai Santa Fe', manufacturerKo: '현대', modelGroupKo: '싼타페',   yearFrom: 2019, mileageMax: 140000 },
+  { label: 'Kia Sorento',      manufacturerKo: '기아', modelGroupKo: '쏘렌토',   yearFrom: 2020, mileageMax: 130000 },
+  { label: 'Kia Sportage',     manufacturerKo: '기아', modelGroupKo: '스포티지', yearFrom: 2019, mileageMax: 130000 },
+  { label: 'Kia Seltos',       manufacturerKo: '기아', modelGroupKo: '셀토스',   yearFrom: 2020, mileageMax: 120000 },
+  { label: 'Hyundai Palisade', manufacturerKo: '현대', modelGroupKo: '팰리세이드', yearFrom: 2019, mileageMax: 150000, weight: 2 },
+  { label: 'Kia Carnival',     manufacturerKo: '기아', modelGroupKo: '카니발',   yearFrom: 2019, mileageMax: 150000, weight: 2 },
+  // ─── Электро ───
+  { label: 'Hyundai Ioniq 5',  manufacturerKo: '현대', modelGroupKo: '아이오닉5', yearFrom: 2021, mileageMax: 100000 },
+  { label: 'Kia EV6',          manufacturerKo: '기아', modelGroupKo: 'EV6',      yearFrom: 2021, mileageMax: 100000 },
+  // ─── Genesis (премиум-корейцы) ───
+  { label: 'Genesis G80',      manufacturerKo: '제네시스', modelGroupKo: 'G80',  yearFrom: 2017, mileageMax: 140000, weight: 2 },
+  { label: 'Genesis GV80',     manufacturerKo: '제네시스', modelGroupKo: 'GV80', yearFrom: 2020, mileageMax: 120000, weight: 2 },
+  { label: 'Genesis G70',      manufacturerKo: '제네시스', modelGroupKo: 'G70',  yearFrom: 2017, mileageMax: 140000, weight: 2 },
+  // ─── Немецкий премиум (импорт) ───
+  { label: 'Mercedes E-Class', manufacturerKo: '벤츠', modelGroupKo: 'E-클래스',   imported: true, yearFrom: 2016, mileageMax: 150000 },
+  { label: 'Mercedes C-Class', manufacturerKo: '벤츠', modelGroupKo: 'C-클래스',   imported: true, yearFrom: 2016, mileageMax: 150000 },
+  { label: 'Mercedes GLC',     manufacturerKo: '벤츠', modelGroupKo: 'GLC-클래스', imported: true, yearFrom: 2017, mileageMax: 150000 },
+  { label: 'BMW 5 Series',     manufacturerKo: 'BMW',  modelGroupKo: '5시리즈',    imported: true, yearFrom: 2016, mileageMax: 150000 },
+  { label: 'BMW 3 Series',     manufacturerKo: 'BMW',  modelGroupKo: '3시리즈',    imported: true, yearFrom: 2017, mileageMax: 150000 },
+  { label: 'BMW X5',           manufacturerKo: 'BMW',  modelGroupKo: 'X5',         imported: true, yearFrom: 2016, mileageMax: 150000 },
+  { label: 'BMW X3',           manufacturerKo: 'BMW',  modelGroupKo: 'X3',         imported: true, yearFrom: 2017, mileageMax: 150000 },
+  { label: 'Audi A6',          manufacturerKo: '아우디', modelGroupKo: 'A6',       imported: true, yearFrom: 2016, mileageMax: 150000 },
 ];
+
+/**
+ * Взвешенная последовательность индексов пресетов для ротации.
+ * Раунд 0 — все модели по разу; раунд r — только те, у кого weight>r.
+ * Так модели с weight=2 (Palisade, Carnival, Genesis) выходят вдвое чаще.
+ */
+export function rotationSequence(): number[] {
+  const maxW = Math.max(1, ...PRESETS.map((p) => p.weight ?? 1));
+  const seq: number[] = [];
+  for (let r = 0; r < maxW; r++) {
+    PRESETS.forEach((p, i) => {
+      if ((p.weight ?? 1) > r) seq.push(i);
+    });
+  }
+  return seq;
+}
 
 // ─── Правила публикации ──────────────────────────────────────────────────────
 export const POST_CONFIG = {
