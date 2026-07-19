@@ -6,6 +6,16 @@
 // Авто постим в тему «Автомобили» форум-супергруппы «Авто из Кореи | Mobis | OEM».
 export const GROUP_ID = process.env.TELEGRAM_GROUP_ID || '-1003659575794';
 export const CARS_TOPIC_ID = Number(process.env.TELEGRAM_CARS_TOPIC_ID || '150');
+// Запчасти постим в тему «Запчасти» той же группы.
+export const PARTS_TOPIC_ID = Number(process.env.TELEGRAM_PARTS_TOPIC_ID || '151');
+
+// ─── Правила постинга запчастей ──────────────────────────────────────────────
+export const PARTS_CONFIG = {
+  maxPostsPerDay: 8,      // дневной лимит постов запчастей
+  batchScan: 60,          // сколько товаров тянем за раз для выбора
+  requirePhoto: false,    // ТЕСТ: любые запчасти. Позже true — только с фото.
+  contactUsername: 'caparts',
+};
 // Старый канал — больше не используется для автопостинга (оставлен для совместимости).
 export const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID || '-1003889045726';
 
