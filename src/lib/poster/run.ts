@@ -1,6 +1,6 @@
 // Оркестрация одного тика постера: выбрать пресет → найти → отфильтровать → запостить.
 import { getCurrencyRates } from '@/utils/getCurrencyRates';
-import { PRESETS, POST_CONFIG, CHANNEL_ID, rotationSequence } from './config';
+import { PRESETS, POST_CONFIG, GROUP_ID, CARS_TOPIC_ID, rotationSequence } from './config';
 import { searchListings, fetchDetail, type Listing } from './encar';
 import { prefilter, deepGate } from './quality';
 import { buildCaption, usdLabel } from './caption';
@@ -92,7 +92,7 @@ async function sendMediaGroup(photos: string[], caption: string): Promise<void> 
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMediaGroup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: CHANNEL_ID, media }),
+    body: JSON.stringify({ chat_id: GROUP_ID, message_thread_id: CARS_TOPIC_ID, media }),
   });
   const data = await res.json();
   if (!data.ok) throw new Error(`Telegram sendMediaGroup: ${data.description ?? res.status}`);
