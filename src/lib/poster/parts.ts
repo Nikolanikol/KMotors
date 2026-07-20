@@ -38,8 +38,8 @@ function partName(p: Part): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function baseQuery(sb: any, select: string, opts?: any) {
   let q = sb.from('parts_products').select(select, opts);
-  if (PARTS_CONFIG.requirePhoto) {
-    q = q.or('image_storage_url.not.is.null,image_url.not.is.null');
+  if (PARTS_CONFIG.onlyPosterOk) {
+    q = q.eq('poster_ok', true); // курированные к посту (с фото), помечены на бэке
   }
   return q;
 }

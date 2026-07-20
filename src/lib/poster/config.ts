@@ -13,7 +13,7 @@ export const PARTS_TOPIC_ID = Number(process.env.TELEGRAM_PARTS_TOPIC_ID || '151
 export const PARTS_CONFIG = {
   maxPostsPerDay: 8,      // дневной лимит постов запчастей
   batchScan: 60,          // сколько товаров тянем за раз для выбора
-  requirePhoto: false,    // ТЕСТ: любые запчасти. Позже true — только с фото.
+  onlyPosterOk: true,     // постить только помеченные poster_ok=true (с фото, курировано)
   contactUsername: 'caparts',
 };
 // Старый канал — больше не используется для автопостинга (оставлен для совместимости).
