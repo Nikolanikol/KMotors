@@ -41,6 +41,9 @@ function baseQuery(sb: any, select: string, opts?: any) {
   if (PARTS_CONFIG.onlyPosterOk) {
     q = q.eq('poster_ok', true); // курированные к посту (с фото), помечены на бэке
   }
+  if (PARTS_CONFIG.minPriceKrw) {
+    q = q.gte('price_krw', PARTS_CONFIG.minPriceKrw); // отсекаем «копейки»
+  }
   return q;
 }
 
