@@ -49,7 +49,12 @@ export default async function RootLayout({
   return (
     <html lang={lang} dir="ltr" className={inter.className}>
       <head>
-        <meta name="robots" content="index, follow" />
+        {/* robots задаёт ТОЛЬКО Next Metadata API на уровне страниц — единый
+            источник правды. Раньше здесь был жёстко зашит
+            <meta name="robots" content="index, follow">, который печатался на
+            КАЖДОЙ странице и делал индексируемыми даже проданные карточки и
+            другие noindex-страницы (конфликт из 2–3 robots-тегов). Отсутствие
+            тега = индексируемо по умолчанию, поэтому живые страницы не страдают. */}
 
         {/* Preconnect — только для ресурсов загружаемых в браузере (не SSR) */}
         <link rel="preconnect" href="https://ci.encar.com" />

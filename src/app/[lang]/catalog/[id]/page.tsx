@@ -75,12 +75,17 @@ export async function generateMetadata({
     ? await fetchDataFast(id)
     : await fetchData(id).catch(() => null);
 
-  // If API is slow → return fast generic metadata, WhatsApp gets it instantly
+  // Нет данных = машина продана/удалена (Encar 404) → это не индексируемая
+  // страница. Соц-краулеры (WhatsApp) получают generic-превью по таймауту — им
+  // robots не важен. Googlebot же ДОЛЖЕН получить noindex, иначе сотни таких
+  // страниц с одинаковым title «Авто из Кореи» склеиваются в GSC как
+  // «Дубликат, канонический не выбран» (см. page также вызывает notFound()).
   if (!data)
     return {
       title: `Авто из Кореи`,
       description:
         "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
+      robots: { index: false, follow: true },
       openGraph: {
         title: "Авто из Кореи",
         description: "Купить автомобиль из Южной Кореи.",
