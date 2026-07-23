@@ -127,6 +127,13 @@ export default async function RootLayout({
               `}
             </Script>
 
+            {/* Metricool — lazyOnload (аналитика соцсетей, не критично) */}
+            <Script id="metricool-init" strategy="lazyOnload">
+              {`
+                function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"6c43e81d00fb6aa48054d35893179184"})});
+              `}
+            </Script>
+
             {/* Clarity — lazyOnload (не критично, грузим в idle) */}
             <Script id="clarity-init" strategy="lazyOnload">
               {`
