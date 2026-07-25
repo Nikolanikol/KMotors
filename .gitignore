@@ -45,15 +45,15 @@ next-env.d.ts
 # Claude Code worktrees (служебные папки, не коммитить)
 .claude/worktrees/
 
-# Секретные ключи Google
-*.json
-!package.json
-!package-lock.json
-!tsconfig*.json
-!next.config*.json
+# Секретные ключи Google (OAuth client secret / service account) — обычно в корне репозитория
+client_secret*.json
+*.apps.googleusercontent.com.json
+kaxis-analytics-*.json
+kaxix-firebase-*.json
 
 # Parts-image pipeline runtime artifacts
 scripts/.*.log
 scripts/lib/__pycache__/
 _debrand_preview/
 _holefix_preview/
+.serena
