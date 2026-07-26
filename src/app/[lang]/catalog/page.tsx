@@ -151,9 +151,11 @@ export default async function CatalogPage({ params, searchParams }: Props) {
   let itemListSchema = null;
   try {
     const query = getString(sp);
-    // Тот же размер страницы, что и в CarsRow, чтобы схема совпадала с видимым списком
+    // Тот же размер страницы и тот же offset, что и в CarsRow: схема обязана совпадать
+    // с видимым списком, а идентичный запрос дедуплицируется кешем Next (один поход в Encar).
     const pageSize = catalogPageSize((await headers()).get("user-agent"));
-    const { data } = await getCars(query, sp.page, pageSize);
+    const offset = String((Math.max(1, Number(sp.page || "1")) - 1) * pageSize);
+    const { data } = await getCars(query, offset, pageSize);
     if (data && data.length > 0) {
       itemListSchema = {
         "@context": "https://schema.org",
@@ -218,7 +220,7 @@ export default async function CatalogPage({ params, searchParams }: Props) {
                   </div>
                 }
               >
-                <CarsRow searchParams={searchParams} />
+                <CarsRow searchParams={searchParams} lang={lang} />
               </Suspense>
             </div>
           </div>
