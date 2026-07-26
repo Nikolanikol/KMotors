@@ -15,7 +15,8 @@ import { encarLoader } from "@/utils/encarLoader";
 
 interface CarCardProps {
   id: string;
-  photo: string;
+  /** Encar иногда отдаёт запись без фото — карточка должна пережить это. */
+  photo?: string;
   model: string;
   manufacture: string;
   year: string;
@@ -103,17 +104,23 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
       {/* Image — кликабельна */}
       <Link href={`/${lang}/catalog/${id}`} target="_blank" aria-label={carName} onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_card_click"); }}>
       <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: "var(--axis-graphite)" }}>
-        <Image
-          loader={encarLoader}
-          fill
-          src={`https://ci.encar.com${photo}`}
-          alt={`${manufacture} ${model} ${year} — ${BUY_FROM_KOREA[lang] ?? BUY_FROM_KOREA.ru}`}
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          style={{ transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
-          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 400px"
-          priority={priority}
-          fetchPriority={priority ? "high" : "auto"}
-        />
+        {photo ? (
+          <Image
+            loader={encarLoader}
+            fill
+            src={`https://ci.encar.com${photo}`}
+            alt={`${manufacture} ${model} ${year} — ${BUY_FROM_KOREA[lang] ?? BUY_FROM_KOREA.ru}`}
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            style={{ transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 400px"
+            priority={priority}
+            fetchPriority={priority ? "high" : "auto"}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-xs" style={{ color: "var(--axis-gray-dim)" }}>
+            {`${manufacture} ${model}`.trim() || "—"}
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#141414]/70 to-transparent" />
         {/* Year badge */}
         <div
