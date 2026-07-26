@@ -109,7 +109,7 @@ export default function NotFound() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <CardLink href={`/${lang}/`} icon={Home} title={t.home} desc={t.homeDesc} />
+          <CardLink href={`/${lang}`} icon={Home} title={t.home} desc={t.homeDesc} />
           <CardLink href={`/${lang}/catalog`} icon={Search} title={t.catalog} desc={t.catalogDesc} />
         </div>
 

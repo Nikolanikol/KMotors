@@ -6,7 +6,7 @@ import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import RecommendedCars from "@/components/Catalog/CarDetail/Recommended/RecommendedCars";
 import { FC } from "react";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
@@ -103,35 +103,54 @@ export async function generateMetadata({
     .filter(Boolean)
     .join(" ");
 
-  const year = formatDate(data?.category?.yearMonth);
+  const year = formatYear(data?.category?.yearMonth);
   const mileage = data?.spec.mileage?.toLocaleString("ru-RU") || "—";
   const krwPrice = data?.advertisement?.price
     ? data.advertisement.price * 10000
     : null;
 
-  // Приблизительная цена в рублях для RU описания
-  const rubPrice = krwPrice
-    ? Math.round(krwPrice * 0.065).toLocaleString("ru-RU")
-    : null;
+  // Цена в сниппете обязана совпадать с той, что человек увидит на странице,
+  // иначе клик заканчивается разочарованием. Повторяем логику CarDetailSidebar:
+  // ru → ₽, остальные → $, курс живой (раньше здесь был зашит 0.065 — он
+  // завышал рублёвую цену примерно на 12% относительно фактического курса).
+  // Соц-краулерам курс не ждём: у них жёсткий таймаут на превью.
+  const rates = isSocialBot ? null : await getCurrencyRates();
+  const priceLabel = (() => {
+    if (!krwPrice || !rates) return null;
+    if (lang === "ru" && rates.krwToRub)
+      return `${Math.round(krwPrice * rates.krwToRub).toLocaleString("ru-RU")} ₽`;
+    if (rates.krwToUsd)
+      return `$${Math.round(krwPrice * rates.krwToUsd).toLocaleString("en-US")}`;
+    return null;
+  })();
 
-  // Обрезаем carName если слишком длинный (лимит title ~60 символов)
+  // Обрезаем carName если слишком длинный (лимит title ~60 символов;
+  // запас урезан, т.к. в заголовок теперь идёт ещё и цена)
   const shortCarName =
-    carName.length > 40 ? carName.slice(0, 38) + "…" : carName;
+    carName.length > 34 ? carName.slice(0, 32) + "…" : carName;
 
+  // Порядок: модель → год → «из Кореи» → цена. Первые два блока отвечают
+  // запросу, гео-хвост — ключевая фраза, цена закрывает интент «сколько стоит»
+  // (для ka это буквально топовый запрос: «ფასი» = «цена»).
   const TITLE: Record<string, string> = {
-    ru: `${shortCarName} ${year} из Кореи`,
-    en: `${shortCarName} ${year} from Korea`,
-    ko: `한국산 ${shortCarName} ${year}`,
-    ka: `${shortCarName} ${year} კორეიდან`,
-    ar: `${shortCarName} ${year} من كوريا`,
+    ru: `${shortCarName} ${year} из Кореи${priceLabel ? ` — цена ${priceLabel}` : ""}`,
+    en: `${shortCarName} ${year} from Korea${priceLabel ? ` — price ${priceLabel}` : ""}`,
+    ko: `한국산 ${shortCarName} ${year}${priceLabel ? ` — ${priceLabel}` : ""}`,
+    // ka — цена ПЕРЕД гео: грузинские глифы шире латиницы, Google режет title
+    // по ширине в пикселях, а гео-слова в целевом запросе («kia ev6 gt line
+    // ფასი») нет — обрезаться должен хвост «კორეიდან», а не цена
+    ka: priceLabel
+      ? `${shortCarName} ${year} — ფასი ${priceLabel}, კორეიდან`
+      : `${shortCarName} ${year} კორეიდან`,
+    ar: `${shortCarName} ${year} من كوريا${priceLabel ? ` — السعر ${priceLabel}` : ""}`,
   };
 
   const DESCRIPTION: Record<string, string> = {
-    ru: `Купить ${carName} ${year} из Кореи${rubPrice ? ` — от ${rubPrice} ₽ под ключ` : ""}. Пробег ${mileage} км. Личный осмотр в Сувоне, доставка 3–6 недель. K-Axis.`,
-    en: `Buy ${carName} ${year} from South Korea. Mileage ${mileage} km. Personal inspection in Suwon, delivery in 3–6 weeks. K-Axis.`,
-    ko: `${carName} ${year} 한국에서 구매. 주행거리 ${mileage} km. 수원 현지 직접 검사, 3–6주 배송. K-Axis.`,
-    ka: `${carName} ${year} კორეიდან შეძენა. გარბენი ${mileage} კმ. პირადი დათვალიერება სუვონში, მიტანა 3–6 კვირა. K-Axis.`,
-    ar: `شراء ${carName} ${year} من كوريا الجنوبية. المسافة ${mileage} كم. فحص شخصي في سوون، التوصيل 3–6 أسابيع. K-Axis.`,
+    ru: `Купить ${carName} ${year} из Кореи${priceLabel ? ` — ${priceLabel} с доставкой` : ""}. Пробег ${mileage} км. Личный осмотр в Сувоне, доставка 3–6 недель. K-Axis.`,
+    en: `Buy ${carName} ${year} from South Korea${priceLabel ? ` — ${priceLabel} delivered` : ""}. Mileage ${mileage} km. Personal inspection in Suwon, delivery in 3–6 weeks. K-Axis.`,
+    ko: `${carName} ${year} 한국에서 구매${priceLabel ? ` — ${priceLabel}` : ""}. 주행거리 ${mileage} km. 수원 현지 직접 검사, 3–6주 배송. K-Axis.`,
+    ka: `${carName} ${year} კორეიდან შეძენა${priceLabel ? ` — ფასი ${priceLabel}` : ""}. გარბენი ${mileage} კმ. პირადი დათვალიერება სუვონში, მიტანა 3–6 კვირა. K-Axis.`,
+    ar: `شراء ${carName} ${year} من كوريا الجنوبية${priceLabel ? ` — ${priceLabel}` : ""}. المسافة ${mileage} كم. فحص شخصي في سوون، التوصيل 3–6 أسابيع. K-Axis.`,
   };
 
   const title = TITLE[lang] ?? TITLE.ru;
@@ -153,7 +172,9 @@ export async function generateMetadata({
     : undefined;
 
   return {
-    title,
+    // absolute — гасим глобальный шаблон «%s | K-Axis»: суффикс съедает ~9
+    // символов из лимита, а узнаваемости бренда пока не добавляет
+    title: { absolute: title },
     description,
     openGraph: {
       title,
@@ -203,6 +224,19 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     ka: "კატალოგი",
     ar: "الكتالوج",
   };
+
+  // H1 обязан перекликаться с title: Google берёт H1 как основной источник для
+  // переписывания заголовка в выдаче. Раньше H1 был чисто английским на всех
+  // языках — title обещал «კორეიდან», а заголовок страницы это не подтверждал.
+  const FROM_KOREA_LABEL: Record<string, string> = {
+    ru: "из Кореи",
+    en: "from Korea",
+    ko: "한국산",
+    ka: "კორეიდან",
+    ar: "من كوريا",
+  };
+  const fromKorea = FROM_KOREA_LABEL[lang] ?? FROM_KOREA_LABEL.ru;
+  const carYear = formatYear(data?.category?.yearMonth);
 
   const BUY_PRICE_LABEL: Record<string, string> = {
     ru: "Цена покупки",
@@ -298,6 +332,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     offers: {
       "@type": "Offer",
       url: `https://www.kmotors.shop/${lang}/catalog/${data?.vehicleId}`,
+      // KRW намеренно: главная цена в карточке (CarDetailSidebar) — воны,
+      // конвертация в ₽/$ идёт ниже как справочная. Валюта в разметке обязана
+      // совпадать с видимой ценой, иначе Google бракует Offer.
       priceCurrency: "KRW",
       price: data?.advertisement?.price * 10000,
       availability: "https://schema.org/InStock",
@@ -426,10 +463,13 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 <span style={{ color: "var(--axis-orange)" }}>
                   {data.category.modelGroupEnglishName}
                 </span>{" "}
-                {data.category.gradeEnglishName}
+                {/* Порядок комплектации — как в carName/title, чтобы H1 и
+                    заголовок в выдаче совпадали слово в слово */}
                 {data.category.gradeDetailEnglishName
-                  ? ` ${data.category.gradeDetailEnglishName}`
+                  ? `${data.category.gradeDetailEnglishName} `
                   : ""}
+                {data.category.gradeEnglishName}
+                {carYear ? ` ${carYear}` : ""} {fromKorea}
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <span

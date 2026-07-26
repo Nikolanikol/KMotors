@@ -22,7 +22,8 @@ const PAGES: PageConfig[] = [
 ];
 
 function buildUrl(lang: string, path: string) {
-  return path ? `${BASE}/${lang}/${path}` : `${BASE}/${lang}/`;
+  // Без хвостового слэша: trailingSlash=false, /ru/ отдаёт 308 → /ru
+  return path ? `${BASE}/${lang}/${path}` : `${BASE}/${lang}`;
 }
 
 function alternates(path: string) {

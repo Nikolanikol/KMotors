@@ -76,7 +76,7 @@ export default function Header() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href={`/${lang}/`} className="flex items-center gap-2.5 group">
+          <Link href={`/${lang}`} className="flex items-center gap-2.5 group">
             <KAxisLogo />
             <span className="font-heading text-xl tracking-tight" style={{ color: "var(--axis-white)" }}>
               K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
@@ -190,7 +190,7 @@ export default function Header() {
       >
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between">
-            <Link href={`/${lang}/`} className="flex items-center gap-2.5" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link href={`/${lang}`} className="flex items-center gap-2.5" onClick={() => setIsMobileMenuOpen(false)}>
               <KAxisLogo />
               <span className="font-heading text-xl" style={{ color: "var(--axis-white)" }}>
                 K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
