@@ -5,17 +5,20 @@ import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import RecommendedCars from "@/components/Catalog/CarDetail/Recommended/RecommendedCars";
-import { FC } from "react";
+import { FC, Suspense } from "react";
+import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSection";
 import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { makeAlternates } from "@/lib/seo";
-import { fetchVehicleData as fetchData } from "@/lib/vehicle";
+import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
+import { fetchVehicleRecord } from "@/lib/vehicleRecord";
+import { buildSpecBits, loadCarsDict, normalizeBrand } from "@/lib/carLabels";
 
 // Lazy load — не нужны сразу при загрузке
-const DetailInfo = dynamic(
-  () => import("@/components/Catalog/CarDetail/DetailInfo"),
+const DetailInfoSection = dynamic(
+  () => import("@/components/Catalog/CarDetail/DetailInfoSection"),
 );
 const OptionsRow = dynamic(
   () => import("@/components/Catalog/CarDetail/OptionsRow/OptionsRow"),
@@ -71,21 +74,37 @@ export async function generateMetadata({
   // Соц-краулер — быстрый фетч с жёстким таймаутом; все остальные (включая
   // Googlebot) ждут полные данные. fetchData кэшируется, поэтому страница
   // ниже переиспользует тот же ответ без второго запроса.
-  const data = isSocialBot
-    ? await fetchDataFast(id)
-    : await fetchData(id).catch(() => null);
+  //
+  // «Продана» и «апстрим лёг» — РАЗНЫЕ случаи, и раньше они схлопывались в один
+  // catch(() => null): во время аварии Encar каждая живая карточка отдавалась с
+  // HTTP 200 и noindex, то есть мы сами просили Google выкинуть их из индекса.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any = null;
+  let upstreamDown = false;
+  if (isSocialBot) {
+    data = await fetchDataFast(id);
+  } else {
+    try {
+      data = await fetchData(id);
+    } catch (e) {
+      upstreamDown = e instanceof VehicleUpstreamError;
+      data = null;
+    }
+  }
 
   // Нет данных = машина продана/удалена (Encar 404) → это не индексируемая
   // страница. Соц-краулеры (WhatsApp) получают generic-превью по таймауту — им
   // robots не важен. Googlebot же ДОЛЖЕН получить noindex, иначе сотни таких
   // страниц с одинаковым title «Авто из Кореи» склеиваются в GSC как
   // «Дубликат, канонический не выбран» (см. page также вызывает notFound()).
+  // Исключение — авария апстрима: robots не выставляем вообще. Страница живая,
+  // данные вернутся, а noindex за время аварии стоит переобхода и позиций.
   if (!data)
     return {
       title: `Авто из Кореи`,
       description:
         "Купить автомобиль из Южной Кореи. Доставка 3–6 недель. K-Axis.",
-      robots: { index: false, follow: true },
+      ...(upstreamDown ? {} : { robots: { index: false, follow: true } }),
       openGraph: {
         title: "Авто из Кореи",
         description: "Купить автомобиль из Южной Кореи.",
@@ -95,7 +114,7 @@ export async function generateMetadata({
     };
 
   const carName = [
-    data.category.manufacturerEnglishName,
+    normalizeBrand(data.category.manufacturerEnglishName),
     data.category.modelGroupEnglishName,
     data.category.gradeDetailEnglishName,
     data.category.gradeEnglishName,
@@ -104,7 +123,7 @@ export async function generateMetadata({
     .join(" ");
 
   const year = formatYear(data?.category?.yearMonth);
-  const mileage = data?.spec.mileage?.toLocaleString("ru-RU") || "—";
+  // пробег теперь приходит из buildSpecBits — с локализованной единицей
   const krwPrice = data?.advertisement?.price
     ? data.advertisement.price * 10000
     : null;
@@ -145,12 +164,66 @@ export async function generateMetadata({
     ar: `${shortCarName} ${year} من كوريا${priceLabel ? ` — السعر ${priceLabel}` : ""}`,
   };
 
+  // Хвост описания: кузов, топливо, КПП, пробег + история (ДТП/владельцы).
+  // Это то, чем две одинаковые по модели и году карточки реально отличаются
+  // друг от друга — без него сниппеты серии «Grandeur 2017» выглядели клонами.
+  // История приходит отдельным запросом (кэш 1 ч, дедуплицируется с блоком на
+  // странице). Соц-краулерам не ждём: у них жёсткий бюджет на превью.
+  const record = isSocialBot ? null : await fetchVehicleRecord(data?.vehicleId, data?.vehicleNo);
+  const dict = await loadCarsDict(lang);
+  const { specs, history } = buildSpecBits({
+    lang,
+    dict,
+    bodyRaw: record?.carShape,
+    fuelRaw: data?.spec?.fuelName,
+    transmissionRaw: data?.spec?.transmissionName ?? record?.transmission,
+    mileage: data?.spec?.mileage,
+    accidents:
+      record && (record.myAccidentCnt != null || record.otherAccidentCnt != null)
+        ? (record.myAccidentCnt ?? 0) + (record.otherAccidentCnt ?? 0)
+        : null,
+    owners: record?.ownerChangeCnt,
+  });
+
+  const LEAD: Record<string, string> = {
+    ru: `Купить ${carName} ${year} из Кореи${priceLabel ? ` — ${priceLabel}` : ""}`,
+    en: `Buy ${carName} ${year} from South Korea${priceLabel ? ` — ${priceLabel}` : ""}`,
+    ko: `${carName} ${year} 한국에서 구매${priceLabel ? ` — ${priceLabel}` : ""}`,
+    ka: `${carName} ${year} კორეიდან შეძენა${priceLabel ? ` — ფასი ${priceLabel}` : ""}`,
+    ar: `شراء ${carName} ${year} من كوريا الجنوبية${priceLabel ? ` — ${priceLabel}` : ""}`,
+  };
+  const TAIL: Record<string, string> = {
+    ru: "Осмотр в Корее, доставка 3–6 недель.",
+    en: "Inspection in Korea, delivery in 3–6 weeks.",
+    ko: "한국 현지 검사, 3–6주 배송.",
+    ka: "დათვალიერება კორეაში, მიტანა 3–6 კვირა.",
+    ar: "فحص في كوريا، التوصيل 3–6 أسابيع.",
+  };
+
+  // Google показывает ~160 символов. Собираем от важного к второстепенному и
+  // отбрасываем хвост, который всё равно не поместится.
+  const buildDescription = (l: string) => {
+    const parts = [
+      `${LEAD[l] ?? LEAD.ru}.`,
+      specs.length ? `${specs.join(", ")}.` : "",
+      history.length ? `${history.join(", ")}.` : "",
+      TAIL[l] ?? TAIL.ru,
+    ].filter(Boolean);
+
+    let out = "";
+    for (const part of parts) {
+      if (out && `${out} ${part}`.length > 165) break;
+      out = out ? `${out} ${part}` : part;
+    }
+    return out;
+  };
+
   const DESCRIPTION: Record<string, string> = {
-    ru: `Купить ${carName} ${year} из Кореи${priceLabel ? ` — ${priceLabel} с доставкой` : ""}. Пробег ${mileage} км. Личный осмотр в Сувоне, доставка 3–6 недель. K-Axis.`,
-    en: `Buy ${carName} ${year} from South Korea${priceLabel ? ` — ${priceLabel} delivered` : ""}. Mileage ${mileage} km. Personal inspection in Suwon, delivery in 3–6 weeks. K-Axis.`,
-    ko: `${carName} ${year} 한국에서 구매${priceLabel ? ` — ${priceLabel}` : ""}. 주행거리 ${mileage} km. 수원 현지 직접 검사, 3–6주 배송. K-Axis.`,
-    ka: `${carName} ${year} კორეიდან შეძენა${priceLabel ? ` — ფასი ${priceLabel}` : ""}. გარბენი ${mileage} კმ. პირადი დათვალიერება სუვონში, მიტანა 3–6 კვირა. K-Axis.`,
-    ar: `شراء ${carName} ${year} من كوريا الجنوبية${priceLabel ? ` — ${priceLabel}` : ""}. المسافة ${mileage} كم. فحص شخصي في سوون، التوصيل 3–6 أسابيع. K-Axis.`,
+    ru: buildDescription("ru"),
+    en: buildDescription("en"),
+    ko: buildDescription("ko"),
+    ka: buildDescription("ka"),
+    ar: buildDescription("ar"),
   };
 
   const title = TITLE[lang] ?? TITLE.ru;
@@ -206,7 +279,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     notFound();
 
   const carName = [
-    data.category.manufacturerEnglishName,
+    normalizeBrand(data.category.manufacturerEnglishName),
     data.category.modelGroupEnglishName,
     data.category.gradeDetailEnglishName,
     data.category.gradeEnglishName,
@@ -237,6 +310,18 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
   };
   const fromKorea = FROM_KOREA_LABEL[lang] ?? FROM_KOREA_LABEL.ru;
   const carYear = formatYear(data?.category?.yearMonth);
+
+  // Хвост H1: пробег и КПП. Обязательный префикс (модель + комплектация + год +
+  // «из Кореи») остаётся слово в слово как в title — инвариант из CLAUDE.md не
+  // нарушен, а заголовок перестаёт быть клоном соседних карточек той же модели.
+  const h1Dict = await loadCarsDict(lang);
+  const { mileageLabel: h1Mileage, transmission: h1Transmission } = buildSpecBits({
+    lang,
+    dict: h1Dict,
+    mileage: data?.spec?.mileage,
+    transmissionRaw: data?.spec?.transmissionName,
+  });
+  const h1Tail = [h1Mileage, h1Transmission].filter(Boolean).join(" · ");
 
   const BUY_PRICE_LABEL: Record<string, string> = {
     ru: "Цена покупки",
@@ -307,7 +392,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     description: `${carName} ${carData} — ${data?.spec?.mileage?.toLocaleString("en-US")} km. South Korean car on K-Axis.`,
     brand: {
       "@type": "Brand",
-      name: data.category.manufacturerEnglishName || "Unknown",
+      name: normalizeBrand(data.category.manufacturerEnglishName) || "Unknown",
     },
     ...(data?.vin && { vehicleIdentificationNumber: data.vin }),
     ...(vehicleModelDate && { vehicleModelDate }),
@@ -459,7 +544,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 className="text-2xl lg:text-3xl font-bold leading-tight"
                 style={{ color: "var(--axis-white)" }}
               >
-                {data.category.manufacturerEnglishName}{" "}
+                {normalizeBrand(data.category.manufacturerEnglishName)}{" "}
                 <span style={{ color: "var(--axis-orange)" }}>
                   {data.category.modelGroupEnglishName}
                 </span>{" "}
@@ -470,6 +555,14 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                   : ""}
                 {data.category.gradeEnglishName}
                 {carYear ? ` ${carYear}` : ""} {fromKorea}
+                {h1Tail && (
+                  <span
+                    className="block mt-1 text-base lg:text-lg font-medium"
+                    style={{ color: "var(--axis-gray)" }}
+                  >
+                    {h1Tail}
+                  </span>
+                )}
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <span
@@ -522,12 +615,17 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 </div>
               </div>
             )}
+            {/* spec/options приходят от Encar не всегда — обращаемся через ?. */}
             <VinMileageSection
               vin={data.vin}
               vehicleNo={data.vehicleNo}
-              mileage={data.spec.mileage}
+              mileage={data?.spec?.mileage}
             />
-            <DetailInfo id={data?.vehicleId} carnumber={data?.vehicleNo} />
+            {/* История авто грузится на сервере, но за Suspense: HTML карточки
+                уходит сразу, а блок дописывается в тот же ответ — бот его видит. */}
+            <Suspense fallback={<DetailInfoSkeleton />}>
+              <DetailInfoSection id={data?.vehicleId} vehicleNo={data?.vehicleNo} />
+            </Suspense>
             <OptionsRow data={data.options} />
           </div>
 
@@ -558,7 +656,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
         <CarDescription
           lang={lang}
-          manufacturer={data.category.manufacturerEnglishName ?? ""}
+          manufacturer={normalizeBrand(data.category.manufacturerEnglishName)}
           model={data.category.modelGroupEnglishName ?? ""}
           yearMonth={data?.category?.yearMonth ?? ""}
           mileage={data.spec?.mileage ?? 0}
