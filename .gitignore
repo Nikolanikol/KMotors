@@ -57,3 +57,16 @@ scripts/lib/__pycache__/
 _debrand_preview/
 _holefix_preview/
 .serena
+
+# Промежуточные выгрузки скриптов классификации/аудита запчастей — сотни МБ,
+# пересоздаются прогоном скрипта. data/skin1004.db трекается намеренно.
+data/*.json
+
+# Выгрузки аналитики и временные файлы Office (GSC/Excel экспорты кладут в корень)
+*.xlsx
+~$*
+https___www.kmotors.shop_*/
+
+# Служебные файлы инструментов
+scratchpad_posts.json
+skills-lock.json
