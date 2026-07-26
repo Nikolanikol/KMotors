@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
         messenger: messenger ?? null,
         vin: vin ?? null,
         tg_username: tg_username ?? null,
+        site: "kmotors",
       });
     } catch (err) {
       console.error("Supabase leads insert failed:", err);

@@ -12,6 +12,7 @@ interface Lead {
   messenger: string | null;
   vin: string | null;
   tg_username: string | null;
+  site: string | null;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -154,6 +155,11 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                   ) : (
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg">✈️ Telegram</span>
                   )
+                )}
+                {lead.site === "caranalizer" && (
+                  <span className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-lg">
+                    🔎 Caranalizer
+                  </span>
                 )}
                 <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-lg">
                   {SOURCE_LABELS[lead.source_page || ""] || lead.source_page}

@@ -245,7 +245,7 @@ export default async function AdminPage() {
     // Лиды — предыдущая неделя
     supabase.from("leads").select("*", { count: "exact", head: true }).gte("created_at", days7to14ago).lt("created_at", days7ago),
     // Последние заявки
-    supabase.from("leads").select("id,name,phone,car_name,source_page,created_at,messenger,vin,tg_username").order("created_at", { ascending: false }).limit(20),
+    supabase.from("leads").select("id,name,phone,car_name,source_page,created_at,messenger,vin,tg_username,site").order("created_at", { ascending: false }).limit(20),
     // Топ просматриваемых машин
     supabase.rpc("get_top_cars", { since_date: days30ago, limit_count: 10 }),
   ]);
