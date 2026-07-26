@@ -138,7 +138,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link
-              href={`/${lang}/`}
+              href={`/${lang}`}
               className="flex items-center gap-2.5 mb-4 group"
             >
               <KAxisLogo />

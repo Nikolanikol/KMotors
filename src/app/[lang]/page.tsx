@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://www.kmotors.shop/${lang}/`,
+      url: `https://www.kmotors.shop/${lang}`,
       siteName: "K-Axis",
       type: "website",
       locale: lang === "ko" ? "ko_KR" : lang === "ar" ? "ar_SA" : lang === "ka" ? "ka_GE" : lang === "en" ? "en_US" : "ru_RU",
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: meta.description,
       images: ["https://www.kmotors.shop/preview/preview.png"],
     },
-    alternates: makeAlternates(lang, "/"),
+    alternates: makeAlternates(lang, ""),
   };
 }
 
