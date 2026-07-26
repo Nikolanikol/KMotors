@@ -35,7 +35,9 @@ Never modify DB schema, RLS policies, or run destructive SQL without explicit us
 parts_staging is off-limits to app code — ingestion buffer only. App reads parts_products.
 Do not extend parts_fitment / parts_vehicle_models (legacy). All new fitment work targets part_vehicles + vehicles.
 Never read image_url directly — always resolve images via src/lib/partImage.ts (resolvePartImage / withCleanImage; prefers image_storage_url).
-Prices: stored in KRW, displayed in USD via src/lib/pricing.ts (formatUsd, fixed PRICE_MARKUP). Never format/convert prices ad hoc.
+Prices — PARTS: stored in KRW, displayed in USD via src/lib/pricing.ts (formatUsd, fixed PRICE_MARKUP). Never format/convert prices ad hoc.
+Prices — CARS: different model, pricing.ts does NOT apply. Headline price in the car card is KRW (won); ₽ (ru) / $ (other langs) are shown below as reference, converted with the LIVE rate from src/utils/getCurrencyRates.ts (24h cache, safe fallbacks). Never hardcode an FX rate — a stale constant in generateMetadata was overstating the RU snippet price by ~12%.
+Canonical + hreflang always go through makeAlternates(lang, path) (src/lib/seo.ts). trailingSlash is false, so a path of "/" produces a URL that 308-redirects and Google discards the tag — the home page passes "" instead. Same rule in src/app/sitemap-main.xml/route.ts (buildUrl) and in internal links to the language root.
 ko locale is disabled (301 → /en). LOCALIZATION_GUIDE.md still lists it — that doc is stale; trust src/lib/lang.ts / src/lib/i18n.ts (SUPPORTED = ['ru','en','ka','ar']).
 SEO pipeline never touches live data before the Telegram approval gate — do not change that invariant.
 Architecture
@@ -44,6 +46,16 @@ src/app/[lang]/... — all public pages. [lang] ∈ ru | en | ka | ar (src/lib/l
 No-prefix URL resolution cascade: cookie → Accept-Language → cf-ipcountry → default ru (src/lib/lang.ts, applied in middleware.ts).
 i18n is per-request, not globally bundled: src/lib/i18n.ts seeds an i18next instance with active language + en fallback only (avoids hydration mismatches and bundle bloat). Translations: src/locales/<lang>/{common,cars}.json.
 middleware.ts also does: bot/Electron-scraper blocking, legacy parts-URL 308 redirects (PN--name-slug → PN), /admin cookie auth gate, first-party analytics dispatch to /api/track, 410s for stale indexed paths, and server-side Supabase session refresh.
+Cars catalog (Encar-backed)
+Entry: /[lang]/catalog (listing) and /[lang]/catalog/[id] (card). Data is fetched live from api.encar.com per request via src/lib/vehicle.ts (fetchVehicleData); there is no local mirror of car data.
+Sold car = Encar 404 = fetchVehicleData returns null. generateMetadata then returns a generic title plus robots noindex. This is the ONLY lever: notFound() on this route still streams HTTP 200 (loading.tsx sends the shell first), so a real 404 is unreachable without breaking UX. Do not restore the hardcoded <meta name="robots" content="index, follow"> that used to sit in src/app/layout.tsx — it made every sold card explicitly indexable and produced ~1130 "duplicate, no user-selected canonical" pages in GSC.
+Card metadata (src/app/[lang]/catalog/[id]/page.tsx) — three coupled invariants:
+  1. title and H1 must stay in sync. Google uses H1 as its main source when rewriting SERP titles; an English-only H1 under a localized title invites a rewrite. Both carry model + trim + year + localized "from Korea", in the same word order.
+  2. Snippet price must equal the price the visitor actually sees (ru → ₽, others → $). Order is model → year → geo → price; ka is the exception and puts price before geo, because Georgian glyphs are wide (Google truncates by pixel width) and the geo word is absent from the target query.
+  3. JSON-LD Offer keeps priceCurrency KRW — it must match the headline price in CarDetailSidebar, not the reference conversion.
+Use formatYear() ("2024") in titles/H1/descriptions. formatDate() returns Encar's "YY.MM" registration format — spec rows only; it reads as noise to buyers outside Korea.
+The "| K-Axis" suffix from the global title template is suppressed on car cards via title: { absolute }, to save ~9 characters of the ~60-char budget.
+
 Parts catalog
 Entry: /[lang]/parts and /[lang]/parts/[slug]. UI blocks in src/app/parts/sections/ (not under [lang]/): PartsCatalog.tsx (server, SSR first page for SEO) → PartsCatalogClient.tsx (client, URL-driven filters) and ProductDetailClient.tsx. Details: docs/parts-pages-design-reference.md.
 Data: /api/parts/products (paginated, faceted counts) ← parts_products.
