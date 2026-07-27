@@ -528,10 +528,13 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Three column layout: [calculator] | [photos + specs] | [price + form + seller] */}
         <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_300px] gap-5">
-          {/* Col 1 — Калькулятор (sticky) */}
+          {/* Col 1 — Калькулятор (sticky).
+              id — цель якоря из FAQ. scroll-mt-24 нужен из-за липкой шапки:
+              без него калькулятор после перехода уезжает под неё. */}
           {data?.advertisement?.price && (
             <div
-              className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 car-detail-dark order-2 lg:order-1"
+              id="customs-calculator"
+              className="scroll-mt-24 lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 car-detail-dark order-2 lg:order-1"
               style={{ scrollbarWidth: "none" }}
             >
               <CustomsCalculator

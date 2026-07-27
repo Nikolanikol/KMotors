@@ -13,9 +13,12 @@ import { fetchVehicleRecord } from "@/lib/vehicleRecord";
 
 const FREIGHT_USD = 600; // морской фрахт до Владивостока; прочие направления — по запросу
 
+// link рендерится ТОЛЬКО в видимой карточке и намеренно не попадает в
+// acceptedAnswer.text: разметка должна оставаться простым текстом без HTML.
 interface Qa {
   q: string;
   a: string;
+  link?: { href: string; label: string };
 }
 
 type Dict = {
@@ -26,6 +29,11 @@ type Dict = {
   delivery: Qa;
   inspection: Qa;
 };
+
+// Якорь на калькулятор в этой же карточке, а не на общую страницу
+// /[lang]/calculator: здешний калькулятор уже заполнен ценой, годом и объёмом
+// именно этой машины, на общей странице всё пришлось бы вводить заново.
+const CALC_ANCHOR = "#customs-calculator";
 
 const money = (n: number, locale: string) => n.toLocaleString(locale);
 
@@ -42,7 +50,9 @@ const DICTS: Record<string, Dict> = {
     }),
     customs: (car, cc, year) => ({
       q: `Сколько стоит растаможить ${car} в России?`,
-      a: `Пошлина считается от объёма двигателя (${cc} см³), года выпуска (${year}) и стоимости автомобиля. Точную сумму посчитает калькулятор растаможки слева на этой странице — для России, Казахстана и Узбекистана. Растаможка оплачивается отдельно от фрахта.`,
+      // Без «слева»: на мобиле калькулятор идёт order-2, то есть НИЖЕ фотографий.
+      a: `Пошлина считается от объёма двигателя (${cc} см³), года выпуска (${year}) и стоимости автомобиля. Точную сумму посчитает калькулятор растаможки на этой странице — для России, Казахстана и Узбекистана. Растаможка оплачивается отдельно от фрахта.`,
+      link: { href: CALC_ANCHOR, label: "Посчитать растаможку" },
     }),
     delivery: {
       q: "Куда и за сколько вы доставляете?",
@@ -66,6 +76,7 @@ const DICTS: Record<string, Dict> = {
     customs: (car, cc, year) => ({
       q: `How much does it cost to clear customs for a ${car}?`,
       a: `Duty depends on engine displacement (${cc} cc), year of manufacture (${year}) and the vehicle's value. The customs calculator on this page gives the exact figure for Russia, Kazakhstan and Uzbekistan. Customs duty is paid separately from freight.`,
+      link: { href: CALC_ANCHOR, label: "Calculate customs duty" },
     }),
     delivery: {
       q: "Where do you ship, and how much does it cost?",
@@ -89,6 +100,7 @@ const DICTS: Record<string, Dict> = {
     customs: (car, cc, year) => ({
       q: `რამდენი ღირს ${car}-ის განბაჟება?`,
       a: `გადასახადი დამოკიდებულია ძრავის მოცულობაზე (${cc} სმ³), გამოშვების წელზე (${year}) და ავტომობილის ღირებულებაზე. ზუსტ თანხას გამოთვლის განბაჟების კალკულატორი ამ გვერდზე. განბაჟება ფრახტისგან ცალკე იხდება.`,
+      link: { href: CALC_ANCHOR, label: "განბაჟების გამოთვლა" },
     }),
     delivery: {
       q: "სად და რა ღირებულებით ახორციელებთ მიტანას?",
@@ -112,6 +124,7 @@ const DICTS: Record<string, Dict> = {
     customs: (car, cc, year) => ({
       q: `كم تبلغ تكلفة التخليص الجمركي لسيارة ${car}؟`,
       a: `تعتمد الرسوم على سعة المحرك (${cc} سم³) وسنة الصنع (${year}) وقيمة السيارة. تحسب الآلة الحاسبة في هذه الصفحة المبلغ الدقيق. تُدفع الرسوم الجمركية بشكل منفصل عن الشحن.`,
+      link: { href: CALC_ANCHOR, label: "احسب الرسوم الجمركية" },
     }),
     delivery: {
       q: "إلى أين تشحنون وكم تبلغ التكلفة؟",
@@ -189,7 +202,7 @@ export default async function CarFaq({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {items.map(({ q, a }) => (
+        {items.map(({ q, a, link }) => (
           <div
             key={q}
             className="rounded-2xl p-5"
@@ -210,6 +223,16 @@ export default async function CarFaq({
             >
               {a}
             </p>
+            {link && (
+              <a
+                href={link.href}
+                className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold transition-opacity hover:opacity-80"
+                style={{ color: "var(--axis-orange)" }}
+              >
+                {link.label}
+                <span aria-hidden="true">↓</span>
+              </a>
+            )}
           </div>
         ))}
       </div>
