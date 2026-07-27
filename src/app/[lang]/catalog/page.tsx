@@ -11,16 +11,20 @@ import { catalogPageSize } from "@/utils/device";
 
 export const revalidate = 300;
 
+// Направления перечисляем ПО ЛОКАЛЯМ, а не одним списком на всех: раньше
+// арабской версии предлагалась доставка в Россию и Казахстан. Приоритетные
+// страны оставлены как рабочие ключевые запросы («авто из Кореи в Казахстан»),
+// а «по всему миру» идёт хвостом — само по себе оно ничего не ранжирует.
 const CATALOG_META: Record<string, { default: string; withBrand: string; description: string }> = {
   ru: {
     default: "Каталог авто из Кореи — Hyundai, Kia, Genesis",
     withBrand: "Купить {brand} из Кореи — каталог авто",
-    description: "Каталог корейских автомобилей из Южной Кореи: Hyundai, Kia, Genesis. Актуальные цены, фото, характеристики. Доставка в Россию, Казахстан, Узбекистан, Грузию.",
+    description: "Каталог корейских автомобилей: Hyundai, Kia, Genesis. Актуальные цены, фото, характеристики. Доставка в Россию, Казахстан, Узбекистан и другие страны, без комиссии.",
   },
   en: {
     default: "Korean Cars Catalog — Hyundai, Kia, Genesis",
     withBrand: "Buy {brand} from Korea — car catalog",
-    description: "Catalog of Korean cars from South Korea: Hyundai, Kia, Genesis. Current prices, photos, specs. Delivery to Russia, Kazakhstan, Uzbekistan, Georgia.",
+    description: "Catalog of Korean cars from South Korea: Hyundai, Kia, Genesis. Current prices, photos, specs. Worldwide delivery, zero commission.",
   },
   ko: {
     default: "한국 자동차 카탈로그 — Hyundai, Kia, Genesis",
@@ -30,12 +34,12 @@ const CATALOG_META: Record<string, { default: string; withBrand: string; descrip
   ka: {
     default: "კორეული ავტომობილების კატალოგი — Hyundai, Kia, Genesis",
     withBrand: "შეიძინეთ {brand} კორეიდან — კატალოგი",
-    description: "კორეული ავტომობილების კატალოგი: Hyundai, Kia, Genesis. აქტუალური ფასები, ფოტოები, მახასიათებლები. მიტანა საქართველოში.",
+    description: "კორეული ავტომობილების კატალოგი: Hyundai, Kia, Genesis. აქტუალური ფასები, ფოტოები, მახასიათებლები. მიტანა საქართველოსა და მსოფლიოს სხვა ქვეყნებში, კომისიის გარეშე.",
   },
   ar: {
     default: "كتالوج السيارات الكورية — Hyundai وKia وGenesis",
     withBrand: "اشتر {brand} من كوريا — كتالوج السيارات",
-    description: "كتالوج السيارات الكورية من كوريا الجنوبية: Hyundai وKia وGenesis. أسعار حالية، صور، مواصفات. التوصيل إلى روسيا وكازاخستان وأوزبكستان.",
+    description: "كتالوج السيارات الكورية من كوريا الجنوبية: Hyundai وKia وGenesis. أسعار حالية، صور، مواصفات. الشحن إلى الشرق الأوسط وجميع دول العالم، بدون عمولة.",
   },
 };
 

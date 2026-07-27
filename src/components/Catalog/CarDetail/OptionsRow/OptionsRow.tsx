@@ -249,7 +249,12 @@ export default function OptionsRow({ data }: OptionsRowProps) {
                 </span>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-5 pb-4">
+            {/* forceMount: названия опций — это ~37 реальных характеристик на
+                машину, и без принудительного монтирования Radix не рендерил их
+                на сервере, из-за чего они полностью отсутствовали в HTML.
+                В свёрнутом состоянии Radix сам ставит hidden, поэтому вид и
+                поведение аккордеона не меняются. Цена — ~3,7 КБ сжатого HTML. */}
+            <AccordionContent className="px-5 pb-4" forceMount>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
                 {options.map((option: any) => (
                   <div
@@ -321,7 +326,9 @@ export default function OptionsRow({ data }: OptionsRowProps) {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-5 pb-5 border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
+              {/* Внешний аккордеон «опции на выбор» свёрнут по умолчанию —
+                  без forceMount вложенные названия тоже не попадут в HTML. */}
+              <AccordionContent className="px-5 pb-5 border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }} forceMount>
                 {renderGroups(choiceGroups, "var(--axis-orange)")}
               </AccordionContent>
             </AccordionItem>

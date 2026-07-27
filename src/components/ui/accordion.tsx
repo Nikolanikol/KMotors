@@ -46,7 +46,15 @@ const AccordionContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Content
     ref={ref}
-    className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    className={cn(
+      "overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+      // forceMount оставляет контент в DOM (нужно, чтобы он попадал в SSR-HTML
+      // и индексировался), но Radix в этом режиме НЕ проставляет hidden — без
+      // этого правила свёрнутый блок остаётся видимым на экране.
+      // display:none корректно убирает его и с экрана, и из дерева доступности;
+      // контент за аккордеоном Google индексирует нормально.
+      props.forceMount && "data-[state=closed]:hidden",
+    )}
     {...props}
   >
     <div className={cn("pb-4 pt-0", className)}>{children}</div>

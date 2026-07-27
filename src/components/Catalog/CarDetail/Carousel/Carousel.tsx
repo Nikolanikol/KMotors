@@ -113,7 +113,14 @@ const CarouselLight = ({
             fill
             className="object-cover transition-opacity duration-300 pointer-events-none"
             style={{ opacity: i === index ? 1 : 0 }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 60vw"
+            /* На lg включается сетка 340px_1fr_300px, и средняя колонка — это
+               552px при вьюпорте 1280 и максимум 600px на широких экранах
+               (контент ограничен max-w-7xl). Прежние 60vw объявляли 768px, то
+               есть на 39% больше реального контейнера: при DPR 2 браузер просил
+               1536 и брал ступеньку 1920 (211 КБ) вместо 1200 (100 КБ).
+               Мобильная ветка остаётся 100vw — там замер показал точное
+               попадание (343px → cw=750). */
+            sizes="(max-width: 1023px) 100vw, 600px"
             priority={i === 0}
             draggable={false}
           />

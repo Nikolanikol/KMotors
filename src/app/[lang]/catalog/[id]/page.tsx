@@ -39,6 +39,7 @@ const StickyMobileCTA = dynamic(
 const CarViewTracker = dynamic(
   () => import("@/components/Catalog/CarDetail/CarViewTracker"),
 );
+const CarFaq = dynamic(() => import("@/components/Catalog/CarDetail/CarFaq"));
 
 interface PageProps {
   params: Promise<{ lang: string; id: string }>;
@@ -278,12 +279,16 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
   )
     notFound();
 
+  // filter(Boolean) обязателен: gradeDetailEnglishName часто null, и без него
+  // в названии появлялся двойной пробел — он утекал в JSON-LD и в текст FAQ.
   const carName = [
     normalizeBrand(data.category.manufacturerEnglishName),
     data.category.modelGroupEnglishName,
     data.category.gradeDetailEnglishName,
     data.category.gradeEnglishName,
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
   const carData = formatDate(data?.category?.yearMonth);
   const rates = await getCurrencyRates();
   const mainPhoto = data?.photos?.[0]?.path
@@ -429,12 +434,17 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
         name: "K-Axis",
         url: "https://www.kmotors.shop",
       },
+      // Ставка указана только для того направления, где она действительно
+      // фиксирована: морской фрахт до Владивостока. По остальным странам цена
+      // считается по запросу, и выдумывать её в разметке нельзя — неверная
+      // стоимость доставки хуже, чем её отсутствие. Растаможка сюда не входит:
+      // она считается отдельно (CustomsCalculator).
       shippingDetails: {
         "@type": "OfferShippingDetails",
         shippingRate: {
           "@type": "MonetaryAmount",
           currency: "USD",
-          value: "1500",
+          value: "600",
         },
         shippingDestination: {
           "@type": "DefinedRegion",
@@ -665,6 +675,20 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
           catalogFilter={catalogFilter}
         />
       </div>
+
+      {/* FAQ — уникальный для каждой машины (история, растаможка) + FAQPage.
+          За Suspense: тянет ту же запись истории, что и DetailInfo (кэш
+          дедуплицирует), и не задерживает первую отрисовку карточки. */}
+      <Suspense fallback={null}>
+        <CarFaq
+          lang={lang}
+          carName={carName}
+          vehicleId={data?.vehicleId}
+          vehicleNo={data?.vehicleNo}
+          displacement={data?.spec?.displacement ?? 0}
+          year={carYear}
+        />
+      </Suspense>
 
       <StickyMobileCTA carId={id} carName={fullCarName} />
       <CarViewTracker
