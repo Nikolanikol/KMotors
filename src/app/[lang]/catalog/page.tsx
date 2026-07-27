@@ -7,6 +7,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { makeAlternates } from "@/lib/seo";
+import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { catalogPageSize } from "@/utils/device";
 
 export const revalidate = 300;
@@ -181,6 +182,8 @@ export default async function CatalogPage({ params, searchParams }: Props) {
 
   return (
     <>
+      {/* Filter и CarCard ниже переводят характеристики через словарь Encar */}
+      <CarsDictionary lang={lang} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}

@@ -11,6 +11,7 @@ import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
+import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
 import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
@@ -516,6 +517,8 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       className="min-h-screen pb-24 lg:pb-0"
       style={{ backgroundColor: "var(--axis-black)" }}
     >
+      {/* Header и DetailInfo ниже переводят характеристики через словарь Encar */}
+      <CarsDictionary lang={lang} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}

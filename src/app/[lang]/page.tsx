@@ -8,6 +8,7 @@ import { makeAlternates } from "@/lib/seo";
 // Выше fold — SSR для LCP
 import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
+import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 
 // Ниже fold — lazy load
 const Stage = dynamic(() => import("@/components/Home/Stage"));
@@ -134,6 +135,8 @@ export default async function Home({ params }: Props) {
 
   return (
     <>
+      {/* CarSlider ниже переводит характеристики авто через словарь Encar */}
+      <CarsDictionary lang={lang} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />

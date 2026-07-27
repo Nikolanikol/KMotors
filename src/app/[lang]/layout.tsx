@@ -27,7 +27,11 @@ export default async function LangLayout({ children, params }: Props) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Только активный язык + en (фолбэк) — грузится на сервере, не в клиентском бандле.
+  // Ресурсы уезжают в RSC-payload КАЖДОЙ страницы, поэтому их объём = вес страницы.
+  // Здесь только `common`; словарь Encar (`cars`, 76 KB) подключают сами маршруты
+  // авто через <CarsDictionary/> — этот layout при клиентской навигации внутри
+  // [lang] не перерисовывается, так что раздавать `cars` отсюда нельзя: переход
+  // /parts → /catalog оставил бы каталог без словаря.
   const resources = loadResources(lang);
 
   return (

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import FavoritesClient from "./FavoritesClient";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -13,6 +14,17 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return { title: titles[lang] || titles.ru };
 }
 
-export default function FavoritesPage() {
-  return <FavoritesClient />;
+export default async function FavoritesPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  return (
+    <>
+      {/* FavoritesClient переводит характеристики через словарь Encar */}
+      <CarsDictionary lang={lang} />
+      <FavoritesClient />
+    </>
+  );
 }
