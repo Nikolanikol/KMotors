@@ -40,6 +40,7 @@ Prices — CARS: different model, pricing.ts does NOT apply. Headline price in t
 Canonical + hreflang always go through makeAlternates(lang, path) (src/lib/seo.ts). trailingSlash is false, so a path of "/" produces a URL that 308-redirects and Google discards the tag — the home page passes "" instead. Same rule in src/app/sitemap-main.xml/route.ts (buildUrl) and in internal links to the language root.
 ko locale is disabled (301 → /en). LOCALIZATION_GUIDE.md still lists it — that doc is stale; trust src/lib/lang.ts / src/lib/i18n.ts (SUPPORTED = ['ru','en','ka','ar']).
 SEO pipeline never touches live data before the Telegram approval gate — do not change that invariant.
+Encar fetches must never throw. Every call into api.encar.com goes through a helper that catches, falls back, and returns a typed empty result (getCars in src/components/Catalog/Row/utils/service.ts, fetchNav in src/components/Catalog/Filter/FilterService/index.ts). Always: AbortSignal.timeout (8s primary / 20s the Render proxy, which cold-starts), res.ok check, try/catch around the FALLBACK too — an unguarded fallback was what took the whole catalog page down. Never add a bare fetch to Encar in a component.
 Architecture
 Routing & i18n
 src/app/[lang]/... — all public pages. [lang] ∈ ru | en | ka | ar (src/lib/lang.ts).
@@ -55,6 +56,32 @@ Card metadata (src/app/[lang]/catalog/[id]/page.tsx) — three coupled invariant
   3. JSON-LD Offer keeps priceCurrency KRW — it must match the headline price in CarDetailSidebar, not the reference conversion.
 Use formatYear() ("2024") in titles/H1/descriptions. formatDate() returns Encar's "YY.MM" registration format — spec rows only; it reads as noise to buyers outside Korea.
 The "| K-Axis" suffix from the global title template is suppressed on car cards via title: { absolute }, to save ~9 characters of the ~60-char budget.
+Listing page (/[lang]/catalog) degrades instead of failing. getCars returns { data, count, failed } and never rejects; CarsRow renders three distinct states — cars, "nothing found" (empty result), and "temporarily unavailable" (failed: true) — all four locales. A 404 from Encar means a malformed query (e.g. junk in ?action=), not an outage: it maps to the empty state without spending a second round-trip on the proxy. src/app/[lang]/catalog/error.tsx is a segment-level boundary so an unexpected throw keeps the layout instead of falling through to the root app/error.tsx.
+page.tsx and CarsRow must call getCars with IDENTICAL arguments — same query, same pageSize, same offset ((page-1)*pageSize). The ItemList JSON-LD has to describe the list the visitor actually sees, and matching arguments let Next dedupe the two calls into one Encar request. Passing sp.page straight through as offset (an old bug) broke both at once.
+
+Car card — deliberate render-speed tradeoffs, do NOT "fix" them as bugs
+
+Two blocks on /[lang]/catalog/[id] are intentionally kept out of the initial paint. Both were measured and chosen; treat a proposal to server-render them as a product decision, not a defect report.
+
+- Option names (OptionsRow) live in collapsed Radix accordions and are NOT in the server HTML — only the per-category counts are ("Стандартные опции 37, Комфорт 11…"). Encar sends codes ("001","004",…) resolved against the 218-entry dictionary in OptionsRow/data.ts. Collapsing + lazy mount is what keeps the card's first paint cheap. Known SEO cost: ~37 real feature names per car never reach the HTML.
+- RecommendedCars loads on scroll (IntersectionObserver → /api/recommended). Bots therefore see the <h2> with an empty carousel and get zero internal links from the card. Accepted for the same reason.
+
+Contrast with DetailInfo (specs + accident/owner history): that one WAS moved to the server (src/lib/vehicleRecord.ts + DetailInfoSection.tsx behind Suspense) because it is the card's most unique content. Suspense keeps the first paint fast while the block still lands in the same HTTP response — that is the pattern to copy if any of the above is ever server-rendered.
+
+Car card — upstream failures must not deindex live pages
+
+fetchVehicleData distinguishes "sold" (Encar 404 → null) from "upstream down" (throws VehicleUpstreamError). generateMetadata sets robots noindex ONLY for the sold case. Never collapse the two into catch(() => null): during an Encar outage that served every live card as HTTP 200 + noindex, i.e. we asked Google to drop them. The 5xx the old comment promised is unreachable anyway — loading.tsx starts streaming, so the status is already sent.
+
+Car card — metadata built from Encar's raw fields
+
+- Korean spec words (carShape "세단 4도어", transmissionName "오토", fuelName "LPG(일반인 구입)") must go through src/lib/carLabels.ts. generateMetadata has no i18next instance (i18n is per-request), so it reads cars.json directly. Rule: if a word stays Hangul after lookup, the whole field is dropped — an empty field beats Korean in a Google snippet.
+- manufacturerEnglishName arrives glued: ChevroletGMDaewoo, Renault-KoreaSamsung, KG_Mobility_Ssangyong. Always display via normalizeBrand(). It feeds H1, title, description and JSON-LD brand.
+- H1 carries the title's prefix word for word (model + trim + year + localized "from Korea") and then a muted sub-line "mileage · transmission". Extending the tail is fine; changing the shared prefix breaks the title/H1 sync invariant above.
+- Snippet budget is measured in PIXELS, not characters (Arial 20px, ~600px desktop). Current ru/en titles overrun by 26–37px and the truncation eats the price mid-number ("цена 638 0"). shortCarName still cuts at 34 chars — a character cut against a pixel budget. ka is correct by design: price sits before the geo tail, so the tail is what gets clipped.
+
+Car card — image sizing
+
+Gallery and lightbox are separate paths on purpose: the lightbox (yet-another-react-lightbox, dynamic ssr:false, own LIGHTBOX_WIDTHS up to 1920) loads nothing until the user opens it. Verified. Mobile (375px/DPR2 → cw=750 for a 343px box) and thumbnails (cw=256 for 90px) are accurate. Desktop is not: sizes says 60vw but the grid column (340px_1fr_300px) renders 552px ≈ 43vw, so DPR2 pulls cw=1920 (211 KB) where cw=1200 (100 KB) would do — ~317 KB wasted per card, desktop only.
 
 Parts catalog
 Entry: /[lang]/parts and /[lang]/parts/[slug]. UI blocks in src/app/parts/sections/ (not under [lang]/): PartsCatalog.tsx (server, SSR first page for SEO) → PartsCatalogClient.tsx (client, URL-driven filters) and ProductDetailClient.tsx. Details: docs/parts-pages-design-reference.md.
@@ -83,3 +110,15 @@ Docs by request (load only when relevant)
 docs/seo-automation.md — full SEO pipeline design
 docs/parts-pages-design-reference.md — parts UI breakdown
 README.md — features, env var reference
+Google Search Console — analytics access & gotchas
+
+- GSC API is reachable from scripts via the service account: env GSC_SA_JSON (service-account key JSON, one line) + GSC_SITE_URL=https://www.kmotors.shop/. Helper: src/lib/gsc.ts (JWT → REST searchAnalytics/query). google-auth-library is installed. A manual export lives in ./https___www.kmotors.shop_-Performance-on-Search-2026-07-12/ but is a snapshot — pull fresh via the API for current numbers.
+- Korea (country = "kor") clicks/impressions are the OWNER's own traffic, NOT real users. ALWAYS exclude Korea from any SEO analysis (dimensionFilterGroups country notEquals "kor"). Korea was ~43% of clicks in the 3-month window, so unfiltered totals — and especially the calculator's apparent rank/impressions — are heavily distorted by it.
+- The car catalog is intentionally CLOSED for Korea (security + SEO): /ko/* is 301-redirected to /en/* (middleware.ts) so the SEO weight of legacy Korean-indexed URLs consolidates onto /en. This is deliberate — do not flag the ko→en redirect, the missing ko in hreflang, or leftover /ko/ clicks in GSC as bugs.
+
+Korea is closed in TWO independent layers — a change to one does not affect the other
+
+- Layer 1, Cloudflare WAF (outside this repo, nothing here can read or change it): a custom rule blocks requests from Korea at the edge. The exception is a higher-priority Skip rule keyed on a cookie — expression `http.cookie contains "my_secret_key=<value>"`. The VALUE IS DELIBERATELY NOT IN THIS FILE: the GitHub repo is PUBLIC, so anything committed here is world-readable forever. Keep it in .env / a password manager. To use it, set the cookie once in the browser for kmotors.shop; no app code reads it.
+- Layer 2, in-app link hiding: CATALOG_BLOCKED_COUNTRIES = ["KR"] in src/hooks/useCountry.ts. middleware.ts copies cf-ipcountry into the browser-readable cookie x-user-country (24h), useCountry() reads it client-side, and six components drop their catalog entry points (Header, Footer, Home/Main, Home/NavCards, Home/PopularModels, blog post CTA). Cars only — parts stay visible.
+- Layer 2 is cosmetic, NOT a security control: it only hides links. /[lang]/catalog answers 200 to anyone who reaches the origin, and the cookie is trivially editable in devtools. Do not treat it as access control, and do not "fix" the redundancy between the layers.
+- Consequence for exceptions: the Cloudflare Skip cookie gets you past the edge but leaves the nav links hidden, because layer 2 keys off x-user-country and knows nothing about the bypass. Whitelisting anyone for real means touching both places.
