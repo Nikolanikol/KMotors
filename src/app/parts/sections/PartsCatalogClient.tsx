@@ -27,6 +27,7 @@ import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
 import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
+import { CategoryCloud } from "./CategoryCloud";
 
 const PAGE_SIZE_DESKTOP = 24;
 const PAGE_SIZE_MOBILE = 10;
@@ -73,6 +74,8 @@ interface Props {
   initialTotal: number;
   initialBrandCounts: Record<number, number>;
   initialCatCounts: Record<number, number>;
+  /** Слаги категорий, достойных отдельной страницы — те же, что в sitemap. */
+  indexableCategorySlugs: string[];
 }
 
 // ─── Pending filter reducer ──────────────────────────────────────────────────
@@ -154,7 +157,7 @@ function ProductSkeleton() {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function PartsCatalogClient({ brands, categories, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts }: Props) {
+export function PartsCatalogClient({ brands, categories, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts, indexableCategorySlugs }: Props) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
@@ -583,12 +586,17 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
 
           {/* Sidebar (desktop only) */}
           <aside className="hidden lg:block w-[260px] shrink-0">
-            <div className="sticky top-20">
+            {/* Фильтр и облако категорий — в одном липком контейнере с
+                собственной прокруткой. Облако снаружи оставлять нельзя: липкий
+                фильтр пришпилен к верху экрана, и длинный список проезжал бы
+                прямо за ним. */}
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
               <FilterSidebar
                 {...sidebarProps}
                 onApply={handleApply}
                 className=""
               />
+              <CategoryCloud categories={categories} indexable={indexableCategorySlugs} />
             </div>
           </aside>
 

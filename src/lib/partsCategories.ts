@@ -89,6 +89,28 @@ export const localizedName = (node: PartsCategory, lang: string) =>
  */
 export const CAT_MIN_PARTS = 30;
 
+// Категории-корзины: «Прочее двигатель», «Мелкие детали АКПП», «Кронштейны
+// мелкие» и т.п. Это внутренние вёдра, под которые никто не ищет, — как
+// посадочные они бесполезны. Плюс small-parts-staging, служебное название,
+// которому вообще не место в публичном интерфейсе.
+//
+// Правило по слагу, а не по названию: колонки-флага в parts_categories нет,
+// а эти три шаблона покрывают ровно 25 таких категорий из 176 и ни одной
+// лишней (проверено по выгрузке дерева).
+const BUCKET_SLUG = /(^small-|-small-|-other$|staging)/;
+
+/**
+ * Служебная/мусорная категория: не показываем в навигации, не индексируем,
+ * не кладём в sitemap. Из дерева при этом НЕ вырезаем — иначе её товары
+ * выпали бы из поддерева родителя и потеряли единственный путь обхода
+ * (у одной только small-parts-staging таких 247).
+ */
+export const isBucketCategory = (slug: string) => BUCKET_SLUG.test(slug);
+
+/** Категории, которые показываем человеку в навигации. */
+export const visibleChildren = (node: CategoryNode) =>
+  node.children.filter((c) => !isBucketCategory(c.slug));
+
 /**
  * Слаги категорий, которые заслуживают индексации. Нужны сайтмапу: класть
  * туда noindex-страницы — противоречивый сигнал, Google на него ругается.
@@ -116,7 +138,9 @@ export const getIndexableCategorySlugs = unstable_cache(
           return { slug: node.slug, count: count ?? 0 };
         })
       );
-      for (const c of counts) if (c.count >= CAT_MIN_PARTS) out.push(c.slug);
+      for (const c of counts) {
+        if (c.count >= CAT_MIN_PARTS && !isBucketCategory(c.slug)) out.push(c.slug);
+      }
     }
     return out;
   },
