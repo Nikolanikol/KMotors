@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
+import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
 
 export const revalidate = 86400;
@@ -81,6 +82,8 @@ export default async function ModelPage({ params }: Props) {
 
   return (
     <>
+      {/* CarSlider ниже переводит характеристики авто через словарь Encar */}
+      <CarsDictionary lang={lang} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 

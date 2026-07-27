@@ -182,6 +182,8 @@ export function ProductDetailClient({
       ? product.name_ko || product.name_en || product.name_ru
       : product.name_en || product.name_ru || product.name_ko;
 
+  const partNo = product.part_number || product.product_no || "";
+
   const catName = categoryName
     ? i18n.language === "ru"
       ? categoryName.ru
@@ -384,9 +386,18 @@ export function ProductDetailClient({
               </span>
             </div>
 
-            {/* Title */}
+            {/* Title.
+                Артикул входит в сам H1, а не только в табличку ниже: Google берёт
+                H1 главным источником при переписывании заголовка выдачи, а 93%
+                запросов к этим страницам — ввод OEM-номера. Без номера в H1
+                заголовок и H1 расходятся, и Google переписывает сниппет сам. */}
             <h1 className="text-3xl sm:text-[40px] font-extrabold text-[var(--pn-text)] leading-[1.08] tracking-tight mb-4">
               {productName}
+              {partNo && (
+                <span className="block sm:inline sm:ml-3 mt-1.5 sm:mt-0 font-mono text-lg sm:text-2xl font-bold tracking-[0.06em] text-[var(--pn-text-dim)] whitespace-nowrap align-middle">
+                  {partNo}
+                </span>
+              )}
             </h1>
 
             {/* Part number — primary identity plate */}
