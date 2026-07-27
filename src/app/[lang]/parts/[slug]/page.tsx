@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
 import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
@@ -199,14 +200,50 @@ interface Props {
   params: Promise<{ lang: string; slug: string }>;
 }
 
-// Заголовки и описания для каждого языка
-// Truncate name so title stays under 65 chars (Bing/Google recommendation)
-// Format: "{name} — {partNumber} | K-Axis" → max ~52 chars for name+pn
-function truncateName(name: string, pn: string, maxTotal = 50): string {
-  const suffix = pn ? ` — ${pn}` : "";
-  const budget = maxTotal - suffix.length;
-  if (name.length <= budget) return name;
-  return name.slice(0, budget - 1).trimEnd() + "…";
+// ── Сниппет ───────────────────────────────────────────────────────────────────
+//
+// Бюджет заголовка Google меряет в ПИКСЕЛЯХ (~600px десктоп), что для кириллицы
+// даёт примерно 60 символов. Суффикс "| K-Axis" из глобального шаблона подавлен
+// через title: { absolute } — те же 9 символов, что экономит карточка авто.
+const TITLE_BUDGET = 60;
+const DESC_BUDGET = 170;
+
+// Обрезка по границе слова. Символьный срез посреди слова
+// ("Головка блока цилиндров в сборе, лев…") читается в выдаче как поломка.
+function clip(s: string, budget: number): string {
+  if (s.length <= budget) return s;
+  const cut = s.slice(0, budget - 1);
+  const space = cut.lastIndexOf(" ");
+  let base = space > budget * 0.6 ? cut.slice(0, space) : cut;
+  // Висящий предлог/союз в конце ("…рулевого механизма с…") читается хуже,
+  // чем обрыв на знаменательном слове — отбрасываем хвостовое короткое слово.
+  base = base.replace(/\s+\S{1,2}$/, "");
+  return base.replace(/[\s,;:.–—-]+$/, "") + "…";
+}
+
+// Артикул идёт ПЕРВЫМ: 93% запросов, по которым ранжируются эти страницы, —
+// это ввод OEM-номера в поиск (GSC, 90 дней: 472 из 505 запросов, 94% показов).
+// Точное совпадение в начале строки Google подсвечивает жирным; раньше номер
+// стоял за родовым существительным и его съедала обрезка.
+function buildTitle(name: string, pn: string): string {
+  if (!pn) return clip(name, TITLE_BUDGET);
+  const head = `${pn} — `;
+  return head + clip(name, TITLE_BUDGET - head.length);
+}
+
+/** Список совместимых моделей для сниппета: до `max` штук + счётчик остальных. */
+function fitmentSample(brands: CompatibleBrand[], max: number) {
+  const total = brands.reduce((n, b) => n + b.models.length, 0);
+  const shown: string[] = [];
+  for (const b of brands) {
+    for (const m of b.models) {
+      if (shown.length >= max) break;
+      const nm = m.name_en.startsWith(b.name) ? m.name_en : `${b.name} ${m.name_en}`;
+      shown.push(m.years ? `${nm} (${m.years})` : nm);
+    }
+    if (shown.length >= max) break;
+  }
+  return { list: shown.join(", "), rest: total - shown.length };
 }
 
 function buildMeta(
@@ -215,43 +252,88 @@ function buildMeta(
     part_number: string | null; name_ru: string; name_en: string; name_ko: string | null;
     seo_title_ru?: string | null; seo_title_en?: string | null;
     seo_desc_ru?: string | null; seo_desc_en?: string | null;
-  }
+  },
+  ctx: { price: string; brands: CompatibleBrand[] }
 ) {
-  const ru = truncateName(p.name_ru || p.name_en || p.name_ko || "Запчасть", p.part_number || "");
-  const en = truncateName(p.name_en || p.name_ru || p.name_ko || "Part", p.part_number || "");
-  const ko = truncateName(p.name_ko || p.name_en || p.name_ru || "부품", p.part_number || "");
+  const ru = p.name_ru || p.name_en || p.name_ko || "Запчасть";
+  const en = p.name_en || p.name_ru || p.name_ko || "Part";
+  const ko = p.name_ko || p.name_en || p.name_ru || "부품";
   const pn = p.part_number || "";
+  const { price } = ctx;
+
+  // Описание собирается из сегментов: имя+артикул, цена+наличие, применимость,
+  // хвост. Применимость — единственный сегмент переменной длины, поэтому под
+  // бюджет ужимается именно она: две модели → одна → совсем без списка. Цена
+  // не выпадает никогда — она и есть то, ради чего кликают.
+  const compose = (
+    head: string,
+    priceSeg: string,
+    fit: (n: number) => string,
+    tail: string
+  ) => {
+    let out = "";
+    for (const n of [2, 1, 0]) {
+      out = [head, priceSeg, fit(n), tail].filter(Boolean).join(" ");
+      if (out.length <= DESC_BUDGET) break;
+    }
+    return out;
+  };
+
+  /** Локализованный сегмент применимости: `${label}: A, B${more(rest)}.` */
+  const fitSeg =
+    (label: string, more: (rest: number) => string) =>
+    (n: number): string => {
+      if (n === 0) return "";
+      const { list, rest } = fitmentSample(ctx.brands, n);
+      if (!list) return "";
+      return `${label}: ${list}${rest > 0 ? more(rest) : ""}.`;
+    };
 
   const map: Record<string, { title: string; description: string }> = {
     ru: {
-      title: pn ? `${ru} — ${pn}` : ru,
-      description: pn
-        ? `Оригинальная запчасть Hyundai Mobis — ${ru}. Артикул: ${pn}. Прямые поставки из Кореи, гарантия качества.`
-        : `Оригинальная запчасть Hyundai Mobis — ${ru}. Прямые поставки из Кореи, гарантия качества.`,
+      title: buildTitle(ru, pn),
+      description: compose(
+        pn ? `${ru}, артикул ${pn}.` : `${ru}.`,
+        price ? `Цена ${price}, в наличии.` : "",
+        fitSeg("Подходит", (rest) => ` и ещё ${rest}`),
+        "Оригинал Hyundai Mobis, отправка из Кореи."
+      ),
     },
     en: {
-      title: pn ? `${en} — ${pn}` : en,
-      description: pn
-        ? `Original Hyundai Mobis spare part — ${en}. Part number: ${pn}. Direct supply from Korea, quality guarantee.`
-        : `Original Hyundai Mobis spare part — ${en}. Direct supply from Korea, quality guarantee.`,
+      title: buildTitle(en, pn),
+      description: compose(
+        pn ? `${en}, part number ${pn}.` : `${en}.`,
+        price ? `Price ${price}, in stock.` : "",
+        fitSeg("Fits", (rest) => ` and ${rest} more`),
+        "Genuine Hyundai Mobis, shipped from Korea."
+      ),
     },
     ko: {
-      title: pn ? `${ko} — ${pn}` : ko,
-      description: pn
-        ? `현대모비스 정품 부품 — ${ko}. 부품 번호: ${pn}. 한국에서 직접 공급, 품질 보증.`
-        : `현대모비스 정품 부품 — ${ko}. 한국에서 직접 공급, 품질 보증.`,
+      title: buildTitle(ko, pn),
+      description: compose(
+        pn ? `${ko}, 부품 번호 ${pn}.` : `${ko}.`,
+        price ? `가격 ${price}, 재고 보유.` : "",
+        fitSeg("적용 차종", (rest) => ` 외 ${rest}종`),
+        "현대모비스 정품, 한국에서 발송."
+      ),
     },
     ka: {
-      title: pn ? `${en} — ${pn}` : en,
-      description: pn
-        ? `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. ნომერი: ${pn}. პირდაპირი მიწოდება კორეიდან.`
-        : `Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი — ${en}. პირდაპირი მიწოდება კორეიდან.`,
+      title: buildTitle(en, pn),
+      description: compose(
+        pn ? `${en}, ნომერი ${pn}.` : `${en}.`,
+        price ? `ფასი ${price}, მარაგშია.` : "",
+        fitSeg("შეესაბამება", (rest) => ` და კიდევ ${rest}`),
+        "ორიგინალი Hyundai Mobis, იგზავნება კორეიდან."
+      ),
     },
     ar: {
-      title: pn ? `${en} — ${pn}` : en,
-      description: pn
-        ? `قطعة غيار أصلية من Hyundai Mobis — ${en}. رقم القطعة: ${pn}. توريد مباشر من كوريا.`
-        : `قطعة غيار أصلية من Hyundai Mobis — ${en}. توريد مباشر من كوريا.`,
+      title: buildTitle(en, pn),
+      description: compose(
+        pn ? `${en}، رقم القطعة ${pn}.` : `${en}.`,
+        price ? `السعر ${price}، متوفر.` : "",
+        fitSeg("يناسب", (rest) => ` و${rest} أخرى`),
+        "أصلية من Hyundai Mobis، تشحن من كوريا."
+      ),
     },
   };
   // Override шаблона утверждённым SEO-контентом (ru/en — приоритетные языки)
@@ -268,18 +350,26 @@ function buildMeta(
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
 
-  const data = await getCachedProduct(slug);
+  const [data, { krwToUsd }] = await Promise.all([getCachedProduct(slug), getCurrencyRates()]);
   if (!data) return {};
 
   const p = data.product;
-  const { title, description } = buildMeta(lang, p);
+  // Цена в сниппете обязана совпадать с ценой, которую видит посетитель, —
+  // тот же formatUsd, что и в CarDetailSidebar/ProductDetailClient, а не своя
+  // арифметика. Курс живой (getCurrencyRates, кэш 24ч), константы в коде нет.
+  const { title, description } = buildMeta(lang, p, {
+    price: formatUsd(p.price_krw, krwToUsd),
+    brands: data.compatibleBrands,
+  });
   // Canonical всегда указывает на чистый URL по артикулу — независимо от того,
   // по какому slug-варианту открыли страницу
   const canonicalSlug = generatePartSlug(p.part_number, null, "ru", p.id);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
   return {
-    title,
+    // absolute — глушит суффикс "| K-Axis" из шаблона в layout.tsx,
+    // освобождая 9 символов пиксельного бюджета под название детали.
+    title: { absolute: title },
     description,
     openGraph: {
       title,
@@ -316,7 +406,10 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   // ── Product JSON-LD (Google Rich Results) ──────────────────────────────────
-  const priceUsd = Math.ceil(product.price_krw * krwToUsd * 1.23);
+  // Цена ОБЯЗАНА совпадать с ценой в карточке. Раньше здесь стоял свой
+  // множитель ×1.23, тогда как витрина считает по тиерам маржи из pricing.ts, —
+  // расхождение доходило до 5% и делало Offer невалидным для rich results.
+  const priceUsd = krwToDisplayUsd(product.price_krw, krwToUsd);
   const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
   const productName =
     lang === "ko"
