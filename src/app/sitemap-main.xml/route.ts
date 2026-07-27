@@ -1,6 +1,7 @@
 // app/sitemap-main.xml/route.ts
 import { NextResponse } from "next/server";
 import { MODEL_PAGES } from "@/data/model-pages";
+import { getIndexableCategorySlugs } from "@/lib/partsCategories";
 
 const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ka", "ar"];
@@ -59,6 +60,25 @@ export async function GET() {
       const loc = buildUrl(lang, modelPath);
       urlBlocks.push(
         `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n${alternates(modelPath)}\n  </url>`
+      );
+    }
+  }
+
+  // Категории запчастей. Только те, что проходят порог по числу товаров —
+  // остальные отдают noindex, и класть их сюда было бы противоречиво.
+  // Список никогда не роняет сайтмап: при сбое БД он просто пустой.
+  let categorySlugs: string[] = [];
+  try {
+    categorySlugs = await getIndexableCategorySlugs();
+  } catch {
+    categorySlugs = [];
+  }
+  for (const slug of categorySlugs) {
+    const catPath = `parts/category/${slug}`;
+    for (const lang of LANGS) {
+      const loc = buildUrl(lang, catPath);
+      urlBlocks.push(
+        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n${alternates(catPath)}\n  </url>`
       );
     }
   }

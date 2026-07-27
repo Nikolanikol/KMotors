@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { Hero } from "@/app/parts/sections/Hero";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
 import { PopularModels } from "@/app/parts/sections/PopularModels";
+import { CategoryIndex } from "@/app/parts/sections/CategoryIndex";
 
 // Lazy load — грузятся после Hero
 const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").then(m => ({ default: m.PartsCatalog })));
@@ -141,6 +142,7 @@ export default async function PartsPage({ params }: Props) {
         <Hero />
         <PopularModels lang={lang} />
         <PartsCatalog />
+        <CategoryIndex lang={lang} />
         <About />
         <ContactForm />
       </div>
