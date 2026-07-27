@@ -58,7 +58,7 @@ function buildCopy(lang: string, full: string, brandName: string) {
     ru: {
       h1: `Запчасти для ${full}`,
       intro: `Каталог оригинальных запчастей Hyundai Mobis для ${full}. Двигатель, подвеска, кузов, электрика и салон — с подбором по вашему поколению. K-Axis отгружает напрямую со складов в Южной Корее.`,
-      title: `Запчасти ${full} — оригинал из Кореи | K-Axis`,
+      title: `Запчасти ${full} — оригинал из Кореи`,
       desc: `Оригинальные запчасти Hyundai Mobis для ${full}. Прямая отправка из Кореи, подбор по поколению и году выпуска.`,
       count: (n) => `Позиций в каталоге: ${n}`,
       others: `Другие поколения ${brandName}`,
@@ -66,7 +66,7 @@ function buildCopy(lang: string, full: string, brandName: string) {
     en: {
       h1: `${full} Parts`,
       intro: `Genuine Hyundai Mobis parts catalog for the ${full}. Engine, suspension, body, electrical and interior — matched to your exact generation. K-Axis ships direct from warehouses in South Korea.`,
-      title: `${full} Parts — Genuine OEM from Korea | K-Axis`,
+      title: `${full} Parts — Genuine OEM from Korea`,
       desc: `Genuine Hyundai Mobis parts for the ${full}. Direct shipping from Korea, matched by generation and model year.`,
       count: (n) => `Parts in catalog: ${n}`,
       others: `Other ${brandName} generations`,
@@ -74,7 +74,7 @@ function buildCopy(lang: string, full: string, brandName: string) {
     ko: {
       h1: `${full} 부품`,
       intro: `${full}에 맞는 현대모비스 정품 부품 카탈로그입니다. 엔진, 서스펜션, 바디, 전장, 실내 부품을 세대별로 정확하게 확인하세요. K-Axis는 한국 창고에서 직접 발송합니다.`,
-      title: `${full} 부품 — 한국 정품 | K-Axis`,
+      title: `${full} 부품 — 한국 정품`,
       desc: `${full}용 현대모비스 정품 부품. 한국에서 직접 배송, 세대·연식별 맞춤 조회.`,
       count: (n) => `카탈로그 품목: ${n}`,
       others: `다른 ${brandName} 세대`,
@@ -82,7 +82,7 @@ function buildCopy(lang: string, full: string, brandName: string) {
     ka: {
       h1: `${full} ნაწილები`,
       intro: `Hyundai Mobis-ის ორიგინალი ნაწილების კატალოგი ${full}-სთვის. ძრავა, სავალი ნაწილი, ძარა, ელექტრო და სალონი — შერჩეული თქვენი თაობის მიხედვით. K-Axis აგზავნის პირდაპირ სამხრეთ კორეის საწყობებიდან.`,
-      title: `${full} ნაწილები — ორიგინალი კორეიდან | K-Axis`,
+      title: `${full} ნაწილები — ორიგინალი კორეიდან`,
       desc: `Hyundai Mobis-ის ორიგინალი ნაწილები ${full}-სთვის. პირდაპირი მიწოდება კორეიდან, შერჩევა თაობისა და წლის მიხედვით.`,
       count: (n) => `პოზიციები კატალოგში: ${n}`,
       others: `${brandName}-ის სხვა თაობები`,
@@ -90,7 +90,7 @@ function buildCopy(lang: string, full: string, brandName: string) {
     ar: {
       h1: `قطع غيار ${full}`,
       intro: `كتالوج قطع غيار Hyundai Mobis الأصلية لسيارة ${full}. المحرك، التعليق، الهيكل، الكهرباء والمقصورة — مطابقة لجيل سيارتك بدقة. تشحن K-Axis مباشرة من مستودعات كوريا الجنوبية.`,
-      title: `قطع غيار ${full} — أصلية من كوريا | K-Axis`,
+      title: `قطع غيار ${full} — أصلية من كوريا`,
       desc: `قطع غيار Hyundai Mobis الأصلية لسيارة ${full}. شحن مباشر من كوريا، مطابقة حسب الجيل وسنة الصنع.`,
       count: (n) => `عدد القطع في الكتالوج: ${n}`,
       others: `أجيال ${brandName} الأخرى`,
@@ -112,16 +112,23 @@ function displayName(v: VehicleRow): { full: string; brandName: string } {
   return { full: `${withBrand}${y ? ` (${y})` : ""}`, brandName };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { lang, brand, slug } = await params;
+  const { page: pageParam } = await searchParams;
   const v = await findVehicle(brand, slug);
   if (!v) return {};
   const { full, brandName } = displayName(v);
   const copy = buildCopy(lang, full, brandName);
-  const path = `/fitment/${brand}/${slug}`;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  // Страницы пагинации каноникалят САМИ НА СЕБЯ. Раньше makeAlternates получал
+  // путь без ?page, поэтому все страницы схлопывались на первую — Google их
+  // отбрасывал вместе с единственными ссылками на товары со 2-й и дальше.
+  const path = `/fitment/${brand}/${slug}${page > 1 ? `?page=${page}` : ""}`;
 
   return {
-    title: copy.title,
+    // absolute — иначе к заголовку, который уже содержит имя бренда, шаблон из
+    // layout.tsx дописывал второй суффикс: "… | K-Axis — 2 | K-Axis".
+    title: { absolute: page > 1 ? `${copy.title} — ${page}` : copy.title },
     description: copy.desc,
     ...(v.parts_count < GEN_MIN_PARTS && { robots: { index: false, follow: true } }),
     alternates: makeAlternates(lang, path),
