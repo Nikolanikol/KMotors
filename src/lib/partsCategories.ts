@@ -1,5 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
+import { CAT_MIN_PARTS, isBucketCategory, ownsSlug } from "./partsCategoryRules";
+
+export { CAT_MIN_PARTS, isBucketCategory } from "./partsCategoryRules";
 
 // Дерево категорий запчастей: 6 корней, 93 узла второго уровня, 77 третьего.
 //
@@ -55,7 +58,10 @@ export function indexCategories(rows: PartsCategory[]) {
   for (const node of byId.values()) if (node.parent_id === null) setDepth(node, 0);
 
   const bySlug = new Map<string, CategoryNode>();
-  for (const node of byId.values()) bySlug.set(node.slug, node);
+  for (const node of byId.values()) {
+    const current = bySlug.get(node.slug);
+    if (!current || node.id < current.id) bySlug.set(node.slug, node);
+  }
 
   return { byId, bySlug, roots: [...byId.values()].filter((n) => n.parent_id === null) };
 }
@@ -67,45 +73,57 @@ export function subtreeIds(node: CategoryNode): number[] {
   return out;
 }
 
-/** Количество товаров в поддереве категории. */
-export const getCategoryCount = unstable_cache(
-  async (ids: number[]): Promise<number> => {
-    const { count } = await createServerClient()
+/**
+ * Сколько товаров в каждой подкатегории: { subcategory_id → количество }.
+ *
+ * Считается ОДНИМ проходом по колонке subcategory_id, а не запросом на
+ * категорию. Замер на живой базе: один `count` по 48 689 строкам стоит
+ * ~0.9 с сам по себе, то есть 176 категорий — это минуты, и на холодном
+ * кэше от этого вставали и sitemap, и рендер /parts. Постраничная выборка
+ * одной колонки: 49 параллельных запросов, 1.3 с суммарно.
+ */
+const getSubcategoryHistogram = unstable_cache(
+  async (): Promise<Record<number, number>> => {
+    const supabase = createServerClient();
+    const PAGE = 1000;
+
+    const first = await supabase
       .from("parts_products")
-      .select("*", { count: "exact", head: true })
-      .in("subcategory_id", ids);
-    return count ?? 0;
+      .select("subcategory_id", { count: "exact" })
+      .range(0, PAGE - 1);
+
+    const total = first.count ?? 0;
+    const rest = await Promise.all(
+      Array.from({ length: Math.max(0, Math.ceil(total / PAGE) - 1) }, (_, i) =>
+        supabase
+          .from("parts_products")
+          .select("subcategory_id")
+          .range((i + 1) * PAGE, (i + 2) * PAGE - 1)
+          .then((r) => r.data ?? [])
+      )
+    );
+
+    const histogram: Record<number, number> = {};
+    for (const row of [...(first.data ?? []), ...rest.flat()]) {
+      const id = (row as { subcategory_id: number | null }).subcategory_id;
+      if (id !== null) histogram[id] = (histogram[id] ?? 0) + 1;
+    }
+    return histogram;
   },
-  ["parts-category-count"],
+  ["parts-subcategory-histogram"],
   { revalidate: 3600, tags: ["parts-categories"] }
 );
+
+/** Количество товаров в поддереве категории — из гистограммы, без запросов. */
+export async function getCategoryCount(ids: number[]): Promise<number> {
+  const histogram = await getSubcategoryHistogram();
+  return ids.reduce((sum, id) => sum + (histogram[id] ?? 0), 0);
+}
 
 export const localizedName = (node: PartsCategory, lang: string) =>
   lang === "ru" ? node.name_ru : node.name_en || node.name_ru;
 
-/**
- * Порог тонкого контента: категории меньше рендерятся, но отдают noindex
- * и не попадают в sitemap. Значение согласовано со страницей категории.
- */
-export const CAT_MIN_PARTS = 30;
 
-// Категории-корзины: «Прочее двигатель», «Мелкие детали АКПП», «Кронштейны
-// мелкие» и т.п. Это внутренние вёдра, под которые никто не ищет, — как
-// посадочные они бесполезны. Плюс small-parts-staging, служебное название,
-// которому вообще не место в публичном интерфейсе.
-//
-// Правило по слагу, а не по названию: колонки-флага в parts_categories нет,
-// а эти три шаблона покрывают ровно 25 таких категорий из 176 и ни одной
-// лишней (проверено по выгрузке дерева).
-const BUCKET_SLUG = /(^small-|-small-|-other$|staging)/;
-
-/**
- * Служебная/мусорная категория: не показываем в навигации, не индексируем,
- * не кладём в sitemap. Из дерева при этом НЕ вырезаем — иначе её товары
- * выпали бы из поддерева родителя и потеряли единственный путь обхода
- * (у одной только small-parts-staging таких 247).
- */
-export const isBucketCategory = (slug: string) => BUCKET_SLUG.test(slug);
 
 /** Категории, которые показываем человеку в навигации. */
 export const visibleChildren = (node: CategoryNode) =>
@@ -113,37 +131,26 @@ export const visibleChildren = (node: CategoryNode) =>
 
 /**
  * Слаги категорий, которые заслуживают индексации. Нужны сайтмапу: класть
- * туда noindex-страницы — противоречивый сигнал, Google на него ругается.
+ * туда noindex-страницы — противоречивый сигнал. Тот же список получает
+ * облако категорий в сайдбаре, чтобы навигация и сайтмап не разъезжались.
  *
- * Считается раз в сутки: это ~176 HEAD-запросов (count без выборки строк),
- * поэтому обёрнуто в кэш с большим окном, а не считается на каждый запрос.
+ * Своего кэша не держит: считается из гистограммы и дерева, оба закэшированы.
  */
-export const getIndexableCategorySlugs = unstable_cache(
-  async (): Promise<string[]> => {
-    const rows = await fetchCategories();
-    const { byId } = indexCategories(rows);
-    const supabase = createServerClient();
+export async function getIndexableCategorySlugs(): Promise<string[]> {
+  const [rows, histogram] = await Promise.all([
+    getPartsCategories(),
+    getSubcategoryHistogram(),
+  ]);
+  const { byId } = indexCategories(rows);
 
-    const nodes = [...byId.values()];
-    const out: string[] = [];
-    // Небольшими партиями, чтобы не открывать 176 соединений разом.
-    for (let i = 0; i < nodes.length; i += 12) {
-      const batch = nodes.slice(i, i + 12);
-      const counts = await Promise.all(
-        batch.map(async (node) => {
-          const { count } = await supabase
-            .from("parts_products")
-            .select("*", { count: "exact", head: true })
-            .in("subcategory_id", subtreeIds(node));
-          return { slug: node.slug, count: count ?? 0 };
-        })
-      );
-      for (const c of counts) {
-        if (c.count >= CAT_MIN_PARTS && !isBucketCategory(c.slug)) out.push(c.slug);
-      }
-    }
-    return out;
-  },
-  ["parts-indexable-categories"],
-  { revalidate: 86400, tags: ["parts-categories"] }
-);
+  const nodes = [...byId.values()];
+  return nodes
+    .filter((node) => {
+      if (isBucketCategory(node.slug)) return false;
+      // Слаг может принадлежать двум категориям — в sitemap нужен один <loc>.
+      if (!ownsSlug(node, nodes)) return false;
+      const count = subtreeIds(node).reduce((s, id) => s + (histogram[id] ?? 0), 0);
+      return count >= CAT_MIN_PARTS;
+    })
+    .map((node) => node.slug);
+}

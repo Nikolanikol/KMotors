@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { isBucketCategory } from "@/lib/partsCategories";
+// Импорт из partsCategoryRules, а НЕ из partsCategories: второй тянет
+// createServerClient и next/cache, которым в клиентском бандле не место.
+import { isBucketCategory, ownsSlug } from "@/lib/partsCategoryRules";
 import type { Category } from "./PartsCatalogClient";
 
 // Облако категорий в левой колонке каталога, под фильтром.
@@ -41,7 +43,10 @@ export function CategoryCloud({
     // Если список не доехал — откатываемся на отсев одних лишь вёдер.
     const allow = new Set(indexable);
     const show = (c: Category) =>
-      allow.size ? allow.has(c.slug) : !isBucketCategory(c.slug);
+      // ownsSlug: слаг body-panels принадлежит двум категориям в разных
+      // ветках, и без этого в облаке было бы две одинаковые ссылки на один URL.
+      ownsSlug(c, categories) &&
+      (allow.size ? allow.has(c.slug) : !isBucketCategory(c.slug));
 
     const roots = categories.filter((c) => c.parent_id === null && show(c));
 
