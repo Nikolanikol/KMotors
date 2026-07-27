@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getIndexableCategorySlugs } from "@/lib/partsCategories";
 import { PartsCatalogClient } from "./PartsCatalogClient";
 import type { Brand, Category, VehicleModel, ModelChip, Product } from "./PartsCatalogClient";
 
@@ -155,7 +156,12 @@ async function fetchCatalogData() {
     );
   });
 
-  return { brands, categories, brandModelChipsMap, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts };
+  // Категории для облака в сайдбаре: ровно тот же список, что уходит в
+  // sitemap, — иначе в навигации всплывали бы пустые ветки («Зеркала» под
+  // «Кузов» с нулём товаров) и внутренние вёдра.
+  const indexableCategorySlugs = await getIndexableCategorySlugs().catch(() => [] as string[]);
+
+  return { brands, categories, brandModelChipsMap, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts, indexableCategorySlugs };
 }
 
 const getCachedCatalogData = unstable_cache(

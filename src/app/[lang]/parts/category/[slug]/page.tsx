@@ -11,6 +11,8 @@ import {
   indexCategories,
   subtreeIds,
   localizedName,
+  isBucketCategory,
+  visibleChildren,
   type CategoryNode,
 } from "@/lib/partsCategories";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
@@ -101,9 +103,13 @@ async function resolve(slug: string) {
     ancestors.unshift(parent);
     p = parent.parent_id;
   }
-  const siblings = node.parent_id !== null
-    ? (byId.get(node.parent_id)?.children ?? []).filter((c) => c.id !== node.id)
-    : [...byId.values()].filter((c) => c.parent_id === null && c.id !== node.id);
+  // Вёдра из навигации убираем: как посадочные они бесполезны, а их товары
+  // всё равно достижимы через пагинацию родительской категории.
+  const siblings = (
+    node.parent_id !== null
+      ? (byId.get(node.parent_id)?.children ?? [])
+      : [...byId.values()].filter((c) => c.parent_id === null)
+  ).filter((c) => c.id !== node.id && !isBucketCategory(c.slug));
 
   return { node, ancestors, siblings, ids: subtreeIds(node) };
 }
@@ -131,12 +137,17 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   // ссылки на товары со 2-й страницы и дальше — а других ссылок на них нет.
   const path = `/parts/category/${slug}${page > 1 ? `?page=${page}` : ""}`;
 
+  // noindex, follow: для тонких категорий и для внутренних вёдер («Прочее …»,
+  // «Мелкие детали …», staging). Follow обязателен — страница остаётся путём
+  // обхода к товарам, просто сама в индекс не идёт.
+  const noindex = total < CAT_MIN_PARTS || isBucketCategory(slug);
+
   return {
     // absolute — суффикс "| K-Axis" из шаблона в layout.tsx выводит заголовок
     // за пиксельный бюджет выдачи (68 символов против 59 без него).
     title: { absolute: page > 1 ? `${copy.title} — ${page}` : copy.title },
     description: copy.desc,
-    ...(total < CAT_MIN_PARTS && { robots: { index: false, follow: true } }),
+    ...(noindex && { robots: { index: false, follow: true } }),
     alternates: makeAlternates(lang, path),
     openGraph: { title: copy.title, description: copy.desc, url: `${BASE}/${lang}${path}`, type: "website" },
   };
@@ -247,11 +258,11 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         <p className="text-[15px] text-[var(--pn-text-muted)] max-w-3xl mb-3 leading-relaxed">{copy.intro}</p>
         <p className="text-sm font-medium text-[var(--pn-orange-soft)] mb-8">{copy.count(total)}</p>
 
-        {node.children.length > 0 && (
+        {visibleChildren(node).length > 0 && (
           <nav aria-label={copy.children} className="mb-8">
             <h2 className="text-lg font-semibold text-[var(--pn-text)] mb-3">{copy.children}</h2>
             <div className="flex flex-wrap gap-2">
-              {node.children.map((c) => (
+              {visibleChildren(node).map((c) => (
                 <Link
                   key={c.id}
                   href={`/${lang}/parts/category/${c.slug}`}
