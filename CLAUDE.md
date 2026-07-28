@@ -132,6 +132,35 @@ Publish /api/seo/publish (src/lib/seo-publish.ts) — approved → parts_product
 
 LLM access is provider-agnostic via src/lib/llm.ts (LlmClient.generateJSON()); provider/tier switch is env var LLM_PROVIDER only, no call-site changes. Transient failures retry; QuotaError stops the batch. blog-generate shares the same daily quota.
 
+Расписания живут на VPS, а НЕ в vercel.json — это уже стоило месяца тишины
+
+Прод крутится на Coolify/VPS, краны Vercel исполняются только на Vercel. Заявленное в vercel.json расписание блога не исполнял никто: июнь-июль 2026 дали 2 поста в месяц вместо ~10, а между 7 июня и 18 июля не вышло ни одного. Диагностировать это было тяжело именно потому, что и README, и CLAUDE.md уверенно писали «Vercel cron». Блок crons из vercel.json удалён — не возвращать, там остались только headers.
+
+Каждое задание = скрипт в scripts/ + строка в системном планировщике на VPS. Строка для crontab лежит в шапке самого скрипта.
+
+| Задание | Скрипт / эндпоинт | Расписание | Гейт |
+|---|---|---|---|
+| Черновик статьи блога | scripts/blog-generate-cron.sh | 0 10 */3 * * | x-poster-secret |
+| Синхронизация RSS-новостей | scripts/rss-sync-cron.sh | 0 9 * * * | x-poster-secret |
+| Сбор статистики GSC | scripts/seo-collect-cron.sh | ежедневно | x-seo-secret |
+| Автопостинг авто в Telegram | /api/poster/run (systemd timer) | по окну публикации | x-poster-secret |
+
+Секреты: два, не больше. POSTER_CRON_SECRET (заголовок x-poster-secret) закрывает /api/poster/run, /api/poster/parts/run, /api/rss-sync и /api/blog-generate. SEO_CRON_SECRET (заголовок x-seo-secret) закрывает SEO-пайплайн. CRON_SECRET больше не используется нигде — он был задан только в README и ни разу в окружении.
+
+Гейты обязаны быть FAIL-CLOSED: `if (!secret || req.headers.get("x-poster-secret") !== secret) return 401`. Прежняя схема rss-sync — «проверяем, ЕСЛИ секрет задан» — при незаданной переменной просто не срабатывала, и роут месяцами стоял открытым, хотя README утверждал обратное. Не писать новые гейты в стиле fail-open.
+
+Блог — генерация статей (blog_topics → blog_posts)
+
+/api/blog-generate (Gemini 2.5-flash напрямую, не через llm.ts): берёт из blog_topics самую приоритетную тему со status='pending' → генерирует RU → переводит на EN (ko/ka/ar не генерируем, их страницы noindex) → обложка с Pexels → вставка в blog_posts. Замер на проде: ~45 сек на статью.
+
+Инварианты, которые легко сломать:
+
+- Пост создаётся ЧЕРНОВИКОМ (published: false). На сайт он попадает только после кнопки в Telegram (callback publish: в telegram-webhook). Генерация ≠ публикация — «постов нет» может значить «черновики есть, их не одобрили».
+- Квалити-гейт внутри ретрая: валидный JSON + минимум 700 слов + обязательная markdown-таблица. Три попытки.
+- Провал НЕ сжигает тему. Раньше стоял терминальный status='failed', а автовыбор берёт только 'pending' — любая разовая осечка Gemini выбрасывала тему из пула навсегда, и пул истощался молча. Теперь при провале приоритет понижается на PRIORITY_PENALTY (тема уходит в конец очереди и вернётся), а 'failed' ставится только когда приоритет исчерпан. Схему для этого не меняли — используется существующая колонка priority (шкала /10).
+- Пустой пул и остаток <= LOW_POOL_THRESHOLD шлют уведомление в Telegram. До этого пустой пул отвечал молчаливым ok: true, и узнать о нём было неоткуда — крон исправно ходил и ничего не делал.
+- Статусы blog_topics: pending / generated / skipped / failed.
+
 Сайтмапы — краул-бюджет делится между авто и запчастями, и это не поровну
 
 Мастер-индекс src/app/sitemap.xml/route.ts собирает: sitemap-main.xml (статические страницы × 4 языка + модельные + индексируемые категории запчастей), sitemap-blog.xml (только ru+en, остальные языки noindex), sitemap-fitment.xml (поколения с parts_count >= 10), затем sitemap-parts/1..N (по 1 000 товаров) и sitemap-catalog/1..N (по 200 машин). robots.ts отдаёт Google ТОЛЬКО sitemap.xml — дочерние файлы не подаются отдельно.
@@ -154,7 +183,7 @@ src/utils/customsCalculator/ — import duty calculator (Russia/Uzbekistan; engi
 src/lib/matryoshka.ts + src/lib/ems-rates.ts — bin-packing of EMS parcels into Korea Post boxes to minimize billed weight.
 src/lib/supabase/client.ts vs server.ts — browser vs server clients (@supabase/ssr).
 Admin panel (src/app/admin/) — separate auth from storefront: single ADMIN_PASSWORD env + admin_session cookie, checked in middleware.ts.
-Deploys: Vercel (primary — vercel.json, cron, headers), Netlify mirror (netlify.toml), standalone Docker (output: 'standalone').
+Deploys: Coolify на VPS (единственный живой прод, см. раздел Deployment в начале файла). vercel.json остаётся ТОЛЬКО ради headers, netlify.toml — мёртвый зеркальный конфиг, output: 'standalone' для Docker-сборки. Строка «Vercel primary» жила здесь до 07.2026 и стоила месяца молчащего блога — не восстанавливать.
 design-reference/ — separate Vite project, visual reference only; no runtime relationship to src/.
 Docs by request (load only when relevant)
 docs/seo-automation.md — full SEO pipeline design
