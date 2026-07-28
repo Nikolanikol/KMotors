@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { headers } from "next/headers";
 import dynamic from "next/dynamic";
 import { MODEL_PAGES } from "@/data/model-pages";
@@ -16,6 +17,7 @@ import { makeAlternates } from "@/lib/seo";
 import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
 import { buildSpecBits, loadCarsDict, normalizeBrand } from "@/lib/carLabels";
+import { markCarSold, recordCarSeen } from "@/lib/carsSeen";
 
 // Lazy load — не нужны сразу при загрузке
 const DetailInfoSection = dynamic(
@@ -277,8 +279,19 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     !data ||
     !data.category?.manufacturerEnglishName ||
     !data.advertisement?.price
-  )
+  ) {
+    // Строгий null = 404 от Encar = машина продана. Авария апстрима сюда не
+    // доходит: fetchData на ней бросает VehicleUpstreamError. Непустой, но
+    // кривой ответ продажей не считаем — иначе сбой парсинга у Encar пометил бы
+    // живые машины проданными.
+    if (data === null) after(() => markCarSold(id));
     notFound();
+  }
+
+  // Снимок в cars_seen: когда Encar начнёт отдавать по этому id 404, брать
+  // данные для страницы «машина продана» будет уже неоткуда. after() — чтобы
+  // поход в базу не задерживал ответ посетителю.
+  after(() => recordCarSeen(id, data));
 
   // filter(Boolean) обязателен: gradeDetailEnglishName часто null, и без него
   // в названии появлялся двойной пробел — он утекал в JSON-LD и в текст FAQ.
