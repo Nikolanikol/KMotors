@@ -23,6 +23,14 @@ npx tsc --noEmit
 
 There is no test suite — never assume npm test works.
 
+Застрял — сообщи сразу, не молчи
+
+lint + tsc обязательны всегда. Всё остальное (браузерная проверка, дев-сервер, скриншоты, скрипты, внешние API) — если инструмент виснет, отваливается по таймауту или требует обходных путей, ОСТАНОВИСЬ после ВТОРОЙ неудачной попытки и напиши пользователю: что не работает, что уже сделано, какие есть варианты. Не уходи в молчаливый цикл обходных решений — это сжигает время и деньги, а пользователь узнаёт об этом постфактум.
+
+Типовые случаи: панель браузера скрыта (`document.visibilityState === "hidden"` → скриншоты чёрные — проверять через DOM/read_page или попросить открыть панель), дев-сервер не поднимается, Encar/Supabase не отвечают.
+
+Правило простое: сама работа важнее её демонстрации. Код готов и проверен через lint/tsc — доложи об этом и о проблеме с проверкой, дальше решает пользователь.
+
 Deployment — READ FIRST
 Every push to main triggers an automatic production redeploy (Coolify on the VPS). git push to main is a deploy action, not a save action.
 The Supabase database is self-hosted on the same VPS and is the LIVE production database. .env in this repo points at it. Any SQL, any data script, any supabase CLI command touches production directly. There is no separate staging DB.
@@ -88,6 +96,14 @@ Entry: /[lang]/parts and /[lang]/parts/[slug]. UI blocks in src/app/parts/sectio
 Data: /api/parts/products (paginated, faceted counts) ← parts_products.
 Vehicle compatibility is split across two systems (see Rules): source of truth part_vehicles+vehicles (product page, /fitment, sitemaps, seo-generate); legacy parts_fitment+parts_vehicle_models (only catalog model-filter chips).
 Parts-page design tokens are --pn-* custom properties in src/app/globals.css, distinct from axis.* Tailwind tokens used by the rest of the dark-themed site.
+
+Пустая выдача каталога = точка потери клиента, а не служебное состояние
+
+Нулевой результат поиска раньше означал «Ничего не найдено» — клиент делал вывод, что детали нет, и уходил. Теперь при products.length === 0 рендерится NoResultsBanner.tsx (src/app/parts/sections/): оффер «привезём под заказ» + три пути в личку — заявка через тот же OrderModal (source: parts_no_results, артикул из поиска подставляется в partNumber, лид уходит в Telegram через /api/telegram) и прямые ссылки WhatsApp / Telegram с готовым текстом запроса.
+Инвариант: строка счётчика над сеткой при total === 0 остаётся ПУСТОЙ — «ничего не найдено» больше нигде не дублируется. Не возвращать t("parts.catalog.noResults") в results bar.
+Ключи баннера — parts.catalog.miss.* во всех четырёх локалях (ru/en/ka/ar). Ключи noResults / noResultsHint остались в JSON для других мест — их наличие не значит, что баннер их использует.
+События: search_no_results (с search_term), no_results_request, no_results_messenger — это метрика спроса на то, чего нет в базе; ей меряется, что закупать. Не переименовывать без причины.
+
 SEO automation pipeline (parts)
 
 Cron-triggered, guarded by header x-seo-secret / env SEO_CRON_SECRET. Design doc: docs/seo-automation.md.

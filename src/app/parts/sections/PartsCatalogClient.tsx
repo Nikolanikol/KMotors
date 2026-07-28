@@ -28,6 +28,7 @@ import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
 import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
 import { CategoryCloud } from "./CategoryCloud";
+import { NoResultsBanner } from "./NoResultsBanner";
 
 const PAGE_SIZE_DESKTOP = 24;
 const PAGE_SIZE_MOBILE = 10;
@@ -679,7 +680,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                 {isLoading && products.length === 0
                   ? "…"
                   : total === 0
-                  ? t("parts.catalog.noResults")
+                  ? "" /* пустую выдачу озвучивает NoResultsBanner — дублировать «ничего не найдено» незачем */
                   : t("parts.catalog.resultsShown", { shown: `${pageStart}–${pageEnd}`, total })
                 }
               </span>
@@ -709,7 +710,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                   {Array.from({ length: pageSize }).map((_, i) => <ProductSkeleton key={i} />)}
                 </div>
               ) : products.length === 0 ? (
-                <EmptyState onReset={handleReset} t={t} />
+                <NoResultsBanner query={searchQ} onReset={handleReset} />
               ) : (
                 <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {products.map((product, index) => {
@@ -845,19 +846,3 @@ function FilterTag({ label, onRemove }: { label: string; onRemove: () => void })
   );
 }
 
-// ─── EmptyState ──────────────────────────────────────────────────────────────
-
-function EmptyState({ onReset, t }: { onReset: () => void; t: (key: string) => string }) {
-  return (
-    <div className="text-center py-24">
-      <div className="w-16 h-16 rounded-full bg-[var(--pn-surface-2)] border border-[var(--pn-border)] flex items-center justify-center mx-auto mb-4">
-        <Search className="w-8 h-8 text-[var(--pn-text-dim)]" />
-      </div>
-      <p className="text-[var(--pn-text)] font-medium mb-1">{t("parts.catalog.noResults")}</p>
-      <p className="text-sm text-[var(--pn-text-muted)] mb-4">{t("parts.catalog.noResultsHint")}</p>
-      <button onClick={onReset} className="text-sm text-[var(--pn-orange)] underline hover:brightness-110 transition-colors">
-        {t("parts.catalog.resetFilters")}
-      </button>
-    </div>
-  );
-}
