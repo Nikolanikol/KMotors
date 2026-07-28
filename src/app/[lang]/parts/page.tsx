@@ -12,8 +12,12 @@ const ContactForm = dynamic(() => import("@/app/parts/sections/ContactForm").the
 const LANGS = ["ru", "en", "ka", "ar"];
 const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 
-// Полностью статично — пересобирается только при следующем деплое
-export const revalidate = false;
+// Час, а не false. Первый экран каталога рендерится на сервере ради SEO, и
+// вместе с ним PartsTopLinks + PopularModels — это видимый ботам граф
+// внутренних ссылок. При revalidate = false он оставался слепком с билда, и
+// новые товары не попадали в него до следующего деплоя. TTL совпадает с
+// внутренним кешем parts-catalog-data (unstable_cache, 3600).
+export const revalidate = 3600;
 
 // Pre-generate все 5 языковых вариантов при сборке
 export function generateStaticParams() {

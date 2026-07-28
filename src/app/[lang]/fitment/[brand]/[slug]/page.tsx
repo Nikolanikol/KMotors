@@ -10,7 +10,10 @@ import { generatePartSlug } from "@/utils/partSlug";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 
-export const revalidate = false;
+// 24 часа, а не false: страница показывает цены (krwToUsd, кеш курса 24ч) и
+// списки деталей поколения, которые растут вместе с каталогом. При
+// revalidate = false ни то, ни другое не обновлялось до деплоя.
+export const revalidate = 86400;
 export const dynamicParams = true;
 
 const BASE = "https://www.kmotors.shop";
