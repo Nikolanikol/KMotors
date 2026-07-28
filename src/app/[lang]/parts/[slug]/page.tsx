@@ -15,10 +15,18 @@ import type {
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import { makeAlternates } from "@/lib/seo";
 
-// Страницы продуктов рендерятся по требованию и кэшируются навсегда.
-// generateStaticParams убран: 50k × 5 langs = 250k страниц при сборке — неприемлемо.
-// dynamicParams = true (дефолт) — неизвестные [slug] рендерятся при первом визите.
-export const revalidate = false;
+// Страницы продуктов рендерятся по требованию: generateStaticParams убран,
+// 50k × 4 langs при сборке неприемлемо. dynamicParams = true (дефолт) —
+// неизвестные [slug] рендерятся при первом визите. Сборку это и обеспечивает;
+// revalidate тут отдельная ручка и на объём сборки не влияет.
+//
+// 24 часа, а не false: цена в HTML считается от krwToUsd (getCurrencyRates,
+// кеш 24ч). При revalidate = false страница не перерендеривается никогда, и
+// этот кеш курса не может сработать — курс замерзает на момент первого визита,
+// а /api/parts/checkout (POST, не кешируется) считает по свежему. Витрина и
+// чекаут расходятся тем сильнее, чем дольше страница лежит. TTL совпадает с
+// кешем самого курса: чаще смысла нет, реже — снова копим расхождение.
+export const revalidate = 86400;
 export const dynamicParams = true;
 
 const BRAND_ORDER: Record<string, number> = {
@@ -356,7 +364,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = data.product;
   // Цена в сниппете обязана совпадать с ценой, которую видит посетитель, —
   // тот же formatUsd, что и в CarDetailSidebar/ProductDetailClient, а не своя
-  // арифметика. Курс живой (getCurrencyRates, кэш 24ч), константы в коде нет.
+  // арифметика. Курс живой (getCurrencyRates, кеш 24ч), константы в коде нет —
+  // но «живой» он ровно настолько, насколько часто перерендеривается страница:
+  // держать revalidate этого маршрута не выше 24ч обязательно, иначе курс
+  // запекается в HTML намертво и превращается в ту самую константу.
   const { title, description } = buildMeta(lang, p, {
     price: formatUsd(p.price_krw, krwToUsd),
     brands: data.compatibleBrands,
