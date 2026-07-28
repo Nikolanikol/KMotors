@@ -115,6 +115,23 @@ Publish /api/seo/publish (src/lib/seo-publish.ts) — approved → parts_product
 
 LLM access is provider-agnostic via src/lib/llm.ts (LlmClient.generateJSON()); provider/tier switch is env var LLM_PROVIDER only, no call-site changes. Transient failures retry; QuotaError stops the batch. blog-generate shares the same daily quota.
 
+Сайтмапы — краул-бюджет делится между авто и запчастями, и это не поровну
+
+Мастер-индекс src/app/sitemap.xml/route.ts собирает: sitemap-main.xml (статические страницы × 4 языка + модельные + индексируемые категории запчастей), sitemap-blog.xml (только ru+en, остальные языки noindex), sitemap-fitment.xml (поколения с parts_count >= 10), затем sitemap-parts/1..N (по 1 000 товаров) и sitemap-catalog/1..N (по 200 машин). robots.ts отдаёт Google ТОЛЬКО sitemap.xml — дочерние файлы не подаются отдельно.
+
+Соотношение сил: запчастей ~48 700 URL, машин 2 000. Запчасти вечные, машина одноразовая (продалась → Encar 404 → noindex). Поэтому у каталога авто приоритеты сознательно занижены, и это НЕ баг:
+
+- Карточки машин отдаются БЕЗ <lastmod> и БЕЗ <changefreq>, с priority 0.5 (ниже запчастей с 0.7). lastmod раньше брался из Encar ModifiedDate — а это дата переподнятия объявления, не изменения страницы; она обновлялась каждый час на всех URL и превращала каталог в вечную заявку на переобход. Тег необязательный: без него Google планирует обход сам. Не возвращать.
+- CATALOG_MAX_CARS в sitemap.xml/route.ts и MAX_OFFSET в sitemap-catalog/[page]/route.ts — ОДНО И ТО ЖЕ число (2 000), меняются только вместе, иначе индекс сошлётся на пустые файлы. 2 000 — это наш выбор ради краул-бюджета, а не предел Encar: сам Encar отдаёт данные примерно до offset 10 000 и обрывается сразу после.
+
+Порядок выдачи Encar стабилизировать нечем — проверено эмпирически
+
+sr=|Id| и sr=|Price| дают HTTP 400; живых ключа сортировки два, ModifiedDate и Year. ModifiedDate пересобирает выдачу при каждом переподнятии объявления, Year бесполезен (на 155 тысяч машин ~15 значений, внутри года порядок произвольный). Следствие, которое надо просто знать: offset-пагинация по живой выдаче нестабильна, один файл содержит ~200 URL на ~180 уникальных Id, и между файлами дубли тоже есть. Google дедуплицирует URL по индексу целиком, так что это терпимо. Настоящее лечение — сложить Id в своё хранилище (таблица + крон) и отдавать сайтмап из него; это даст и стабильный номер страницы, и честный lastmod = дата первого появления.
+
+Известный неисправленный баг: sitemap-parts/[page] сортирует .order("price_krw") без уникального тайбрейкера, из-за чего при равных ценах порядок строк между запросами не гарантирован — на стыках страниц часть товаров дублируется, а примерно столько же не попадает ни в один файл (замер: страницы 2 и 3 пересекаются на 4 URL). Лечится добавлением .order("id") вторым ключом.
+
+src/app/sitemap-parts.xml/route.ts — осиротевший второй индекс запчастей: на него не ссылаются ни sitemap.xml, ни robots.ts. Либо удалить, либо проверить, не подан ли он в GSC руками (тогда это дубль отправки).
+
 Other notable pieces
 src/utils/customsCalculator/ — import duty calculator (Russia/Uzbekistan; engine cc, age, price).
 src/lib/matryoshka.ts + src/lib/ems-rates.ts — bin-packing of EMS parcels into Korea Post boxes to minimize billed weight.

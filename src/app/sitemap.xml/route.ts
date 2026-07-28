@@ -3,10 +3,12 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 
 const BASE = "https://www.kmotors.shop";
-// Должно совпадать с sitemap-catalog/[page]: 200 URL на файл,
-// глубже ~10 000 машин Encar выдачу не отдаёт
+// Должно совпадать с sitemap-catalog/[page]: 200 URL на файл и тот же потолок.
+// 2 000 — не предел Encar (он ~10 000), а сознательный лимит ради краул-бюджета;
+// обоснование в комментарии к MAX_OFFSET в sitemap-catalog/[page]/route.ts.
+// Меняешь здесь — меняй и там, иначе индекс сошлётся на пустые файлы.
 const CATALOG_PAGE_SIZE = 200;
-const CATALOG_MAX_CARS = 10_000;
+const CATALOG_MAX_CARS = 2_000;
 const PARTS_PAGE_SIZE = 1_000;
 const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
 const QUERY = "(And.Hidden.N._.CarType.Y.)";
@@ -45,7 +47,7 @@ export async function GET() {
 
   const catalogPages = catalogCount > 0
     ? Math.ceil(Math.min(catalogCount, CATALOG_MAX_CARS) / CATALOG_PAGE_SIZE)
-    : 50;
+    : CATALOG_MAX_CARS / CATALOG_PAGE_SIZE;
 
   const partsPages = Math.ceil(partsCount / PARTS_PAGE_SIZE) || 49;
 
