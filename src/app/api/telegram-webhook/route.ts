@@ -270,7 +270,11 @@ async function handleGenerateCommand(chatId: number) {
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
-    const res = await fetch(`${baseUrl}/api/blog-generate`, { method: "POST" });
+    // /api/blog-generate закрыт POSTER_CRON_SECRET — без заголовка получим 401.
+    const res = await fetch(`${baseUrl}/api/blog-generate`, {
+      method: "POST",
+      headers: { "x-poster-secret": process.env.POSTER_CRON_SECRET ?? "" },
+    });
     const result = await res.json();
 
     if (!res.ok || !result.ok) {

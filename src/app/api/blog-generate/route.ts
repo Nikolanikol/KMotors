@@ -6,6 +6,38 @@ import { buildEncarGrounding } from "@/lib/encarModelPrices";
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+// Порог «тем осталось мало» — при таком остатке pending шлём предупреждение.
+// Крон ходит раз в 3 дня, значит 3 темы это примерно неделя запаса.
+const LOW_POOL_THRESHOLD = 3;
+
+// Штраф приоритета за неудачную генерацию (см. handleGenerate).
+const PRIORITY_PENALTY = 3;
+
+/** Служебное сообщение владельцу. Никогда не роняет генерацию. */
+async function notify(text: string): Promise<void> {
+  if (!CHAT_ID) return;
+  try {
+    await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML" }),
+    });
+  } catch {
+    /* уведомление — не критичный путь */
+  }
+}
+
+/** Сколько тем ещё ждут генерации. null — если посчитать не удалось. */
+async function countPending(
+  supabase: ReturnType<typeof createServerClient>
+): Promise<number | null> {
+  const { count, error } = await supabase
+    .from("blog_topics")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+  return error ? null : count ?? 0;
+}
+
 async function fetchCoverImage(imageQuery: string): Promise<string | null> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey || !imageQuery) return null;
@@ -181,6 +213,18 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleGenerate(req: NextRequest) {
+  // Тот же гейт, что у /api/poster/run: заголовок x-poster-secret.
+  // Раньше эндпоинт был открыт всему интернету — любой мог жечь квоту Gemini
+  // и плодить черновики.
+  //
+  // Fail-closed намеренно: нет секрета в окружении — 401 для всех. Это норма
+  // poster-роутов. У rss-sync исторически обратное (нет секрета → пускаем
+  // всех), из-за чего он и оставался открытым: CRON_SECRET нигде не задан.
+  const secret = process.env.POSTER_CRON_SECRET;
+  if (!secret || req.headers.get("x-poster-secret") !== secret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "GEMINI_API_KEY not configured" }, { status: 500 });
@@ -218,6 +262,15 @@ async function handleGenerate(req: NextRequest) {
   }
 
   if (!topic) {
+    // Раньше это был молчаливый ok: true — крон исправно ходил, ничего не делал,
+    // и узнать об этом было неоткуда. Теперь пустой пул сообщает о себе сам.
+    await notify(
+      "📭 <b>Темы для блога закончились</b>\n\n" +
+        "В blog_topics не осталось ни одной записи со статусом pending — " +
+        "генерация статей остановлена до пополнения.\n\n" +
+        "Добавь темы в Supabase → blog_topics (status: pending), " +
+        "либо посмотри /topics в этом чате."
+    );
     return NextResponse.json({ ok: true, message: "No pending topics available" });
   }
 
@@ -280,7 +333,33 @@ async function handleGenerate(req: NextRequest) {
     }, "Gemini generate");
   } catch (err) {
     console.error("Gemini generate failed after 3 attempts:", err);
-    await supabase.from("blog_topics").update({ status: "failed" }).eq("id", topic.id);
+
+    // Тема НЕ сгорает. Раньше здесь стоял терминальный status: "failed", а
+    // автовыбор берёт только pending — то есть каждая осечка Gemini (в том числе
+    // разовая: оборванный JSON, короткий текст, забытая таблица) навсегда
+    // выбрасывала тему из пула. Пул истощался необратимо и молча.
+    //
+    // Вместо этого опускаем приоритет: тема пропускает вперёд остальные и
+    // вернётся к попытке, когда снова окажется наверху. Терминальный failed —
+    // только когда запас приоритета исчерпан (примерно 3-4 осечки для темы с
+    // приоритетом 9), то есть когда тема действительно безнадёжна.
+    const nextPriority = topic.priority - PRIORITY_PENALTY;
+    const giveUp = nextPriority < 0;
+
+    await supabase
+      .from("blog_topics")
+      .update(giveUp ? { status: "failed" } : { priority: nextPriority })
+      .eq("id", topic.id);
+
+    await notify(
+      `⚠️ <b>Не удалось сгенерировать статью</b>\n\n` +
+        `Тема: ${escapeHtml(topic.topic)}\n` +
+        `Причина: ${escapeHtml(String(err)).slice(0, 300)}\n\n` +
+        (giveUp
+          ? "Приоритет исчерпан — тема помечена failed и больше не берётся."
+          : `Приоритет понижен ${topic.priority} → ${nextPriority}, тема вернётся в очередь.`)
+    );
+
     return NextResponse.json({ error: "Failed to generate article after retries", details: String(err) }, { status: 500 });
   }
 
@@ -395,6 +474,18 @@ async function handleGenerate(req: NextRequest) {
     });
   }
 
+  // Предупредить заранее, а не постфактум: об исчерпании пула лучше узнать за
+  // неделю до того, как генерация встанет, а не когда она уже встала.
+  const remaining = await countPending(supabase);
+  if (remaining !== null && remaining <= LOW_POOL_THRESHOLD) {
+    await notify(
+      `📉 <b>Темы для блога заканчиваются</b>\n\n` +
+        `Осталось pending-тем: <b>${remaining}</b>. ` +
+        `При текущем расписании это примерно ${remaining * 3} дн. запаса.\n\n` +
+        `Добавь новые в Supabase → blog_topics (status: pending).`
+    );
+  }
+
   return NextResponse.json({
     ok: true,
     slug: topic.slug,
@@ -402,5 +493,6 @@ async function handleGenerate(req: NextRequest) {
     title: ruData.title_ru,
     type: topic.type,
     priority: topic.priority,
+    pendingLeft: remaining,
   });
 }

@@ -10,16 +10,6 @@
       "staging": false
     }
   },
-  "crons": [
-    {
-      "path": "/api/rss-sync",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/blog-generate",
-      "schedule": "0 10 */3 * *"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
