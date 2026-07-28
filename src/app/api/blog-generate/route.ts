@@ -213,16 +213,16 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleGenerate(req: NextRequest) {
-  // Тот же гейт, что и у /api/rss-sync: Authorization: Bearer <CRON_SECRET>.
+  // Тот же гейт, что у /api/poster/run: заголовок x-poster-secret.
   // Раньше эндпоинт был открыт всему интернету — любой мог жечь квоту Gemini
-  // и плодить черновики. Если CRON_SECRET не задан (локальная разработка),
-  // проверка не применяется, поведение как раньше.
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    if (token !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // и плодить черновики.
+  //
+  // Fail-closed намеренно: нет секрета в окружении — 401 для всех. Это норма
+  // poster-роутов. У rss-sync исторически обратное (нет секрета → пускаем
+  // всех), из-за чего он и оставался открытым: CRON_SECRET нигде не задан.
+  const secret = process.env.POSTER_CRON_SECRET;
+  if (!secret || req.headers.get("x-poster-secret") !== secret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;

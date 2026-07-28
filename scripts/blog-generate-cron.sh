@@ -8,7 +8,8 @@
 # (июнь-июль 2026: 2 поста в месяц вместо ожидаемых 10). Планировщик здесь —
 # системный cron, а не хостинг.
 #
-# Секрет читается из окружения CRON_SECRET, иначе — из .env приложения.
+# Секрет читается из окружения POSTER_CRON_SECRET, иначе — из .env приложения.
+# Тот же секрет и тот же заголовок, что у автопостера (/api/poster/run).
 # Настройки можно переопределить переменными окружения:
 #   BLOG_ENDPOINT  (по умолчанию https://www.kmotors.shop/api/blog-generate)
 #   ENV_FILE       (по умолчанию /var/www/kmotors/.env — поправь под свой путь)
@@ -22,14 +23,14 @@ BLOG_ENDPOINT="${BLOG_ENDPOINT:-https://www.kmotors.shop/api/blog-generate}"
 ENV_FILE="${ENV_FILE:-/var/www/kmotors/.env}"
 
 # Если секрет не передан в окружении — достаём из .env приложения
-if [[ -z "${CRON_SECRET:-}" ]]; then
+if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
   if [[ -f "$ENV_FILE" ]]; then
-    CRON_SECRET="$(grep -m1 '^CRON_SECRET=' "$ENV_FILE" | cut -d= -f2-)"
+    POSTER_CRON_SECRET="$(grep -m1 '^POSTER_CRON_SECRET=' "$ENV_FILE" | cut -d= -f2-)"
   fi
 fi
 
-if [[ -z "${CRON_SECRET:-}" ]]; then
-  echo "[$(date -Is)] ERROR: CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
+if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
+  echo "[$(date -Is)] ERROR: POSTER_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
   exit 1
 fi
 
@@ -39,7 +40,7 @@ echo "[$(date -Is)] POST $BLOG_ENDPOINT"
 # Замер на проде — 45 сек, но при ретраях бывает дольше.
 HTTP_CODE=$(curl -fsS -o /tmp/blog-generate-resp.json -w '%{http_code}' \
   --max-time 300 \
-  -X POST -H "Authorization: Bearer ${CRON_SECRET}" \
+  -X POST -H "x-poster-secret: ${POSTER_CRON_SECRET}" \
   "$BLOG_ENDPOINT") || {
     echo "[$(date -Is)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
     cat /tmp/blog-generate-resp.json >&2 || true

@@ -6,7 +6,8 @@
 # ЗАЧЕМ ОН НУЖЕН: то же, что и у blog-generate-cron.sh — расписание лежало в
 # vercel.json, а прод на Coolify/VPS, где краны Vercel не исполняются.
 #
-# Секрет читается из окружения CRON_SECRET, иначе — из .env приложения.
+# Секрет читается из окружения POSTER_CRON_SECRET, иначе — из .env приложения.
+# Тот же секрет и тот же заголовок, что у автопостера (/api/poster/run).
 # Настройки можно переопределить переменными окружения:
 #   RSS_ENDPOINT   (по умолчанию https://www.kmotors.shop/api/rss-sync)
 #   ENV_FILE       (по умолчанию /var/www/kmotors/.env — поправь под свой путь)
@@ -20,14 +21,14 @@ RSS_ENDPOINT="${RSS_ENDPOINT:-https://www.kmotors.shop/api/rss-sync}"
 ENV_FILE="${ENV_FILE:-/var/www/kmotors/.env}"
 
 # Если секрет не передан в окружении — достаём из .env приложения
-if [[ -z "${CRON_SECRET:-}" ]]; then
+if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
   if [[ -f "$ENV_FILE" ]]; then
-    CRON_SECRET="$(grep -m1 '^CRON_SECRET=' "$ENV_FILE" | cut -d= -f2-)"
+    POSTER_CRON_SECRET="$(grep -m1 '^POSTER_CRON_SECRET=' "$ENV_FILE" | cut -d= -f2-)"
   fi
 fi
 
-if [[ -z "${CRON_SECRET:-}" ]]; then
-  echo "[$(date -Is)] ERROR: CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
+if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
+  echo "[$(date -Is)] ERROR: POSTER_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
   exit 1
 fi
 
@@ -36,7 +37,7 @@ echo "[$(date -Is)] GET $RSS_ENDPOINT"
 # /api/rss-sync — метод GET (в отличие от blog-generate).
 HTTP_CODE=$(curl -fsS -o /tmp/rss-sync-resp.json -w '%{http_code}' \
   --max-time 300 \
-  -H "Authorization: Bearer ${CRON_SECRET}" \
+  -H "x-poster-secret: ${POSTER_CRON_SECRET}" \
   "$RSS_ENDPOINT") || {
     echo "[$(date -Is)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
     cat /tmp/rss-sync-resp.json >&2 || true

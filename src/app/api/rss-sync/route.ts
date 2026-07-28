@@ -21,15 +21,15 @@ const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOK
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 export async function GET(req: NextRequest) {
-  // Validate cron secret
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret) {
-    const token = authHeader?.replace("Bearer ", "");
-    if (token !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // Тот же гейт, что у /api/poster/run и /api/blog-generate: x-poster-secret.
+  //
+  // Было: CRON_SECRET с проверкой «если секрет задан». Задан он нигде не был,
+  // поэтому условие не срабатывало и эндпоинт по факту оставался открытым,
+  // хотя README утверждал обратное. Fail-closed убирает этот класс ошибки:
+  // забыли переменную — получаем 401, а не молча открытый роут.
+  const secret = process.env.POSTER_CRON_SECRET;
+  if (!secret || req.headers.get("x-poster-secret") !== secret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

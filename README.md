@@ -116,7 +116,8 @@ EMAIL_FROM=
 
 # Blog
 PEXELS_API_KEY=           # stock images for AI-generated posts
-CRON_SECRET=              # guards /api/rss-sync and /api/blog-generate
+POSTER_CRON_SECRET=       # guards /api/poster/run, /api/rss-sync, /api/blog-generate
+                          # all three are fail-closed: no value => 401 for everyone
 ```
 
 ### Run
@@ -182,8 +183,9 @@ crontab:
 
 | Job | Script | Schedule | Guard |
 |---|---|---|---|
-| Blog article draft | `scripts/blog-generate-cron.sh` | `0 10 */3 * *` | `Authorization: Bearer $CRON_SECRET` |
-| RSS news sync | `scripts/rss-sync-cron.sh` | `0 9 * * *` | `Authorization: Bearer $CRON_SECRET` |
+| Blog article draft | `scripts/blog-generate-cron.sh` | `0 10 */3 * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+| RSS news sync | `scripts/rss-sync-cron.sh` | `0 9 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+| Telegram car poster | `/api/poster/run` (systemd timer) | per posting window | `x-poster-secret: $POSTER_CRON_SECRET` |
 | GSC stats collect | `scripts/seo-collect-cron.sh` | daily | `x-seo-secret: $SEO_CRON_SECRET` |
 
 Each script reads its secret from the environment, falling back to the app's `.env`
