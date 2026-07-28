@@ -22,7 +22,7 @@
 - **Customs calculator** — duty estimation for Russia and Uzbekistan based on engine volume, age, and price
 - **Shipping cost optimizer** — bin-packing algorithm (`matryoshka.ts`) that groups EMS parcels into official Korea Post boxes to minimize billed weight, guaranteed never more expensive than per-item billing
 - **AI SEO pipeline** (parts) — Search Console stats collector → LLM-drafted titles/descriptions/cross-refs → Telegram approval gate → publish + IndexNow ping (see below)
-- **AI-generated blog** — Gemini-drafted posts + RSS auto-sync, both on Vercel cron
+- **AI-generated blog** — Gemini-drafted posts + RSS auto-sync, both on VPS cron (`scripts/*-cron.sh`)
 - **Multilingual** — Russian (default), English, Georgian, Arabic — `react-i18next`, geo/cookie/Accept-Language-based redirect in middleware. Korean is disabled (301 → `/en/*`)
 - **Telegram integration** — order/checkout notifications, SEO digest + approval, webhook-driven admin actions
 - **Admin panel** — password-protected route (`/admin`) for blog/content management
@@ -44,7 +44,7 @@
 | LLM | Gemini or Groq (Llama 3.3 70B) — provider-agnostic, one env var swap (`src/lib/llm.ts`) |
 | Payments | PayPal |
 | Email | Resend |
-| Deployment | Vercel (cron jobs, security headers, edge middleware) |
+| Deployment | Coolify on VPS (push to `main` redeploys); cron via system crontab + `scripts/*-cron.sh` |
 | External APIs | Encar.com (cars), Search Console, Telegram Bot API |
 
 ---
@@ -116,7 +116,7 @@ EMAIL_FROM=
 
 # Blog
 PEXELS_API_KEY=           # stock images for AI-generated posts
-CRON_SECRET=              # guards /api/rss-sync
+CRON_SECRET=              # guards /api/rss-sync and /api/blog-generate
 ```
 
 ### Run
@@ -157,7 +157,7 @@ src/
 
 ## SEO Automation Pipeline (parts catalog)
 
-An unattended, human-gated content pipeline for parts pages, cron-triggered on Vercel and guarded by `SEO_CRON_SECRET`:
+An unattended, human-gated content pipeline for parts pages, cron-triggered from the VPS and guarded by `SEO_CRON_SECRET`:
 
 1. **Collect** (`/api/seo/collect`) — pulls Search Console impressions/CTR/position into `seo_page_stats`
 2. **Generate** (`/api/seo/generate`) — picks parts with impressions but no improved copy yet, drafts `title`/`description`/body (RU+EN) and cross-reference numbers via the configured LLM, strict prompt rules (no invented specs, proper Russian automotive terminology, no transliteration), stores as `seo_suggestions` (`status: draft`)
@@ -172,18 +172,27 @@ Calculates import duties based on vehicle age, engine displacement (cc), and pri
 
 ## Deployment
 
-Deployed on Vercel. Cron jobs:
+Deployed on **Coolify on the VPS** — every push to `main` triggers a production redeploy.
 
-```json
-{
-  "crons": [
-    { "path": "/api/rss-sync", "schedule": "0 9 * * *" },
-    { "path": "/api/blog-generate", "schedule": "0 10 */3 * *" }
-  ]
-}
-```
+`vercel.json` is kept for headers only. It used to declare `crons`, but Vercel cron
+is executed by Vercel and nothing else — on the VPS those entries were inert, and the
+blog quietly stopped publishing (2 posts/month instead of ~10). **Do not put schedules
+there.** Every scheduled job is a shell script in `scripts/` plus a line in the VPS
+crontab:
 
-SEO pipeline crons (`/api/seo/collect|generate|publish`) are triggered externally (not yet in `vercel.json`) with the `x-seo-secret` header.
+| Job | Script | Schedule | Guard |
+|---|---|---|---|
+| Blog article draft | `scripts/blog-generate-cron.sh` | `0 10 */3 * *` | `Authorization: Bearer $CRON_SECRET` |
+| RSS news sync | `scripts/rss-sync-cron.sh` | `0 9 * * *` | `Authorization: Bearer $CRON_SECRET` |
+| GSC stats collect | `scripts/seo-collect-cron.sh` | daily | `x-seo-secret: $SEO_CRON_SECRET` |
+
+Each script reads its secret from the environment, falling back to the app's `.env`
+(`ENV_FILE`, default `/var/www/kmotors/.env`), and is a single `curl` — all the work
+happens inside the Next process. Install with `crontab -e`; the exact line is in each
+script's header comment.
+
+The remaining SEO pipeline endpoints (`/api/seo/generate|publish`) are triggered
+manually via the Telegram approval gate, not on a schedule.
 
 ---
 
