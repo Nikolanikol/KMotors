@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useRef, useMemo, useReducer, useTransition } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useReducer, useTransition, memo } from "react";
 import { trackEvent } from "@/utils/gtag";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -204,24 +204,36 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
   const urlCats   = useMemo(() => mergeUrlParam(catsParam, catParam), [catsParam, catParam]);
 
   // ── URL updaters ──────────────────────────────────────────────────────────
+  // replace: true — URL переписывается через history API, БЕЗ router.push.
+  // Данные каталога приходят из /api/parts/products, серверный рендер
+  // /[lang]/parts от searchParams не зависит, поэтому на строке поиска push
+  // означал бы полный RSC-запрос всей страницы (Hero, каталог, About,
+  // ContactForm) на каждый дебаунс-тик — и по записи в истории на каждое слово.
   const updateParams = useCallback(
-    (updates: Record<string, string | undefined>) => {
-      const params = new URLSearchParams(searchParams.toString());
+    (updates: Record<string, string | undefined>, opts?: { replace?: boolean }) => {
+      // База — живой URL, а не useSearchParams(): после replaceState хук может
+      // обновиться не синхронно, и следующий клик по фильтру потерял бы q.
+      const params = new URLSearchParams(window.location.search);
       Object.entries(updates).forEach(([k, v]) => {
         if (v === undefined || v === "") params.delete(k);
         else params.set(k, v);
       });
       const qs = params.toString();
+      const url = qs ? `${pathname}?${qs}` : pathname;
+      if (opts?.replace) {
+        window.history.replaceState(null, "", url);
+        return;
+      }
       startTransition(() => {
-        router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+        router.push(url, { scroll: false });
       });
     },
-    [searchParams, router, pathname, startTransition]
+    [router, pathname, startTransition]
   );
 
   const updateFilters = useCallback(
-    (updates: Record<string, string | undefined>) => {
-      updateParams({ ...updates, page: undefined });
+    (updates: Record<string, string | undefined>, opts?: { replace?: boolean }) => {
+      updateParams({ ...updates, page: undefined }, opts);
     },
     [updateParams]
   );
@@ -274,32 +286,23 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
 
   const handleReset = useCallback(() => {
     dispatch({ type: "RESET" });
-    setSearchInput("");
     setSearchQ("");
     router.push(pathname, { scroll: false });
   }, [router, pathname]);
 
-  // ── Search (debounced 300ms) ──────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
-  const [searchQ, setSearchQ]         = useState(searchParams.get("q") ?? "");
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchQ(searchInput);
-      updateFilters({ q: searchInput || undefined });
-      if (searchInput.length > 2) {
-        trackEvent("search", { search_term: searchInput, section: "parts" });
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
+  // ── Search ────────────────────────────────────────────────────────────────
+  // Здесь живёт только ЗАФИКСИРОВАННЫЙ запрос. Сам ввод и дебаунс — внутри
+  // SearchBar: иначе каждая набранная буква перерисовывала бы сетку из 24
+  // карточек, сайдбар и облако категорий.
+  const [searchQ, setSearchQ] = useState(searchParams.get("q") ?? "");
 
-  // Hero pill-search → fill catalog search
-  useEffect(() => {
-    const handler = (e: Event) => setSearchInput((e as CustomEvent<string>).detail ?? "");
-    window.addEventListener("parts:hero-search", handler);
-    return () => window.removeEventListener("parts:hero-search", handler);
-  }, []);
+  const handleSearchCommit = useCallback((value: string) => {
+    setSearchQ(value);
+    updateFilters({ q: value || undefined }, { replace: true });
+    if (value.length > 2) {
+      trackEvent("search", { search_term: value, section: "parts" });
+    }
+  }, [updateFilters]);
 
   // ── Quick view modal ──────────────────────────────────────────────────────
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
@@ -514,7 +517,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
     if (searchQ) {
       tags.push({
         label: `"${searchQ}"`,
-        onRemove: () => { setSearchInput(""); setSearchQ(""); updateFilters({ q: undefined }); },
+        onRemove: () => { setSearchQ(""); updateFilters({ q: undefined }, { replace: true }); },
       });
     }
     return tags;
@@ -558,29 +561,15 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
         </div>
 
         {/* Search bar */}
-        <div className={`relative mb-6 max-w-2xl mx-auto transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          {isLoading && searchQ ? (
-            <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-orange)] animate-spin pointer-events-none z-10" />
-          ) : (
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-text-dim)] pointer-events-none z-10" />
-          )}
-          <Input
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t("parts.catalog.filterSearchPlaceholder")}
-            className="pn-glow pl-12 h-11 sm:h-[52px] text-sm sm:text-base text-[var(--pn-text)] placeholder:text-[var(--pn-text-dim)] border border-[var(--pn-border)] focus-visible:ring-0 rounded-xl bg-[var(--pn-surface-2)] shadow-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => { setSearchInput(""); setSearchQ(""); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-[var(--pn-text-dim)] hover:text-[var(--pn-text)] transition-colors z-10"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        <SearchBar
+          committed={searchQ}
+          onCommit={handleSearchCommit}
+          loading={isLoading && !!searchQ}
+          placeholder={t("parts.catalog.filterSearchPlaceholder")}
+          submitLabel={t("parts.hero.searchButton")}
+          clearLabel={t("filter.reset")}
+          className={`mb-6 max-w-2xl mx-auto transition-all duration-700 delay-100 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        />
 
         {/* Two-column layout */}
         <div className="flex flex-col lg:flex-row gap-6">
@@ -781,6 +770,109 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
     </section>
   );
 }
+
+// ─── SearchBar ───────────────────────────────────────────────────────────────
+// Поиск отправляется ЯВНО — кнопкой или Enter, без дебаунса по вводу. Набор
+// артикула «26300-35505» — это 11 символов, то есть до 11 запросов к
+// /api/parts/products по 48 700 товарам за один осознанный поиск; ни один
+// промежуточный результат человеку не нужен. Теперь запрос ровно один.
+//
+// Ввод при этом живёт внутри компонента: наружу уходит только отправленное
+// значение, поэтому буквы не перерисовывают 24 карточки, сайдбар с фасетными
+// счётчиками и облако категорий.
+
+const SearchBar = memo(function SearchBar({
+  committed, onCommit, loading, placeholder, submitLabel, clearLabel, className,
+}: {
+  committed: string;
+  onCommit: (value: string) => void;
+  loading: boolean;
+  placeholder: string;
+  submitLabel: string;
+  clearLabel: string;
+  className?: string;
+}) {
+  const [value, setValue] = useState(committed);
+  const lastCommitted = useRef(committed);
+
+  // onCommit пересоздаётся при смене URL — держим в ref, чтобы обработчики
+  // ниже не пересоздавались вслед за ним.
+  const onCommitRef = useRef(onCommit);
+  useEffect(() => { onCommitRef.current = onCommit; });
+
+  // Повторная отправка того же запроса не идёт в сеть.
+  const commit = useCallback((v: string) => {
+    if (v === lastCommitted.current) return;
+    lastCommitted.current = v;
+    onCommitRef.current(v);
+  }, []);
+
+  // Внешний сброс: крестик на теге фильтра, «сбросить фильтры». Собственные
+  // отправки сюда не возвращаются — иначе текст, набранный сразу после
+  // отправки, затирался бы откатом к уже отправленному значению.
+  useEffect(() => {
+    if (committed === lastCommitted.current) return;
+    lastCommitted.current = committed;
+    setValue(committed);
+  }, [committed]);
+
+  // Поиск из Hero — уже осознанный запрос, выполняем сразу, без второго клика.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const q = ((e as CustomEvent<string>).detail ?? "").trim();
+      setValue(q);
+      commit(q);
+    };
+    window.addEventListener("parts:hero-search", handler);
+    return () => window.removeEventListener("parts:hero-search", handler);
+  }, [commit]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = value.trim();
+    setValue(v);
+    commit(v);
+  };
+
+  return (
+    <form className={className} role="search" onSubmit={submit}>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          {loading ? (
+            <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-orange)] animate-spin pointer-events-none z-10" />
+          ) : (
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--pn-text-dim)] pointer-events-none z-10" />
+          )}
+          <Input
+            type="search"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            enterKeyHint="search"
+            className="pn-glow pl-12 pr-10 h-11 sm:h-[52px] text-sm sm:text-base text-[var(--pn-text)] placeholder:text-[var(--pn-text-dim)] border border-[var(--pn-border)] focus-visible:ring-0 rounded-xl bg-[var(--pn-surface-2)] shadow-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
+          />
+          {value && (
+            // Очистка — тоже осознанное действие: возвращаем полный каталог сразу.
+            <button
+              type="button"
+              onClick={() => { setValue(""); commit(""); }}
+              aria-label={clearLabel}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--pn-text-dim)] hover:text-[var(--pn-text)] transition-colors z-10"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="shrink-0 h-11 sm:h-[52px] px-5 sm:px-8 rounded-xl bg-[var(--pn-orange)] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[var(--pn-orange)]/20 hover:brightness-110 active:scale-95 transition-all"
+        >
+          {submitLabel}
+        </button>
+      </div>
+    </form>
+  );
+});
 
 // ─── Pagination ──────────────────────────────────────────────────────────────
 
