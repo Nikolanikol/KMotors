@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCars } from "@/components/Catalog/Row/utils/service";
 import { fetchVehicleData } from "@/lib/vehicle";
+import { normalizeBrand } from "@/lib/carLabels";
 import {
   FETCH_LIMIT,
   listDueSubscriptions,
@@ -40,18 +41,42 @@ const MAX_DETAIL_CHECKS = 20;
  * Разбираем явно, иначе Date.parse трактует их как UTC и даёт сдвиг в 9 часов —
  * достаточно, чтобы вчерашняя машина выглядела завтрашней.
  */
-async function isListedAfter(id: string, since: number): Promise<boolean> {
+/** Машина-кандидат вместе с уже загруженной карточкой — чтобы не ходить дважды. */
+interface Candidate {
+  id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listing: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  detail: any;
+}
+
+/**
+ * Карточка машины, если объявление подано ПОСЛЕ момента подписки, иначе null.
+ *
+ * manage.firstAdvertisedDateTime — дата подачи, единственный надёжный признак
+ * новизны. Не путать с ModifiedDate из листинга: та обновляется при каждом
+ * переподнятии объявления дилером.
+ *
+ * Даты Encar отдаёт без зоны ("2026-06-14T14:30:10"), время корейское (UTC+9).
+ * Разбираем явно, иначе Date.parse трактует их как UTC и даёт сдвиг в 9 часов —
+ * достаточно, чтобы вчерашняя машина выглядела завтрашней.
+ *
+ * Карточку возвращаем целиком: из неё же берутся английские названия для
+ * текста сообщения (в листинге их нет вовсе).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function detailIfNew(id: string, since: number): Promise<any | null> {
   try {
     const data = await fetchVehicleData(id);
     const raw = data?.manage?.firstAdvertisedDateTime;
-    if (typeof raw !== "string" || !raw) return false;
+    if (typeof raw !== "string" || !raw) return null;
     const listed = Date.parse(`${raw}+09:00`);
-    if (!Number.isFinite(listed)) return false;
-    return listed > since;
+    if (!Number.isFinite(listed) || listed <= since) return null;
+    return data;
   } catch {
     // Карточка не открылась (машину уже сняли, апстрим моргнул) — молчим.
     // Ложное «новая» дороже пропущенной машины: от спама отписываются.
-    return false;
+    return null;
   }
 }
 
@@ -60,16 +85,38 @@ interface SendResult {
   sent: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function carLine(car: any, krwToUsd: number): string {
-  const krw = Number(car?.Price) * 10000;
-  const name = [car?.Manufacturer, car?.Model, car?.Badge].filter(Boolean).join(" ");
-  const year = car?.FormYear ? ` ${car.FormYear}` : "";
-  const mileage = car?.Mileage ? ` · ${Number(car.Mileage).toLocaleString("ru-RU")} км` : "";
+// В HTML-разметке Telegram активны три символа; имена приходят от Encar,
+// то есть это чужие данные, и экранировать их обязательно.
+const esc = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function carLine(c: Candidate, krwToUsd: number): string {
+  const cat = c.detail?.category ?? {};
+  // ⚠️ Только английские имена. Листинг Encar отдаёт корейские
+  // («쉐보레(GM대우) 올 뉴 말리부»), и первая же живая рассылка ушла на хангыле.
+  // На сайте это лечит translateGenerationRow, но у него нужен i18next, а здесь
+  // его нет — зато в карточке лежат готовые английские поля. Марку прогоняем
+  // через normalizeBrand: Encar склеивает её (ChevroletGMDaewoo).
+  const name =
+    [
+      normalizeBrand(cat.manufacturerEnglishName),
+      cat.modelGroupEnglishName,
+      cat.gradeEnglishName,
+      cat.formYear ? String(cat.formYear) : null,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim() || `Автомобиль ${c.id}`;
+
+  const krw = Number(c.detail?.advertisement?.price) * 10000;
+  const mileageRaw = Number(c.detail?.spec?.mileage ?? c.listing?.Mileage);
+  const mileage = Number.isFinite(mileageRaw)
+    ? ` · ${mileageRaw.toLocaleString("ru-RU")} км`
+    : "";
   const price = Number.isFinite(krw)
     ? ` — ${krw.toLocaleString("ru-RU")} ₩ (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`
     : "";
-  return `• <a href="${SITE}/ru/catalog/${car.Id}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=subscription">${name}${year}</a>${mileage}${price}`;
+  return `• <a href="${SITE}/ru/catalog/${c.id}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=subscription">${esc(name)}</a>${mileage}${price}`;
 }
 
 async function sendToChat(chatId: number, text: string, subId: number) {
@@ -146,9 +193,10 @@ export async function GET(req: NextRequest) {
       // тех, кто появился уже после оформления подписки. Кандидатов единицы,
       // так что лишних запросов почти нет.
       const subscribedAt = Date.parse(sub.created_at);
-      const fresh: typeof candidates = [];
+      const fresh: Candidate[] = [];
       for (const c of candidates.slice(0, MAX_DETAIL_CHECKS)) {
-        if (await isListedAfter(String(c.Id), subscribedAt)) fresh.push(c);
+        const detail = await detailIfNew(String(c.Id), subscribedAt);
+        if (detail) fresh.push({ id: String(c.Id), listing: c, detail });
       }
 
       if (fresh.length === 0) {
@@ -161,7 +209,7 @@ export async function GET(req: NextRequest) {
       const show = fresh.slice(0, MAX_CARS_PER_MESSAGE);
       const more = fresh.length - show.length;
       const header = sub.title
-        ? `🚗 Появились похожие на <b>${sub.title}</b>`
+        ? `🚗 Появились похожие на <b>${esc(sub.title)}</b>`
         : `🚗 Появились подходящие машины`;
       const text =
         `${header}\n\n` +
