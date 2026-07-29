@@ -37,16 +37,24 @@ const WRITE_TTL_MS = 60 * 60 * 1000;
 const MAX_TRACKED = 5_000;
 const lastWrite = new Map<string, number>();
 
-function shouldWrite(id: string): boolean {
-  const prev = lastWrite.get(id);
+// Ключи снимка и отметки продажи живут в одной Map, поэтому разводим их
+// префиксом: иначе запись снимка «съедала» бы право отметить ту же машину
+// проданной в том же часе.
+function shouldWrite(key: string): boolean {
+  const prev = lastWrite.get(key);
   if (prev && Date.now() - prev < WRITE_TTL_MS) return false;
   // Инстанс живёт долго, а машин в обороте много — Map без потолка это утечка.
   // Дешевле сбросить целиком, чем городить LRU: потеряем лишь право пропустить
   // запись, а не сами данные.
   if (lastWrite.size >= MAX_TRACKED) lastWrite.clear();
-  lastWrite.set(id, Date.now());
+  lastWrite.set(key, Date.now());
   return true;
 }
+
+// Id у Encar — целое число (в обороте 8-значные). Всё остальное, что прилетает
+// в /catalog/[id], это сканеры и мусор из индекса: по ним поход в базу заведомо
+// холостой, строки с таким ключом там быть не может.
+const VALID_ID_RE = /^\d{6,10}$/;
 
 const int = (v: unknown): number | null => {
   const n = Number(v);
@@ -148,10 +156,18 @@ export async function saveCarSnapshots(rows: CarSnapshot[]): Promise<number> {
 /**
  * Фоновая запись снимка при рендере карточки. Вызывать через after() из
  * next/server, чтобы ответ ушёл посетителю до похода в базу.
+ *
+ * ⚠️ Ботов здесь фильтровать НЕЛЬЗЯ, хотя рука тянется. Снимок нужен ровно для
+ * тех страниц, которые получают трафик из поиска, а попасть в поиск страница
+ * может только после обхода Googlebot'ом — то есть обход и есть тот самый
+ * рендер, который мы записываем. Отфильтруем ботов — и снимки останутся только
+ * у машин, которые кто-то успел открыть руками, а это малая доля индекса.
+ * Боты тут не шум, а основной источник. Для аналитики фильтр обратный и живёт
+ * отдельно (isbot в middleware.ts) — не переносить его сюда.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function recordCarSeen(id: string, data: any): Promise<void> {
-  if (!shouldWrite(id)) return;
+  if (!shouldWrite(`seen:${id}`)) return;
   await saveCarSnapshots([snapshotFromVehicle(id, data)]);
 }
 
@@ -162,6 +178,11 @@ export async function recordCarSeen(id: string, data: any): Promise<void> {
  * снимки) — это нормально, upsert не создаём, просто обновляем что есть.
  */
 export async function markCarSold(id: string): Promise<void> {
+  // Проданных карточек в индексе сотни, и переобходят их постоянно — без
+  // троттлинга каждый такой заход отправлял бы UPDATE, который уже после
+  // первого раза не меняет ни строки (мешает .is("sold_at", null)), но круглый
+  // рейс до Supabase стоит полностью.
+  if (!VALID_ID_RE.test(String(id)) || !shouldWrite(`sold:${id}`)) return;
   try {
     const { error } = await createServerClient()
       .from("cars_seen")
@@ -176,6 +197,7 @@ export async function markCarSold(id: string): Promise<void> {
 
 /** Снимок проданной машины для карточки. null — снимка нет, это штатно. */
 export async function getCarSnapshot(id: string): Promise<CarSnapshot | null> {
+  if (!VALID_ID_RE.test(String(id))) return null;
   try {
     const { data, error } = await createServerClient()
       .from("cars_seen")
