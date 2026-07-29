@@ -45,6 +45,14 @@ Do not extend parts_fitment / parts_vehicle_models (legacy). All new fitment wor
 Never read image_url directly — always resolve images via src/lib/partImage.ts (resolvePartImage / withCleanImage; prefers image_storage_url).
 Prices — PARTS: stored in KRW, displayed in USD via src/lib/pricing.ts (formatUsd, fixed PRICE_MARKUP). Never format/convert prices ad hoc.
 Prices — CARS: different model, pricing.ts does NOT apply. Headline price in the car card is KRW (won); ₽ (ru) / $ (other langs) are shown below as reference, converted with the LIVE rate from src/utils/getCurrencyRates.ts (24h cache, safe fallbacks). Never hardcode an FX rate — a stale constant in generateMetadata was overstating the RU snippet price by ~12%.
+
+Курсы валют — «живой источник» ещё не значит, что он отдаёт нужную валюту
+
+Второй раз в этом проекте цены в рублях уехали вверх, и второй раз из-за курса — но по другой причине, чем в первый. Первый раз константу зашили руками. Во второй раз её никто не зашивал: `getCurrencyRates` честно ходил в живой API (frankfurter.dev) за обеими валютами сразу, только **RUB там нет вообще** — валюты нет в списке `/v1/currencies`, а на `?from=KRW&to=RUB,USD` приходит `{"rates":{"USD":0.00069}}`, молча, без ошибки. Выражение `data.rates?.RUB ?? FALLBACK_KRW_TO_RUB` из-за этого срабатывало не изредка при сбое, а КАЖДЫЙ раз, и подстраховка тихо стала основным путём. Итог: 0.058 от июня 2026 против реальных 0.0537 — **все рублёвые цены на сайте были завышены на 8%** (Palisade 3500 만원 показывался как 2 030 000 ₽ вместо 1 879 644 ₽), на карточках, в слайдере главной, в избранном и в рублёвых сниппетах Google.
+
+Отсюда правило, которого раньше не было: `?? FALLBACK` на внешнем курсе — это НЕ подстраховка, а место, где расхождение становится невидимым. Проверять надо не «жив ли источник», а «отдаёт ли он именно эту валюту», и падение на фолбэк должно быть заметным (лог), а не бесшумным.
+
+Текущее устройство (после фикса): источники РАЗНЫЕ и опрашиваются параллельно и независимо — рубль у ЦБ РФ (`cbr-xml-daily.ru/daily_json.js`, `Valute.KRW` = `Value/Nominal`; там KRW есть напрямую и это официальный курс для российского покупателя), доллар у frankfurter. Не сводить обратно к одному источнику, не проверив, что он отдаёт ОБЕ валюты. Рабочий пример обращения к ЦБ лежал в репозитории всё это время — `src/app/api/exchange-rate/route.ts`.
 Canonical + hreflang always go through makeAlternates(lang, path) (src/lib/seo.ts). trailingSlash is false, so a path of "/" produces a URL that 308-redirects and Google discards the tag — the home page passes "" instead. Same rule in src/app/sitemap-main.xml/route.ts (buildUrl) and in internal links to the language root.
 ko locale is disabled (301 → /en). LOCALIZATION_GUIDE.md still lists it — that doc is stale; trust src/lib/lang.ts / src/lib/i18n.ts (SUPPORTED = ['ru','en','ka','ar']).
 SEO pipeline never touches live data before the Telegram approval gate — do not change that invariant.
@@ -110,7 +118,7 @@ Parts-page design tokens are --pn-* custom properties in src/app/globals.css, di
 
 Текущие значения: /[lang]/parts 3600, /[lang]/parts/[slug] 86400, /[lang]/parts/category/[slug] 3600, /[lang]/fitment/[brand]/[slug] 86400.
 
-Инвариант: на любом маршруте, который рендерит ЦЕНУ, revalidate не выше 86400. Цена в HTML считается от krwToUsd (getCurrencyRates, кеш 24ч), то есть курс запекается в разметку в момент рендера. Если страница не перерендеривается, кеш курса физически не может сработать — он опрашивается только при рендере. А /api/parts/checkout это POST, POST-роуты не кешируются никогда и считают по свежему курсу. Итог расхождения: витрина показывает одну цену, чекаут выставляет другую. Ровно тот же класс ошибки, что и stale-константа в generateMetadata на машинах.
+Инвариант: на любом маршруте, который рендерит ЦЕНУ, revalidate не выше 86400. Цена в HTML считается от krwToUsd (getCurrencyRates, кеш 24ч), то есть курс запекается в разметку в момент рендера. Если страница не перерендеривается, кеш курса физически не может сработать — он опрашивается только при рендере. А /api/parts/checkout это POST, POST-роуты не кешируются никогда и считают по свежему курсу. Итог расхождения: витрина показывает одну цену, чекаут выставляет другую. Ровно тот же класс ошибки, что и stale-константа в generateMetadata на машинах и как молчаливый фолбэк курса рубля (см. раздел про курсы валют выше).
 
 Отсюда общее следствие: TTL внутренних unstable_cache (parts-catalog-data 3600, parts-product 3600, parts-top-links 86400 и прочие) подчинены revalidate маршрута. Если сегмент не перерендеривается, эти TTL декоративны — их некому опросить. Настраивать внутренний кеш, не посмотрев на revalidate сегмента, бессмысленно.
 
