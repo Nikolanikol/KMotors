@@ -5,6 +5,8 @@ import {
 } from "@/lib/seo-telegram";
 import { publishApproved } from "@/lib/seo-publish";
 import { getCarSnapshot } from "@/lib/carsSeen";
+import { normalizeBrand } from "@/lib/carLabels";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -127,7 +129,9 @@ export async function POST(req: NextRequest) {
       const soldSnapshot = soldId ? await getCarSnapshot(soldId) : null;
       const soldName = soldSnapshot
         ? [
-            soldSnapshot.manufacturer_en,
+            // Encar отдаёт марку слипшейся (ChevroletGMDaewoo) — в сообщение
+            // она должна попадать только через normalizeBrand, как и в H1.
+            normalizeBrand(soldSnapshot.manufacturer_en),
             soldSnapshot.model_group_en,
             soldSnapshot.grade_en,
             soldSnapshot.year ? String(soldSnapshot.year) : null,
@@ -136,6 +140,23 @@ export async function POST(req: NextRequest) {
             .join(" ")
         : "";
 
+      // Цену показываем в вонах и долларах: 만원 (десятки тысяч вон) — внутренняя
+      // единица Encar, читать её в чате невозможно.
+      //
+      // Намеренно НЕ в рублях: krwToRub из getCurrencyRates сейчас недостоверен.
+      // Источник (frankfurter.dev) RUB не отдаёт вообще — в его списке валют
+      // такой нет, — поэтому значение всегда сваливается на зашитую константу
+      // 0.058 от июня 2026 при реальном курсе ЦБ 0.0537, то есть завышает на 8%.
+      // Курс USD оттуда же приходит живым и ему верить можно.
+      let soldPriceLine = "";
+      if (soldSnapshot?.price_manwon) {
+        const krw = soldSnapshot.price_manwon * 10000;
+        const { krwToUsd } = await getCurrencyRates();
+        soldPriceLine =
+          ` — было ${krw.toLocaleString("ru-RU")} ₩` +
+          ` (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`;
+      }
+
       // Уведомление на личный и рабочий чаты
       const ownerMsg = soldId
         ? `🔔 <b>Хочет похожую на проданную</b>\n\n` +
@@ -143,7 +164,7 @@ export async function POST(req: NextRequest) {
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🚗 Смотрел: ${soldName || `id ${soldId}`}` +
-          (soldSnapshot?.price_manwon ? ` — было ${soldSnapshot.price_manwon} 만원` : "") +
+          soldPriceLine +
           `\n🔗 <a href="https://www.kmotors.shop/ru/catalog/${soldId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=sold">Открыть страницу</a>`
         : carId
         ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
