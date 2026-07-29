@@ -20,7 +20,19 @@
     "noResults": "No cars found",
     "loading": "Loading...",
     "showMore": "Show more",
-    "total": "Total cars"
+    "total": "Total cars",
+    "sold": {
+      "badge": "Sold",
+      "titleUnknown": "This listing is no longer available",
+      "lead": "This car has already been sold. We bring in cars like it regularly — subscribe and we'll message you as soon as a similar one shows up.",
+      "wasPrice": "Price was",
+      "subscribe": "Send me similar cars",
+      "subscribeHint": "One tap opens Telegram. No form, no sign-up.",
+      "similar": "Similar cars available now",
+      "toCatalog": "Browse the full catalog",
+      "msg": "Hello! I was looking at a car on your site that's already sold — could you find me something similar?",
+      "msgCar": "Hello! I was looking at {{car}} — it's already sold. Could you find me something similar?"
+    }
   },
   "car": {
     "buyFromKorea": "buy from Korea",

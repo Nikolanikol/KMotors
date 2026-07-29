@@ -4,6 +4,7 @@ import {
   approveBatch, rejectBatch, approveOne, rejectOne, sendItemMessages, sendSeoDigest,
 } from "@/lib/seo-telegram";
 import { publishApproved } from "@/lib/seo-publish";
+import { getCarSnapshot } from "@/lib/carsSeen";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -100,10 +101,16 @@ export async function POST(req: NextRequest) {
     if (message.text.startsWith("/start")) {
       const param = message.text.slice("/start".length).trim(); // "car_41289593" или ""
       const carId = param.startsWith("car_") ? param.slice(4) : null;
+      // sold_<id> — со страницы проданной машины: человек пришёл по ссылке из
+      // поиска, машины уже нет, и он просит подобрать похожую. Самый горячий
+      // вход из всех: он искал конкретную модель.
+      const soldId = param.startsWith("sold_") ? param.slice(5) : null;
       const isWebsite = param === "website";
 
       // Ответ клиенту
-      const clientMsg = carId
+      const clientMsg = soldId
+        ? `👋 Здравствуйте!\n\nТа машина уже продана, но мы подберём похожую и напишем вам, как только она появится.\n\n⏱ Первый ответ — в течение 1 часа`
+        : carId
         ? `👋 Здравствуйте!\n\nВаш запрос по автомобилю принят. Николай свяжется с вами в ближайшее время.\n\n⏱ Время ответа: в течение 1 часа`
         : `👋 Здравствуйте!\n\nДобро пожаловать в K-Axis — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
 
@@ -115,8 +122,30 @@ export async function POST(req: NextRequest) {
       const username = from?.username ? `@${from.username}` : "нет username";
       const replyLink = `tg://user?id=${chatId}`;
 
+      // По проданной машине подтягиваем снимок: у Encar её уже нет, и без
+      // cars_seen менеджер увидел бы голый id вместо «Palisade 2023 за 3500».
+      const soldSnapshot = soldId ? await getCarSnapshot(soldId) : null;
+      const soldName = soldSnapshot
+        ? [
+            soldSnapshot.manufacturer_en,
+            soldSnapshot.model_group_en,
+            soldSnapshot.grade_en,
+            soldSnapshot.year ? String(soldSnapshot.year) : null,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        : "";
+
       // Уведомление на личный и рабочий чаты
-      const ownerMsg = carId
+      const ownerMsg = soldId
+        ? `🔔 <b>Хочет похожую на проданную</b>\n\n` +
+          `👤 Имя: ${fullName}\n` +
+          `✈️ Telegram: ${username}\n` +
+          `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
+          `🚗 Смотрел: ${soldName || `id ${soldId}`}` +
+          (soldSnapshot?.price_manwon ? ` — было ${soldSnapshot.price_manwon} 만원` : "") +
+          `\n🔗 <a href="https://www.kmotors.shop/ru/catalog/${soldId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=sold">Открыть страницу</a>`
+        : carId
         ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +

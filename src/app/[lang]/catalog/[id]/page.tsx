@@ -17,7 +17,9 @@ import { makeAlternates } from "@/lib/seo";
 import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
 import { buildSpecBits, loadCarsDict, normalizeBrand } from "@/lib/carLabels";
-import { markCarSold, recordCarSeen } from "@/lib/carsSeen";
+import { getCarSnapshot, markCarSold, recordCarSeen } from "@/lib/carsSeen";
+import { getSimilarCars } from "@/lib/similarCars";
+import SoldCar from "@/components/Catalog/CarDetail/SoldCar/SoldCar";
 
 // Lazy load — не нужны сразу при загрузке
 const DetailInfoSection = dynamic(
@@ -270,6 +272,52 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Ветка «машина продана»: Encar отдал 404, живых данных нет. Раньше здесь стоял
+ * notFound() и весь входящий поисковый трафик уходил в пустую заглушку.
+ * Теперь страницу наполняет снимок из cars_seen, а похожие машины подбираются
+ * запросом к Encar по полям этого снимка.
+ *
+ * noindex выставляется независимо, в generateMetadata, и от этого рендера не
+ * зависит — страница остаётся закрытой от индексации намеренно.
+ */
+async function SoldCarPage({ lang, id }: { lang: string; id: string }) {
+  const snapshot = await getCarSnapshot(id);
+  const [similar, rates] = await Promise.all([
+    getSimilarCars(snapshot),
+    getCurrencyRates(),
+  ]);
+
+  // Имя собираем только из английских полей: если снимок пришёл из бэкфилла,
+  // их нет, и лучше показать нейтральный заголовок, чем хангыль (то же правило,
+  // что и в generateMetadata — пустое поле лучше корейского слова).
+  const carName = snapshot
+    ? [
+        normalizeBrand(snapshot.manufacturer_en),
+        snapshot.model_group_en,
+        snapshot.grade_en,
+        snapshot.year ? String(snapshot.year) : null,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+    : "";
+
+  return (
+    <>
+      <CarsDictionary lang={lang} />
+      <SoldCar
+        lang={lang}
+        carId={id}
+        snapshot={snapshot}
+        similar={similar}
+        rates={rates}
+        carName={snapshot?.manufacturer_en ? carName : ""}
+      />
+    </>
+  );
+}
+
 const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
   params,
 }) => {
@@ -284,7 +332,10 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     // доходит: fetchData на ней бросает VehicleUpstreamError. Непустой, но
     // кривой ответ продажей не считаем — иначе сбой парсинга у Encar пометил бы
     // живые машины проданными.
-    if (data === null) after(() => markCarSold(id));
+    if (data === null) {
+      after(() => markCarSold(id));
+      return <SoldCarPage lang={lang} id={id} />;
+    }
     notFound();
   }
 
