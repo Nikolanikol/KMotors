@@ -39,7 +39,19 @@ export async function GET(
     const { data: products, error } = await supabase
       .from("parts_products")
       .select("id, part_number, name_ru, name_en, name_ko, scraped_at", { count: "exact" })
+      // ⚠️ .order("id") — не украшение, а условие корректности пагинации.
+      // price_krw НЕ уникальна: почти половина товаров делит цену с кем-то ещё
+      // (замер: на 1000 строк 691 различная цена, до 15 товаров на одну цену).
+      // ORDER BY без уникального тайбрейкера не задаёт полного порядка, и
+      // Postgres честно возвращал строки по-разному от запроса к запросу —
+      // два одинаковых запроса за страницей 2 разошлись на 608 позиций из 1000.
+      // А так как каждый файл сайтмапа генерируется отдельно и кешируется на
+      // сутки, товар со «стыковой» ценой попадал либо сразу в два файла, либо
+      // ни в один: ~150–250 товаров на 48 стыках, и состав их менялся при
+      // каждой перегенерации. Для Google мигающий URL хуже, чем стабильно
+      // отсутствующий.
       .order("price_krw", { ascending: false })
+      .order("id", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
 
     console.log(`[sitemap-parts] DB Response: error=${!!error}, products=${products?.length || 0}`);

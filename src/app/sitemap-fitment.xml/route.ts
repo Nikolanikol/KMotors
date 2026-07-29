@@ -31,7 +31,16 @@ export async function GET() {
         .from("vehicles")
         .select("brand, slug")
         .gte("parts_count", MIN_PARTS)
+        // Тайбрейкер по той же причине, что и в sitemap-parts/[page]:
+        // parts_count не уникален (56% строк делят значение с кем-то), а без
+        // полного порядка строки на границе range() дублируются или теряются.
+        // Здесь баг пока спящий — авто с parts_count >= 10 всего 627, цикл
+        // ломается на первой итерации и границы не возникает. Проснётся, как
+        // только их станет больше 1000, то есть по мере наполнения данных
+        // совместимости. Дублирование тут попало бы в ОДИН файл, а не между
+        // файлами: один и тот же <url> дважды в разметке.
         .order("parts_count", { ascending: false })
+        .order("id", { ascending: true })
         .range(offset, offset + 999);
       if (error) break;
       if (!data || data.length === 0) break;
