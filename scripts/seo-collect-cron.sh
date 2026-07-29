@@ -21,18 +21,18 @@ if [[ -z "${SEO_CRON_SECRET:-}" ]]; then
 fi
 
 if [[ -z "${SEO_CRON_SECRET:-}" ]]; then
-  echo "[$(date -Is)] ERROR: SEO_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
+  echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] ERROR: SEO_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
   exit 1
 fi
 
-echo "[$(date -Is)] POST $SEO_ENDPOINT"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] POST $SEO_ENDPOINT"
 HTTP_CODE=$(curl -fsS -o /tmp/seo-collect-resp.json -w '%{http_code}' \
   --max-time 300 \
   -X POST -H "x-seo-secret: ${SEO_CRON_SECRET}" \
   "$SEO_ENDPOINT") || {
-    echo "[$(date -Is)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
     cat /tmp/seo-collect-resp.json >&2 || true
     exit 1
   }
 
-echo "[$(date -Is)] HTTP $HTTP_CODE  $(cat /tmp/seo-collect-resp.json)"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] HTTP $HTTP_CODE  $(cat /tmp/seo-collect-resp.json)"

@@ -30,11 +30,11 @@ if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
 fi
 
 if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
-  echo "[$(date -Is)] ERROR: POSTER_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
+  echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] ERROR: POSTER_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
   exit 1
 fi
 
-echo "[$(date -Is)] POST $BLOG_ENDPOINT"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] POST $BLOG_ENDPOINT"
 
 # --max-time 300: генерация это два вызова Gemini (статья + перевод) с ретраями.
 # Замер на проде — 45 сек, но при ретраях бывает дольше.
@@ -42,9 +42,9 @@ HTTP_CODE=$(curl -fsS -o /tmp/blog-generate-resp.json -w '%{http_code}' \
   --max-time 300 \
   -X POST -H "x-poster-secret: ${POSTER_CRON_SECRET}" \
   "$BLOG_ENDPOINT") || {
-    echo "[$(date -Is)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
     cat /tmp/blog-generate-resp.json >&2 || true
     exit 1
   }
 
-echo "[$(date -Is)] HTTP $HTTP_CODE  $(cat /tmp/blog-generate-resp.json)"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] HTTP $HTTP_CODE  $(cat /tmp/blog-generate-resp.json)"

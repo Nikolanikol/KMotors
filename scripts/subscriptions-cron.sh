@@ -31,19 +31,19 @@ if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
 fi
 
 if [[ -z "${POSTER_CRON_SECRET:-}" ]]; then
-  echo "[$(date -Is)] ERROR: POSTER_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
+  echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] ERROR: POSTER_CRON_SECRET не найден (ни в env, ни в $ENV_FILE)" >&2
   exit 1
 fi
 
-echo "[$(date -Is)] GET $SUBS_ENDPOINT"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] GET $SUBS_ENDPOINT"
 
 HTTP_CODE=$(curl -fsS -o /tmp/subscriptions-resp.json -w '%{http_code}' \
   --max-time 300 \
   -H "x-poster-secret: ${POSTER_CRON_SECRET}" \
   "$SUBS_ENDPOINT") || {
-    echo "[$(date -Is)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
+    echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] ERROR: curl упал (HTTP ${HTTP_CODE:-?})" >&2
     cat /tmp/subscriptions-resp.json >&2 || true
     exit 1
   }
 
-echo "[$(date -Is)] HTTP $HTTP_CODE  $(cat /tmp/subscriptions-resp.json)"
+echo "[$(date +%Y-%m-%dT%H:%M:%S%z)] HTTP $HTTP_CODE  $(cat /tmp/subscriptions-resp.json)"
