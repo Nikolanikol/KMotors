@@ -22,6 +22,7 @@ export interface SavedSearch {
   query: string;
   title: string | null;
   seen_ids: string[];
+  created_at: string;
   last_sent_at: string | null;
 }
 
@@ -113,7 +114,7 @@ export async function listDueSubscriptions(): Promise<SavedSearch[]> {
     const cutoff = new Date(Date.now() - SEND_COOLDOWN_MS).toISOString();
     const { data, error } = await createServerClient()
       .from("saved_searches")
-      .select("id, chat_id, source_car_id, lang, query, title, seen_ids, last_sent_at")
+      .select("id, chat_id, source_car_id, lang, query, title, seen_ids, created_at, last_sent_at")
       .eq("active", true)
       .or(`last_sent_at.is.null,last_sent_at.lt.${cutoff}`)
       .order("last_sent_at", { ascending: true, nullsFirst: true })
@@ -138,9 +139,16 @@ export async function markSent(id: number, seenIds: string[]): Promise<void> {
   });
 }
 
-/** Новинок не нашлось — фиксируем только факт проверки. */
-export async function markChecked(id: number): Promise<void> {
-  await patch(id, { last_checked_at: new Date().toISOString() });
+/**
+ * Новинок не нашлось. seen_ids всё равно пополняем: кандидаты уже проверены по
+ * дате подачи и оказались старыми, дёргать по ним карточки второй раз незачем.
+ * last_sent_at НЕ трогаем — сообщения не было, суточный лимит не расходуется.
+ */
+export async function markChecked(id: number, seenIds: string[]): Promise<void> {
+  await patch(id, {
+    seen_ids: seenIds.slice(-SEEN_CAP),
+    last_checked_at: new Date().toISOString(),
+  });
 }
 
 /**

@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getCars } from "@/components/Catalog/Row/utils/service";
+import { fetchVehicleData } from "@/lib/vehicle";
 import {
   FETCH_LIMIT,
   listDueSubscriptions,
@@ -22,6 +23,37 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+// Потолок проверок карточек на одну подписку за прогон. Кандидатов обычно
+// единицы; потолок нужен на случай, когда выдача Encar перетасовалась целиком —
+// чтобы один прогон не превратился в сотни запросов к карточкам.
+const MAX_DETAIL_CHECKS = 20;
+
+/**
+ * Объявление подано ПОСЛЕ момента подписки?
+ *
+ * manage.firstAdvertisedDateTime — дата подачи, единственный надёжный признак
+ * новизны. Не путать с ModifiedDate из листинга: та обновляется при каждом
+ * переподнятии объявления дилером.
+ *
+ * Даты Encar отдаёт без зоны ("2026-06-14T14:30:10"), время корейское (UTC+9).
+ * Разбираем явно, иначе Date.parse трактует их как UTC и даёт сдвиг в 9 часов —
+ * достаточно, чтобы вчерашняя машина выглядела завтрашней.
+ */
+async function isListedAfter(id: string, since: number): Promise<boolean> {
+  try {
+    const data = await fetchVehicleData(id);
+    const raw = data?.manage?.firstAdvertisedDateTime;
+    if (typeof raw !== "string" || !raw) return false;
+    const listed = Date.parse(`${raw}+09:00`);
+    if (!Number.isFinite(listed)) return false;
+    return listed > since;
+  } catch {
+    // Карточка не открылась (машину уже сняли, апстрим моргнул) — молчим.
+    // Ложное «новая» дороже пропущенной машины: от спама отписываются.
+    return false;
+  }
+}
 
 interface SendResult {
   chatId: number;
@@ -100,10 +132,29 @@ export async function GET(req: NextRequest) {
     for (const sub of group) {
       checked++;
       const seen = new Set(sub.seen_ids ?? []);
-      const fresh = data.filter((c) => c?.Id && !seen.has(String(c.Id)));
+      const candidates = data.filter((c) => c?.Id && !seen.has(String(c.Id)));
+
+      // ⚠️ «Нет в seen_ids» ещё НЕ значит «новая машина», и на этом тест
+      // провалился при первой же проверке. Выдача Encar сортируется по
+      // ModifiedDate и пересобирается, а мы забираем только верхние FETCH_LIMIT
+      // из выборки, которая может быть в разы больше (замер: 373 совпадения при
+      // окне в 60). Старое объявление свободно вплывает в окно и выглядит новым
+      // — так в тесте «новинкой» оказалась машина, поданная полтора месяца назад.
+      //
+      // Настоящий признак — manage.firstAdvertisedDateTime из карточки: дата
+      // подачи объявления. Проверяем ей каждого кандидата и оставляем только
+      // тех, кто появился уже после оформления подписки. Кандидатов единицы,
+      // так что лишних запросов почти нет.
+      const subscribedAt = Date.parse(sub.created_at);
+      const fresh: typeof candidates = [];
+      for (const c of candidates.slice(0, MAX_DETAIL_CHECKS)) {
+        if (await isListedAfter(String(c.Id), subscribedAt)) fresh.push(c);
+      }
 
       if (fresh.length === 0) {
-        if (!dryRun) await markChecked(sub.id);
+        // seen_ids пополняем и здесь: кандидаты проверены и оказались старыми,
+        // повторно дёргать по ним карточки незачем.
+        if (!dryRun) await markChecked(sub.id, [...(sub.seen_ids ?? []), ...ids]);
         continue;
       }
 
