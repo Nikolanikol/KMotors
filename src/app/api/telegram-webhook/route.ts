@@ -5,6 +5,7 @@ import {
 } from "@/lib/seo-telegram";
 import { publishApproved } from "@/lib/seo-publish";
 import { getCarSnapshot } from "@/lib/carsSeen";
+import { deactivateAllForChat, deactivateOwn, saveSubscription } from "@/lib/savedSearches";
 import { normalizeBrand } from "@/lib/carLabels";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
@@ -99,6 +100,19 @@ export async function POST(req: NextRequest) {
       return ok();
     }
 
+    // /stop — отписка от рассылки похожих машин. Публичная команда, поэтому
+    // стоит ДО гейта isAdmin, рядом с /start.
+    if (message.text.trim() === "/stop") {
+      const n = await deactivateAllForChat(chatId);
+      await sendMessage(
+        chatId,
+        n > 0
+          ? `✅ Отписал вас от подбора похожих машин (подписок: ${n}).\n\nЕсли передумаете — нажмите «Пришлите похожие» на любой странице проданной машины.`
+          : `У вас нет активных подписок на подбор машин.`
+      );
+      return ok();
+    }
+
     // Обработка /start от клиентов — ДО проверки на владельца
     if (message.text.startsWith("/start")) {
       const param = message.text.slice("/start".length).trim(); // "car_41289593" или ""
@@ -109,9 +123,24 @@ export async function POST(req: NextRequest) {
       const soldId = param.startsWith("sold_") ? param.slice(5) : null;
       const isWebsite = param === "website";
 
+      // По проданной машине подтягиваем снимок ДО ответа клиенту: у Encar её
+      // уже нет, и без cars_seen менеджер увидел бы голый id вместо
+      // «Palisade 2023 за 3500». От снимка же зависит, удастся ли оформить
+      // подписку, а значит и что мы обещаем человеку в ответе.
+      const soldSnapshot = soldId ? await getCarSnapshot(soldId) : null;
+
+      // Подписка «пришлём похожие». Текущие совпадения записываются как уже
+      // виденные — иначе первый прогон крона объявил бы новинками весь
+      // сегодняшний рынок и вывалил человеку пять случайных машин.
+      const subscribed = soldSnapshot
+        ? await saveSubscription({ chatId, snapshot: soldSnapshot })
+        : false;
+
       // Ответ клиенту
       const clientMsg = soldId
-        ? `👋 Здравствуйте!\n\nТа машина уже продана, но мы подберём похожую и напишем вам, как только она появится.\n\n⏱ Первый ответ — в течение 1 часа`
+        ? subscribed
+          ? `👋 Здравствуйте!\n\nТа машина уже продана. Подписал вас на похожие — как только появится подходящая, бот напишет сюда сам.\n\nЕсли хотите обсудить сейчас, просто напишите в этот чат: Николай отвечает в течение часа.\n\n<i>Отписаться — команда /stop</i>`
+          : `👋 Здравствуйте!\n\nТа машина уже продана, но мы подберём похожую и напишем вам, как только она появится.\n\n⏱ Первый ответ — в течение 1 часа`
         : carId
         ? `👋 Здравствуйте!\n\nВаш запрос по автомобилю принят. Николай свяжется с вами в ближайшее время.\n\n⏱ Время ответа: в течение 1 часа`
         : `👋 Здравствуйте!\n\nДобро пожаловать в K-Axis — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
@@ -123,10 +152,6 @@ export async function POST(req: NextRequest) {
       const fullName = [from?.first_name, from?.last_name].filter(Boolean).join(" ") || "Неизвестно";
       const username = from?.username ? `@${from.username}` : "нет username";
       const replyLink = `tg://user?id=${chatId}`;
-
-      // По проданной машине подтягиваем снимок: у Encar её уже нет, и без
-      // cars_seen менеджер увидел бы голый id вместо «Palisade 2023 за 3500».
-      const soldSnapshot = soldId ? await getCarSnapshot(soldId) : null;
       const soldName = soldSnapshot
         ? [
             // Encar отдаёт марку слипшейся (ChevroletGMDaewoo) — в сообщение
@@ -165,6 +190,9 @@ export async function POST(req: NextRequest) {
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🚗 Смотрел: ${soldName || `id ${soldId}`}` +
           soldPriceLine +
+          (subscribed
+            ? `\n🔁 Подписан на похожие — бот напишет сам`
+            : `\n⚠️ Подписку оформить не удалось (нет снимка) — только ручной ответ`) +
           `\n🔗 <a href="https://www.kmotors.shop/ru/catalog/${soldId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=sold">Открыть страницу</a>`
         : carId
         ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
@@ -241,6 +269,30 @@ export async function POST(req: NextRequest) {
   const data = callbackQuery.data || "";
   const messageId = callbackQuery.message?.message_id;
   const chatId = callbackQuery.message?.chat?.id;
+
+  // «Отписаться» под рассылкой похожих машин — кнопка ОБЫЧНОГО пользователя,
+  // поэтому обрабатывается до гейта isAdmin. Отписать можно только свои
+  // подписки: сверяем chat_id из подписки с тем, кто нажал.
+  if (chatId && data.startsWith("unsub:")) {
+    const subId = Number(data.slice("unsub:".length));
+    const ok0 = Number.isFinite(subId) && (await deactivateOwn(subId, chatId));
+    await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        callback_query_id: callbackId,
+        text: ok0 ? "Отписал. Больше не пишем." : "Подписка уже неактивна",
+      }),
+    });
+    if (ok0 && messageId) {
+      await fetch(`${TELEGRAM_API}/editMessageReplyMarkup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } }),
+      });
+    }
+    return ok();
+  }
 
   // Callback-кнопки (publish/delete) — только для администраторов
   if (!chatId || !isAdmin(chatId)) {

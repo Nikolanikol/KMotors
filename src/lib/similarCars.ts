@@ -22,7 +22,7 @@ const LIMIT = 6;
  * вслепую нельзя — лишняя точка перед закрывающей скобкой даёт HTTP 404,
  * и выглядит это как «ничего не найдено», а не как сломанный запрос.
  */
-function buildQuery(s: CarSnapshot): string | null {
+export function buildSimilarQuery(s: CarSnapshot): string | null {
   const mfr = s.manufacturer_ko?.trim();
   if (!mfr) return null;
 
@@ -56,7 +56,7 @@ function buildQuery(s: CarSnapshot): string | null {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getSimilarCars(snapshot: CarSnapshot | null): Promise<any[]> {
   if (!snapshot) return [];
-  const query = buildQuery(snapshot);
+  const query = buildSimilarQuery(snapshot);
   if (!query) return [];
 
   const { data } = await getCars(query, "0", LIMIT);
