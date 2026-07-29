@@ -130,10 +130,36 @@ export async function listDueSubscriptions(): Promise<SavedSearch[]> {
   }
 }
 
+/**
+ * Схлопывает повторы, оставляя ПОСЛЕДНЕЕ вхождение, и обрезает до потолка.
+ *
+ * Вызывающий код каждый раз склеивает старое множество со свежей выдачей, а они
+ * почти целиком совпадают — без дедупликации массив пухнет дублями (замер на
+ * проде: 111 записей там, где уникальных 60). Само по себе это не ломает
+ * ничего, но съедает потолок: под видом четырёхсот id хранилось бы вдвое
+ * меньше реальных, и подписка начала бы «забывать» недавно показанное.
+ *
+ * Последнее вхождение, а не первое: срез идёт с конца, и id должен занимать
+ * позицию по своему последнему наблюдению, иначе давно виденная машина
+ * вылетит из памяти раньше времени.
+ */
+function compactSeen(ids: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (let i = ids.length - 1; i >= 0; i--) {
+    const id = ids[i];
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= SEEN_CAP) break;
+  }
+  return out.reverse();
+}
+
 /** После отправки: запоминаем показанные Id и время. */
 export async function markSent(id: number, seenIds: string[]): Promise<void> {
   await patch(id, {
-    seen_ids: seenIds.slice(-SEEN_CAP),
+    seen_ids: compactSeen(seenIds),
     last_sent_at: new Date().toISOString(),
     last_checked_at: new Date().toISOString(),
   });
@@ -146,7 +172,7 @@ export async function markSent(id: number, seenIds: string[]): Promise<void> {
  */
 export async function markChecked(id: number, seenIds: string[]): Promise<void> {
   await patch(id, {
-    seen_ids: seenIds.slice(-SEEN_CAP),
+    seen_ids: compactSeen(seenIds),
     last_checked_at: new Date().toISOString(),
   });
 }
