@@ -21,6 +21,7 @@ import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
+const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -83,6 +84,40 @@ async function detailIfNew(id: string, since: number): Promise<any | null> {
 interface SendResult {
   chatId: number;
   sent: number;
+}
+
+/**
+ * Служебный отчёт о прогоне в рабочий чат.
+ *
+ * ⚠️ ВРЕМЕННО, НА ПЕРИОД ТЕСТОВ, снять вместе с пятиминутным расписанием и
+ * тестовым SEND_COOLDOWN_MS.
+ *
+ * Зачем вообще: подписчику при отсутствии новинок не уходит НИЧЕГО — это штатно,
+ * но снаружи неотличимо от мёртвого крона. Отчёт делает тишину наблюдаемой, не
+ * трогая то, что видит клиент.
+ *
+ * Уходит в рабочий чат, а не подписчику. Не бросает исключений и не влияет на
+ * результат прогона: упавший отчёт не должен ронять рассылку.
+ */
+async function reportToWorkChat(lines: string[]): Promise<void> {
+  if (!WORK_CHAT_ID) return;
+  try {
+    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // Без parse_mode: текст служебный, разметки в нём нет, а любой случайный
+      // спецсимвол в HTML-режиме уронил бы отправку целиком.
+      body: JSON.stringify({
+        chat_id: WORK_CHAT_ID,
+        text: lines.join("\n"),
+        disable_web_page_preview: true,
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) console.error("[subscriptions] отчёт не ушёл:", JSON.stringify(data));
+  } catch (e) {
+    console.error("[subscriptions] отчёт упал:", (e as Error)?.message);
+  }
 }
 
 // В HTML-разметке Telegram активны три символа; имена приходят от Encar,
@@ -150,6 +185,15 @@ export async function GET(req: NextRequest) {
 
   const subs = await listDueSubscriptions();
   if (subs.length === 0) {
+    // Ноль подписок к проверке — не то же самое, что ноль новинок: сюда попадают
+    // и отписавшиеся, и те, кого отсёк кулдаун. Именно так выглядел пропуск
+    // 30.07.2026, и по логу это было не отличить от «ничего не нашлось».
+    if (!dryRun) {
+      await reportToWorkChat([
+        "🔁 Подписки: прогон вхолостую",
+        "К проверке никого — все либо неактивны, либо ещё в кулдауне.",
+      ]);
+    }
     return NextResponse.json({ ok: true, subscriptions: 0, sent: 0 });
   }
 
@@ -166,13 +210,17 @@ export async function GET(req: NextRequest) {
   const { krwToUsd } = await getCurrencyRates();
   const results: SendResult[] = [];
   let checked = 0;
+  let failedQueries = 0;
 
   for (const [query, group] of byQuery) {
     const { data, failed } = await getCars(query, "0", FETCH_LIMIT);
     // Апстрим не ответил — НЕ трогаем ни seen_ids, ни last_sent_at, иначе
     // авария Encar молча съела бы новинки: они попали бы в «уже виденные»
     // без единого отправленного сообщения.
-    if (failed) continue;
+    if (failed) {
+      failedQueries++;
+      continue;
+    }
 
     const ids = data.map((c) => String(c?.Id)).filter(Boolean);
 
@@ -232,12 +280,27 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const cars = results.reduce((n, r) => n + r.sent, 0);
+
+  if (!dryRun) {
+    await reportToWorkChat([
+      results.length > 0 ? "✅ Подписки: разослано" : "🔁 Подписки: новинок нет",
+      `Проверено подписок: ${checked}`,
+      `Запросов к Encar: ${byQuery.size}${
+        failedQueries > 0 ? ` (не ответил на ${failedQueries})` : ""
+      }`,
+      `Отправлено сообщений: ${results.length}`,
+      `Машин в них: ${cars}`,
+    ]);
+  }
+
   return NextResponse.json({
     ok: true,
     dryRun,
     subscriptions: checked,
     queries: byQuery.size,
+    failedQueries,
     messages: results.length,
-    cars: results.reduce((n, r) => n + r.sent, 0),
+    cars,
   });
 }
