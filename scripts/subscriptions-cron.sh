@@ -16,6 +16,13 @@
 # приходили человеку в разумное время, а не ночью:
 #   0 11 * * * /var/www/kmotors/scripts/subscriptions-cron.sh >> /var/log/subscriptions.log 2>&1
 #
+# ⚠️ НА ВРЕМЯ ТЕСТОВ расписание снято до каждых 5 минут:
+#   */5 * * * * /var/www/kmotors/scripts/subscriptions-cron.sh >> /var/log/subscriptions.log 2>&1
+# Парная ручка — SEND_COOLDOWN_MS в src/lib/savedSearches.ts, тоже тестовые 5
+# минут. Одного расписания мало: кулдаун отсекает подписку до выборки, и крон
+# будет вхолостую отрабатывать каждые 5 минут, ничего не отправляя. Вернуть надо
+# ОБЕ строки — расписание сюда, 20 часов туда.
+#
 # Проверить без отправки сообщений:
 #   SUBS_ENDPOINT="https://www.kmotors.shop/api/subscriptions/run?dry=1" ./scripts/subscriptions-cron.sh
 
