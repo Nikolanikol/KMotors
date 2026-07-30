@@ -467,19 +467,45 @@ parts-top-links 86400 и прочие) подчинены `revalidate` марш�
 - Пустой пул и остаток `<= LOW_POOL_THRESHOLD` шлют уведомление в Telegram.
 - Статусы `blog_topics`: `pending` / `generated` / `skipped` / `failed`.
 
-### Расписания — живут на VPS, а НЕ в vercel.json
+### Расписания — crontab на VPS, строкой ПРЯМОГО curl
 
-Каждое задание = скрипт в `scripts/` + строка в системном планировщике на VPS. Строка для
-crontab лежит в шапке самого скрипта. Не возвращать блок `crons` в `vercel.json`
-([постмортем](docs/postmortems.md)).
+Не возвращать блок `crons` в `vercel.json` ([постмортем](docs/postmortems.md)).
 
-| Задание | Скрипт / эндпоинт | Расписание | Гейт |
-|---|---|---|---|
-| Черновик статьи блога | `scripts/blog-generate-cron.sh` | `0 10 */3 * *` | x-poster-secret |
-| Синхронизация RSS-новостей | `scripts/rss-sync-cron.sh` | `0 9 * * *` | x-poster-secret |
-| Сбор статистики GSC | `scripts/seo-collect-cron.sh` | ежедневно | x-seo-secret |
-| Автопостинг авто в Telegram | `/api/poster/run` (systemd timer) | по окну публикации | x-poster-secret |
-| Рассылка подписок «похожие» | `scripts/subscriptions-cron.sh` | `0 11 * * *` | x-poster-secret |
+⚠️ **На VPS НЕТ рабочей копии репозитория.** Прод собирается Coolify в Docker, каталога
+`/var/www/kmotors/` не существует. Поэтому каждая строка crontab — прямой `curl` к
+эндпоинту, и никаких вызовов скриптов там быть не может.
+
+Скрипты `scripts/*-cron.sh` живут в репозитории как документация и для ручного запуска с
+локальной машины. На проде они НЕ исполняются, а строки из их шапок
+(`/var/www/kmotors/scripts/...`) ставить в crontab нельзя: cron каждый раз пишет в лог
+`not found`, задание не отрабатывает ни разу, и снаружи это выглядит как «функция не
+работает», а не как ошибка конфигурации. Так рассылка подписок простояла с первого дня —
+пока не выяснилось, что путь не существует (31.07.2026).
+
+| Задание | Эндпоинт | Метод | Расписание | Гейт |
+|---|---|---|---|---|
+| Автопостинг авто | `/api/poster/run` | POST | `0 */2 * * *` | x-poster-secret |
+| Автопостинг запчастей | `/api/poster/parts/run` | POST | `30 */2 * * *` | x-poster-secret |
+| Черновик статьи блога | `/api/blog-generate` | POST | `0 10 */3 * *` | x-poster-secret |
+| Синхронизация RSS-новостей | `/api/rss-sync` | GET | `0 9 * * *` | x-poster-secret |
+| Сбор статистики GSC | `/api/seo/collect` | POST | `35 4 * * *` | x-seo-secret |
+| Черновики SEO | `/api/seo/generate?limit=15` | POST | `0 5 * * *` | x-seo-secret |
+| Рассылка подписок «похожие» | `/api/subscriptions/run` | GET | `0 11 * * *` | x-poster-secret |
+| Бэкап Supabase | `/opt/backups/supabase/backup.sh` | — | `0 3 * * *` | — |
+
+Автопостинг идёт из crontab, а не из systemd-таймера: строка про таймер стояла здесь и в
+README и была неверной. Бэкап — единственное задание, которое действительно вызывает
+скрипт, и лежит он вне репозитория.
+
+Образец строки (методы разные, сверяться с таблицей — `-X POST` там, где POST):
+
+```
+*/5 * * * * curl -fsS --max-time 300 -H "x-poster-secret: $SECRET" https://www.kmotors.shop/api/subscriptions/run >> /var/log/subscriptions.log 2>&1
+```
+
+Правило проверки: после любой правки crontab убедиться, что в логе появилась строка с
+JSON-ответом, а не `not found`. Отсутствие сообщений от задания само по себе НЕ означает,
+что задание отработало и ничего не нашло.
 
 Секретов два, не больше. `POSTER_CRON_SECRET` (заголовок `x-poster-secret`) закрывает
 `/api/poster/run`, `/api/poster/parts/run`, `/api/rss-sync`, `/api/blog-generate` и

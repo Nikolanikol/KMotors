@@ -181,17 +181,27 @@ blog quietly stopped publishing (2 posts/month instead of ~10). **Do not put sch
 there.** Every scheduled job is a shell script in `scripts/` plus a line in the VPS
 crontab:
 
-| Job | Script | Schedule | Guard |
-|---|---|---|---|
-| Blog article draft | `scripts/blog-generate-cron.sh` | `0 10 */3 * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
-| RSS news sync | `scripts/rss-sync-cron.sh` | `0 9 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
-| Telegram car poster | `/api/poster/run` (systemd timer) | per posting window | `x-poster-secret: $POSTER_CRON_SECRET` |
-| GSC stats collect | `scripts/seo-collect-cron.sh` | daily | `x-seo-secret: $SEO_CRON_SECRET` |
+| Job | Endpoint | Method | Schedule | Guard |
+|---|---|---|---|---|
+| Telegram car poster | `/api/poster/run` | POST | `0 */2 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+| Telegram parts poster | `/api/poster/parts/run` | POST | `30 */2 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+| Blog article draft | `/api/blog-generate` | POST | `0 10 */3 * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+| RSS news sync | `/api/rss-sync` | GET | `0 9 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+| GSC stats collect | `/api/seo/collect` | POST | `35 4 * * *` | `x-seo-secret: $SEO_CRON_SECRET` |
+| SEO drafts | `/api/seo/generate?limit=15` | POST | `0 5 * * *` | `x-seo-secret: $SEO_CRON_SECRET` |
+| Saved-search digest | `/api/subscriptions/run` | GET | `0 11 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
 
-Each script reads its secret from the environment, falling back to the app's `.env`
-(`ENV_FILE`, default `/var/www/kmotors/.env`), and is a single `curl` — all the work
-happens inside the Next process. Install with `crontab -e`; the exact line is in each
-script's header comment.
+**The repo is not checked out on the VPS.** Production is built by Coolify into Docker;
+`/var/www/kmotors/` does not exist. Every crontab line is therefore a direct `curl` to the
+endpoint — all the work happens inside the Next process:
+
+```
+0 9 * * * curl -fsS --max-time 300 -H "x-poster-secret: $SECRET" https://www.kmotors.shop/api/rss-sync >> /var/log/rss-sync.log 2>&1
+```
+
+The `scripts/*-cron.sh` wrappers are kept for local manual runs only. Do not paste the
+crontab lines from their headers — they point at `/var/www/kmotors/scripts/`, cron logs
+`not found` on every tick, and the job silently never runs.
 
 The remaining SEO pipeline endpoints (`/api/seo/generate|publish`) are triggered
 manually via the Telegram approval gate, not on a schedule.
