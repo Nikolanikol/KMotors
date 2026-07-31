@@ -8,19 +8,23 @@ const ContactPage = () => {
   const { t } = useTranslation();
 
   return (
-    <div className=" pt-4 relative min-h-[70vh] w-screen bg-[url('/images/map.png')] ">
-      <div className="row flex flex-col gap-y-5 px-4 py-4 md:absolute md:-bottom-10 md:right-10 z-10 bg-white  rounded-2xl shadow-2xl">
-        <div>
-          <h1 className="md:heading-2 font-bold text-4xl ">
-            {t('contact.formTitle')} <span className="text-red-600">{t('contact.formTitleHighlight')}</span>{" "}
-          </h1>{" "}
-          <p className="desc uppercase max-w-100">
-            {t('contact.formSubtitle')}
-          </p>{" "}
+    <section className="relative min-h-[70vh] w-full bg-[url('/images/map.png')] bg-cover bg-center bg-no-repeat">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 md:py-16 flex justify-center md:justify-end">
+        <div className="w-full max-w-md flex flex-col gap-y-5 p-6 sm:p-8 bg-white rounded-2xl shadow-2xl">
+          <div>
+            {/* Карточка белая, а глобальный цвет текста — светлый axis-white: без
+                явного тёмного цвета заголовок сливается с фоном карточки. */}
+            <h1 className="md:heading-2 font-bold text-4xl text-[var(--axis-charcoal)]">
+              {t('contact.formTitle')} <span className="text-[var(--axis-orange)]">{t('contact.formTitleHighlight')}</span>
+            </h1>
+            <p className="desc uppercase mt-2 text-sm text-[var(--axis-gray-dim)]">
+              {t('contact.formSubtitle')}
+            </p>
+          </div>
+          <ContactForm />
         </div>
-        <ContactForm />{" "}
       </div>
-    </div>
+    </section>
   );
 };
 

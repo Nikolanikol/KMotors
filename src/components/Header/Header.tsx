@@ -49,7 +49,6 @@ export default function Header() {
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },
     { href: `/${lang}/calculator`, labelKey: "nav.calculator" },
-    { href: `/${lang}/contact`, labelKey: "nav.contact" },
   ];
 
   useEffect(() => {
