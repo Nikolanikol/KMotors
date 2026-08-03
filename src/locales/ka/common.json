@@ -305,7 +305,12 @@
     "hero": {
       "title": "იპოვე შენი ოცნების ავტომობილი",
       "subtitle": "კორეიდან მსოფლიოს ნებისმიერ წერტილში!",
-      "catalogButton": "კატალოგი"
+      "catalogButton": "კატალოგი",
+      "statCars": "ავტომობილი კატალოგში",
+      "statClients": "კმაყოფილი კლიენტი",
+      "statYears": "12 წელი",
+      "statYearsLabel": "ბაზარზე",
+      "scrollHint": "გადაახვიე ქვემოთ"
     },
     "brands": {
       "title": "ბრენდები"
@@ -472,7 +477,8 @@
       "article": "არტიკული",
       "orderBtn": "შეკვეთა",
       "notFoundText": "ვერ იპოვეთ საჭირო ნაწილი? დაგვიკავშირდით — დაგეხმარებით!",
-      "leaveRequest": "განაცხადის დატოვება"
+      "leaveRequest": "განაცხადის დატოვება",
+      "inCart": "კალათაშია"
     },
     "about": {
       "badge": "კომპანიის შესახებ",
@@ -550,7 +556,12 @@
       "breadcrumbParts": "სათადარიგო ნაწილები",
       "copySuccess": "დაკოპირდა!",
       "viewAll": "ყველა ნახვა",
-      "similarTitle": "ამ მოდელის ნაწილები"
+      "similarTitle": "ამ მოდელის ნაწილები",
+      "shippingCalcTitle": "EMS Korea მიწოდების ღირებულება",
+      "shippingCalcSelect": "აირჩიეთ ქვეყანა",
+      "shippingCalcResult": "დაახლოებით {price} USD",
+      "shippingCalcUnavailable": "EMS ამ ქვეყნისთვის მიუწვდომელია",
+      "shippingCalcNote": "* მითითებულია მხოლოდ მიწოდების ღირებულება. საბოლოო ფასი შეიძლება განსხვავდებოდეს."
     },
     "order": {
       "partNumber": "არტიკული",

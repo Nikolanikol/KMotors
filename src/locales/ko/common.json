@@ -276,7 +276,12 @@
     "hero": {
       "title": "꿈의 자동차를 찾아보세요",
       "subtitle": "한국에서 전 세계 어디든!",
-      "catalogButton": "카탈로그"
+      "catalogButton": "카탈로그",
+      "statCars": "카탈로그 차량",
+      "statClients": "만족한 고객",
+      "statYears": "12년",
+      "statYearsLabel": "업계 경력",
+      "scrollHint": "아래로 스크롤"
     },
     "brands": {
       "title": "브랜드"

@@ -110,7 +110,7 @@ const Main = () => {
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.85, behavior: "smooth" })}
       >
         <span className="text-xs font-medium tracking-widest uppercase" style={{ color: "var(--axis-gray)", animation: "fadeInOut 2s ease-in-out infinite" }}>
-          листай вниз
+          {t("home.hero.scrollHint")}
         </span>
         <div className="flex flex-col items-center gap-0.5" style={{ animation: "arrowBounce 1.5s ease-in-out infinite" }}>
           <svg width="24" height="14" viewBox="0 0 24 14" fill="none">

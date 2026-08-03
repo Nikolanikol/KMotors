@@ -305,7 +305,12 @@
     "hero": {
       "title": "Find the Car of Your Dreams",
       "subtitle": "From Korea to Anywhere in the World!",
-      "catalogButton": "Catalog"
+      "catalogButton": "Catalog",
+      "statCars": "Cars in catalog",
+      "statClients": "Happy clients",
+      "statYears": "12 years",
+      "statYearsLabel": "On the market",
+      "scrollHint": "scroll down"
     },
     "brands": {
       "title": "Brands"

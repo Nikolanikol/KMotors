@@ -309,7 +309,8 @@
       "statCars": "Авто в каталоге",
       "statClients": "Довольных клиентов",
       "statYears": "12 лет",
-      "statYearsLabel": "На рынке"
+      "statYearsLabel": "На рынке",
+      "scrollHint": "листай вниз"
     },
     "brands": {
       "title": "Бренды"

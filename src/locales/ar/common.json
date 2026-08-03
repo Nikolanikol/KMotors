@@ -305,7 +305,12 @@
     "hero": {
       "title": "اعثر على سيارة أحلامك",
       "subtitle": "من كوريا إلى أي مكان في العالم!",
-      "catalogButton": "الكتالوج"
+      "catalogButton": "الكتالوج",
+      "statCars": "سيارة في الكتالوج",
+      "statClients": "عميل سعيد",
+      "statYears": "12 عامًا",
+      "statYearsLabel": "في السوق",
+      "scrollHint": "مرّر للأسفل"
     },
     "brands": {
       "title": "الماركات"
@@ -472,7 +477,8 @@
       "article": "رقم القطعة",
       "orderBtn": "اطلب الآن",
       "notFoundText": "لم تجد القطعة التي تحتاجها؟ تواصل معنا وسنساعدك!",
-      "leaveRequest": "اترك طلبًا"
+      "leaveRequest": "اترك طلبًا",
+      "inCart": "في السلة"
     },
     "about": {
       "badge": "عن الشركة",
@@ -550,7 +556,12 @@
       "breadcrumbParts": "قطع الغيار",
       "copySuccess": "تم النسخ!",
       "viewAll": "عرض الكل",
-      "similarTitle": "قطع غيار لهذا الموديل"
+      "similarTitle": "قطع غيار لهذا الموديل",
+      "shippingCalcTitle": "تكلفة الشحن EMS Korea",
+      "shippingCalcSelect": "اختر الدولة",
+      "shippingCalcResult": "حوالي {price} USD",
+      "shippingCalcUnavailable": "خدمة EMS غير متاحة لهذه الدولة",
+      "shippingCalcNote": "* التكلفة المذكورة للشحن فقط. قد يختلف السعر النهائي."
     },
     "order": {
       "partNumber": "رقم القطعة",
