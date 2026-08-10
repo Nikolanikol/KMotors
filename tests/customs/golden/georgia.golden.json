@@ -1,0 +1,550 @@
+{
+  "_": "Эталон для Грузии. Заполняется вручную по результатам прогона на независимых ресурсах. Пустые (null) кейсы тест пропускает и показывает как skipped.",
+  "country": "georgia",
+  "currentYear": 2026,
+  "tolerance": {
+    "_": "Сравнение идёт только в лари: курс в расчёте Грузии не участвует. Допуск нужен лишь на округление у источника.",
+    "gel": 1
+  },
+  "source": "https://myauto.ge/ru/calculator",
+  "takenAt": "2026-08-09",
+  "notes": [
+    "Грузия не различает бензин и дизель — обе позиции идут как fuel: petrol.",
+    "Для электромобилей объём двигателя в расчёте не участвует.",
+    "breakdown — построчная разбивка со стороннего ресурса. Ключи совпадают с id строк чека в ядре, поэтому расхождение видно построчно.",
+    "Если ресурс какую-то строку не показывает — оставь null, тест её пропустит и сверит только заполненные.",
+    "Стоимость авто в расчёте Грузии не участвует вообще — поля для неё нет ни в форме, ни во входе ядра."
+  ],
+  "cases": [
+    {
+      "id": "ge-01",
+      "car": "Kia Morning (Picanto) 1.0",
+      "probes": "граница объёма 1000 снизу; возраст ровно 5",
+      "in": {
+        "year": 2021,
+        "volumeCc": 998,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 2043,
+        "breakdown": {
+          "excise": 1500,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 63,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-02",
+      "car": "Chevrolet Spark 1.0",
+      "probes": "возраст 10 лет",
+      "in": {
+        "year": 2016,
+        "volumeCc": 995,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 5055,
+        "breakdown": {
+          "excise": 4500,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 75,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-03",
+      "car": "Kia Rio 1.4",
+      "probes": "возраст ровно 7 — старше порога 6 лет",
+      "in": {
+        "year": 2019,
+        "volumeCc": 1368,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 6875,
+        "breakdown": {
+          "excise": 6300,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 95,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-04",
+      "car": "Hyundai Avante (Elantra) CN7 1.6",
+      "probes": "возраст 3",
+      "in": {
+        "year": 2023,
+        "volumeCc": 1598,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 2972,
+        "breakdown": {
+          "excise": 2400,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 92,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-05",
+      "car": "Hyundai Kona 1.6 T-GDI",
+      "probes": "возраст 5",
+      "in": {
+        "year": 2021,
+        "volumeCc": 1591,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 2980,
+        "breakdown": {
+          "excise": 2400,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 100,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-06",
+      "car": "Kia Seltos 1.6 T-GDI",
+      "probes": "почти новый, возраст 2",
+      "in": {
+        "year": 2024,
+        "volumeCc": 1591,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 2968,
+        "breakdown": {
+          "excise": 2400,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 88,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-07",
+      "car": "Hyundai Tucson NX4 1.6 T-GDI",
+      "probes": "возраст 4",
+      "in": {
+        "year": 2022,
+        "volumeCc": 1598,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 2976,
+        "breakdown": {
+          "excise": 2400,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 96,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-08",
+      "car": "Kia Sportage NQ5 2.0 CRDi (дизель)",
+      "probes": "дизель считается как бензин",
+      "in": {
+        "year": 2021,
+        "volumeCc": 1995,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 3605,
+        "breakdown": {
+          "excise": 3000,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 125,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-09",
+      "car": "Hyundai Sonata DN8 2.0",
+      "probes": "ВОЗРАСТ РОВНО 6 — порог смены ставки акциза",
+      "in": {
+        "year": 2020,
+        "volumeCc": 1999,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 3610,
+        "breakdown": {
+          "excise": 3000,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 130,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-10",
+      "car": "Genesis G70 2.0T",
+      "probes": "возраст 7 — первый год за порогом",
+      "in": {
+        "year": 2019,
+        "volumeCc": 1998,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 9615,
+        "breakdown": {
+          "excise": 9000,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 135,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-11",
+      "car": "Kia Sorento MQ4 2.2 CRDi (дизель)",
+      "probes": "объём 2151",
+      "in": {
+        "year": 2021,
+        "volumeCc": 2151,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 3918,
+        "breakdown": {
+          "excise": 3300,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 138,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-12",
+      "car": "Hyundai Santa Fe TM 2.2 CRDi (дизель)",
+      "probes": "возраст 7, объём 2199",
+      "in": {
+        "year": 2019,
+        "volumeCc": 2199,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 10529,
+        "breakdown": {
+          "excise": 9900,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 149,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-13",
+      "car": "Genesis G80 2.5T",
+      "probes": "объём 2497",
+      "in": {
+        "year": 2022,
+        "volumeCc": 2497,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 4380,
+        "breakdown": {
+          "excise": 3750,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 150,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-14",
+      "car": "Hyundai Grandeur IG 2.5",
+      "probes": "возраст 3 при большом объёме",
+      "in": {
+        "year": 2023,
+        "volumeCc": 2497,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 4374,
+        "breakdown": {
+          "excise": 3750,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 144,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-15",
+      "car": "Genesis GV80 3.0 CRDi (дизель)",
+      "probes": "объём 2999",
+      "in": {
+        "year": 2021,
+        "volumeCc": 2999,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 5168,
+        "breakdown": {
+          "excise": 4500,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 188,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-16",
+      "car": "Kia Carnival KA4 3.5",
+      "probes": "объём 3470",
+      "in": {
+        "year": 2022,
+        "volumeCc": 3470,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 5940,
+        "breakdown": {
+          "excise": 5250,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 210,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-17",
+      "car": "Hyundai Palisade 3.8",
+      "probes": "большой объём плюс порог 6 лет",
+      "in": {
+        "year": 2020,
+        "volumeCc": 3778,
+        "fuel": "petrol",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 6427,
+        "breakdown": {
+          "excise": 5700,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 247,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-18",
+      "car": "Hyundai Ioniq 5",
+      "probes": "электромобиль, левый руль — акциз должен быть нулевым",
+      "in": {
+        "year": 2023,
+        "volumeCc": 0,
+        "fuel": "electric",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 480,
+        "breakdown": {
+          "excise": 0,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 0,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-19",
+      "car": "Kia Niro Hybrid 1.6",
+      "probes": "гибрид на пороге 6 лет",
+      "in": {
+        "year": 2020,
+        "volumeCc": 1580,
+        "fuel": "hybrid",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 1544,
+        "breakdown": {
+          "excise": 960,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 104,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-20",
+      "car": "Toyota Prius (из Японии)",
+      "probes": "ПРАВЫЙ РУЛЬ плюс гибрид плюс возраст 16",
+      "in": {
+        "year": 2010,
+        "volumeCc": 1797,
+        "fuel": "hybrid",
+        "steering": "right"
+      },
+      "expected": {
+        "totalGel": 24942,
+        "breakdown": {
+          "excise": 24300,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 162,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-21",
+      "car": "Nissan Leaf (из Японии)",
+      "probes": "ПРАВОРУЛЬНЫЙ ЭЛЕКТРОМОБИЛЬ — эталон показал нулевой акциз, правило демо про фикс. 3000 GEL опровергнуто",
+      "in": {
+        "year": 2019,
+        "volumeCc": 0,
+        "fuel": "electric",
+        "steering": "right"
+      },
+      "expected": {
+        "totalGel": 480,
+        "breakdown": {
+          "excise": 0,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 0,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-22",
+      "car": "Toyota Prius (из Японии), ЛЕВЫЙ руль",
+      "probes": "СТАРЫЙ ГИБРИД С ЛЕВЫМ РУЛЁМ — отделяет «скидки нет из-за возраста» от «скидки нет из-за правого руля». Отличается от ge-20 только рулём.",
+      "in": {
+        "year": 2010,
+        "volumeCc": 1797,
+        "fuel": "hybrid",
+        "steering": "left"
+      },
+      "expected": {
+        "totalGel": 8742,
+        "breakdown": {
+          "excise": 8100,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 162,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    },
+    {
+      "id": "ge-23",
+      "car": "Toyota Prius (из Японии), правый руль, свежий",
+      "probes": "МОЛОДОЙ ГИБРИД С ПРАВЫМ РУЛЁМ — проверяет, нужна ли для скидки пара условий «возраст И левый руль». Отличается от ge-20 только возрастом.",
+      "in": {
+        "year": 2021,
+        "volumeCc": 1797,
+        "fuel": "hybrid",
+        "steering": "right"
+      },
+      "expected": {
+        "totalGel": 8693,
+        "breakdown": {
+          "excise": 8100,
+          "customsServiceTax": 150,
+          "processing": 200,
+          "importTax": 113,
+          "expertAppraisal": 30,
+          "declaration": 50,
+          "internalTransit": 50
+        }
+      }
+    }
+  ],
+  "sourceName": "myauto.ge"
+}

@@ -1,0 +1,275 @@
+{
+  "_": "Эталон для Албании. Снят прогоном на независимом стороннем калькуляторе, не с legacy. Пустые (null) значения тест пропускает.",
+  "country": "albania",
+  "source": "https://www.vinauto.al/kalkulator-dogane",
+  "takenAt": "2026-08-09",
+  "tolerance": {
+    "_": "Сравнение идёт в леках. Допуск на округление у источника.",
+    "all": 1
+  },
+  "fx": {
+    "_": "Курс, стоявший в калькуляторе-эталоне в момент прогона. Подаётся в ядро как allPerUnit: в Албании курс входит в расчёт напрямую, и без фиксации кейсы разъедутся на следующий же день.",
+    "allPerUnit": 93.11,
+    "unit": "EUR",
+    "rateLine": "Kursi EUR / ALL: 1 EUR = 93.11 ALL. Kurs nga Frankfurter (2026-08-07). Kur vendoset kursi zyrtar doganor ne sistem, perdoret ai per llogaritjen.",
+    "unitNote": "Ядро валюту цены не знает: оно получает allPerUnit — сколько леков за единицу валюты. Эталон снят в евро, форма предлагает доллар и вону. Для ядра это один и тот же вход."
+  },
+  "notes": [
+    "Кейсы синтетические — это прощупывание границ, а не реальные лоты из reference-cars.md. Прогон по ходовым авто добавляется отдельно.",
+    "breakdown — построчная разбивка со стороннего ресурса. Ключи совпадают с id строк чека в ядре, поэтому расхождение видно построчно.",
+    "duty и excise записаны null: источник таких строк не показывает вовсе. То, что для физлиц они нулевые, закрепляется инвариантом ядра, а не кейсом.",
+    "luxuryOnce и luxuryAnnual выведены из итогов: источник рисует налог на роскошь одной строкой 91 000, но в 'Detyrime dogane' кладёт 70 000, а 'Totali i vitit te pare' больше ровно на 21 000. Разбивка совпала с dpshtrr.al (TRML 70 000 разово + TVML 21 000 ежегодно).",
+    "totalAll — 'Detyrime dogane + regjistrim + takse luksi', то есть без ежегодного налога. Ежегодный в итог не входит и лежит отдельным полем.",
+    "Источник не применяет минимальную стоимость по объёму, а ядро её применяет по решению владельца. Кейсы, где таможенная стоимость ниже минимума, помечены полем divergence и не утверждаются — иначе пришлось бы подгонять ядро под источник.",
+    "Округление проверено кейсом al-12: точный НДС 81229.164 стал 81229, значит обычное округление, не вверх.",
+    "Порядок округления (сначала база, потом НДС — или НДС от точной базы) на курсе 93.11 не различим ни на одной сумме от 700 до 20000 EUR."
+  ],
+  "cases": [
+    {
+      "id": "al-01",
+      "case": "малый объём, бракет минимума ≤1400",
+      "probes": "базовый кейс; минимум 162 500 не срабатывает — стоимость выше",
+      "in": { "price": 8000, "freight": 800, "volumeCc": 1200, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 819368,
+        "totalAll": 172374,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 163874,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-02",
+      "case": "объём 1500 — соседний бракет минимума",
+      "probes": "смена бракета минимума не меняет итог, пока стоимость выше минимума",
+      "in": { "price": 8000, "freight": 800, "volumeCc": 1500, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 819368,
+        "totalAll": 172374,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 163874,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-03",
+      "case": "2999 см³ — на волос ниже порога люкса",
+      "probes": "нижняя сторона границы 3000 см³; парный к al-04, отличается одним полем",
+      "in": { "price": 12000, "freight": 800, "volumeCc": 2999, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 1191808,
+        "totalAll": 246862,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 238362,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-04",
+      "case": "3000 см³ — порог люкса ровно",
+      "probes": "граница включительная: 3000 уже роскошь. Источник подписал строку «Kapacitet motori >= 3000 cm3»",
+      "in": { "price": 12000, "freight": 800, "volumeCc": 3000, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 1191808,
+        "totalAll": 316862,
+        "luxuryAnnualAll": 21000,
+        "breakdown": {
+          "vat": 238362,
+          "registration": 8500,
+          "luxuryOnce": 70000,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-05",
+      "case": "стоимость 4 934 830 ALL — ниже порога люкса",
+      "probes": "нижняя сторона границы 5 000 000 ALL; парный к al-06",
+      "in": { "price": 53000, "freight": 0, "volumeCc": 1998, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 4934830,
+        "totalAll": 995466,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 986966,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-06",
+      "case": "стоимость 5 027 940 ALL — выше порога люкса",
+      "probes": "порог по стоимости меряется от таможенной стоимости. Источник подписал строку «Vlere >= 5,000,000 ALL»",
+      "in": { "price": 54000, "freight": 0, "volumeCc": 1998, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 5027940,
+        "totalAll": 1084088,
+        "luxuryAnnualAll": 21000,
+        "breakdown": {
+          "vat": 1005588,
+          "registration": 8500,
+          "luxuryOnce": 70000,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-13",
+      "case": "оба критерия люкса сразу — 3000 см³ и 5 027 940 ALL",
+      "probes": "двойного начисления нет: налог тот же, что при одном сработавшем критерии (al-04, al-06). Источник подписал строку «Kapacitet motori >= 3000 cm3 dhe vlere >= 5,000,000 ALL»",
+      "in": { "price": 54000, "freight": 0, "volumeCc": 3000, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 5027940,
+        "totalAll": 1084088,
+        "luxuryAnnualAll": 21000,
+        "breakdown": {
+          "vat": 1005588,
+          "registration": 8500,
+          "luxuryOnce": 70000,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-07",
+      "case": "электромобиль",
+      "probes": "льготы по НДС для EV нет — совпадает с бензиновым al-03 до лека. Объёма двигателя нет, минимум по см³ не применяется",
+      "in": { "price": 12000, "freight": 800, "volumeCc": 0, "fuel": "electric" },
+      "expected": {
+        "customsValueAll": 1191808,
+        "totalAll": 246862,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 238362,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-09",
+      "case": "некруглая стоимость 13 320 EUR",
+      "probes": "дробная таможенная стоимость 1 240 225,20 — округление до целого лека",
+      "in": { "price": 12543, "freight": 777, "volumeCc": 1798, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 1240225,
+        "totalAll": 256545,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 248045,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-12",
+      "case": "округление НДС вниз",
+      "probes": "ключевой кейс на правило округления: база 406 145,82 → 406 146, точный НДС 81 229,164 → 81 229. При округлении вверх вышло бы 81 230",
+      "in": { "price": 4000, "freight": 362, "volumeCc": 1200, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 406146,
+        "totalAll": 89729,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 81229,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-08",
+      "case": "дешёвый лот 800 EUR при объёме 1998 см³",
+      "probes": "источник считает НДС от фактической стоимости 74 488 ALL",
+      "divergence": {
+        "reason": "Источник не применяет минимальную стоимость по объёму. Ядро по решению владельца применяет: для 1998 см³ минимум 406 000 ALL, что выше таможенной стоимости 74 488 ALL. Кейс сохранён как документ поведения источника, но ядром не утверждается.",
+        "minimumByCcAll": 406000
+      },
+      "in": { "price": 500, "freight": 300, "volumeCc": 1998, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 74488,
+        "totalAll": 23398,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 14898,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-10",
+      "case": "706 EUR — округление базы вверх до 65 736",
+      "probes": "точная база 65 735,66 → 65 736, точный НДС 13 147,132 → 13 147",
+      "divergence": {
+        "reason": "Та же причина, что у al-08: 1998 см³ даёт минимум 406 000 ALL против стоимости 65 736 ALL. Правило округления, ради которого кейс снят, закрыто кейсом al-12 — он выше минимума и утверждается.",
+        "minimumByCcAll": 406000
+      },
+      "in": { "price": 706, "freight": 0, "volumeCc": 1998, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 65736,
+        "totalAll": 21647,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 13147,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    },
+    {
+      "id": "al-11",
+      "case": "703 EUR — округление базы вниз до 65 456",
+      "probes": "точная база 65 456,33 → 65 456, точный НДС 13 091,266 → 13 091",
+      "divergence": {
+        "reason": "Та же причина, что у al-08: 1998 см³ даёт минимум 406 000 ALL против стоимости 65 456 ALL.",
+        "minimumByCcAll": 406000
+      },
+      "in": { "price": 703, "freight": 0, "volumeCc": 1998, "fuel": "petrol" },
+      "expected": {
+        "customsValueAll": 65456,
+        "totalAll": 21591,
+        "luxuryAnnualAll": 0,
+        "breakdown": {
+          "vat": 13091,
+          "registration": 8500,
+          "luxuryOnce": 0,
+          "duty": null,
+          "excise": null
+        }
+      }
+    }
+  ]
+}
