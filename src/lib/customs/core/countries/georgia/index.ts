@@ -1,4 +1,11 @@
-import type { CalcResult, CountryCalculator, Flag, Line } from "@/lib/customs/core/types";
+import type {
+  CalcResult,
+  CountryCalculator,
+  Flag,
+  I18nText,
+  Line,
+} from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 import { georgiaFields } from "./fields";
 import {
   AGE_THRESHOLD_YEARS,
@@ -39,7 +46,14 @@ export const georgiaDefaults: GeorgiaInput = {
 
 interface ExciseBreakdown {
   amountGel: number;
-  note: string;
+  note: I18nText;
+}
+
+/** Возрастной бракет — отдельным текстом: он подставляется внутрь формулы акциза. */
+function ageBandText(isOld: boolean): I18nText {
+  return txt(isOld ? "georgia.ageBand.over" : "georgia.ageBand.upTo", {
+    years: AGE_THRESHOLD_YEARS,
+  });
 }
 
 function calcExcise(
@@ -56,13 +70,11 @@ function calcExcise(
   if (input.fuel === "electric") {
     return {
       amountGel: ELECTRIC_EXCISE_GEL,
-      note: "электромобиль — акциз не взимается",
+      note: txt("georgia.notes.exciseElectric"),
     };
   }
 
   const isRhd = input.steering === "right";
-  const rhdSuffix = isRhd ? ` × ${RIGHT_HAND_DRIVE_MULTIPLIER} (правый руль)` : "";
-  const ageLabel = isOld ? `>${AGE_THRESHOLD_YEARS} лет` : `≤${AGE_THRESHOLD_YEARS} лет`;
 
   // Скидка для гибрида требует обоих условий сразу: возраст до порога и левый руль.
   const hybridApplies = input.fuel === "hybrid" && !isOld && !isRhd;
@@ -71,10 +83,25 @@ function calcExcise(
   if (hybridApplies) rate *= HYBRID_MULTIPLIER;
   if (isRhd) rate *= RIGHT_HAND_DRIVE_MULTIPLIER;
 
-  const hybridSuffix = hybridApplies ? ` × ${HYBRID_MULTIPLIER} (гибрид)` : "";
+  // Множители исключают друг друга: скидка гибриду не достаётся при правом руле.
+  // Поэтому вариантов формулы три, а не четыре, и каждый — самостоятельный ключ:
+  // переводить обрывок вроде « × 0,4 (гибрид)» отдельно от предложения нельзя.
+  const noteKey = hybridApplies
+    ? "georgia.notes.exciseHybrid"
+    : isRhd
+      ? "georgia.notes.exciseRhd"
+      : "georgia.notes.excise";
+
   return {
     amountGel: rate * volumeCc,
-    note: `${baseRate} GEL/см³${hybridSuffix}${rhdSuffix} × ${volumeCc} см³, возраст ${age} лет (${ageLabel})`,
+    note: txt(noteKey, {
+      baseRate,
+      volumeCc,
+      age,
+      ageBand: ageBandText(isOld),
+      hybridMultiplier: HYBRID_MULTIPLIER,
+      rhdMultiplier: RIGHT_HAND_DRIVE_MULTIPLIER,
+    }),
   };
 }
 
@@ -84,57 +111,73 @@ function calcFlags(input: GeorgiaInput, isOld: boolean): Flag[] {
   if (input.year < EURO5_TYPICAL_YEAR_FROM) {
     flags.push({
       level: "warn",
-      text: `Возможны сложности с постоянной регистрацией: требуется соответствие Euro-5, обычно это авто от ${EURO5_TYPICAL_YEAR_FROM} г.в.`,
+      text: txt("georgia.flags.euro5", { yearFrom: EURO5_TYPICAL_YEAR_FROM }),
     });
   }
   if (isOld) {
     flags.push({
       level: "info",
-      text: `Возраст больше ${AGE_THRESHOLD_YEARS} лет — акциз по повышенной ставке ${EXCISE_GEL_PER_CC.overThreshold} GEL/см³.`,
+      text: txt("georgia.flags.oldAge", {
+        years: AGE_THRESHOLD_YEARS,
+        rate: EXCISE_GEL_PER_CC.overThreshold,
+      }),
     });
   }
   if (input.fuel === "electric") {
-    flags.push({
-      level: "info",
-      text: "Электромобиль — акциз не взимается независимо от расположения руля.",
-    });
+    flags.push({ level: "info", text: txt("georgia.flags.electric") });
   }
   if (input.fuel === "hybrid") {
     const isRhd = input.steering === "right";
-    let text: string;
+    let text: I18nText;
     if (isOld && isRhd) {
-      text = `Гибрид старше ${AGE_THRESHOLD_YEARS} лет и с правым рулём — скидка на акциз не применяется.`;
+      text = txt("georgia.flags.hybridOldRhd", { years: AGE_THRESHOLD_YEARS });
     } else if (isOld) {
-      text = `Гибрид старше ${AGE_THRESHOLD_YEARS} лет — скидка на акциз не применяется.`;
+      text = txt("georgia.flags.hybridOld", { years: AGE_THRESHOLD_YEARS });
     } else if (isRhd) {
-      text = "Гибрид с правым рулём — скидка на акциз не применяется.";
+      text = txt("georgia.flags.hybridRhd");
     } else {
-      text = "Гибрид — акциз со скидкой 60%.";
+      // Скидка выражена долей от ставки, поэтому процент считается из неё,
+      // а не зашивается в текст: поменяется множитель — поменяется и цифра.
+      text = txt("georgia.flags.hybridDiscount", {
+        discount: Math.round((1 - HYBRID_MULTIPLIER) * 100),
+      });
     }
     flags.push({ level: "info", text });
   }
   if (input.steering === "right" && input.fuel !== "electric") {
     flags.push({
       level: "info",
-      text: `Правый руль — акциз умножается на ${RIGHT_HAND_DRIVE_MULTIPLIER}.`,
+      text: txt("georgia.flags.rhd", {
+        multiplier: RIGHT_HAND_DRIVE_MULTIPLIER,
+      }),
     });
   }
   return flags;
 }
 
-const FUEL_LABELS: Record<GeorgiaFuel, string> = {
-  petrol: "бензин / дизель",
-  hybrid: "гибрид",
-  electric: "электро",
+const FUEL_KEYS: Record<GeorgiaFuel, string> = {
+  petrol: "georgia.fuelShort.petrol",
+  hybrid: "georgia.fuelShort.hybrid",
+  electric: "georgia.fuelShort.electric",
 };
 
 /** Подпись под заголовком чека. Собирается ядром, чтобы интерфейс не знал про страны. */
-function buildSubtitle(input: GeorgiaInput, volumeCc: number): string {
-  const parts: string[] = [String(input.year)];
-  if (input.fuel !== "electric") parts.push(`${volumeCc} см³`);
-  parts.push(FUEL_LABELS[input.fuel]);
-  parts.push(input.steering === "right" ? "правый руль" : "левый руль");
-  return parts.join(" · ");
+function buildSubtitle(input: GeorgiaInput, volumeCc: number): I18nText[] {
+  const parts: I18nText[] = [
+    txt("georgia.subtitle.year", { year: input.year }),
+  ];
+  if (input.fuel !== "electric") {
+    parts.push(txt("georgia.subtitle.volume", { volumeCc }));
+  }
+  parts.push(txt(FUEL_KEYS[input.fuel]));
+  parts.push(
+    txt(
+      input.steering === "right"
+        ? "georgia.steeringShort.right"
+        : "georgia.steeringShort.left",
+    ),
+  );
+  return parts;
 }
 
 export function calculateGeorgia(input: GeorgiaInput): CalcResult {
@@ -160,7 +203,7 @@ export function calculateGeorgia(input: GeorgiaInput): CalcResult {
   const lines: Line[] = [
     {
       id: "excise",
-      label: "Акциз",
+      label: txt("georgia.lines.excise"),
       note: excise.note,
       amount: excise.amountGel,
       currency: "GEL",
@@ -168,56 +211,59 @@ export function calculateGeorgia(input: GeorgiaInput): CalcResult {
     },
     {
       id: "customsServiceTax",
-      label: "Налог на таможенные услуги",
+      label: txt("georgia.lines.customsServiceTax"),
       amount: FEES_GEL.customsServiceTax,
       currency: "GEL",
     },
     {
       id: "processing",
-      label: "Оформление",
+      label: txt("georgia.lines.processing"),
       amount: FEES_GEL.processing,
       currency: "GEL",
     },
     {
       id: "importTax",
-      label: "Налог на импорт",
+      label: txt("georgia.lines.importTax"),
       note: isElectric
-        ? "электромобиль — объём двигателя отсутствует, налог не начисляется"
-        : `${rate.toFixed(4)} GEL/см³ × ${volumeCc} см³ — ставка растёт с возрастом`,
+        ? txt("georgia.notes.importTaxElectric")
+        : txt("georgia.notes.importTax", {
+            rate: rate.toFixed(4),
+            volumeCc,
+          }),
       amount: importTaxGel,
       currency: "GEL",
       muted: isElectric,
     },
     {
       id: "expertAppraisal",
-      label: "Оценка эксперта",
+      label: txt("georgia.lines.expertAppraisal"),
       amount: FEES_GEL.expertAppraisal,
       currency: "GEL",
     },
     {
       id: "declaration",
-      label: "Таможенная декларация",
+      label: txt("georgia.lines.declaration"),
       amount: FEES_GEL.declaration,
       currency: "GEL",
     },
     {
       id: "internalTransit",
-      label: "Внутренний транзит (до 60 дней)",
+      label: txt("georgia.lines.internalTransit"),
       amount: FEES_GEL.internalTransit,
       currency: "GEL",
     },
     {
       id: "duty",
-      label: "Импортная пошлина",
-      note: "на автомобили не взимается",
+      label: txt("georgia.lines.duty"),
+      note: txt("common.notChargedOnCars"),
       amount: 0,
       currency: "GEL",
       muted: true,
     },
     {
       id: "vat",
-      label: "НДС",
-      note: "на автомобили не взимается",
+      label: txt("georgia.lines.vat"),
+      note: txt("common.notChargedOnCars"),
       amount: 0,
       currency: "GEL",
       muted: true,
@@ -236,21 +282,22 @@ export function calculateGeorgia(input: GeorgiaInput): CalcResult {
     total: { amount: totalGel, currency: "GEL" },
     alt,
     flags: calcFlags(input, isOld),
+    subtitle: buildSubtitle(input, volumeCc),
+    stampLabel: ageBandText(isOld),
     meta: {
       age: String(age),
-      ageBand: isOld ? `>${AGE_THRESHOLD_YEARS} лет` : `≤${AGE_THRESHOLD_YEARS} лет`,
+      // Код бракета, а не подпись: подпись живёт в stampLabel и переводится.
+      ageBand: isOld ? "over" : "upTo",
       volumeCc: String(volumeCc),
       fuel: input.fuel,
       steering: input.steering,
-      subtitle: buildSubtitle(input, volumeCc),
-      stampLabel: isOld ? `>${AGE_THRESHOLD_YEARS} лет` : `≤${AGE_THRESHOLD_YEARS} лет`,
     },
   };
 }
 
 export const georgiaCalculator: CountryCalculator<GeorgiaInput> = {
   id: "georgia",
-  title: "Растаможка авто в Грузии",
+  title: txt("georgia.title"),
   fields: georgiaFields,
   defaults: georgiaDefaults,
   calculate: calculateGeorgia,

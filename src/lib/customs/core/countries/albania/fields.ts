@@ -1,4 +1,5 @@
 import type { FieldDef } from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 
 /**
  * Схема формы для Албании.
@@ -6,39 +7,39 @@ import type { FieldDef } from "@/lib/customs/core/types";
  * Года выпуска здесь нет намеренно: он не влияет на расчёт ни одной статьёй.
  * Топливо влияет только через электромобиль — у него нет объёма, поэтому
  * к нему не применяется ни минимальная стоимость, ни порог роскоши по объёму.
- * Никаких льгот по НДС для электромобилей эталон не показывает.
+ * Льгот по НДС для электромобилей в Албании нет.
  */
 export const albaniaFields: FieldDef[] = [
   {
     kind: "segmented",
     id: "priceCurrency",
-    label: "Валюта сделки",
-    hint: "Курс к леку подставляется автоматически.",
+    label: txt("albania.fields.priceCurrency"),
+    hint: txt("albania.fields.priceCurrencyHint"),
     options: [
-      { value: "USD", label: "Доллар" },
-      { value: "KRW", label: "Вона" },
+      { value: "USD", label: txt("albania.currency.USD") },
+      { value: "KRW", label: txt("albania.currency.KRW") },
     ],
   },
   {
     kind: "number",
     id: "price",
-    label: "Стоимость авто",
+    label: txt("albania.fields.price"),
     min: 0,
     step: 50,
   },
   {
     kind: "number",
     id: "freight",
-    label: "Фрахт и страховка",
-    hint: "Входит в таможенную стоимость наравне с ценой авто.",
+    label: txt("albania.fields.freight"),
+    hint: txt("albania.fields.freightHint"),
     min: 0,
     step: 50,
   },
   {
     kind: "number",
     id: "allPerUnit",
-    label: "Курс: леков за единицу валюты",
-    hint: "Рыночный курс. Таможня применяет свой официальный — он может отличаться.",
+    label: txt("albania.fields.allPerUnit"),
+    hint: txt("albania.fields.allPerUnitHint"),
     min: 0.0001,
     step: 0.0001,
     // Курс едет за валютой сделки: переключил доллар на вону — подставится
@@ -48,18 +49,18 @@ export const albaniaFields: FieldDef[] = [
   {
     kind: "segmented",
     id: "fuel",
-    label: "Тип топлива",
+    label: txt("albania.fields.fuel"),
     options: [
-      { value: "petrol", label: "Бензин / дизель" },
-      { value: "hybrid", label: "Гибрид" },
-      { value: "electric", label: "Электро" },
+      { value: "petrol", label: txt("albania.fuel.petrol") },
+      { value: "hybrid", label: txt("albania.fuel.hybrid") },
+      { value: "electric", label: txt("albania.fuel.electric") },
     ],
   },
   {
     kind: "number",
     id: "volumeCc",
-    label: "Объём двигателя, см³",
-    hint: "Определяет минимальную таможенную стоимость и порог налога на роскошь.",
+    label: txt("albania.fields.volumeCc"),
+    hint: txt("albania.fields.volumeCcHint"),
     min: 1,
     step: 1,
     visibleIf: (input) => input.fuel !== "electric",

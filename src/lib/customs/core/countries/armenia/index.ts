@@ -1,5 +1,12 @@
 import { formatAmount } from "@/lib/customs/core/format";
-import type { CalcResult, CountryCalculator, Flag, Line } from "@/lib/customs/core/types";
+import type {
+  CalcResult,
+  CountryCalculator,
+  Flag,
+  I18nText,
+  Line,
+} from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 import { armeniaFields } from "./fields";
 import {
   AGE_NEW_BELOW,
@@ -57,17 +64,11 @@ export const armeniaDefaults: ArmeniaInput = {
   priceCurrency: "USD",
 };
 
-const FUEL_LABELS: Record<ArmeniaFuel, string> = {
-  petrol: "бензин",
-  diesel: "дизель",
-  hybrid: "гибрид",
-  electric: "электро",
-};
-
 interface DutyResult {
   amd: number;
-  note: string;
-  band: string;
+  note: I18nText;
+  /** Код бракета — машинное значение для meta и тестов, не для показа. */
+  bandId: "electric" | "new" | "mid" | "old";
 }
 
 /**
@@ -91,8 +92,8 @@ function calcDuty(
   if (fuel === "electric") {
     return {
       amd: 0,
-      band: "льготная квота",
-      note: "электромобили ввозятся по беспошлинной квоте ЕАЭС — ставка 0%",
+      bandId: "electric",
+      note: txt("armenia.notes.dutyElectric"),
     };
   }
 
@@ -101,10 +102,11 @@ function calcDuty(
     const rate = large ? NEW_DUTY_RATE_LARGE_PETROL : NEW_DUTY_RATE;
     return {
       amd: customsValueAmd * rate,
-      band: `до ${AGE_NEW_BELOW} лет`,
-      note: large
-        ? `${rate * 100}% от таможенной стоимости — пониженная ставка для бензина крупнее ${LARGE_PETROL_CC_ABOVE} см³`
-        : `${rate * 100}% от таможенной стоимости — минимума по объёму нет`,
+      bandId: "new",
+      note: txt(
+        large ? "armenia.notes.dutyNewLargePetrol" : "armenia.notes.dutyNew",
+        { rate: rate * 100, threshold: LARGE_PETROL_CC_ABOVE },
+      ),
     };
   }
 
@@ -116,19 +118,26 @@ function calcDuty(
     const minWins = byVolume > byValue;
     return {
       amd: Math.max(byValue, byVolume),
-      band: `${AGE_NEW_BELOW}–${AGE_OLD_FROM - 1} лет`,
-      note:
-        `${MID_DUTY_RATE * 100}% от стоимости, но не менее ${bracket.mid} €/см³ — ` +
-        (minWins
-          ? `минимум по объёму выше (${formatAmount(byVolume)} ֏ против ${formatAmount(byValue)} ֏)`
-          : `процент выше минимума (${formatAmount(byValue)} ֏ против ${formatAmount(byVolume)} ֏)`),
+      bandId: "mid",
+      note: txt(
+        minWins ? "armenia.notes.dutyMidByVolume" : "armenia.notes.dutyMidByValue",
+        {
+          rate: MID_DUTY_RATE * 100,
+          perCc: bracket.mid,
+          byVolume: formatAmount(byVolume),
+          byValue: formatAmount(byValue),
+        },
+      ),
     };
   }
 
   return {
     amd: bracket.old * volumeCc * amdPerEur,
-    band: `${AGE_OLD_FROM} лет и старше`,
-    note: `${bracket.old} €/см³ × ${volumeCc} см³ — заградительная ставка, от стоимости не зависит`,
+    bandId: "old",
+    note: txt("armenia.notes.dutyOld", {
+      perCc: bracket.old,
+      volumeCc,
+    }),
   };
 }
 
@@ -142,108 +151,78 @@ function calcFlags(args: {
   const { fuel, age, volumeCc, ecoAmd } = args;
 
   // Первым делом — то, из-за чего Армению путают чаще всего.
-  flags.push({
-    level: "info",
-    text:
-      "Физлицо в Армении платит не единый совокупный платёж по Решению ЕЭК №107, " +
-      "а пошлину по ЕТТ ЕАЭС, НДС 20% отдельной строкой и экологический налог. " +
-      "Ставки 48–54% и 1,5–5,7 €/см³, которые часто приводят для «физлиц», — это " +
-      "таблицы №107, и к легковым в Армении они не применяются.",
-  });
+  flags.push({ level: "info", text: txt("armenia.flags.notEec107") });
 
   if (fuel === "electric") {
+    flags.push({ level: "warn", text: txt("armenia.flags.electricQuota") });
     flags.push({
       level: "warn",
-      text:
-        "Электромобиль идёт по беспошлинной квоте ЕАЭС на 2026 год, расширенной " +
-        "дополнительными 5 000 машин. Квота распределяется по мере ввоза: когда она " +
-        "заканчивается, включается обычная ставка 15%, и платёж вырастает сразу по двум " +
-        "статьям — по пошлине и по НДС с неё. С датой ввоза лучше не тянуть.",
-    });
-    flags.push({
-      level: "warn",
-      text:
-        `Освобождение от НДС действует до 31 декабря ${ELECTRIC_VAT_FREE_UNTIL_YEAR} года ` +
-        "и рассчитано на новые машины. В расчёте оно учтено; для электромобиля 2023 года " +
-        "выпуска и старше подтвердите льготу при оформлении.",
+      text: txt("armenia.flags.electricVat", {
+        untilYear: ELECTRIC_VAT_FREE_UNTIL_YEAR,
+      }),
     });
   }
 
   if (isLargePetrol(fuel, volumeCc) && age < AGE_NEW_BELOW) {
     flags.push({
       level: "info",
-      text:
-        `Бензиновый двигатель крупнее ${LARGE_PETROL_CC_ABOVE} см³ и возраст до ${AGE_NEW_BELOW} лет — ` +
-        `пошлина ${NEW_DUTY_RATE_LARGE_PETROL * 100}% вместо ${NEW_DUTY_RATE * 100}%. ` +
-        "Верхней границы у этой ставки нет: коды ТН ВЭД 8703 23 198 8 и 8703 24 109 8 " +
-        "несут одну и ту же ставку. На дизель и на гибрид снижение не распространяется.",
+      text: txt("armenia.flags.largePetrol", {
+        threshold: LARGE_PETROL_CC_ABOVE,
+        ageBelow: AGE_NEW_BELOW,
+        reducedRate: NEW_DUTY_RATE_LARGE_PETROL * 100,
+        baseRate: NEW_DUTY_RATE * 100,
+      }),
     });
   }
 
   if (fuel === "hybrid" && age < AGE_NEW_BELOW && volumeCc > LARGE_PETROL_CC_ABOVE) {
     flags.push({
       level: "warn",
-      text:
-        `Гибрид крупнее ${LARGE_PETROL_CC_ABOVE} см³ моложе ${AGE_NEW_BELOW} лет платит полные ` +
-        `${NEW_DUTY_RATE * 100}%, хотя такой же бензиновый платил бы ${NEW_DUTY_RATE_LARGE_PETROL * 100}%. ` +
-        "Во всех остальных бракетах гибрид считается ровно как бензин. На такой машине " +
-        "имеет смысл заранее уточнить код ТН ВЭД.",
+      text: txt("armenia.flags.largeHybrid", {
+        threshold: LARGE_PETROL_CC_ABOVE,
+        ageBelow: AGE_NEW_BELOW,
+        baseRate: NEW_DUTY_RATE * 100,
+        reducedRate: NEW_DUTY_RATE_LARGE_PETROL * 100,
+      }),
     });
   }
 
-  flags.push({
-    level: "info",
-    text:
-      "Экологический налог берётся один раз, при ввозе: 0 до 5 лет включительно, 2% на " +
-      "6–10 лет, 10% на 11–15, 20% на 16 и старше; электромобили и гибриды освобождены. " +
-      "Не путайте его с ежегодным налогом на выбросы, который платит владелец машины уже " +
-      "на армянском учёте — там ставки другие и заметно ниже.",
-  });
+  flags.push({ level: "info", text: txt("armenia.flags.ecoOnce") });
 
   if (ecoAmd > 0) {
     flags.push({
       level: "info",
-      text:
-        `Возраст ${age} лет — экологический налог ${ecoRate(age) * 100}% от таможенной стоимости. ` +
-        `Следующий порог — ${nextEcoThreshold(age)}.`,
+      text: txt("armenia.flags.ecoCurrent", {
+        age,
+        rate: ecoRate(age) * 100,
+        next: nextEcoThreshold(age),
+      }),
     });
   }
 
-  flags.push({
-    level: "info",
-    text:
-      "Акциз при ввозе легковых (категория М1, ТН ВЭД 8703) не взимается: статья 84 " +
-      "Налогового кодекса РА облагает им только грузовые и мотоциклы свыше 500 см³. " +
-      "Строка оставлена нулевой, чтобы было видно, что её учли.",
-  });
+  flags.push({ level: "info", text: txt("armenia.flags.noExcise") });
 
   flags.push({
     level: "warn",
-    text:
-      `Расчёт берёт возраст как разницу календарных годов, а таможня отсчитывает его от ` +
-      `даты производства. Переломы ставки приходятся на ${AGE_NEW_BELOW} и ${AGE_OLD_FROM} лет: ` +
-      "если машине вот-вот исполнится столько, платёж может попасть в соседний бракет — " +
-      "такие лоты выгоднее оформлять заранее.",
+    text: txt("armenia.flags.ageByYear", {
+      ageBelow: AGE_NEW_BELOW,
+      ageOld: AGE_OLD_FROM,
+    }),
   });
 
-  flags.push({
-    level: "warn",
-    text:
-      "Доставка до Армении, стоянка и терминальные сборы, услуги таможенного представителя " +
-      "и постановка на учёт в расчёт не входят.",
-  });
+  flags.push({ level: "warn", text: txt("armenia.flags.notIncluded") });
 
   return flags;
 }
 
 /** Подсказка «когда станет дороже» — по границам экологического налога. */
-function nextEcoThreshold(age: number): string {
+function nextEcoThreshold(age: number): I18nText {
   for (const bracket of ECO_BRACKETS) {
     if (age <= bracket.maxAge && Number.isFinite(bracket.maxAge)) {
-      return `${bracket.maxAge + 1} лет`;
+      return txt("armenia.ecoNext.years", { years: bracket.maxAge + 1 });
     }
   }
-  return "выше нет";
+  return txt("armenia.ecoNext.none");
 }
 
 export function calculateArmenia(input: ArmeniaInput): CalcResult {
@@ -275,23 +254,30 @@ export function calculateArmenia(input: ArmeniaInput): CalcResult {
   const ecoFree = input.fuel === "electric" || input.fuel === "hybrid";
   const ecoAmd = ecoFree ? 0 : roundAmd(customsValueAmd * ecoRate(age));
 
-  const vatNote = vatFree
-    ? `электромобиль — освобождение до 31 декабря ${ELECTRIC_VAT_FREE_UNTIL_YEAR} года`
-    : `${VAT_RATE * 100}% от таможенной стоимости вместе с пошлиной: ` +
-      `${formatAmount(customsValueAmd)} ֏ + ${formatAmount(dutyAmd)} ֏`;
+  const vatNote: I18nText = vatFree
+    ? txt("armenia.notes.vatElectric", {
+        untilYear: ELECTRIC_VAT_FREE_UNTIL_YEAR,
+      })
+    : txt("armenia.notes.vat", {
+        rate: VAT_RATE * 100,
+        value: formatAmount(customsValueAmd),
+        duty: formatAmount(dutyAmd),
+      });
 
-  const ecoNote = ecoFree
-    ? input.fuel === "electric"
-      ? "электромобили освобождены полностью"
-      : "гибриды освобождены полностью"
+  const ecoNote: I18nText = ecoFree
+    ? txt(
+        input.fuel === "electric"
+          ? "armenia.notes.ecoElectric"
+          : "armenia.notes.ecoHybrid",
+      )
     : ecoAmd === 0
-      ? `возраст до ${ECO_BRACKETS[0].maxAge} лет включительно — налог не начисляется`
-      : `${ecoRate(age) * 100}% от таможенной стоимости, возраст ${age} лет`;
+      ? txt("armenia.notes.ecoYoung", { years: ECO_BRACKETS[0].maxAge })
+      : txt("armenia.notes.eco", { rate: ecoRate(age) * 100, age });
 
   const lines: Line[] = [
     {
       id: "duty",
-      label: "Таможенная пошлина",
+      label: txt("armenia.lines.duty"),
       note: duty.note,
       amount: dutyAmd,
       currency: "AMD",
@@ -299,15 +285,15 @@ export function calculateArmenia(input: ArmeniaInput): CalcResult {
     },
     {
       id: "excise",
-      label: "Акциз",
-      note: "при ввозе легковых автомобилей в РА не взимается",
+      label: txt("armenia.lines.excise"),
+      note: txt("armenia.notes.excise"),
       amount: EXCISE_AMD,
       currency: "AMD",
       muted: true,
     },
     {
       id: "vat",
-      label: "НДС",
+      label: txt("armenia.lines.vat"),
       note: vatNote,
       amount: vatAmd,
       currency: "AMD",
@@ -315,7 +301,7 @@ export function calculateArmenia(input: ArmeniaInput): CalcResult {
     },
     {
       id: "eco",
-      label: "Экологический налог",
+      label: txt("armenia.lines.eco"),
       note: ecoNote,
       amount: ecoAmd,
       currency: "AMD",
@@ -330,10 +316,12 @@ export function calculateArmenia(input: ArmeniaInput): CalcResult {
     alt.push({ amount: totalAmd / amdPerUnit, currency: input.priceCurrency });
   }
 
-  const subtitleParts: string[] = [
-    String(input.year),
-    ...(input.fuel === "electric" ? [] : [`${volumeCc} см³`]),
-    FUEL_LABELS[input.fuel],
+  const subtitle: I18nText[] = [
+    txt("armenia.subtitle.year", { year: input.year }),
+    ...(input.fuel === "electric"
+      ? []
+      : [txt("armenia.subtitle.volume", { volumeCc })]),
+    txt(`armenia.fuelShort.${input.fuel}`),
   ];
 
   return {
@@ -341,25 +329,26 @@ export function calculateArmenia(input: ArmeniaInput): CalcResult {
     total: { amount: totalAmd, currency: "AMD" },
     alt,
     flags: calcFlags({ fuel: input.fuel, age, volumeCc, ecoAmd }),
+    subtitle,
+    stampLabel: txt("armenia.stamp.eaeu"),
     meta: {
       fuel: input.fuel,
       age: String(age),
-      ageBand: duty.band,
+      // Код бракета, а не подпись — подпись переводится и живёт в словаре.
+      ageBand: duty.bandId,
       volumeCc: String(volumeCc),
       customsValueAmd: String(customsValueAmd),
       dutyAmd: String(dutyAmd),
       vatAmd: String(vatAmd),
       ecoAmd: String(ecoAmd),
       totalAmd: String(totalAmd),
-      subtitle: subtitleParts.join(" · "),
-      stampLabel: "ЕТТ ЕАЭС",
     },
   };
 }
 
 export const armeniaCalculator: CountryCalculator<ArmeniaInput> = {
   id: "armenia",
-  title: "Растаможка авто в Армению",
+  title: txt("armenia.title"),
   fields: armeniaFields,
   defaults: armeniaDefaults,
   calculate: calculateArmenia,

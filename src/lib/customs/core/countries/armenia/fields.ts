@@ -1,4 +1,5 @@
 import type { FieldDef } from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 
 /**
  * Схема формы для Армении.
@@ -16,20 +17,20 @@ export const armeniaFields: FieldDef[] = [
   {
     kind: "select",
     id: "fuel",
-    label: "Тип двигателя",
-    hint: "Гибрид считается по бензиновой таблице. Электромобиль идёт по беспошлинной квоте ЕАЭС.",
+    label: txt("armenia.fields.fuel"),
+    hint: txt("armenia.fields.fuelHint"),
     options: [
-      { value: "petrol", label: "Бензин" },
-      { value: "diesel", label: "Дизель" },
-      { value: "hybrid", label: "Гибрид" },
-      { value: "electric", label: "Электромобиль" },
+      { value: "petrol", label: txt("armenia.fuel.petrol") },
+      { value: "diesel", label: txt("armenia.fuel.diesel") },
+      { value: "hybrid", label: txt("armenia.fuel.hybrid") },
+      { value: "electric", label: txt("armenia.fuel.electric") },
     ],
   },
   {
     kind: "number",
     id: "volumeCc",
-    label: "Объём двигателя, см³",
-    hint: "Границы бракетов включительные: 1500 см³ попадает в бракет «до 1500». У авто младше 3 лет объём влияет только на бензин крупнее 2800 см³.",
+    label: txt("armenia.fields.volumeCc"),
+    hint: txt("armenia.fields.volumeCcHint"),
     min: 1,
     step: 1,
     visibleIf: (input) => input.fuel !== "electric",
@@ -37,8 +38,8 @@ export const armeniaFields: FieldDef[] = [
   {
     kind: "number",
     id: "year",
-    label: "Год выпуска",
-    hint: "Возраст считается как разница календарных годов. Переломы ставки — на 3 и на 7 годах.",
+    label: txt("armenia.fields.year"),
+    hint: txt("armenia.fields.yearHint"),
     min: 1970,
     max: 2026,
     step: 1,
@@ -46,33 +47,33 @@ export const armeniaFields: FieldDef[] = [
   {
     kind: "segmented",
     id: "priceCurrency",
-    label: "Валюта сделки",
-    hint: "Курс к драму подставляется автоматически и остаётся редактируемым.",
+    label: txt("armenia.fields.priceCurrency"),
+    hint: txt("armenia.fields.priceCurrencyHint"),
     options: [
-      { value: "USD", label: "Доллар" },
-      { value: "KRW", label: "Вона" },
+      { value: "USD", label: txt("armenia.currency.USD") },
+      { value: "KRW", label: txt("armenia.currency.KRW") },
     ],
   },
   {
     kind: "number",
     id: "price",
-    label: "Стоимость авто",
+    label: txt("armenia.fields.price"),
     min: 0,
     step: 50,
   },
   {
     kind: "number",
     id: "freight",
-    label: "Фрахт и страховка",
-    hint: "Входит в таможенную стоимость наравне с ценой авто и облагается наравне с ней.",
+    label: txt("armenia.fields.freight"),
+    hint: txt("armenia.fields.freightHint"),
     min: 0,
     step: 50,
   },
   {
     kind: "number",
     id: "amdPerUnit",
-    label: "Курс: драмов за единицу валюты",
-    hint: "По нему таможенная стоимость переводится в драмы. От него зависят пошлина в процентах, НДС и экологический налог.",
+    label: txt("armenia.fields.amdPerUnit"),
+    hint: txt("armenia.fields.amdPerUnitHint"),
     min: 0.000001,
     step: 0.000001,
     // Курс едет за валютой сделки: переключил доллар на вону — подставится
@@ -82,8 +83,8 @@ export const armeniaFields: FieldDef[] = [
   {
     kind: "number",
     id: "amdPerEur",
-    label: "Курс ЦБ РА: драмов за 1 евро",
-    hint: "Нужен только для ставок за 1 см³ — они заданы в евро. У авто младше 3 лет на результат не влияет.",
+    label: txt("armenia.fields.amdPerEur"),
+    hint: txt("armenia.fields.amdPerEurHint"),
     min: 0.01,
     step: 0.01,
     ratePair: () => ({ from: "EUR", to: "AMD" }),

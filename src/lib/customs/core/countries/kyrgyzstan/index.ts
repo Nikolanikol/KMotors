@@ -1,5 +1,12 @@
 import { formatAmount } from "@/lib/customs/core/format";
-import type { CalcResult, CountryCalculator, Flag, Line } from "@/lib/customs/core/types";
+import type {
+  CalcResult,
+  CountryCalculator,
+  Flag,
+  I18nText,
+  Line,
+} from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 import { kyrgyzstanFields } from "./fields";
 import {
   COMMERCIAL_AGE_MID_MAX,
@@ -78,8 +85,9 @@ function isQuotaVehicle(fuel: KyrgyzstanFuel): boolean {
 
 interface DutyResult {
   eur: number;
-  note: string;
-  band: string;
+  note: I18nText;
+  /** Код бракета — машинное значение для meta, не для показа. */
+  bandId: "quota" | "new" | "mid" | "old";
 }
 
 /**
@@ -95,8 +103,10 @@ function personalDuty(
   if (isQuotaVehicle(fuel)) {
     return {
       eur: valueEur * ELECTRIC_DUTY_RATE,
-      band: "квота исчерпана",
-      note: `${ELECTRIC_DUTY_RATE * 100}% от таможенной стоимости — квота 2026 на беспошлинный ввоз исчерпана`,
+      bandId: "quota",
+      note: txt("kyrgyzstan.notes.dutyQuotaPersonal", {
+        rate: ELECTRIC_DUTY_RATE * 100,
+      }),
     };
   }
 
@@ -107,24 +117,26 @@ function personalDuty(
     const minWins = byVolume > byValue;
     return {
       eur: Math.max(byValue, byVolume),
-      band: `до ${PERSONAL_AGE_NEW_MAX} лет`,
-      note:
-        `${bracket.rate * 100}% от стоимости, но не менее ${bracket.minEurPerCc} €/см³ — ` +
-        (minWins
-          ? `минимум по объёму выше (${formatAmount(byVolume, 2)} € против ${formatAmount(byValue, 2)} €)`
-          : `процент выше минимума (${formatAmount(byValue, 2)} € против ${formatAmount(byVolume, 2)} €)`),
+      bandId: "new",
+      note: txt(
+        minWins
+          ? "kyrgyzstan.notes.dutyNewByVolume"
+          : "kyrgyzstan.notes.dutyNewByValue",
+        {
+          rate: bracket.rate * 100,
+          perCc: bracket.minEurPerCc,
+          byVolume: formatAmount(byVolume, 2),
+          byValue: formatAmount(byValue, 2),
+        },
+      ),
     };
   }
 
   const rate = personalRateEurPerCc(volumeCc, age);
-  const band =
-    age <= PERSONAL_AGE_MID_MAX
-      ? `${PERSONAL_AGE_NEW_MAX + 1}–${PERSONAL_AGE_MID_MAX} лет`
-      : `${PERSONAL_AGE_MID_MAX + 1} лет и старше`;
   return {
     eur: rate * volumeCc,
-    band,
-    note: `${rate} €/см³ × ${volumeCc} см³ — фиксировано, от стоимости не зависит`,
+    bandId: age <= PERSONAL_AGE_MID_MAX ? "mid" : "old",
+    note: txt("kyrgyzstan.notes.dutyPerCc", { perCc: rate, volumeCc }),
   };
 }
 
@@ -138,16 +150,20 @@ function commercialDuty(
   if (isQuotaVehicle(fuel)) {
     return {
       eur: valueEur * ELECTRIC_DUTY_RATE,
-      band: "квота не положена",
-      note: `${ELECTRIC_DUTY_RATE * 100}% от таможенной стоимости — льготная квота юрлицам не выделялась`,
+      bandId: "quota",
+      note: txt("kyrgyzstan.notes.dutyQuotaCommercial", {
+        rate: ELECTRIC_DUTY_RATE * 100,
+      }),
     };
   }
 
   if (age <= COMMERCIAL_AGE_NEW_MAX) {
     return {
       eur: valueEur * COMMERCIAL_NEW_DUTY_RATE,
-      band: `до ${COMMERCIAL_AGE_NEW_MAX} лет`,
-      note: `${COMMERCIAL_NEW_DUTY_RATE * 100}% от таможенной стоимости — минимума по объёму нет`,
+      bandId: "new",
+      note: txt("kyrgyzstan.notes.dutyNewFlat", {
+        rate: COMMERCIAL_NEW_DUTY_RATE * 100,
+      }),
     };
   }
 
@@ -159,28 +175,30 @@ function commercialDuty(
     const minWins = byVolume > byValue;
     return {
       eur: Math.max(byValue, byVolume),
-      band: `${COMMERCIAL_AGE_NEW_MAX + 1}–${COMMERCIAL_AGE_MID_MAX} лет`,
-      note:
-        `${COMMERCIAL_MID_DUTY_RATE * 100}% от стоимости, но не менее ${bracket.mid} €/см³ — ` +
-        (minWins
-          ? `минимум по объёму выше (${formatAmount(byVolume, 2)} € против ${formatAmount(byValue, 2)} €)`
-          : `процент выше минимума (${formatAmount(byValue, 2)} € против ${formatAmount(byVolume, 2)} €)`),
+      bandId: "mid",
+      note: txt(
+        minWins
+          ? "kyrgyzstan.notes.dutyNewByVolume"
+          : "kyrgyzstan.notes.dutyNewByValue",
+        {
+          rate: COMMERCIAL_MID_DUTY_RATE * 100,
+          perCc: bracket.mid,
+          byVolume: formatAmount(byVolume, 2),
+          byValue: formatAmount(byValue, 2),
+        },
+      ),
     };
   }
 
   return {
     eur: bracket.old * volumeCc,
-    band: `${COMMERCIAL_AGE_MID_MAX + 1} лет и старше`,
-    note: `${bracket.old} €/см³ × ${volumeCc} см³ — заградительная ставка, от стоимости не зависит`,
+    bandId: "old",
+    note: txt("kyrgyzstan.notes.dutyOld", {
+      perCc: bracket.old,
+      volumeCc,
+    }),
   };
 }
-
-const FUEL_LABELS: Record<KyrgyzstanFuel, string> = {
-  petrol: "бензин",
-  diesel: "дизель",
-  seriesHybrid: "последовательный гибрид",
-  electric: "электро",
-};
 
 function calcFlags(args: {
   mode: KyrgyzstanMode;
@@ -195,77 +213,53 @@ function calcFlags(args: {
   if (quota) {
     flags.push({
       level: "critical",
-      text:
-        `Квота 2026 года на беспошлинный ввоз — 15 000 машин по кодам ТН ВЭД ` +
-        `${HS_CODE_ELECTRIC} и ${HS_CODE_SERIES_HYBRID} — исчерпана, поэтому начислена ` +
-        `ставка ЕТТ ${ELECTRIC_DUTY_RATE * 100}%. Официальный калькулятор ГТС по электромобилям ` +
-        `до сих пор показывает нулевую пошлину: он не обновлён под исчерпание квоты.`,
+      text: txt("kyrgyzstan.flags.quotaExhausted", {
+        codeElectric: HS_CODE_ELECTRIC,
+        codeHybrid: HS_CODE_SERIES_HYBRID,
+        rate: ELECTRIC_DUTY_RATE * 100,
+      }),
     });
   }
 
   if (args.mode === "personal") {
     if (!quota) {
-      flags.push({
-        level: "info",
-        text:
-          "Личное пользование: тип топлива на сумму не влияет. ЕЭК №107 считает " +
-          "только по объёму двигателя, возрасту и — для авто до 3 лет — стоимости.",
-      });
+      flags.push({ level: "info", text: txt("kyrgyzstan.flags.fuelIrrelevant") });
     }
     flags.push({
       level: "warn",
-      text:
-        `Сбор за таможенное оформление ${CUSTOMS_FEE_RATE * 100}% начислен отдельной строкой. ` +
-        `Калькулятор ГТС физлицу его не показывает, считая ЕСП всё включающим платежом.`,
+      text: txt("kyrgyzstan.flags.feeSeparate", {
+        rate: CUSTOMS_FEE_RATE * 100,
+      }),
     });
-    flags.push({
-      level: "info",
-      text:
-        "Физлицо вправе растаможить для личных нужд один автомобиль в календарный год. " +
-        "Второй и последующие оформляются как коммерческий ввоз.",
-    });
+    flags.push({ level: "info", text: txt("kyrgyzstan.flags.onePerYear") });
     if (args.registrationKgs > 0) {
       flags.push({
         level: "warn",
-        text:
-          `Первичная регистрация в ГРС/ЦОН показана оценкой: ${REGISTRATION_FEE_RATE * 100}% считаются ` +
-          `от нашей таможенной стоимости, а МВД берёт их от своей среднерыночной оценки. ` +
-          `Реальная сумма будет другой.`,
+        text: txt("kyrgyzstan.flags.registrationEstimate", {
+          rate: REGISTRATION_FEE_RATE * 100,
+        }),
       });
     }
   } else {
-    flags.push({
-      level: "info",
-      text:
-        "Юрлицо обязано оформлять ввоз через лицензированного таможенного представителя — " +
-        "самостоятельная подача декларации компанией не допускается. Услуги брокера в расчёт не входят.",
-    });
+    flags.push({ level: "info", text: txt("kyrgyzstan.flags.brokerRequired") });
     if (quota) {
       flags.push({
         level: args.vatEur > 0 ? "info" : "warn",
         text:
           args.vatEur > 0
-            ? `Возраст больше ${ELECTRIC_VAT_FREE_AGE_MAX} лет — освобождение по Налоговому кодексу КР ` +
-              `не действует, начислен полный импортный НДС ${VAT_RATE * 100}%.`
-            : `Возраст до ${ELECTRIC_VAT_FREE_AGE_MAX} лет включительно — импортный НДС не начисляется. ` +
-              `Границу эталон не проверяет: он вообще не берёт НДС с электромобилей.`,
+            ? txt("kyrgyzstan.flags.electricVatCharged", {
+                maxAge: ELECTRIC_VAT_FREE_AGE_MAX,
+                rate: VAT_RATE * 100,
+              })
+            : txt("kyrgyzstan.flags.electricVatFree", {
+                maxAge: ELECTRIC_VAT_FREE_AGE_MAX,
+              }),
       });
     }
   }
 
-  flags.push({
-    level: "info",
-    text:
-      "Ставки заданы в евро: и ЕЭК №107, и специфические ставки ЕТТ. Сомы получаются " +
-      "пересчётом по курсу НБКР на дату оформления — он может отличаться от сегодняшнего.",
-  });
-
-  flags.push({
-    level: "warn",
-    text:
-      "Доставка до Кыргызстана, СВХ, брокер и постановка на учёт в расчёт не входят. " +
-      "Утилизационного сбора для личного пользования в КР нет.",
-  });
+  flags.push({ level: "info", text: txt("kyrgyzstan.flags.ratesInEur") });
+  flags.push({ level: "warn", text: txt("kyrgyzstan.flags.notIncluded") });
 
   return flags;
 }
@@ -303,21 +297,27 @@ export function calculateKyrgyzstan(input: KyrgyzstanInput): CalcResult {
 
   const toKgs = (eur: number) => roundKgs(eur * kgsPerEur);
 
-  const vatNote =
+  const vatNote: I18nText =
     input.mode === "personal"
-      ? "физлицо платит единый совокупный платёж — НДС сверх него не начисляется"
+      ? txt("kyrgyzstan.notes.vatPersonal")
       : vatFree
-        ? `электромобиль до ${ELECTRIC_VAT_FREE_AGE_MAX} лет включительно — освобождение по Налоговому кодексу КР`
-        : `${VAT_RATE * 100}% от таможенной стоимости вместе с пошлиной: ` +
-          `${formatAmount(customsValueEur, 2)} € + ${formatAmount(dutyEur, 2)} €`;
+        ? txt("kyrgyzstan.notes.vatElectricFree", {
+            maxAge: ELECTRIC_VAT_FREE_AGE_MAX,
+          })
+        : txt("kyrgyzstan.notes.vat", {
+            rate: VAT_RATE * 100,
+            value: formatAmount(customsValueEur, 2),
+            duty: formatAmount(dutyEur, 2),
+          });
 
   const lines: Line[] = [
     {
       id: "duty",
-      label:
+      label: txt(
         input.mode === "personal"
-          ? "Совокупный таможенный платёж (ЕСП)"
-          : "Таможенная пошлина",
+          ? "kyrgyzstan.lines.dutyPersonal"
+          : "kyrgyzstan.lines.duty",
+      ),
       note: duty.note,
       amount: toKgs(dutyEur),
       currency: "KGS",
@@ -325,15 +325,15 @@ export function calculateKyrgyzstan(input: KyrgyzstanInput): CalcResult {
     },
     {
       id: "excise",
-      label: "Акциз",
-      note: "при ввозе легковых автомобилей в КР не взимается",
+      label: txt("kyrgyzstan.lines.excise"),
+      note: txt("kyrgyzstan.notes.excise"),
       amount: EXCISE_KGS,
       currency: "KGS",
       muted: true,
     },
     {
       id: "vat",
-      label: "НДС",
+      label: txt("kyrgyzstan.lines.vat"),
       note: vatNote,
       amount: toKgs(vatEur),
       currency: "KGS",
@@ -341,8 +341,11 @@ export function calculateKyrgyzstan(input: KyrgyzstanInput): CalcResult {
     },
     {
       id: "fee",
-      label: "Сбор за таможенное оформление",
-      note: `${CUSTOMS_FEE_RATE * 100}% от таможенной стоимости ${formatAmount(customsValueEur, 2)} €`,
+      label: txt("kyrgyzstan.lines.fee"),
+      note: txt("kyrgyzstan.notes.fee", {
+        rate: CUSTOMS_FEE_RATE * 100,
+        value: formatAmount(customsValueEur, 2),
+      }),
       amount: toKgs(feeEur),
       currency: "KGS",
     },
@@ -361,8 +364,10 @@ export function calculateKyrgyzstan(input: KyrgyzstanInput): CalcResult {
       ? [
           {
             id: "registration",
-            label: "Первичная регистрация в ГРС/ЦОН",
-            note: `${REGISTRATION_FEE_RATE * 100}% — оценка: МВД считает от своей среднерыночной стоимости, а не от инвойса`,
+            label: txt("kyrgyzstan.lines.registration"),
+            note: txt("kyrgyzstan.notes.registration", {
+              rate: REGISTRATION_FEE_RATE * 100,
+            }),
             amount: registrationKgs,
             currency: "KGS",
           },
@@ -377,11 +382,11 @@ export function calculateKyrgyzstan(input: KyrgyzstanInput): CalcResult {
     alt.push({ amount: totalEur / eurPerUnit, currency: input.priceCurrency });
   }
 
-  const subtitleParts: string[] = [
-    String(input.year),
-    ...(quota ? [] : [`${volumeCc} см³`]),
-    FUEL_LABELS[input.fuel],
-    input.mode === "personal" ? "физлицо" : "юрлицо",
+  const subtitle: I18nText[] = [
+    txt("kyrgyzstan.subtitle.year", { year: input.year }),
+    ...(quota ? [] : [txt("kyrgyzstan.subtitle.volume", { volumeCc })]),
+    txt(`kyrgyzstan.fuelShort.${input.fuel}`),
+    txt(`kyrgyzstan.modeShort.${input.mode}`),
   ];
 
   return {
@@ -395,26 +400,31 @@ export function calculateKyrgyzstan(input: KyrgyzstanInput): CalcResult {
       vatEur,
       registrationKgs,
     }),
+    subtitle,
+    stampLabel: txt(
+      input.mode === "personal"
+        ? "kyrgyzstan.stamp.personal"
+        : "kyrgyzstan.stamp.commercial",
+    ),
     meta: {
       mode: input.mode,
       fuel: input.fuel,
       age: String(age),
-      ageBand: duty.band,
+      // Код бракета, а не подпись — подпись переводится и живёт в словаре.
+      ageBand: duty.bandId,
       volumeCc: String(volumeCc),
       customsValueEur: String(customsValueEur),
       dutyEur: String(dutyEur),
       vatEur: String(vatEur),
       feeEur: String(feeEur),
       totalEur: String(roundEur(totalEur)),
-      subtitle: subtitleParts.join(" · "),
-      stampLabel: input.mode === "personal" ? "ЕЭК №107" : "ЕТТ ЕАЭС",
     },
   };
 }
 
 export const kyrgyzstanCalculator: CountryCalculator<KyrgyzstanInput> = {
   id: "kyrgyzstan",
-  title: "Растаможка авто в Кыргызстане",
+  title: txt("kyrgyzstan.title"),
   fields: kyrgyzstanFields,
   defaults: kyrgyzstanDefaults,
   calculate: calculateKyrgyzstan,

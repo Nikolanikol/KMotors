@@ -1,4 +1,5 @@
 import type { FieldDef } from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 
 /**
  * Схема формы для Кыргызстана.
@@ -16,30 +17,30 @@ export const kyrgyzstanFields: FieldDef[] = [
   {
     kind: "segmented",
     id: "mode",
-    label: "Кто ввозит",
-    hint: "Физлицо — единый совокупный платёж. Юрлицо — пошлина, НДС и сбор по отдельности.",
+    label: txt("kyrgyzstan.fields.mode"),
+    hint: txt("kyrgyzstan.fields.modeHint"),
     options: [
-      { value: "personal", label: "Физлицо" },
-      { value: "commercial", label: "Юрлицо" },
+      { value: "personal", label: txt("kyrgyzstan.mode.personal") },
+      { value: "commercial", label: txt("kyrgyzstan.mode.commercial") },
     ],
   },
   {
     kind: "select",
     id: "fuel",
-    label: "Тип двигателя",
-    hint: "Последовательный гибрид (LiAuto, Voyah, Zeekr REEV) приравнен к электромобилю. Параллельный (Prius, BYD DM-i) считается как его базовое топливо.",
+    label: txt("kyrgyzstan.fields.fuel"),
+    hint: txt("kyrgyzstan.fields.fuelHint"),
     options: [
-      { value: "petrol", label: "Бензин / бензин-гибрид" },
-      { value: "diesel", label: "Дизель / дизель-гибрид" },
-      { value: "seriesHybrid", label: "Последовательный гибрид (REEV)" },
-      { value: "electric", label: "Электромобиль" },
+      { value: "petrol", label: txt("kyrgyzstan.fuel.petrol") },
+      { value: "diesel", label: txt("kyrgyzstan.fuel.diesel") },
+      { value: "seriesHybrid", label: txt("kyrgyzstan.fuel.seriesHybrid") },
+      { value: "electric", label: txt("kyrgyzstan.fuel.electric") },
     ],
   },
   {
     kind: "number",
     id: "volumeCc",
-    label: "Объём двигателя, см³",
-    hint: "Определяет ставку за 1 см³. Границы бракетов включительные: 1800 см³ попадает в бракет «до 1800».",
+    label: txt("kyrgyzstan.fields.volumeCc"),
+    hint: txt("kyrgyzstan.fields.volumeCcHint"),
     min: 1,
     step: 1,
     visibleIf: (input) => input.fuel === "petrol" || input.fuel === "diesel",
@@ -47,8 +48,8 @@ export const kyrgyzstanFields: FieldDef[] = [
   {
     kind: "number",
     id: "year",
-    label: "Год выпуска",
-    hint: "Возраст считается как разница календарных годов, как в калькуляторе ГТС.",
+    label: txt("kyrgyzstan.fields.year"),
+    hint: txt("kyrgyzstan.fields.yearHint"),
     min: 1970,
     max: 2026,
     step: 1,
@@ -56,33 +57,33 @@ export const kyrgyzstanFields: FieldDef[] = [
   {
     kind: "segmented",
     id: "priceCurrency",
-    label: "Валюта сделки",
-    hint: "Курс до евро подставляется автоматически.",
+    label: txt("kyrgyzstan.fields.priceCurrency"),
+    hint: txt("kyrgyzstan.fields.priceCurrencyHint"),
     options: [
-      { value: "USD", label: "Доллар" },
-      { value: "KRW", label: "Вона" },
+      { value: "USD", label: txt("kyrgyzstan.currency.USD") },
+      { value: "KRW", label: txt("kyrgyzstan.currency.KRW") },
     ],
   },
   {
     kind: "number",
     id: "price",
-    label: "Стоимость авто",
+    label: txt("kyrgyzstan.fields.price"),
     min: 0,
     step: 50,
   },
   {
     kind: "number",
     id: "freight",
-    label: "Фрахт и страховка",
-    hint: "Входит в таможенную стоимость наравне с ценой авто. У калькулятора ГТС отдельного поля нет — там всё складывают вручную.",
+    label: txt("kyrgyzstan.fields.freight"),
+    hint: txt("kyrgyzstan.fields.freightHint"),
     min: 0,
     step: 50,
   },
   {
     kind: "number",
     id: "eurPerUnit",
-    label: "Курс: евро за единицу валюты",
-    hint: "Ставки и ЕЭК №107, и ЕТТ заданы в евро, поэтому таможенная стоимость переводится в евро.",
+    label: txt("kyrgyzstan.fields.eurPerUnit"),
+    hint: txt("kyrgyzstan.fields.eurPerUnitHint"),
     min: 0.000001,
     step: 0.000001,
     // Курс едет за валютой сделки: переключил доллар на вону — подставится
@@ -92,8 +93,8 @@ export const kyrgyzstanFields: FieldDef[] = [
   {
     kind: "number",
     id: "kgsPerEur",
-    label: "Курс НБКР: сомов за 1 евро",
-    hint: "Итог переводится в сомы по курсу на дату оформления.",
+    label: txt("kyrgyzstan.fields.kgsPerEur"),
+    hint: txt("kyrgyzstan.fields.kgsPerEurHint"),
     min: 0.01,
     step: 0.01,
     ratePair: () => ({ from: "EUR", to: "KGS" }),

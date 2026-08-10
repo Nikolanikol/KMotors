@@ -145,7 +145,7 @@ describe("Армения — инварианты ядра", () => {
     // ядро идёт вторым путём: НДС есть и он ненулевой.
     const r = calculateArmenia(base);
     expect(lineOf(base, "vat")).toBeGreaterThan(0);
-    expect(r.meta.stampLabel).toBe("ЕТТ ЕАЭС");
+    expect(r.stampLabel.key).toBe("armenia.stamp.eaeu");
   });
 
   it("НДС берётся от стоимости ВМЕСТЕ с пошлиной", () => {
@@ -177,18 +177,16 @@ describe("Армения — инварианты ядра", () => {
     // currentYear 2026: 2024 → 2 года, 2023 → 3, 2020 → 6, 2019 → 7.
     const at = (year: number) => calculateArmenia({ ...base, year });
 
+    // Сверяем код бракета, а не подпись: подпись переехала в словарь и
+    // переводится, а проверять надо именно выбор ветки.
     it(`возраст ${AGE_NEW_BELOW - 1} — ещё новый, ${AGE_NEW_BELOW} — уже средний`, () => {
-      expect(at(2024).meta.ageBand).toBe(`до ${AGE_NEW_BELOW} лет`);
-      expect(at(2023).meta.ageBand).toBe(
-        `${AGE_NEW_BELOW}–${AGE_OLD_FROM - 1} лет`,
-      );
+      expect(at(2024).meta.ageBand).toBe("new");
+      expect(at(2023).meta.ageBand).toBe("mid");
     });
 
     it(`возраст ${AGE_OLD_FROM - 1} — ещё средний, ${AGE_OLD_FROM} — уже старый`, () => {
-      expect(at(2020).meta.ageBand).toBe(
-        `${AGE_NEW_BELOW}–${AGE_OLD_FROM - 1} лет`,
-      );
-      expect(at(2019).meta.ageBand).toBe(`${AGE_OLD_FROM} лет и старше`);
+      expect(at(2020).meta.ageBand).toBe("mid");
+      expect(at(2019).meta.ageBand).toBe("old");
     });
 
     it("бракеты «3–5» и «5–7» эталона — на самом деле один бракет", () => {

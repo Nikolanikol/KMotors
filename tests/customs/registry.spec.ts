@@ -11,7 +11,9 @@ describe("Реестр стран", () => {
         ).toBeDefined();
         // Название источника обязательно всегда, ссылка — нет: на конкурента
         // мы ссылаться не обязаны, но назвать его должны.
-        expect(country.verification!.sourceName.trim().length).toBeGreaterThan(0);
+        expect(
+          country.verification!.sourceName.key.trim().length,
+        ).toBeGreaterThan(0);
         if (country.verification!.sourceUrl !== undefined) {
           expect(country.verification!.sourceUrl).toMatch(/^https:\/\//);
         }

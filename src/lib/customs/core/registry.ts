@@ -5,7 +5,13 @@
  * Пока ядра нет — таб рисует заглушку вместо формы и чека.
  */
 
-import type { CalcResult, CountryCalculator, FieldDef } from "@/lib/customs/core/types";
+import type {
+  CalcResult,
+  CountryCalculator,
+  FieldDef,
+  I18nText,
+} from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 import { georgiaCalculator } from "@/lib/customs/core/countries/georgia";
 import { albaniaCalculator } from "@/lib/customs/core/countries/albania";
 import { kyrgyzstanCalculator } from "@/lib/customs/core/countries/kyrgyzstan";
@@ -20,7 +26,7 @@ export type CountryId = "georgia" | "armenia" | "kyrgyzstan" | "albania";
  */
 export interface ErasedCalculator {
   id: string;
-  title: string;
+  title: I18nText;
   fields: FieldDef[];
   defaults: Record<string, unknown>;
   calculate(input: Record<string, unknown>): CalcResult;
@@ -39,11 +45,11 @@ function erase<TInput>(calculator: CountryCalculator<TInput>): ErasedCalculator 
 export interface CountryMeta {
   id: CountryId;
   /** Подпись на табе. */
-  tabLabel: string;
+  tabLabel: I18nText;
   /** Заголовок над калькулятором. */
-  title: string;
+  title: I18nText;
   /** Выделенное слово в заголовке — рисуется акцентным цветом. */
-  titleAccent: string;
+  titleAccent: I18nText;
   /** Моноширинная надстрочная строка в стиле грузинского калькулятора. */
   eyebrow: string;
   /** Верхняя строка на печати в чеке — латиницей, как штамп таможни. */
@@ -54,7 +60,7 @@ export interface CountryMeta {
   calculator?: ErasedCalculator;
   /** Откуда снят эталон и когда сверялся. Отсутствует, пока сверки не было. */
   verification?: {
-    sourceName: string;
+    sourceName: I18nText;
     /**
      * Ссылка на источник. Необязательна: источник называем всегда, но ссылку
      * ставим не на всякий. Решение принимается здесь, в реестре, а не в
@@ -69,24 +75,24 @@ export interface CountryMeta {
 export const COUNTRIES: CountryMeta[] = [
   {
     id: "georgia",
-    tabLabel: "Грузия",
-    title: "Растаможка авто в",
-    titleAccent: "Грузии",
+    tabLabel: txt("georgia.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("georgia.titleAccent"),
     eyebrow: "SAKARTVELO / CUSTOMS ESTIMATE",
     stampTop: "GEORGIA",
     currency: "GEL",
     calculator: erase(georgiaCalculator),
     verification: {
-      sourceName: "myauto.ge",
+      sourceName: txt("georgia.source"),
       sourceUrl: "https://myauto.ge/ru/calculator",
       verifiedAt: "2026-08-09",
     },
   },
   {
     id: "armenia",
-    tabLabel: "Армения",
-    title: "Растаможка авто в",
-    titleAccent: "Армению",
+    tabLabel: txt("armenia.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("armenia.titleAccent"),
     eyebrow: "HAYASTAN / CUSTOMS ESTIMATE",
     stampTop: "ARMENIA",
     currency: "AMD",
@@ -95,22 +101,22 @@ export const COUNTRIES: CountryMeta[] = [
       // Ссылки здесь сознательно нет: источник сверки — калькулятор компании,
       // которая возит авто с аукционов в Ереван, то есть прямой конкурент.
       // Называем его честно, но трафик ему не отдаём. Полный адрес и разбор
-      // прогона лежат в tests/golden/armenia.golden.json и в CLAUDE.md.
-      sourceName: "Platinum Motors",
+      // прогона лежат в tests/customs/golden/armenia.golden.json и в CLAUDE.md.
+      sourceName: txt("armenia.source"),
       verifiedAt: "2026-08-10",
     },
   },
   {
     id: "kyrgyzstan",
-    tabLabel: "Кыргызстан",
-    title: "Растаможка авто в",
-    titleAccent: "Кыргызстане",
+    tabLabel: txt("kyrgyzstan.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("kyrgyzstan.titleAccent"),
     eyebrow: "KYRGYZ REPUBLIC / CUSTOMS ESTIMATE",
     stampTop: "KYRGYZSTAN",
     currency: "KGS",
     calculator: erase(kyrgyzstanCalculator),
     verification: {
-      sourceName: "Калькулятор ГТС при Кабмине КР",
+      sourceName: txt("kyrgyzstan.source"),
       sourceUrl:
         "https://www.customs.gov.kg/site/ru/master/customskg/kalkuljator-ats",
       verifiedAt: "2026-08-09",
@@ -118,15 +124,15 @@ export const COUNTRIES: CountryMeta[] = [
   },
   {
     id: "albania",
-    tabLabel: "Албания",
-    title: "Растаможка авто в",
-    titleAccent: "Албанию",
+    tabLabel: txt("albania.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("albania.titleAccent"),
     eyebrow: "SHQIPËRIA / CUSTOMS ESTIMATE",
     stampTop: "SHQIPËRIA",
     currency: "ALL",
     calculator: erase(albaniaCalculator),
     verification: {
-      sourceName: "vinauto.al",
+      sourceName: txt("albania.source"),
       sourceUrl: "https://www.vinauto.al/kalkulator-dogane",
       verifiedAt: "2026-08-09",
     },

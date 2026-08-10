@@ -1,11 +1,12 @@
 import type { FieldDef } from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 
 /** Схема формы для Грузии. Порядок полей повторяет демо-калькулятор. */
 export const georgiaFields: FieldDef[] = [
   {
     kind: "number",
     id: "year",
-    label: "Год выпуска",
+    label: txt("georgia.fields.year"),
     min: 1970,
     max: 2026,
     step: 1,
@@ -13,7 +14,7 @@ export const georgiaFields: FieldDef[] = [
   {
     kind: "number",
     id: "volumeCc",
-    label: "Объём двигателя, см³",
+    label: txt("georgia.fields.volumeCc"),
     min: 1,
     step: 1,
     visibleIf: (input) => input.fuel !== "electric",
@@ -21,27 +22,27 @@ export const georgiaFields: FieldDef[] = [
   {
     kind: "segmented",
     id: "fuel",
-    label: "Тип топлива",
+    label: txt("georgia.fields.fuel"),
     options: [
-      { value: "petrol", label: "Бензин / дизель" },
-      { value: "hybrid", label: "Гибрид" },
-      { value: "electric", label: "Электро" },
+      { value: "petrol", label: txt("georgia.fuel.petrol") },
+      { value: "hybrid", label: txt("georgia.fuel.hybrid") },
+      { value: "electric", label: txt("georgia.fuel.electric") },
     ],
   },
   {
     kind: "segmented",
     id: "steering",
-    label: "Расположение руля",
+    label: txt("georgia.fields.steering"),
     options: [
-      { value: "left", label: "Левый" },
-      { value: "right", label: "Правый" },
+      { value: "left", label: txt("georgia.steering.left") },
+      { value: "right", label: txt("georgia.steering.right") },
     ],
   },
   {
     kind: "number",
     id: "gelPerUsd",
-    label: "Курс GEL за 1 USD",
-    hint: "Влияет только на пересчёт итога в доллары.",
+    label: txt("georgia.fields.gelPerUsd"),
+    hint: txt("georgia.fields.gelPerUsdHint"),
     min: 0.1,
     step: 0.01,
     ratePair: () => ({ from: "USD", to: "GEL" }),

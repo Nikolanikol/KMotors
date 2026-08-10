@@ -1,5 +1,12 @@
 import { formatAmount } from "@/lib/customs/core/format";
-import type { CalcResult, CountryCalculator, Flag, Line } from "@/lib/customs/core/types";
+import type {
+  CalcResult,
+  CountryCalculator,
+  Flag,
+  I18nText,
+  Line,
+} from "@/lib/customs/core/types";
+import { txt } from "@/lib/customs/core/text";
 import { albaniaFields } from "./fields";
 import {
   DUTY_RATE,
@@ -60,25 +67,30 @@ function calcFlags(args: {
   if (args.minimumApplied) {
     flags.push({
       level: "warn",
-      text:
-        `Заявленная стоимость ${formatAmount(args.customsValueAll)} ALL ниже минимальной ` +
-        `${formatAmount(args.minimumAll)} ALL для этого объёма — НДС считается от минимума. ` +
-        `Калькулятор-эталон этот барьер не применяет, поэтому здесь наш расчёт выше.`,
+      text: txt("albania.flags.minimumApplied", {
+        declared: formatAmount(args.customsValueAll),
+        minimum: formatAmount(args.minimumAll),
+      }),
     });
   }
 
   if (args.byVolume || args.byValue) {
-    const reason = args.byVolume && args.byValue
-      ? `объём от ${formatAmount(LUXURY_VOLUME_THRESHOLD_CC)} см³ и стоимость от ${formatAmount(LUXURY_VALUE_THRESHOLD_ALL)} ALL`
-      : args.byVolume
-        ? `объём от ${formatAmount(LUXURY_VOLUME_THRESHOLD_CC)} см³`
-        : `стоимость от ${formatAmount(LUXURY_VALUE_THRESHOLD_ALL)} ALL`;
+    const reasonKey =
+      args.byVolume && args.byValue
+        ? "albania.luxuryReason.both"
+        : args.byVolume
+          ? "albania.luxuryReason.volume"
+          : "albania.luxuryReason.value";
     flags.push({
       level: "info",
-      text:
-        `Авто признано роскошным: ${reason}. Кроме единовременных ` +
-        `${formatAmount(LUXURY_ONCE_ALL)} ALL придётся платить ${formatAmount(LUXURY_ANNUAL_ALL)} ALL ежегодно, ` +
-        `пока машина стоит на учёте.`,
+      text: txt("albania.flags.luxury", {
+        reason: txt(reasonKey, {
+          volume: formatAmount(LUXURY_VOLUME_THRESHOLD_CC),
+          value: formatAmount(LUXURY_VALUE_THRESHOLD_ALL),
+        }),
+        once: formatAmount(LUXURY_ONCE_ALL),
+        annual: formatAmount(LUXURY_ANNUAL_ALL),
+      }),
     });
   } else if (
     !args.byValue &&
@@ -86,34 +98,18 @@ function calcFlags(args: {
   ) {
     flags.push({
       level: "warn",
-      text:
-        `Стоимость близка к порогу роскоши ${formatAmount(LUXURY_VALUE_THRESHOLD_ALL)} ALL. ` +
-        `Таможня оценивает авто по своим каталогам на момент регистрации, а не по договору, ` +
-        `поэтому налог может сработать даже при меньшей цене в договоре.`,
+      text: txt("albania.flags.nearLuxury", {
+        threshold: formatAmount(LUXURY_VALUE_THRESHOLD_ALL),
+      }),
     });
   }
 
   if (args.isElectric) {
-    flags.push({
-      level: "info",
-      text:
-        "Электромобиль: объёма двигателя нет, минимальная стоимость по см³ не применяется. " +
-        "Льготы по НДС эталон не показывает — расчёт идёт по общей ставке 20%.",
-    });
+    flags.push({ level: "info", text: txt("albania.flags.electric") });
   }
 
-  flags.push({
-    level: "info",
-    text:
-      "Расчёт по рыночному курсу лека. Таможня применяет собственный официальный курс — " +
-      "итог может отличаться на его разницу.",
-  });
-
-  flags.push({
-    level: "warn",
-    text:
-      "Портовые расходы в Дурресе, услуги брокера и доставка до Албании в расчёт не входят.",
-  });
+  flags.push({ level: "info", text: txt("albania.flags.officialRate") });
+  flags.push({ level: "warn", text: txt("albania.flags.portCosts") });
 
   return flags;
 }
@@ -145,49 +141,64 @@ export function calculateAlbania(input: AlbaniaInput): CalcResult {
   // Налог не удваивается, когда сработали оба условия — кейс al-13.
   const luxuryOnceAll = isLuxury ? LUXURY_ONCE_ALL : 0;
 
+  const luxuryNote: I18nText = isLuxury
+    ? txt(
+        byVolume && byValue
+          ? "albania.luxuryReason.both"
+          : byVolume
+            ? "albania.luxuryReason.volume"
+            : "albania.luxuryReason.value",
+        {
+          volume: LUXURY_VOLUME_THRESHOLD_CC,
+          value: formatAmount(LUXURY_VALUE_THRESHOLD_ALL),
+        },
+      )
+    : txt("albania.notes.luxuryNotApplied", {
+        volume: LUXURY_VOLUME_THRESHOLD_CC,
+        value: formatAmount(LUXURY_VALUE_THRESHOLD_ALL),
+      });
+
   const lines: Line[] = [
     {
       id: "duty",
-      label: "Таможенная пошлина",
-      note: "для физлиц не взимается — ставка 0 независимо от страны происхождения",
+      label: txt("albania.lines.duty"),
+      note: txt("albania.notes.duty"),
       amount: DUTY_RATE,
       currency: "ALL",
       muted: true,
     },
     {
       id: "excise",
-      label: "Акциз",
-      note: "на легковые автомобили в Албании не применяется",
+      label: txt("albania.lines.excise"),
+      note: txt("albania.notes.excise"),
       amount: EXCISE_ALL,
       currency: "ALL",
       muted: true,
     },
     {
       id: "vat",
-      label: "НДС (TVSH)",
-      note: minimumApplied
-        ? `20% от минимальной стоимости ${formatAmount(vatBaseAll)} ALL — она выше заявленной`
-        : `20% от таможенной стоимости ${formatAmount(vatBaseAll)} ALL`,
+      label: txt("albania.lines.vat"),
+      note: txt(
+        minimumApplied ? "albania.notes.vatMinimum" : "albania.notes.vat",
+        {
+          rate: Math.round(VAT_RATE * 100),
+          base: formatAmount(vatBaseAll),
+        },
+      ),
       amount: vatAll,
       currency: "ALL",
     },
     {
       id: "registration",
-      label: "Регистрация DPSHTRR",
-      note: "физический контроль, разрешение на движение и номерные знаки — оценка",
+      label: txt("albania.lines.registration"),
+      note: txt("albania.notes.registration"),
       amount: REGISTRATION_FEE_ALL,
       currency: "ALL",
     },
     {
       id: "luxuryOnce",
-      label: "Налог на роскошь при регистрации (TRML)",
-      note: isLuxury
-        ? byVolume && byValue
-          ? `объём от ${LUXURY_VOLUME_THRESHOLD_CC} см³ и стоимость от ${formatAmount(LUXURY_VALUE_THRESHOLD_ALL)} ALL`
-          : byVolume
-            ? `объём от ${LUXURY_VOLUME_THRESHOLD_CC} см³`
-            : `стоимость от ${formatAmount(LUXURY_VALUE_THRESHOLD_ALL)} ALL`
-        : `не применяется: объём меньше ${LUXURY_VOLUME_THRESHOLD_CC} см³ и стоимость меньше ${formatAmount(LUXURY_VALUE_THRESHOLD_ALL)} ALL`,
+      label: txt("albania.lines.luxuryOnce"),
+      note: luxuryNote,
       amount: luxuryOnceAll,
       currency: "ALL",
       muted: !isLuxury,
@@ -201,8 +212,8 @@ export function calculateAlbania(input: AlbaniaInput): CalcResult {
     ? [
         {
           id: "luxuryAnnual",
-          label: "Ежегодный налог на роскошь (TVML)",
-          note: "платится каждый год, пока авто на учёте в Албании",
+          label: txt("albania.lines.luxuryAnnual"),
+          note: txt("albania.notes.luxuryAnnual"),
           amount: LUXURY_ANNUAL_ALL,
           currency: "ALL",
         },
@@ -214,16 +225,14 @@ export function calculateAlbania(input: AlbaniaInput): CalcResult {
       ? [{ amount: totalAll / rate, currency: input.priceCurrency }]
       : [];
 
-  const subtitleParts: string[] = [];
-  if (!isElectric) subtitleParts.push(`${volumeCc} см³`);
-  subtitleParts.push(
-    input.fuel === "electric"
-      ? "электро"
-      : input.fuel === "hybrid"
-        ? "гибрид"
-        : "бензин / дизель",
+  const subtitle: I18nText[] = [];
+  if (!isElectric) subtitle.push(txt("albania.subtitle.volume", { volumeCc }));
+  subtitle.push(txt(`albania.fuelShort.${input.fuel}`));
+  subtitle.push(
+    txt("albania.subtitle.customsValue", {
+      value: formatAmount(customsValueAll),
+    }),
   );
-  subtitleParts.push(`${formatAmount(customsValueAll)} ALL таможенной стоимости`);
 
   return {
     lines,
@@ -239,22 +248,25 @@ export function calculateAlbania(input: AlbaniaInput): CalcResult {
       byVolume,
       byValue,
     }),
+    subtitle,
+    stampLabel: txt(isLuxury ? "albania.stamp.luxury" : "albania.stamp.vat", {
+      rate: Math.round(VAT_RATE * 100),
+    }),
     meta: {
       customsValueAll: String(customsValueAll),
       minimumAll: String(minimumAll),
       vatBaseAll: String(vatBaseAll),
       volumeCc: String(volumeCc),
       fuel: input.fuel,
-      luxury: isLuxury ? "да" : "нет",
-      subtitle: subtitleParts.join(" · "),
-      stampLabel: isLuxury ? "ЛЮКС" : "НДС 20%",
+      // Машинное значение: подпись «ЛЮКС» живёт в stampLabel и переводится.
+      luxury: String(isLuxury),
     },
   };
 }
 
 export const albaniaCalculator: CountryCalculator<AlbaniaInput> = {
   id: "albania",
-  title: "Растаможка авто в Албании",
+  title: txt("albania.title"),
   fields: albaniaFields,
   defaults: albaniaDefaults,
   calculate: calculateAlbania,
