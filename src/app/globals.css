@@ -93,6 +93,33 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Калькуляторы растаможки. Отдельный набор с префиксом calc-, как --pn-* у
+     запчастей: палитра пришла из калькулятора Грузии и намеренно отличается
+     от axis-* остального сайта (красный с золотом вместо оранжевого).
+     Тёмная база при этом та же, поэтому раздел не выглядит чужим. */
+  --color-calc-surface:    #15130f;
+  --color-calc-panel:      #1d1a15;
+  --color-calc-panel-2:    #221e18;
+  --color-calc-line:       #37322a;
+
+  --color-calc-paper:      #f1ead9;
+  --color-calc-ink:        #2a241c;
+  --color-calc-ink-soft:   #6b6252;
+
+  --color-calc-red:        #b62a24;
+  --color-calc-red-bright: #d8392f;
+  --color-calc-gold:       #c79a4b;
+
+  --color-calc-fg:         #ece5d6;
+  --color-calc-fg-dim:     #a89d87;
+  --color-calc-fg-faint:   #75695a;
+
+  /* Шрифтовые переменные объявляет сегментный layout /calculator, а не корневой:
+     на остальных страницах эти семейства не грузятся. Фолбэк на Inter нужен и
+     сам по себе — Space Grotesk не содержит кириллицы. */
+  --font-calc-display: var(--font-space-grotesk), Inter, sans-serif;
+  --font-calc-mono:    var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 /* ── Base ─────────────────────────────────────────────────── */
@@ -423,4 +450,42 @@ select.PhoneInputCountrySelect {
 .parts-page .pn-section-fade.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ── Калькуляторы растаможки ─────────────────────────────────────────────── */
+
+/* Фактура «бумажного» чека: линовка плюс внутренняя пунктирная рамка.
+   В утилитарных классах выражается плохо — оставлено обычным CSS. */
+.calc-paper-texture {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 27px,
+    rgba(42, 36, 28, 0.035) 28px
+  );
+}
+
+.calc-paper-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: 8px;
+  border: 1px dashed rgba(42, 36, 28, 0.18);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+/* Пунктирный разделитель строк чека — dotted нужного веса. */
+.calc-receipt-row {
+  border-bottom: 1px dotted rgba(42, 36, 28, 0.25);
+}
+
+/* Фон раздела. Тёмная база совпадает с axis-*, но у калькулятора свой
+   тёплый оттенок и своя подсветка углов — как в исходном калькуляторе. */
+.calc-surface {
+  background-color: var(--color-calc-surface);
+  background-image:
+    radial-gradient(circle at 15% 0%, #201c16 0%, transparent 45%),
+    radial-gradient(circle at 100% 100%, #1b1712 0%, transparent 50%);
+  color: var(--color-calc-fg);
 }

@@ -28,7 +28,7 @@ export function createI18nInstance(lang: string, resources: Resource): I18nType 
     debug: false,
     resources,
     defaultNS: 'common',
-    ns: ['common', 'cars'],
+    ns: ['common', 'cars', 'customs'],
     interpolation: {
       escapeValue: false, // React уже защищён от XSS
     },

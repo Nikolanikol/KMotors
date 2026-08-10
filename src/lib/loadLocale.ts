@@ -23,16 +23,22 @@ import kaCommon from "../locales/ka/common.json";
 import kaCars from "../locales/ka/cars.json";
 import arCommon from "../locales/ar/common.json";
 import arCars from "../locales/ar/cars.json";
+// Словарь калькуляторов растаможки. Пока заполнен только ru — en/ka/ar лежат
+// заглушками до отдельного шага с переводами.
+import enCustoms from "../locales/en/customs.json";
+import ruCustoms from "../locales/ru/customs.json";
+import kaCustoms from "../locales/ka/customs.json";
+import arCustoms from "../locales/ar/customs.json";
 
 const BUNDLES = {
-  en: { common: enCommon, cars: enCars },
-  ru: { common: ruCommon, cars: ruCars },
-  ka: { common: kaCommon, cars: kaCars },
-  ar: { common: arCommon, cars: arCars },
+  en: { common: enCommon, cars: enCars, customs: enCustoms },
+  ru: { common: ruCommon, cars: ruCars, customs: ruCustoms },
+  ka: { common: kaCommon, cars: kaCars, customs: kaCustoms },
+  ar: { common: arCommon, cars: arCars, customs: arCustoms },
 } as const;
 
 type Dict = Record<string, unknown>;
-type Ns = "common" | "cars";
+type Ns = "common" | "cars" | "customs";
 
 const isBranch = (v: unknown): v is Dict =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -85,6 +91,15 @@ export function loadCarsResources(lang: string): Resource {
   return loadResources(lang, { cars: true, common: false });
 }
 
+/**
+ * Только неймспейс `customs` — тексты калькуляторов растаможки.
+ * Подключается страницами под /calculator по той же причине, что и `cars`:
+ * layout под [lang] при клиентской навигации не перерисовывается.
+ */
+export function loadCustomsResources(lang: string): Resource {
+  return loadResources(lang, { customs: true, common: false });
+}
+
 export interface LocaleOptions {
   /**
    * Подключить неймспейс `cars` — словарь Encar (76 KB на en).
@@ -95,6 +110,12 @@ export interface LocaleOptions {
   cars?: boolean;
   /** Отключить `common` — для догрузки одного лишь словаря Encar. */
   common?: boolean;
+  /**
+   * Подключить неймспейс `customs` — тексты калькуляторов растаможки.
+   * Нужен только маршрутам под /calculator, поэтому по умолчанию выключен:
+   * иначе словарь уезжал бы в RSC-payload каждой страницы сайта.
+   */
+  customs?: boolean;
 }
 
 /** Ресурсы для i18next: активный язык + минимальный en-фолбэк. */
@@ -102,6 +123,7 @@ export function loadResources(lang: string, opts: LocaleOptions = {}): Resource 
   const namespaces: Ns[] = [
     ...(opts.common === false ? [] : (["common"] as Ns[])),
     ...(opts.cars ? (["cars"] as Ns[]) : []),
+    ...(opts.customs ? (["customs"] as Ns[]) : []),
   ];
   const active = (BUNDLES as Record<string, Record<Ns, Dict>>)[lang];
 
