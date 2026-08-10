@@ -65,8 +65,10 @@ function parseUpdateDate(value: unknown): string {
 
 export async function fetchErApi(): Promise<ProviderRates> {
   const response = await fetch(ERAPI_URL, {
-    // Кэш в Next 16 — opt-in: без force-cache запрос уходил бы к провайдеру
-    // на каждый рендер. Одного revalidate недостаточно, он задаёт только TTL.
+    // Кэш fetch — opt-in начиная с Next 15: без force-cache запрос уходил бы
+    // к провайдеру на каждый рендер. Одного revalidate недостаточно, он
+    // задаёт только TTL. Проверяется по выводу next build: у маршрута,
+    // который зовёт getRates, должен появиться Revalidate 6h.
     cache: "force-cache",
     next: { revalidate: ERAPI_REVALIDATE_SECONDS },
   });

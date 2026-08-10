@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { logDegradation } from "@/lib/customs/fx/getRates";
 import { parseErApi } from "@/lib/customs/fx/providers/erapi";
 import { parseCbr } from "@/lib/customs/fx/providers/cbr";
 import { mergeRates } from "@/lib/customs/fx/getRates";
@@ -147,6 +148,31 @@ describe("Сборка курсов и деградация", () => {
     // Лека у ЦБ нет, поэтому без основного провайдера он ушёл бы в снимок.
     expect(mergeRates([cbr]).sources.ALL).toBe("fallback");
     expect(mergeRates([cbr]).degraded).toBe(true);
+  });
+
+  it("падение на снимок пишется в лог с перечнем валют", () => {
+    // Правило KMotors: «падение на фолбэк должно логироваться». Провайдер
+    // может ответить успехом и молча не отдать часть валют — тогда исключения
+    // нет, и без этой записи расхождение осталось бы невидимым.
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      logDegradation(mergeRates([cbr]));
+      expect(spy).toHaveBeenCalledTimes(1);
+      // Лек — единственное, чего у ЦБ нет, значит он и должен быть назван.
+      expect(String(spy.mock.calls[0][0])).toContain("ALL");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("на живых курсах лог молчит", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      logDegradation(mergeRates([er]));
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("показывает самую старую дату среди использованных источников", () => {

@@ -77,6 +77,30 @@ export function mergeRates(results: ProviderRates[]): Rates {
 }
 
 /**
+ * Падение на вшитый снимок обязано быть видно в логах.
+ *
+ * Провайдер может ответить успехом и при этом не отдать часть валют — тогда
+ * исключения нет, `degraded` тихо становится true, и расчёт идёт на цифрах
+ * многомесячной давности, ничем не отличаясь снаружи от живого. В KMotors это
+ * уже стоило месяца незамеченного расхождения по курсу (см. постмортемы),
+ * поэтому уровень здесь error, а не warn: предупреждениями лог зашумлён.
+ *
+ * Вынесено из `mergeRates`, чтобы та осталась чистой и проверяемой без спая.
+ */
+export function logDegradation(rates: Rates): void {
+  if (!rates.degraded) return;
+
+  const fromSnapshot = TRACKED_CURRENCIES.filter(
+    (code) => rates.sources[code] === "fallback",
+  );
+  console.error(
+    `[fx] курсы взяты из вшитого снимка от ${fallbackRates.asOf}: ` +
+      `${fromSnapshot.join(", ")}. Живые провайдеры их не отдали — ` +
+      `расчёт идёт на устаревших цифрах.`,
+  );
+}
+
+/**
  * Оба провайдера опрашиваются параллельно, каждый в своём try/catch:
  * падение одного не роняет второй. Исключений наружу не бросает никогда —
  * калькулятор не имеет права сломаться из-за недоступного API.
@@ -97,5 +121,7 @@ export async function getRates(): Promise<Rates> {
     }
   }
 
-  return mergeRates(ok);
+  const rates = mergeRates(ok);
+  logDegradation(rates);
+  return rates;
 }
