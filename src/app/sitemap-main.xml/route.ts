@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { MODEL_PAGES } from "@/data/model-pages";
 import { getIndexableCategorySlugs } from "@/lib/partsCategories";
+import { COUNTRIES } from "@/lib/customs/core/registry";
+import { hasCustomsDictionary } from "@/lib/customs/serverDict";
 
 const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ka", "ar"];
@@ -49,6 +51,31 @@ export async function GET() {
       const loc = buildUrl(lang, page.path);
       urlBlocks.push(
         `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n${alternates(page.path)}\n  </url>`
+      );
+    }
+  }
+
+  // Калькуляторы растаможки по странам.
+  //
+  // Языки фильтруются по наличию словаря: без перевода страница отдаётся с
+  // noindex, а подавать в сайтмапе то, что закрыто от индексации, — прямой
+  // конфликт сигналов. Список расширится сам, когда переводы появятся.
+  const customsLangs = LANGS.filter(hasCustomsDictionary);
+  for (const country of COUNTRIES) {
+    const countryPath = `calculator/${country.id}`;
+    const links = customsLangs.map(
+      (lang) =>
+        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${buildUrl(lang, countryPath)}"/>`
+    );
+    if (customsLangs.includes("ru")) {
+      links.push(
+        `    <xhtml:link rel="alternate" hreflang="x-default" href="${buildUrl("ru", countryPath)}"/>`
+      );
+    }
+    for (const lang of customsLangs) {
+      const loc = buildUrl(lang, countryPath);
+      urlBlocks.push(
+        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n${links.join("\n")}\n  </url>`
       );
     }
   }

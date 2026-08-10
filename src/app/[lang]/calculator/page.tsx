@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import CalculatorPage from "@/components/Calculator/CalculatorPage";
+import CountryLinks from "@/components/Customs/CountryLinks";
 import { makeAlternates } from "@/lib/seo";
 
 interface Props {
@@ -151,6 +152,13 @@ export default async function Page({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
       <CalculatorPage lang={lang} />
+      {/*
+        Направления GE/AM/KG/AL живут отдельными страницами. Пока их ядра не
+        сведены со старыми RU/KZ/UZ в один интерфейс, хаб связывает их
+        перечнем — иначе на новые страницы нет ни одного пути ни для
+        посетителя, ни для краулера.
+      */}
+      <CountryLinks lang={lang} />
     </>
   );
 }
