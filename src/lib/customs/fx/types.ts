@@ -17,6 +17,12 @@ export const TRACKED_CURRENCIES = [
   "GEL",
   "AMD",
   "KGS",
+  // Россия, Казахстан, Узбекистан — добавлены при слиянии двух калькуляторов
+  // в один. Оба провайдера их котируют; у ЦБ РФ рубль — база, поэтому там
+  // он берётся особым случаем, см. providers/cbr.ts.
+  "RUB",
+  "KZT",
+  "UZS",
 ] as const;
 
 export type CurrencyCode = (typeof TRACKED_CURRENCIES)[number];

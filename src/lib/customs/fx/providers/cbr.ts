@@ -52,9 +52,15 @@ export function parseCbr(payload: unknown): ProviderRates {
     throw new Error("ЦБ РФ: в ответе нет курса USD, кросс не построить");
   }
 
-  const perUsd: Partial<Record<CurrencyCode, number>> = { USD: 1 };
+  // Рубль у ЦБ — база, отдельной записи в Valute для него нет. Курс «рублей
+  // за доллар» и есть то, что мы уже прочитали; без этого случая RUB молча
+  // уходил бы в фолбэк, хотя источник его знает лучше всех.
+  const perUsd: Partial<Record<CurrencyCode, number>> = {
+    USD: 1,
+    RUB: rubPerUsd,
+  };
   for (const code of TRACKED_CURRENCIES) {
-    if (code === "USD") continue;
+    if (code === "USD" || code === "RUB") continue;
     const rubPerUnit = readValute(valute, code);
     if (rubPerUnit) perUsd[code] = rubPerUsd / rubPerUnit;
   }

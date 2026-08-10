@@ -23,6 +23,9 @@ const ER_OK = {
     GEL: 2.619746,
     AMD: 366.081469,
     KGS: 87.487992,
+    RUB: 81.969182,
+    KZT: 468.321957,
+    UZS: 11851.454593,
     XYZ: 42,
   },
 };
@@ -35,6 +38,8 @@ const CBR_OK = {
     EUR: { Value: 94.8366, Nominal: 1 },
     KRW: { Value: 5.7913, Nominal: 100 },
     GEL: { Value: 31.3338, Nominal: 1 },
+    KZT: { Value: 17.5765, Nominal: 100 },
+    UZS: { Value: 68.7465, Nominal: 10000 },
   },
 };
 

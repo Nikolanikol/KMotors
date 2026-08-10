@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { COUNTRIES } from "@/lib/customs/core/registry";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
 import { resolveText } from "@/lib/customs/i18nText";
 
 /**
@@ -26,7 +26,12 @@ export default function CountryTabs({ lang }: { lang: string }) {
     <nav aria-label={t("ui.countriesNav")} className="w-full">
       <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
         {COUNTRIES.map((country) => {
-          const href = `/${lang}/calculator/${country.id}`;
+          // У страны по умолчанию адрес без сегмента: этот URL накоплен в
+          // индексе, и вести на него надо напрямую, а не через дубль.
+          const href =
+            country.id === DEFAULT_COUNTRY
+              ? `/${lang}/calculator`
+              : `/${lang}/calculator/${country.id}`;
           const isActive = pathname === href;
           return (
             <li key={country.id}>

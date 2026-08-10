@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { MODEL_PAGES } from "@/data/model-pages";
 import { getIndexableCategorySlugs } from "@/lib/partsCategories";
-import { COUNTRIES } from "@/lib/customs/core/registry";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
 import { hasCustomsDictionary } from "@/lib/customs/serverDict";
 
 const BASE = "https://www.kmotors.shop";
@@ -62,6 +62,9 @@ export async function GET() {
   // конфликт сигналов. Список расширится сам, когда переводы появятся.
   const customsLangs = LANGS.filter(hasCustomsDictionary);
   for (const country of COUNTRIES) {
+    // Страна по умолчанию живёт на /calculator, который уже есть в PAGES;
+    // её сегмент 301-редиректится туда же и в сайтмапе не нужен.
+    if (country.id === DEFAULT_COUNTRY) continue;
     const countryPath = `calculator/${country.id}`;
     const links = customsLangs.map(
       (lang) =>

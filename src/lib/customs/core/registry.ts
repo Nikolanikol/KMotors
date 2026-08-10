@@ -16,8 +16,18 @@ import { georgiaCalculator } from "@/lib/customs/core/countries/georgia";
 import { albaniaCalculator } from "@/lib/customs/core/countries/albania";
 import { kyrgyzstanCalculator } from "@/lib/customs/core/countries/kyrgyzstan";
 import { armeniaCalculator } from "@/lib/customs/core/countries/armenia";
+import { russiaCalculator } from "@/lib/customs/core/countries/russia";
+import { kazakhstanCalculator } from "@/lib/customs/core/countries/kazakhstan";
+import { uzbekistanCalculator } from "@/lib/customs/core/countries/uzbekistan";
 
-export type CountryId = "georgia" | "armenia" | "kyrgyzstan" | "albania";
+export type CountryId =
+  | "russia"
+  | "kazakhstan"
+  | "uzbekistan"
+  | "georgia"
+  | "armenia"
+  | "kyrgyzstan"
+  | "albania";
 
 /**
  * Калькулятор со стёртым типом входа — в таком виде его держит реестр
@@ -73,6 +83,40 @@ export interface CountryMeta {
 }
 
 export const COUNTRIES: CountryMeta[] = [
+  // Порядок табов — по значимости направления для трафика, а не по алфавиту.
+  // Россия, Казахстан и Узбекистан пришли из прежнего калькулятора сайта:
+  // их формулы перенесены дословно, но эталоном ещё не сверены, поэтому
+  // блока `verification` у них нет и дата актуальности не показывается.
+  {
+    id: "russia",
+    tabLabel: txt("russia.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("russia.titleAccent"),
+    eyebrow: "ROSSIYA / CUSTOMS ESTIMATE",
+    stampTop: "RUSSIA",
+    currency: "RUB",
+    calculator: erase(russiaCalculator),
+  },
+  {
+    id: "kazakhstan",
+    tabLabel: txt("kazakhstan.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("kazakhstan.titleAccent"),
+    eyebrow: "QAZAQSTAN / CUSTOMS ESTIMATE",
+    stampTop: "KAZAKHSTAN",
+    currency: "KZT",
+    calculator: erase(kazakhstanCalculator),
+  },
+  {
+    id: "uzbekistan",
+    tabLabel: txt("uzbekistan.tabLabel"),
+    title: txt("common.titlePrefix"),
+    titleAccent: txt("uzbekistan.titleAccent"),
+    eyebrow: "OʻZBEKISTON / CUSTOMS ESTIMATE",
+    stampTop: "UZBEKISTAN",
+    currency: "UZS",
+    calculator: erase(uzbekistanCalculator),
+  },
   {
     id: "georgia",
     tabLabel: txt("georgia.tabLabel"),
@@ -139,7 +183,12 @@ export const COUNTRIES: CountryMeta[] = [
   },
 ];
 
-export const DEFAULT_COUNTRY: CountryId = "georgia";
+/**
+ * Страна на `/[lang]/calculator` без сегмента. Россия — самое ёмкое
+ * направление, и этот URL уже накоплен в индексе, поэтому он и остаётся
+ * главным. `/calculator/russia` редиректится сюда, чтобы не плодить дубль.
+ */
+export const DEFAULT_COUNTRY: CountryId = "russia";
 
 /**
  * Устарела ли сверка. Ставки и сборы пересматриваются с начала календарного

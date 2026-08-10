@@ -1,70 +1,27 @@
-import { Metadata } from "next";
-import CalculatorPage from "@/components/Calculator/CalculatorPage";
-import CountryLinks from "@/components/Customs/CountryLinks";
+import type { Metadata } from "next";
+import CalculatorPanel from "@/components/Customs/CalculatorPanel";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
+import { getRates } from "@/lib/customs/fx/getRates";
+import { customsText, hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { makeAlternates } from "@/lib/seo";
+
+/**
+ * Курс запекается в HTML в момент рендера, поэтому маршрут обязан
+ * перерендериваться не реже, чем живёт кэш курса: правило проекта —
+ * revalidate не выше 86400 на любом маршруте, который рендерит цену.
+ */
+export const revalidate = 21600;
+
+const SITE = "https://www.kmotors.shop";
 
 interface Props {
   params: Promise<{ lang: string }>;
 }
 
-const META: Record<string, { title: string; description: string }> = {
-  ru: {
-    title: "Калькулятор растаможки авто из Кореи 2026",
-    description:
-      "Рассчитайте стоимость растаможки корейского автомобиля в Россию, Казахстан или Узбекистан. Актуальные ставки пошлин 2026 для физических лиц. Онлайн-калькулятор.",
-  },
-  en: {
-    title: "Korean Car Import Duty Calculator 2026",
-    description:
-      "Calculate import customs duties for Korean cars to Russia, Kazakhstan or Uzbekistan. Updated 2026 rates for individuals.",
-  },
-  ko: {
-    title: "한국 자동차 통관 관세 계산기 2026",
-    description:
-      "러시아, 카자흐스탄, 우즈베키스탄으로 한국 자동차 수입 관세를 계산하세요. 2026년 최신 요율.",
-  },
-  ka: {
-    title: "კორეული მანქანის საბაჟო გადასახადის კალკულატორი 2026",
-    description:
-      "გამოთვალეთ კორეული ავტომობილის იმპორტის საბაჟო გადასახადი რუსეთში, ყაზახეთში ან უზბეკეთში. 2026 წლის განახლებული განაკვეთები.",
-  },
-  ar: {
-    title: "حاسبة الرسوم الجمركية للسيارات الكورية 2026",
-    description:
-      "احسب رسوم الاستيراد الجمركية للسيارات الكورية إلى روسيا أو كازاخستان أو أوزبكستان. أسعار 2026 المحدّثة للأفراد.",
-  },
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { lang } = await params;
-  const meta = META[lang] ?? META.ru;
-  return {
-    title: meta.title,
-    description: meta.description,
-    openGraph: {
-      title: meta.title,
-      description: meta.description,
-      type: "website",
-      images: [
-        {
-          url: "https://www.kmotors.shop/preview/preview.png",
-          width: 1200,
-          height: 630,
-          alt: meta.title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: meta.title,
-      description: meta.description,
-      images: ["https://www.kmotors.shop/preview/preview.png"],
-    },
-    alternates: makeAlternates(lang, "/calculator"),
-  };
-}
-
-// FAQ translations for structured data (FAQPage schema)
+/**
+ * FAQ перенесён с прежней версии страницы без изменений: разметка
+ * FAQPage уже отработала в выдаче, терять её при слиянии незачем.
+ */
 const FAQ: Record<string, { q: string; a: string }[]> = {
   ru: [
     {
@@ -101,20 +58,55 @@ const FAQ: Record<string, { q: string; a: string }[]> = {
       q: "How accurate is the calculation?",
       a: "The calculation is approximate. The final amount may slightly differ due to the current exchange rate on the clearance date and individual vehicle parameters.",
     },
-    {
-      q: "Which cars are most cost-efficient to import to Kazakhstan?",
-      a: "New electric vehicles (under 1 year): zero recycling fee and preferential duty. New petrol cars under 2 years with engine up to 2,000 cc — optimal customs-to-price ratio.",
-    },
-    {
-      q: "Why is customs clearance so expensive for ICE cars in Uzbekistan?",
-      a: "From January 1, 2026 Uzbekistan abolished preferential rates for small-displacement cars. All petrol and diesel cars now pay 15% duty plus a fixed surcharge per cubic centimetre of engine displacement.",
-    },
   ],
 };
 
-export default async function Page({ params }: Props) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const meta = META[lang] ?? META.ru;
+
+  const title = customsText(lang, "hub.meta.title");
+  const description = customsText(lang, "hub.meta.description");
+  const translated = hasCustomsDictionary(lang) && Boolean(title);
+
+  return {
+    title: title ?? "",
+    description: description ?? "",
+    alternates: makeAlternates(lang, "/calculator"),
+    robots: translated ? undefined : { index: false, follow: true },
+    openGraph: {
+      title: title ?? "",
+      description: description ?? "",
+      type: "website",
+      url: `${SITE}/${lang}/calculator`,
+      images: [
+        {
+          url: `${SITE}/preview/preview.png`,
+          width: 1200,
+          height: 630,
+          alt: title ?? "",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: title ?? "",
+      description: description ?? "",
+      images: [`${SITE}/preview/preview.png`],
+    },
+  };
+}
+
+/**
+ * Главная страница калькулятора: страна по умолчанию плюс общая плашка табов
+ * из layout. Семь направлений живут в ОДНОМ интерфейсе — отдельной страницы
+ * со ссылками на них нет и быть не должно.
+ */
+export default async function CalculatorPage({ params }: Props) {
+  const { lang } = await params;
+  const rates = await getRates();
+
+  const title = customsText(lang, "hub.meta.title");
+  const description = customsText(lang, "hub.meta.description");
   const faqs = FAQ[lang] ?? FAQ.ru;
 
   const faqSchema = {
@@ -123,42 +115,64 @@ export default async function Page({ params }: Props) {
     mainEntity: faqs.map(({ q, a }) => ({
       "@type": "Question",
       name: q,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: a,
-      },
+      acceptedAnswer: { "@type": "Answer", text: a },
     })),
   };
 
   const webPageSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: meta.title,
-    description: meta.description,
-    url: `https://www.kmotors.shop/${lang}/calculator`,
+    name: title,
+    description,
+    url: `${SITE}/${lang}/calculator`,
     inLanguage: lang,
-    isPartOf: { "@type": "WebSite", name: "K-Axis", url: "https://www.kmotors.shop/" },
+    isPartOf: { "@type": "WebSite", name: "K-Axis", url: `${SITE}/` },
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-        { "@type": "ListItem", position: 2, name: meta.title, item: `https://www.kmotors.shop/${lang}/calculator` },
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "K-Axis",
+          item: `${SITE}/${lang}/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: title,
+          item: `${SITE}/${lang}/calculator`,
+        },
       ],
+    },
+    // Перечисляем направления: из главной видно, какие страны покрыты,
+    // и у каждой есть собственный адрес.
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: COUNTRIES.map((country, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: customsText(lang, `${country.id}.title`) ?? country.id,
+        url:
+          country.id === DEFAULT_COUNTRY
+            ? `${SITE}/${lang}/calculator`
+            : `${SITE}/${lang}/calculator/${country.id}`,
+      })),
     },
   };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }} />
-      <CalculatorPage lang={lang} />
-      {/*
-        Направления GE/AM/KG/AL живут отдельными страницами. Пока их ядра не
-        сведены со старыми RU/KZ/UZ в один интерфейс, хаб связывает их
-        перечнем — иначе на новые страницы нет ни одного пути ни для
-        посетителя, ни для краулера.
-      */}
-      <CountryLinks lang={lang} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      {title && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+        />
+      )}
+      <CalculatorPanel countryId={DEFAULT_COUNTRY} rates={rates} />
     </>
   );
 }

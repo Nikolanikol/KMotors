@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import CalculatorPanel from "@/components/Customs/CalculatorPanel";
-import { COUNTRIES, type CountryId } from "@/lib/customs/core/registry";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  type CountryId,
+} from "@/lib/customs/core/registry";
 import { getRates } from "@/lib/customs/fx/getRates";
 import { customsText, hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { makeAlternates } from "@/lib/seo";
@@ -40,7 +44,7 @@ function isKnownCountry(value: string): value is CountryId {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, country } = await params;
-  if (!isKnownCountry(country)) return {};
+  if (!isKnownCountry(country) || country === DEFAULT_COUNTRY) return {};
 
   const title = customsText(lang, `${country}.meta.title`);
   const description = customsText(lang, `${country}.meta.description`);
@@ -65,6 +69,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CountryCalculatorPage({ params }: Props) {
   const { lang, country } = await params;
   if (!isKnownCountry(country)) notFound();
+  // Страна по умолчанию живёт на /calculator без сегмента; второй адрес для
+  // неё был бы дублем, поэтому уводим его туда навсегда.
+  if (country === DEFAULT_COUNTRY) permanentRedirect(`/${lang}/calculator`);
 
   // Курсы получает серверный слой: нет CORS-сюрпризов, лимиты провайдеров под
   // контролем, и значения попадают в HTML первого ответа, а не подгружаются

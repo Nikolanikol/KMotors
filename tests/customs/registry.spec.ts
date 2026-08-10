@@ -1,10 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { COUNTRIES, isVerificationStale } from "@/lib/customs/core/registry";
 
+/**
+ * Страны, чьи ядра перенесены из прежнего калькулятора сайта и эталоном ещё
+ * не сверены. Список ЯВНЫЙ намеренно: без него проверка «у страны с ядром
+ * есть источник» просто исчезла бы, и следующая незаверенная страна проехала
+ * бы молча. Убирать отсюда страну — по мере снятия golden-кейсов.
+ */
+const VERIFICATION_PENDING = new Set(["russia", "kazakhstan", "uzbekistan"]);
+
 describe("Реестр стран", () => {
-  it("у каждой страны с ядром заполнен источник сверки", () => {
+  it("страны, ожидающие сверки, перечислены явно и не выдают себя за сверенные", () => {
+    for (const id of VERIFICATION_PENDING) {
+      const country = COUNTRIES.find((c) => c.id === id);
+      expect(country, `в реестре нет страны "${id}"`).toBeDefined();
+      expect(
+        country!.verification,
+        `у "${id}" появился источник — убери её из VERIFICATION_PENDING`,
+      ).toBeUndefined();
+    }
+  });
+
+  it("у каждой сверенной страны заполнен источник сверки", () => {
     for (const country of COUNTRIES) {
-      if (country.calculator) {
+      if (country.calculator && !VERIFICATION_PENDING.has(country.id)) {
         expect(
           country.verification,
           `у страны "${country.id}" есть ядро, но нет verification`,
