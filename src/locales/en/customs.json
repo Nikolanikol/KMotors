@@ -1,1 +1,628 @@
-{}
+{
+  "common": {
+    "notChargedOnCars": "not charged on passenger cars",
+    "titlePrefix": "Car import duty to"
+  },
+  "hub": {
+    "heading": "Car import duty calculator",
+    "meta": {
+      "title": "Car Import Duty Calculator from Korea 2026",
+      "description": "Work out the import payments on a car brought in from Korea to seven countries: Russia, Kazakhstan, Uzbekistan, Georgia, Armenia, Kyrgyzstan, Albania. Current 2026 rates for individuals."
+    }
+  },
+  "ui": {
+    "countriesNav": "Import destinations",
+    "carData": "Car details",
+    "receiptTitle": "Import payment breakdown",
+    "total": "Total payable",
+    "notInTotal": "Not included in the total",
+    "ratesAsOf": "Rates current as of {{date}}",
+    "verifiedWith": " — cross-checked against ",
+    "staleWarning": "Since then {{year}} has begun, and rates and fees are revised at the start of the calendar year.",
+    "staleAdvice": "The calculation below may be out of date — check with a broker before you commit to a deal.",
+    "freshAdvice": ". Rates and fees are normally revised at the start of the calendar year — check with a broker for the clearance date before you commit to a deal.",
+    "fxFallback": "Exchange rates could not be fetched — a stored snapshot from {{date}} has been used. Verify the rate manually before relying on the figures.",
+    "fxLive": "Exchange rate: {{label}}, data as of {{date}}. The rate field can be edited by hand.",
+    "date": "{{day}} {{month}} {{year}}",
+    "month": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    }
+  },
+  "russia": {
+    "title": "Car import duty to Russia",
+    "tabLabel": "Russia",
+    "titleAccent": "Russia",
+    "source": "Drom",
+    "meta": {
+      "title": "Russia Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Russia by an individual: duty under EEC Decision No. 107, the customs processing fee and the recycling fee based on displacement and power. 2026 rates.",
+      "short": "Duty under EEC No. 107, customs processing fee and recycling fee. The reduced coefficient applies up to 160 hp and 3000 cc."
+    },
+    "fields": {
+      "priceCurrency": "Deal currency",
+      "priceCurrencyHint": "The rate against the ruble is filled in automatically.",
+      "price": "Car price",
+      "volumeCc": "Engine displacement, cc",
+      "horsePower": "Power, hp",
+      "horsePowerHint": "Without it the recycling fee is only a rough estimate from displacement alone — the amount can differ substantially.",
+      "year": "Year of manufacture",
+      "month": "Month of manufacture",
+      "monthHint": "The rate breaks at 3 and 5 years, so the month matters.",
+      "fuel": "Engine type",
+      "rubPerUnit": "Rate: rubles per unit of currency",
+      "rubPerUnitHint": "The price is converted into rubles at this rate — the processing fee and the recycling fee both depend on it.",
+      "rubPerEur": "Bank of Russia rate: rubles per 1 euro",
+      "rubPerEurHint": "Duty rates are set in euros, so a separate rate is needed."
+    },
+    "currency": {
+      "USD": "US dollar",
+      "KRW": "Won"
+    },
+    "fuel": {
+      "ice": "Petrol / diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric"
+    },
+    "fuelShort": {
+      "ice": "petrol / diesel",
+      "hybrid": "hybrid",
+      "electric": "electric"
+    },
+    "subtitle": {
+      "yearMonth": "{{month}} {{year}}",
+      "volume": "{{volumeCc}} cc",
+      "power": "{{horsePower}} hp"
+    },
+    "stamp": {
+      "eaeu": "EEC No. 107"
+    },
+    "lines": {
+      "duty": "Customs duty",
+      "customsFee": "Customs processing fee",
+      "recyclingFee": "Recycling fee"
+    },
+    "notes": {
+      "dutyElectric": "{{rate}}% of the price — the relief for electric cars expired on 31.12.2023",
+      "dutyNewByValue": "{{rate}}% of the price but not less than {{perCc}} €/cc — the percentage beats the minimum ({{byValue}} € against {{byVolume}} €)",
+      "dutyNewByVolume": "{{rate}}% of the price but not less than {{perCc}} €/cc — the displacement minimum is higher ({{byVolume}} € against {{byValue}} €)",
+      "dutyPerCc": "{{perCc}} €/cc × {{volumeCc}} cc — fixed, independent of the price",
+      "customsFee": "bracket by customs value of {{value}} ₽",
+      "recyclingFee": "base rate {{base}} ₽ × coefficient {{coeff}}"
+    },
+    "flags": {
+      "recyclingNoHp": "Power was left blank, so the lowest possible recycling fee for this displacement is shown. Above 160 hp the reduced coefficient stops applying and the fee grows hundreds of times over — enter the hp from the vehicle title.",
+      "electric": "Electric car: duty is {{rate}}% of the price, engine displacement plays no part in the calculation.",
+      "hybrid": "A hybrid is treated as a petrol car — by the displacement of its combustion engine.",
+      "midBand": "Age between {{from}} and {{to}} years — duty is a fixed rate per cc, and the price does not affect it.",
+      "privatePerson": "Calculated for an individual importing for personal use. Rates for companies and sole traders are different.",
+      "notIncluded": "Shipping from Korea, bonded warehouse, broker and registration are not included."
+    }
+  },
+  "kazakhstan": {
+    "title": "Car import duty to Kazakhstan",
+    "tabLabel": "Kazakhstan",
+    "titleAccent": "Kazakhstan",
+    "meta": {
+      "title": "Kazakhstan Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Kazakhstan: 15% duty, 16% VAT from 2026, excise by displacement and luxury excise, recycling and registration fees tied to the MCI.",
+      "short": "15% duty, 16% VAT, recycling fee and registration in MCI. Electric cars pay no recycling fee."
+    },
+    "fields": {
+      "priceCurrency": "Deal currency",
+      "priceCurrencyHint": "The rate against the tenge is filled in automatically.",
+      "price": "Car price",
+      "volumeCc": "Engine displacement, cc",
+      "volumeCcHint": "Above 3000 cc the excise is charged on the whole displacement, not on the excess.",
+      "year": "Year of manufacture",
+      "month": "Month of manufacture",
+      "monthHint": "Needed for the 7-year threshold on customs duty. It does not affect the registration fee — that goes by year of manufacture.",
+      "fuel": "Engine type",
+      "fuelHint": "The two kinds of hybrid are treated differently: in a series hybrid (EREV) the engine is not connected to the wheels and runs purely as a generator — no duty and no recycling fee.",
+      "kztPerUnit": "Rate: tenge per unit of currency",
+      "kztPerUnitHint": "The price is converted into tenge at this rate.",
+      "kztPerEur": "Rate: tenge per 1 euro",
+      "kztPerEurHint": "Needed only for the minimum rate per cc on cars older than 7 years."
+    },
+    "currency": {
+      "USD": "US dollar",
+      "KRW": "Won"
+    },
+    "fuel": {
+      "ice": "Petrol / diesel",
+      "hybrid": "Hybrid HEV / PHEV",
+      "erev": "Hybrid EREV",
+      "electric": "Electric"
+    },
+    "fuelShort": {
+      "ice": "petrol / diesel",
+      "hybrid": "hybrid HEV / PHEV",
+      "erev": "hybrid EREV",
+      "electric": "electric"
+    },
+    "subtitle": {
+      "yearMonth": "{{month}} {{year}}",
+      "volume": "{{volumeCc}} cc"
+    },
+    "stamp": {
+      "eaeu": "EAEU CCT",
+      "luxury": "LUXURY"
+    },
+    "lines": {
+      "customsFee": "Customs processing fee",
+      "duty": "Customs duty",
+      "exciseEngine": "Excise by engine displacement",
+      "exciseLuxury": "Luxury excise",
+      "vat": "VAT",
+      "registration": "First registration at the Public Service Centre",
+      "registrationDocs": "State fees: plates and registration certificate",
+      "recyclingFee": "Recycling fee",
+      "additional": "Related costs"
+    },
+    "notes": {
+      "customsFee": "{{mrp}} MCI, a flat rate",
+      "duty": "{{rate}}% of the customs value",
+      "dutyElectric": "electric cars are not subject to duty",
+      "dutyErev": "a series hybrid falls under HS code 8703 80 as an electric car — no duty",
+      "dutyByValue": "{{rate}}% of the price but not less than {{perCc}} €/cc — the percentage beats the minimum ({{byValue}} ₸ against {{byVolume}} ₸)",
+      "dutyByVolume": "{{rate}}% of the price but not less than {{perCc}} €/cc — the displacement minimum is higher ({{byVolume}} ₸ against {{byValue}} ₸)",
+      "exciseEngine": "{{perCc}} ₸ per cc on the whole displacement — it exceeds {{threshold}} cc",
+      "exciseEngineNone": "not charged: displacement is no more than {{threshold}} cc",
+      "exciseLuxury": "{{rate}}% of the price — it is above the {{threshold}} ₸ threshold",
+      "exciseLuxuryNone": "not charged: the price is no higher than {{threshold}} ₸",
+      "vat": "{{rate}}% under art. 466 of the Tax Code: the price together with duty, the customs processing fee and excises",
+      "registration": "bracket by year of manufacture: {{year}} when calculated for {{currentYear}}",
+      "registrationDocs": "{{plates}} MCI for the number plates and {{certificate}} MCI for the registration certificate",
+      "recyclingFee": "{{base}} MCI × coefficient {{coeff}} by displacement",
+      "recyclingElectric": "not charged on electric cars imported directly",
+      "recyclingErev": "not charged on series hybrids, on a par with electric cars",
+      "additional": "safety certificate, emergency call system, broker and bonded warehouse — an estimate, not a state payment"
+    },
+    "flags": {
+      "oldCar": "The car is more than {{years}} years old: duty is the greater of two amounts — a percentage of the price and a minimum per cc. Importing such a car is usually not worth it.",
+      "luxury": "The price is above the {{threshold}} ₸ threshold — a luxury excise of {{rate}}% has been added on top of the other payments.",
+      "electric": "Electric car: duty and recycling fee are zero, and the registration fee follows the reduced scale. VAT is charged on general terms.",
+      "erev": "Treated as a series hybrid: 0% duty, no recycling fee, registration on the reduced scale. This applies only to a car whose engine is NOT connected to the wheels and works as a generator — Li Auto, AITO, Voyah EVR, Leapmotor, Deepal. An ordinary Toyota or BYD DM-i hybrid does not belong here; choose “Hybrid HEV / PHEV” for those.",
+      "registrationJump": "By year of manufacture the car is two years old or more, so the first registration fee is charged at the higher step.",
+      "additionalEstimate": "The related costs line of {{amount}} ₸ is a market estimate, not a tariff. The actual amount depends on the broker and on how long the car sits in the bonded warehouse.",
+      "notIncluded": "Shipping from Korea is not included."
+    }
+  },
+  "uzbekistan": {
+    "title": "Car import duty to Uzbekistan",
+    "tabLabel": "Uzbekistan",
+    "titleAccent": "Uzbekistan",
+    "meta": {
+      "title": "Uzbekistan Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Uzbekistan: duty under PP-3818, 12% VAT, the recycling fee in BRV and the customs processing fee. 2026 rates — used and new cars fall under different lines of the tariff.",
+      "short": "40% + $3/cc duty on used cars, 12% VAT, recycling fee in BRV. Electric cars — 0% duty."
+    },
+    "fields": {
+      "priceCurrency": "Deal currency",
+      "priceCurrencyHint": "The rate against the dollar is filled in automatically.",
+      "price": "Car price",
+      "freightUsd": "Shipping to the border, $",
+      "freightUsdHint": "Part of the customs value: duty, VAT and the processing fee bracket are all worked out from the price including shipping. The default is a typical freight cost from Korea — adjust it for your route.",
+      "volumeCc": "Engine displacement, cc",
+      "volumeCcHint": "Sets both the per-cc surcharge on duty and the recycling fee rate.",
+      "year": "Year of manufacture",
+      "yearHint": "Needed for the recycling fee: it goes up once the car is more than 3 years old.",
+      "month": "Month of manufacture",
+      "fuel": "Engine type",
+      "usdPerUnit": "Rate: dollars per unit of currency",
+      "usdPerUnitHint": "Duty is set in dollars, so the price is converted into them first.",
+      "uzsPerUsd": "Rate: soums per 1 dollar",
+      "uzsPerUsdHint": "All payments are converted into soums at this rate.",
+      "condition": "Car status",
+      "conditionHint": "This decides the duty rate. A car from a Korean auction has been registered, so it counts as used — even if it is six months old."
+    },
+    "currency": {
+      "USD": "US dollar",
+      "KRW": "Won"
+    },
+    "fuel": {
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric"
+    },
+    "fuelShort": {
+      "petrol": "petrol",
+      "diesel": "diesel",
+      "hybrid": "hybrid",
+      "electric": "electric"
+    },
+    "subtitle": {
+      "yearMonth": "{{month}} {{year}}",
+      "volume": "{{volumeCc}} cc"
+    },
+    "stamp": {
+      "used": "USED",
+      "newUnder1": "NEW, UNDER 1 YEAR",
+      "newOver1": "NEW"
+    },
+    "lines": {
+      "customsFee": "Customs processing fee",
+      "duty": "Customs duty",
+      "vat": "VAT",
+      "recyclingFee": "Recycling fee",
+      "registration": "Registration (road police)"
+    },
+    "notes": {
+      "customsFee": "{{brv}} BRV — bracket by customs value of {{value}} $ (price including shipping)",
+      "duty": "{{rate}}% of the customs value plus {{perCc}} $/cc × {{volumeCc}} cc = {{usd}} $",
+      "dutyUsed": "{{rate}}% of the customs value plus {{perCc}} $/cc × {{volumeCc}} cc = {{usd}} $ — a single rate for used cars",
+      "dutyHybridUsed": "{{rate}}% of the customs value plus {{perCc}} $/cc × {{volumeCc}} cc = {{usd}} $ — for a used hybrid the rate depends on age",
+      "dutyHybrid": "{{rate}}% of the customs value = {{usd}} $; hybrids carry no per-cc surcharge",
+      "dutyElectric": "electric cars are not subject to duty",
+      "vat": "{{rate}}% of the customs value together with duty",
+      "recyclingFee": "{{coeff}} BRV — by engine displacement and by age above or below {{years}} years",
+      "recyclingElectric": "{{coeff}} BRV — a separate rate for electric cars",
+      "registration": "{{brv}} BRV: registration {{registration}} + vehicle certificate {{certificate}} + plates {{plates}}",
+      "registrationElectric": "{{brv}} BRV — registration is cheaper for fully electric cars"
+    },
+    "flags": {
+      "usedProhibitive": "A used car is charged at a prohibitive rate of {{rate}}% plus {{perCc}} $ per cc. The payments come to roughly {{share}}% of the price of the car itself — in Uzbekistan that usually means importing is not worth it.",
+      "usedHybrid": "A used hybrid is charged at an age-based rate: {{rate}}% plus {{perCc}} $ per cc. The payments come to roughly {{share}}% of the price of the car. Past three years the rate matches petrol; below three years it is markedly lower.",
+      "electric": "Electric car: duty is zero regardless of age or mileage — the one case where importing a used car makes sense.",
+      "electricRecycling": "The recycling fee, however, gives electric cars no relief: since 1 May 2025 it has been raised to 120 BRV for a car under 3 years and 210 BRV for an older one.",
+      "hybridNoPerCc": "A new hybrid carries no surcharge for displacement — only the percentage of the price. Once used, the surcharge appears.",
+      "smallEngineLost": "From 1 January 2026 the relief for small engines was abolished: the per-cc surcharge applies at any displacement.",
+      "recyclingOld": "The car is more than {{years}} years old — the recycling fee is charged at the higher rate, roughly double.",
+      "noExcise": "Excise on imported passenger cars was abolished on 1 August 2020 and replaced by the recycling fee — there is no excise line in this calculation.",
+      "notIncluded": "Shipping is not shown as a separate line but is part of the customs value — duty and VAT are worked out from it. Broker and bonded warehouse are not included."
+    },
+    "condition": {
+      "used": "Used",
+      "new": "New, never registered"
+    },
+    "conditionShort": {
+      "used": "used",
+      "new": "new"
+    }
+  },
+  "georgia": {
+    "title": "Car import duty to Georgia",
+    "tabLabel": "Georgia",
+    "titleAccent": "Georgia",
+    "source": "myauto.ge",
+    "meta": {
+      "title": "Georgia Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Georgia: excise by engine displacement, import tax by age, fixed fees. 2026 rates, with separate treatment for hybrids, electric cars and right-hand drive.",
+      "short": "Excise by displacement, import tax by age, 480 GEL in fees. A discount for hybrids and zero excise for electric cars."
+    },
+    "fields": {
+      "year": "Year of manufacture",
+      "volumeCc": "Engine displacement, cc",
+      "fuel": "Fuel type",
+      "steering": "Steering position",
+      "gelPerUsd": "GEL per 1 USD rate",
+      "gelPerUsdHint": "Affects only the conversion of the total into dollars."
+    },
+    "fuel": {
+      "petrol": "Petrol / diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric"
+    },
+    "steering": {
+      "left": "Left",
+      "right": "Right"
+    },
+    "fuelShort": {
+      "petrol": "petrol / diesel",
+      "hybrid": "hybrid",
+      "electric": "electric"
+    },
+    "steeringShort": {
+      "left": "left-hand drive",
+      "right": "right-hand drive"
+    },
+    "subtitle": {
+      "year": "{{year}}",
+      "volume": "{{volumeCc}} cc"
+    },
+    "ageBand": {
+      "over": ">{{years}} yrs",
+      "upTo": "≤{{years}} yrs"
+    },
+    "lines": {
+      "excise": "Excise",
+      "customsServiceTax": "Customs service tax",
+      "processing": "Processing",
+      "importTax": "Import tax",
+      "expertAppraisal": "Expert appraisal",
+      "declaration": "Customs declaration",
+      "internalTransit": "Internal transit (up to 60 days)",
+      "duty": "Import duty",
+      "vat": "VAT"
+    },
+    "notes": {
+      "exciseElectric": "electric car — no excise is charged",
+      "excise": "{{baseRate}} GEL/cc × {{volumeCc}} cc, age {{age}} yrs ({{ageBand}})",
+      "exciseHybrid": "{{baseRate}} GEL/cc × {{hybridMultiplier}} (hybrid) × {{volumeCc}} cc, age {{age}} yrs ({{ageBand}})",
+      "exciseRhd": "{{baseRate}} GEL/cc × {{rhdMultiplier}} (right-hand drive) × {{volumeCc}} cc, age {{age}} yrs ({{ageBand}})",
+      "importTaxElectric": "electric car — there is no displacement, so no tax is charged",
+      "importTax": "{{rate}} GEL/cc × {{volumeCc}} cc — the rate rises with age"
+    },
+    "flags": {
+      "euro5": "Permanent registration may be difficult: Euro 5 compliance is required, which normally means a car from {{yearFrom}} onwards.",
+      "oldAge": "Age is over {{years}} years — excise at the higher rate of {{rate}} GEL/cc.",
+      "electric": "Electric car — no excise is charged, whichever side the steering wheel is on.",
+      "hybridOldRhd": "A hybrid older than {{years}} years with right-hand drive — the excise discount does not apply.",
+      "hybridOld": "A hybrid older than {{years}} years — the excise discount does not apply.",
+      "hybridRhd": "A right-hand-drive hybrid — the excise discount does not apply.",
+      "hybridDiscount": "Hybrid — excise with a {{discount}}% discount.",
+      "rhd": "Right-hand drive — excise is multiplied by {{multiplier}}."
+    }
+  },
+  "albania": {
+    "title": "Car import duty to Albania",
+    "tabLabel": "Albania",
+    "titleAccent": "Albania",
+    "source": "vinauto.al",
+    "meta": {
+      "title": "Albania Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Albania: 20% VAT on the customs value, the DPSHTRR registration fee and luxury tax. Individuals pay neither duty nor excise.",
+      "short": "The only payment is 20% VAT. Plus the DPSHTRR fee and luxury tax for large engines."
+    },
+    "fields": {
+      "priceCurrency": "Deal currency",
+      "priceCurrencyHint": "The rate against the lek is filled in automatically.",
+      "price": "Car price",
+      "freight": "Freight and insurance",
+      "freightHint": "Part of the customs value, on a par with the price of the car.",
+      "allPerUnit": "Rate: lek per unit of currency",
+      "allPerUnitHint": "A market rate. Customs applies its own official rate, which may differ.",
+      "fuel": "Fuel type",
+      "volumeCc": "Engine displacement, cc",
+      "volumeCcHint": "Sets the minimum customs value and the luxury tax threshold."
+    },
+    "currency": {
+      "USD": "US dollar",
+      "KRW": "Won"
+    },
+    "fuel": {
+      "petrol": "Petrol / diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric"
+    },
+    "fuelShort": {
+      "petrol": "petrol / diesel",
+      "hybrid": "hybrid",
+      "electric": "electric"
+    },
+    "subtitle": {
+      "volume": "{{volumeCc}} cc",
+      "customsValue": "{{value}} ALL of customs value"
+    },
+    "stamp": {
+      "luxury": "LUXURY",
+      "vat": "VAT {{rate}}%"
+    },
+    "lines": {
+      "duty": "Customs duty",
+      "excise": "Excise",
+      "vat": "VAT (TVSH)",
+      "registration": "DPSHTRR registration",
+      "luxuryOnce": "Luxury tax on registration (TRML)",
+      "luxuryAnnual": "Annual luxury tax (TVML)"
+    },
+    "luxuryReason": {
+      "both": "displacement from {{volume}} cc and price from {{value}} ALL",
+      "volume": "displacement from {{volume}} cc",
+      "value": "price from {{value}} ALL"
+    },
+    "notes": {
+      "duty": "not charged on individuals — the rate is 0 regardless of country of origin",
+      "excise": "not applied to passenger cars in Albania",
+      "vat": "{{rate}}% of the customs value of {{base}} ALL",
+      "vatMinimum": "{{rate}}% of the minimum value of {{base}} ALL — it is higher than the declared one",
+      "registration": "physical inspection, circulation permit and number plates — an estimate",
+      "luxuryNotApplied": "not applied: displacement is under {{volume}} cc and the price is under {{value}} ALL",
+      "luxuryAnnual": "payable every year for as long as the car is registered in Albania"
+    },
+    "flags": {
+      "minimumApplied": "The declared price of {{declared}} ALL is below the minimum of {{minimum}} ALL for this displacement, so VAT is charged on the minimum. That barrier exists to counter understated contract prices, which is why the total is higher than a plain calculation on the declared sum.",
+      "luxury": "The car counts as a luxury one: {{reason}}. On top of the one-off {{once}} ALL you will pay {{annual}} ALL every year for as long as it stays registered.",
+      "nearLuxury": "The price is close to the luxury threshold of {{threshold}} ALL. Customs values the car from its own catalogues at the time of registration rather than from the contract, so the tax may still apply even with a lower contract price.",
+      "electric": "Electric car: there is no displacement, so the minimum value per cc does not apply. Albania grants electric cars no VAT relief — the calculation uses the standard 20% rate.",
+      "officialRate": "Calculated at the market rate for the lek. Customs applies its own official rate, so the total may differ by the gap between them.",
+      "portCosts": "Port charges in Durrës, broker services and shipping to Albania are not included."
+    }
+  },
+  "armenia": {
+    "title": "Car import duty to Armenia",
+    "tabLabel": "Armenia",
+    "titleAccent": "Armenia",
+    "source": "Platinum Motors",
+    "meta": {
+      "title": "Armenia Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Armenia: duty under the EAEU Common Customs Tariff, 20% VAT and environmental tax. An individual does not pay under EEC Decision No. 107 — this calculator uses the schedule actually applied.",
+      "short": "CCT duty, 20% VAT and environmental tax. Not Decision No. 107 — Armenia treats passenger cars differently."
+    },
+    "fields": {
+      "fuel": "Engine type",
+      "fuelHint": "A hybrid is charged from the petrol table. An electric car goes under the EAEU duty-free quota.",
+      "volumeCc": "Engine displacement, cc",
+      "volumeCcHint": "Bracket boundaries are inclusive: 1500 cc falls into the “up to 1500” bracket. On cars under 3 years old, displacement matters only for petrol engines above 2800 cc.",
+      "year": "Year of manufacture",
+      "yearHint": "Age is taken as the difference between calendar years. The rate breaks at 3 and at 7 years.",
+      "priceCurrency": "Deal currency",
+      "priceCurrencyHint": "The rate against the dram is filled in automatically and stays editable.",
+      "price": "Car price",
+      "freight": "Freight and insurance",
+      "freightHint": "Part of the customs value on a par with the price of the car, and taxed on the same terms.",
+      "amdPerUnit": "Rate: drams per unit of currency",
+      "amdPerUnitHint": "The customs value is converted into drams at this rate. The percentage duty, VAT and the environmental tax all depend on it.",
+      "amdPerEur": "Central Bank of Armenia rate: drams per 1 euro",
+      "amdPerEurHint": "Needed only for the per-cc rates, which are set in euros. On cars under 3 years old it does not affect the result."
+    },
+    "fuel": {
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric"
+    },
+    "fuelShort": {
+      "petrol": "petrol",
+      "diesel": "diesel",
+      "hybrid": "hybrid",
+      "electric": "electric"
+    },
+    "currency": {
+      "USD": "US dollar",
+      "KRW": "Won"
+    },
+    "subtitle": {
+      "year": "{{year}}",
+      "volume": "{{volumeCc}} cc"
+    },
+    "stamp": {
+      "eaeu": "EAEU CCT"
+    },
+    "ecoNext": {
+      "years": "{{years}} yrs",
+      "none": "none higher"
+    },
+    "lines": {
+      "duty": "Customs duty",
+      "excise": "Excise",
+      "vat": "VAT",
+      "eco": "Environmental tax"
+    },
+    "notes": {
+      "dutyElectric": "electric cars come in under the EAEU duty-free quota — the rate is 0%",
+      "dutyNew": "{{rate}}% of the customs value — there is no displacement minimum",
+      "dutyNewLargePetrol": "{{rate}}% of the customs value — a reduced rate for petrol engines above {{threshold}} cc",
+      "dutyMidByVolume": "{{rate}}% of the price but not less than {{perCc}} €/cc — the displacement minimum is higher ({{byVolume}} ֏ against {{byValue}} ֏)",
+      "dutyMidByValue": "{{rate}}% of the price but not less than {{perCc}} €/cc — the percentage beats the minimum ({{byValue}} ֏ against {{byVolume}} ֏)",
+      "dutyOld": "{{perCc}} €/cc × {{volumeCc}} cc — a prohibitive rate, independent of the price",
+      "excise": "not charged on passenger cars imported into Armenia",
+      "vat": "{{rate}}% of the customs value together with duty: {{value}} ֏ + {{duty}} ֏",
+      "vatElectric": "electric car — exempt until 31 December {{untilYear}}",
+      "ecoElectric": "electric cars are fully exempt",
+      "ecoHybrid": "hybrids are fully exempt",
+      "ecoYoung": "age up to {{years}} years inclusive — no tax is charged",
+      "eco": "{{rate}}% of the customs value, age {{age}} yrs"
+    },
+    "flags": {
+      "notEec107": "In Armenia an individual does not pay the single aggregate payment under EEC Decision No. 107. They pay duty under the EAEU Common Customs Tariff, 20% VAT as a separate line and the environmental tax. The rates of 48–54% and 1.5–5.7 €/cc often quoted “for individuals” come from the Decision No. 107 tables, and they do not apply to passenger cars in Armenia.",
+      "electricQuota": "The electric car comes in under the EAEU duty-free quota for 2026, extended by a further 5,000 cars. The quota is allocated as cars arrive: once it runs out the standard 15% rate kicks in, and the payment jumps on two counts at once — the duty and the VAT charged on it. Best not to delay the import date.",
+      "electricVat": "The VAT exemption runs until 31 December {{untilYear}} and is aimed at new cars. It is applied in this calculation; for an electric car from 2023 or earlier, confirm the relief when you clear customs.",
+      "largePetrol": "A petrol engine above {{threshold}} cc on a car under {{ageBelow}} years old — duty is {{reducedRate}}% instead of {{baseRate}}%. There is no upper bound on this rate: HS codes 8703 23 198 8 and 8703 24 109 8 carry one and the same rate. The reduction extends to neither diesel nor hybrid.",
+      "largeHybrid": "A hybrid above {{threshold}} cc and under {{ageBelow}} years old pays the full {{baseRate}}%, where an equivalent petrol car would pay {{reducedRate}}%. In every other bracket a hybrid is treated exactly as petrol. On a car like this it is worth confirming the HS code in advance.",
+      "ecoOnce": "The environmental tax is charged once, on import: 0 up to 5 years inclusive, 2% for 6–10 years, 10% for 11–15, 20% for 16 and older; electric cars and hybrids are exempt. Do not confuse it with the annual emissions tax paid by the owner of a car already registered in Armenia — the rates there are different and markedly lower.",
+      "ecoCurrent": "Age {{age}} yrs — environmental tax of {{rate}}% of the customs value. The next threshold is {{next}}.",
+      "noExcise": "No excise is charged on imports of passenger cars (category M1, HS 8703): article 84 of the Armenian Tax Code applies it only to trucks and to motorcycles above 500 cc. The line is left at zero to show that it was accounted for.",
+      "ageByYear": "The calculation takes age as the difference between calendar years, whereas customs counts it from the date of manufacture. The rate breaks at {{ageBelow}} and {{ageOld}} years: if the car is about to reach either, the payment may land in the neighbouring bracket — such lots are better cleared sooner.",
+      "notIncluded": "Shipping to Armenia, storage and terminal charges, customs agent services and registration are not included."
+    }
+  },
+  "kyrgyzstan": {
+    "title": "Car import duty to Kyrgyzstan",
+    "tabLabel": "Kyrgyzstan",
+    "titleAccent": "Kyrgyzstan",
+    "source": "State Customs Service calculator (KR)",
+    "meta": {
+      "title": "Kyrgyzstan Car Import Duty Calculator 2026",
+      "description": "Work out the import payments on a car brought into Kyrgyzstan in two modes: an individual under EEC Decision No. 107 and a company under the CCT with 12% VAT. Rates are set in euros and the total is converted into som at the NBKR rate.",
+      "short": "Two modes: an individual under EEC No. 107, a company under the CCT with 12% VAT. The gap between them is severalfold."
+    },
+    "fields": {
+      "mode": "Who is importing",
+      "modeHint": "An individual pays a single aggregate payment. A company pays duty, VAT and the fee separately.",
+      "fuel": "Engine type",
+      "fuelHint": "A series hybrid (Li Auto, Voyah, Zeekr REEV) is treated as an electric car. A parallel one (Prius, BYD DM-i) is treated as its base fuel.",
+      "volumeCc": "Engine displacement, cc",
+      "volumeCcHint": "Sets the rate per cc. Bracket boundaries are inclusive: 1800 cc falls into the “up to 1800” bracket.",
+      "year": "Year of manufacture",
+      "yearHint": "Age is taken as the difference between calendar years, as in the State Customs Service calculator.",
+      "priceCurrency": "Deal currency",
+      "priceCurrencyHint": "The rate to the euro is filled in automatically.",
+      "price": "Car price",
+      "freight": "Freight and insurance",
+      "freightHint": "Part of the customs value on a par with the price of the car. The State Customs Service calculator has no separate field — there everything is added up by hand.",
+      "eurPerUnit": "Rate: euros per unit of currency",
+      "eurPerUnitHint": "Both the EEC No. 107 and the CCT rates are set in euros, so the customs value is converted into euros.",
+      "kgsPerEur": "NBKR rate: som per 1 euro",
+      "kgsPerEurHint": "The total is converted into som at the rate on the clearance date."
+    },
+    "mode": {
+      "personal": "Individual",
+      "commercial": "Company"
+    },
+    "modeShort": {
+      "personal": "individual",
+      "commercial": "company"
+    },
+    "fuel": {
+      "petrol": "Petrol / petrol hybrid",
+      "diesel": "Diesel / diesel hybrid",
+      "seriesHybrid": "Series hybrid (REEV)",
+      "electric": "Electric"
+    },
+    "fuelShort": {
+      "petrol": "petrol",
+      "diesel": "diesel",
+      "seriesHybrid": "series hybrid",
+      "electric": "electric"
+    },
+    "currency": {
+      "USD": "US dollar",
+      "KRW": "Won"
+    },
+    "subtitle": {
+      "year": "{{year}}",
+      "volume": "{{volumeCc}} cc"
+    },
+    "stamp": {
+      "personal": "EEC No. 107",
+      "commercial": "EAEU CCT"
+    },
+    "lines": {
+      "dutyPersonal": "Single aggregate customs payment",
+      "duty": "Customs duty",
+      "excise": "Excise",
+      "vat": "VAT",
+      "fee": "Customs clearance fee",
+      "registration": "First registration at the State Registration Service"
+    },
+    "notes": {
+      "dutyQuotaPersonal": "{{rate}}% of the customs value — the 2026 duty-free quota is exhausted",
+      "dutyQuotaCommercial": "{{rate}}% of the customs value — no preferential quota was allocated to companies",
+      "dutyNewByVolume": "{{rate}}% of the price but not less than {{perCc}} €/cc — the displacement minimum is higher ({{byVolume}} € against {{byValue}} €)",
+      "dutyNewByValue": "{{rate}}% of the price but not less than {{perCc}} €/cc — the percentage beats the minimum ({{byValue}} € against {{byVolume}} €)",
+      "dutyNewFlat": "{{rate}}% of the customs value — there is no displacement minimum",
+      "dutyPerCc": "{{perCc}} €/cc × {{volumeCc}} cc — fixed, independent of the price",
+      "dutyOld": "{{perCc}} €/cc × {{volumeCc}} cc — a prohibitive rate, independent of the price",
+      "excise": "not charged on passenger cars imported into Kyrgyzstan",
+      "vatPersonal": "an individual pays the single aggregate payment — no VAT is charged on top of it",
+      "vatElectricFree": "electric car up to {{maxAge}} years inclusive — exempt under the Tax Code of Kyrgyzstan",
+      "vat": "{{rate}}% of the customs value together with duty: {{value}} € + {{duty}} €",
+      "fee": "{{rate}}% of the customs value of {{value}} €",
+      "registration": "{{rate}}% — an estimate: the ministry works from its own average market value, not from the invoice"
+    },
+    "flags": {
+      "quotaExhausted": "The 2026 duty-free quota — 15,000 cars under HS codes {{codeElectric}} and {{codeHybrid}} — is exhausted, so the CCT rate of {{rate}}% has been applied. The official State Customs Service calculator still shows zero duty on electric cars: it has not been updated for the exhausted quota.",
+      "fuelIrrelevant": "Personal use: fuel type does not affect the amount. EEC No. 107 works only from displacement, age and — for cars under 3 years old — price.",
+      "feeSeparate": "The customs clearance fee of {{rate}}% is shown as a separate line. The State Customs Service calculator does not show it to an individual, treating the aggregate payment as all-inclusive.",
+      "onePerYear": "An individual may clear one car for personal use per calendar year. The second and any further ones are cleared as commercial imports.",
+      "registrationEstimate": "First registration at the State Registration Service is shown as an estimate: the {{rate}}% is taken from the customs value in this calculation, whereas the ministry applies it to its own average market valuation. The real amount will be different.",
+      "brokerRequired": "A company must clear the import through a licensed customs agent — a company may not file the declaration itself. Broker services are not included.",
+      "electricVatCharged": "Age is over {{maxAge}} years — the exemption under the Tax Code of Kyrgyzstan does not apply, and full import VAT of {{rate}}% has been charged.",
+      "electricVatFree": "Age up to {{maxAge}} years inclusive — no import VAT is charged. The count runs from the date of manufacture, so close to the boundary it is worth confirming the relief at clearance.",
+      "ratesInEur": "Rates are set in euros: both EEC No. 107 and the specific CCT rates. Som figures come from conversion at the NBKR rate on the clearance date, which may differ from today’s.",
+      "notIncluded": "Shipping to Kyrgyzstan, bonded warehouse, broker and registration are not included. There is no recycling fee for personal use in Kyrgyzstan."
+    }
+  }
+}

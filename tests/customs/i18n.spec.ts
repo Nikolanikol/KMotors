@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { COUNTRIES } from "@/lib/customs/core/registry";
 import type { CalcResult, I18nText } from "@/lib/customs/core/types";
 import ru from "@/locales/ru/customs.json";
+import en from "@/locales/en/customs.json";
 
 /**
  * Ядра больше не возвращают текст — они возвращают ключи. Значит опечатка в
@@ -10,9 +11,15 @@ import ru from "@/locales/ru/customs.json";
  *
  * Тест закрывает дыру с двух сторон: ключ обязан существовать в словаре, и
  * шаблон обязан получить все параметры, которые в нём упомянуты.
+ *
+ * Гоняется по КАЖДОМУ заполненному словарю, а не по одному русскому: заполненный
+ * язык открывает индексацию и попадает в сайтмап (`hasCustomsDictionary`), так
+ * что недостающий ключ в нём — такая же дыра, как в ru. ka/ar сюда не входят
+ * намеренно: они пустые и живут на en-фолбэке.
  */
+const DICTS = { ru, en } as const;
 
-function lookup(key: string): string | undefined {
+function lookup(key: string, dict: unknown): string | undefined {
   const value = key
     .split(".")
     .reduce<unknown>(
@@ -20,7 +27,7 @@ function lookup(key: string): string | undefined {
         node && typeof node === "object"
           ? (node as Record<string, unknown>)[part]
           : undefined,
-      ru,
+      dict,
     );
   return typeof value === "string" ? value : undefined;
 }
@@ -107,27 +114,79 @@ describe("Словарь customs покрывает всё, что называ�
       const unique = new Map<string, I18nText>();
       for (const text of texts) unique.set(text.key, text);
 
-      it(`все ключи найдены в словаре (${unique.size} шт.)`, () => {
-        const missing = [...unique.keys()].filter((key) => !lookup(key));
-        expect(missing, `нет в ru/customs.json: ${missing.join(", ")}`).toEqual(
-          [],
-        );
-      });
+      for (const [lang, dict] of Object.entries(DICTS)) {
+        it(`${lang}: все ключи найдены в словаре (${unique.size} шт.)`, () => {
+          const missing = [...unique.keys()].filter(
+            (key) => !lookup(key, dict),
+          );
+          expect(
+            missing,
+            `нет в ${lang}/customs.json: ${missing.join(", ")}`,
+          ).toEqual([]);
+        });
 
-      it("каждый шаблон получает все свои параметры", () => {
-        const broken: string[] = [];
-        for (const text of unique.values()) {
-          const template = lookup(text.key);
-          if (!template) continue;
-          const provided = new Set(Object.keys(text.params ?? {}));
-          for (const match of template.matchAll(/\{\{-?\s*(\w+)\s*\}\}/g)) {
-            if (!provided.has(match[1])) {
-              broken.push(`${text.key} → {{${match[1]}}}`);
+        it(`${lang}: каждый шаблон получает все свои параметры`, () => {
+          const broken: string[] = [];
+          for (const text of unique.values()) {
+            const template = lookup(text.key, dict);
+            if (!template) continue;
+            const provided = new Set(Object.keys(text.params ?? {}));
+            for (const match of template.matchAll(/\{\{-?\s*(\w+)\s*\}\}/g)) {
+              if (!provided.has(match[1])) {
+                broken.push(`${text.key} → {{${match[1]}}}`);
+              }
             }
           }
-        }
-        expect(broken, `параметр не передан: ${broken.join(", ")}`).toEqual([]);
-      });
+          expect(broken, `параметр не передан: ${broken.join(", ")}`).toEqual(
+            [],
+          );
+        });
+      }
     });
   }
+});
+
+/**
+ * Паритет словарей. Прогон по ядрам выше не видит ключей, которых ядра не
+ * называют: `ui.*`, `hub.*`, `*.meta.*`, подписи полей. Между тем заполненность
+ * словаря — это то, что открывает языку индексацию, поэтому неполный en хуже
+ * пустого: страница уйдёт в индекс с дырами.
+ */
+describe("Словари ru и en совпадают по составу", () => {
+  const flatten = (node: unknown, prefix = "", out = new Map<string, string>()) => {
+    if (typeof node === "string") out.set(prefix, node);
+    else if (node && typeof node === "object") {
+      for (const [key, value] of Object.entries(node)) {
+        flatten(value, prefix ? `${prefix}.${key}` : key, out);
+      }
+    }
+    return out;
+  };
+
+  const flatRu = flatten(ru);
+  const flatEn = flatten(en);
+  const params = (text: string) =>
+    [...text.matchAll(/\{\{-?\s*(\w+)\s*\}\}/g)].map((m) => m[1]).sort();
+
+  it("в en есть каждый ключ из ru", () => {
+    const missing = [...flatRu.keys()].filter((key) => !flatEn.has(key));
+    expect(missing, `нет в en: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  it("в en нет ключей сверх ru", () => {
+    const extra = [...flatEn.keys()].filter((key) => !flatRu.has(key));
+    expect(extra, `лишние в en: ${extra.join(", ")}`).toEqual([]);
+  });
+
+  it("параметры шаблонов совпадают", () => {
+    const broken: string[] = [];
+    for (const [key, value] of flatRu) {
+      const other = flatEn.get(key);
+      if (other === undefined) continue;
+      const a = params(value);
+      const b = params(other);
+      if (a.join() !== b.join()) broken.push(`${key}: ru {${a}} ≠ en {${b}}`);
+    }
+    expect(broken, broken.join("; ")).toEqual([]);
+  });
 });
