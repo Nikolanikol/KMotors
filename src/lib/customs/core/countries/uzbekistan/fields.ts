@@ -5,8 +5,8 @@ import { txt } from "@/lib/customs/core/text";
  * Схема формы для Узбекистана.
  *
  * Курсов два, и они про разное. `usdPerUnit` переводит цену сделки в доллары —
- * пошлина задана в долларах и считается там. `uzsPerUsd` переводит всё
- * остальное в сумы.
+ * пошлина задана в долларах и там же считается, и по долларовой стоимости
+ * берётся ступень таможенного сбора. `uzsPerUsd` переводит всё остальное в сумы.
  */
 export const uzbekistanFields: FieldDef[] = [
   {
@@ -25,6 +25,50 @@ export const uzbekistanFields: FieldDef[] = [
     label: txt("uzbekistan.fields.price"),
     min: 0,
     step: 50,
+  },
+  /**
+   * Фрахт — не строка чека, а часть БАЗЫ: таможенная стоимость = цена сделки
+   * плюс доставка до границы, и от неё считаются ступень сбора, процентная
+   * часть пошлины и НДС. Поэтому поле стоит сразу за ценой.
+   *
+   * Всегда в долларах, независимо от валюты сделки: фрахт из Кореи так и
+   * котируется. По этой же причине у него нет `ratePair`.
+   */
+  {
+    kind: "number",
+    id: "freightUsd",
+    label: txt("uzbekistan.fields.freightUsd"),
+    hint: txt("uzbekistan.fields.freightUsdHint"),
+    min: 0,
+    step: 50,
+  },
+  /**
+   * ⚠️ Отдельное поле, а не вывод из года выпуска: тариф делит машины по факту
+   * регистрации, а не по возрасту. Корейская машина с аукциона зарегистрирована
+   * и потому «бывшая в эксплуатации» при любом годе — 40% + $3,0/см³ против
+   * 15% + доплата у новой. Ставим его выше года, чтобы порядок полей повторял
+   * порядок решений: сначала статус, потом уже возраст для утильсбора.
+   */
+  {
+    kind: "segmented",
+    id: "condition",
+    label: txt("uzbekistan.fields.condition"),
+    hint: txt("uzbekistan.fields.conditionHint"),
+    options: [
+      { value: "used", label: txt("uzbekistan.condition.used") },
+      { value: "new", label: txt("uzbekistan.condition.new") },
+    ],
+  },
+  {
+    kind: "segmented",
+    id: "fuel",
+    label: txt("uzbekistan.fields.fuel"),
+    options: [
+      { value: "petrol", label: txt("uzbekistan.fuel.petrol") },
+      { value: "diesel", label: txt("uzbekistan.fuel.diesel") },
+      { value: "hybrid", label: txt("uzbekistan.fuel.hybrid") },
+      { value: "electric", label: txt("uzbekistan.fuel.electric") },
+    ],
   },
   {
     kind: "number",
@@ -52,16 +96,6 @@ export const uzbekistanFields: FieldDef[] = [
       value: String(i + 1),
       label: txt(`ui.month.${i + 1}`),
     })),
-  },
-  {
-    kind: "segmented",
-    id: "fuel",
-    label: txt("uzbekistan.fields.fuel"),
-    options: [
-      { value: "ice", label: txt("uzbekistan.fuel.ice") },
-      { value: "hybrid", label: txt("uzbekistan.fuel.hybrid") },
-      { value: "electric", label: txt("uzbekistan.fuel.electric") },
-    ],
   },
   {
     kind: "number",

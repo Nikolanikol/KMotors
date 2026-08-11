@@ -8,8 +8,11 @@ import VerificationNote from "./VerificationNote";
 import FxNote from "./FxNote";
 import { isSharedField, useCalcParams } from "./CalcParams";
 import { getCountry, type CountryId } from "@/lib/customs/core/registry";
-import type { ErasedCalculator } from "@/lib/customs/core/registry";
-import type { FieldDef, RatePair } from "@/lib/customs/core/types";
+import type {
+  ErasedCalculator,
+  RuntimeInputs,
+} from "@/lib/customs/core/registry";
+import type { RatePair } from "@/lib/customs/core/types";
 import { resolveText } from "@/lib/customs/i18nText";
 import {
   formatRateValue,
@@ -66,14 +69,22 @@ function toFormValues(
   return values;
 }
 
-/** Значения формы → вход ядра, с приведением типов по виду поля. */
+/**
+ * Значения формы → вход ядра, с приведением типов по виду поля.
+ *
+ * ⚠️ Затравка идёт из `defaults`, а не из пустого объекта. У ядра есть входы,
+ * которых НЕТ среди полей формы (`currentYear`, `currentMonth`), и без затравки
+ * они приходят `undefined`: возраст становится NaN, все сравнения с ним ложны,
+ * и машина молча падает в последний возрастной бракет. Ровно это и случилось —
+ * калькулятор России полгода считал любую машину как «старше 5 лет».
+ */
 function toCalcInput(
-  fields: FieldDef[],
+  calculator: ErasedCalculator,
   values: FormValues,
   extra: Record<string, unknown>,
 ): Record<string, unknown> {
-  const input: Record<string, unknown> = { ...extra };
-  for (const field of fields) {
+  const input: Record<string, unknown> = { ...calculator.defaults, ...extra };
+  for (const field of calculator.fields) {
     const value = values[field.id];
     if (field.kind === "number") {
       input[field.id] = value === "" || value === undefined ? 0 : Number(value);
@@ -101,8 +112,15 @@ export default function CalculatorPanel({
   const calculator = country.calculator;
   const { shared, remember } = useCalcParams();
 
-  // Текущий год подставляет интерфейс — ядро само дату не берёт.
-  const [currentYear] = useState(() => new Date().getFullYear());
+  // Расчётный момент подставляет интерфейс — ядро само дату не берёт.
+  // Тип RuntimeInputs обязывает подать КАЖДЫЙ ключ из RUNTIME_INPUT_IDS: месяц
+  // тут наравне с годом, у России переломы ставки приходятся на 3 и 5 лет, у
+  // Казахстана — на порог 7 лет, и считается это в месяцах.
+  const [runtime] = useState<RuntimeInputs>(() => {
+    const now = new Date();
+    return { currentYear: now.getFullYear(), currentMonth: now.getMonth() + 1 };
+  });
+  const { currentYear } = runtime;
 
   const [values, setValues] = useState<FormValues>(() =>
     calculator ? toFormValues(calculator, rates, shared) : {},
@@ -135,8 +153,8 @@ export default function CalculatorPanel({
 
   const input = useMemo(
     () =>
-      calculator ? toCalcInput(calculator.fields, values, { currentYear }) : null,
-    [calculator, values, currentYear],
+      calculator ? toCalcInput(calculator, values, runtime) : null,
+    [calculator, values, runtime],
   );
 
   const result = useMemo(

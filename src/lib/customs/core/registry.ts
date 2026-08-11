@@ -52,6 +52,23 @@ function erase<TInput>(calculator: CountryCalculator<TInput>): ErasedCalculator 
   };
 }
 
+/**
+ * Входы ядра, у которых НЕТ поля в форме, — расчётный момент. Ядро дату не
+ * берёт (правило «ядро — чистая функция»), поэтому её подставляет интерфейс.
+ *
+ * ⚠️ Список существует ради связки: `RuntimeInputs` заставляет `CalculatorPanel`
+ * подать КАЖДЫЙ ключ, а тест в registry.spec.ts следит, что ядро не завело
+ * новый такой вход мимо списка. Без этой связки уже терялся `currentMonth`:
+ * возраст становился NaN, сравнения с ним были ложны, и калькулятор России
+ * считал любую машину как «старше 5 лет».
+ */
+export const RUNTIME_INPUT_IDS = ["currentYear", "currentMonth"] as const;
+
+export type RuntimeInputs = Record<
+  (typeof RUNTIME_INPUT_IDS)[number],
+  number
+>;
+
 export interface CountryMeta {
   id: CountryId;
   /** Подпись на табе. */
@@ -84,9 +101,12 @@ export interface CountryMeta {
 
 export const COUNTRIES: CountryMeta[] = [
   // Порядок табов — по значимости направления для трафика, а не по алфавиту.
-  // Казахстан и Узбекистан пришли из прежнего калькулятора сайта: их формулы
-  // перенесены дословно, но эталоном ещё не сверены, поэтому блока
-  // `verification` у них нет и дата актуальности не показывается.
+  // Казахстан и Узбекистан пришли из прежнего калькулятора сайта и сверялись
+  // по опубликованным ставкам, а не по чужому калькулятору. Блока
+  // `verification` у них всё равно нет: у обоих сверен не весь чек, и дата
+  // актуальности обещала бы больше, чем проверено. Что именно осталось
+  // открытым — в блоках `pending` их golden-файлов и в VERIFICATION_PENDING
+  // (tests/customs/registry.spec.ts).
   {
     id: "russia",
     tabLabel: txt("russia.tabLabel"),

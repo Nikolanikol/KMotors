@@ -11,8 +11,10 @@ import { kazakhstanFields } from "./fields";
 import {
   ADDITIONAL_KZT,
   AGE_OLD_ABOVE_MONTHS,
+  CERTIFICATE_MRP,
   CUSTOMS_FEE_MRP,
   DUTY_RATE,
+  PLATES_MRP,
   EXCISE_KZT_PER_CC,
   EXCISE_VOLUME_ABOVE_CC,
   LUXURY_RATE,
@@ -25,7 +27,21 @@ import {
   registrationMrp,
 } from "./tables";
 
-export type KazakhstanFuel = "ice" | "hybrid" | "electric";
+/**
+ * ⚠️ Два вида гибрида разведены НАМЕРЕННО, это не избыточность формы.
+ *
+ * `erev` — последовательный гибрид: ДВС не связан с колёсами механически и
+ * работает только генератором. Решением ЕЭК такие машины попали в ТН ВЭД
+ * 8703 80, и КГД считает их электромобилями: пошлина 0%, утильсбор 0,
+ * регистрация по электрической шкале. Это Li Auto L6–L9, AITO M5/M7/M9,
+ * Voyah в версиях EVR, Leapmotor C10/C11, Deepal L07/S07.
+ *
+ * `hybrid` — параллельный и подключаемый (HEV/PHEV): у ДВС есть трансмиссия
+ * на ведущую ось, и КГД считает такую машину обычной бензиновой, даже если
+ * батарея большая и заряжается от розетки. Это все гибриды Toyota, BYD DM-i
+ * и DM-p, Geely Hi-P. Разница между двумя ветками — миллионы тенге.
+ */
+export type KazakhstanFuel = "ice" | "hybrid" | "erev" | "electric";
 
 export interface KazakhstanInput {
   price: number;
@@ -59,7 +75,7 @@ export const kazakhstanDefaults: KazakhstanInput = {
 };
 
 /**
- * Возраст в ПОЛНЫХ месяцах.
+ * Возраст в ПОЛНЫХ месяцах. Нужен ТОЛЬКО порогу 7 лет по пошлине.
  *
  * Таможня РК принимает датой выпуска последний день указанного месяца, и
  * формула без поправки на день этому правилу эквивалентна — так было
@@ -72,11 +88,24 @@ function ageMonths(input: KazakhstanInput): number {
   );
 }
 
+/**
+ * Возраст в календарных годах — разница годов, месяц не участвует.
+ *
+ * ⚠️ Отдельная функция, а не `ageMonths / 12`: регистрационный сбор ст. 830
+ * НК РК считается «включая год выпуска», то есть по номеру года, а не по дате.
+ * Машина декабря 2023 в августе 2026 — это 32 полных месяца, но 3 календарных
+ * года, и разница между двумя прочтениями здесь 1,95 млн ₸.
+ */
+function ageYears(input: KazakhstanInput): number {
+  return Math.max(0, input.currentYear - input.year);
+}
+
 function calcFlags(args: {
   isElectric: boolean;
+  isErev: boolean;
   isOld: boolean;
   isLuxury: boolean;
-  ageMonths: number;
+  ageYears: number;
 }): Flag[] {
   const flags: Flag[] = [];
 
@@ -100,7 +129,10 @@ function calcFlags(args: {
   if (args.isElectric) {
     flags.push({ level: "info", text: txt("kazakhstan.flags.electric") });
   }
-  if (args.ageMonths > 24) {
+  if (args.isErev) {
+    flags.push({ level: "warn", text: txt("kazakhstan.flags.erev") });
+  }
+  if (args.ageYears >= 2) {
     flags.push({
       level: "info",
       text: txt("kazakhstan.flags.registrationJump"),
@@ -120,9 +152,15 @@ function calcFlags(args: {
 
 export function calculateKazakhstan(input: KazakhstanInput): CalcResult {
   const months = ageMonths(input);
+  const years = ageYears(input);
   const isElectric = input.fuel === "electric";
+  const isErev = input.fuel === "erev";
+  /** Пошлина, утильсбор и шкала регистрации у EREV — как у электромобиля. */
+  const isZeroDuty = isElectric || isErev;
   const isOld = months > AGE_OLD_ABOVE_MONTHS;
 
+  // У EREV объём двигателя остаётся: он ни на что не влияет, пока не перешагнёт
+  // порог акциза, а у чистого электромобиля объёма нет вовсе.
   const volumeCc = isElectric ? 0 : Math.max(0, input.volumeCc);
   const kztPerUnit = Math.max(0, input.kztPerUnit);
   const kztPerEur = Math.max(0, input.kztPerEur);
@@ -132,8 +170,10 @@ export function calculateKazakhstan(input: KazakhstanInput): CalcResult {
   const feeKzt = CUSTOMS_FEE_MRP * MRP_KZT;
 
   let dutyKzt = 0;
-  let dutyNote: I18nText = txt("kazakhstan.notes.dutyElectric");
-  if (!isElectric) {
+  let dutyNote: I18nText = txt(
+    isErev ? "kazakhstan.notes.dutyErev" : "kazakhstan.notes.dutyElectric",
+  );
+  if (!isZeroDuty) {
     const byValue = customsValueKzt * DUTY_RATE;
     if (isOld) {
       const perCc = minDutyEurPerCc(volumeCc);
@@ -164,14 +204,21 @@ export function calculateKazakhstan(input: KazakhstanInput): CalcResult {
     ? Math.round(customsValueKzt * LUXURY_RATE)
     : 0;
 
-  // База НДС — стоимость вместе с пошлиной и акцизом по объёму;
-  // акциз на роскошь в неё не входит. Порядок сохранён от прежней версии.
+  // ⚠️ База НДС по ст. 466 НК РК — «матрёшка»: таможенная стоимость + пошлина +
+  // таможенные СБОРЫ + акцизы, и акциз на роскошь входит наравне с акцизом по
+  // объёму. До 11.08.2026 здесь не было ни сбора, ни акциза на роскошь.
   const vatKzt = Math.round(
-    (customsValueKzt + dutyKzt + exciseEngineKzt) * VAT_RATE,
+    (customsValueKzt + dutyKzt + exciseEngineKzt + exciseLuxuryKzt + feeKzt) *
+      VAT_RATE,
   );
 
-  const registrationKzt = Math.round(registrationMrp(months) * MRP_KZT);
-  const recyclingKzt = isElectric
+  const registrationKzt = Math.round(
+    registrationMrp(years, isZeroDuty ? "electric" : "ice") * MRP_KZT,
+  );
+  const registrationDocsKzt = Math.round(
+    (PLATES_MRP + CERTIFICATE_MRP) * MRP_KZT,
+  );
+  const recyclingKzt = isZeroDuty
     ? 0
     : Math.round(RECYCLING_BASE_MRP * MRP_KZT * recyclingCoeff(volumeCc));
 
@@ -230,17 +277,32 @@ export function calculateKazakhstan(input: KazakhstanInput): CalcResult {
     {
       id: "registration",
       label: txt("kazakhstan.lines.registration"),
-      note: txt("kazakhstan.notes.registration", { months }),
+      note: txt("kazakhstan.notes.registration", {
+        year: input.year,
+        currentYear: input.currentYear,
+      }),
       amount: registrationKzt,
+      currency: "KZT",
+    },
+    {
+      id: "registrationDocs",
+      label: txt("kazakhstan.lines.registrationDocs"),
+      note: txt("kazakhstan.notes.registrationDocs", {
+        plates: PLATES_MRP,
+        certificate: CERTIFICATE_MRP,
+      }),
+      amount: registrationDocsKzt,
       currency: "KZT",
     },
     {
       id: "recyclingFee",
       label: txt("kazakhstan.lines.recyclingFee"),
       note: txt(
-        isElectric
-          ? "kazakhstan.notes.recyclingElectric"
-          : "kazakhstan.notes.recyclingFee",
+        isErev
+          ? "kazakhstan.notes.recyclingErev"
+          : isElectric
+            ? "kazakhstan.notes.recyclingElectric"
+            : "kazakhstan.notes.recyclingFee",
         { coeff: recyclingCoeff(volumeCc), base: RECYCLING_BASE_MRP },
       ),
       amount: recyclingKzt,
@@ -276,7 +338,7 @@ export function calculateKazakhstan(input: KazakhstanInput): CalcResult {
     lines,
     total: { amount: totalKzt, currency: "KZT" },
     alt,
-    flags: calcFlags({ isElectric, isOld, isLuxury, ageMonths: months }),
+    flags: calcFlags({ isElectric, isErev, isOld, isLuxury, ageYears: years }),
     subtitle,
     stampLabel: txt(
       isLuxury ? "kazakhstan.stamp.luxury" : "kazakhstan.stamp.eaeu",
@@ -284,12 +346,14 @@ export function calculateKazakhstan(input: KazakhstanInput): CalcResult {
     meta: {
       fuel: input.fuel,
       ageMonths: String(months),
+      ageYears: String(years),
       ageBand: isOld ? "old" : "new",
       volumeCc: String(volumeCc),
       customsValueKzt: String(Math.round(customsValueKzt)),
       dutyKzt: String(Math.round(dutyKzt)),
       vatKzt: String(vatKzt),
       registrationKzt: String(registrationKzt),
+      registrationScale: isZeroDuty ? "electric" : "ice",
       recyclingKzt: String(recyclingKzt),
       luxury: String(isLuxury),
       totalKzt: String(totalKzt),

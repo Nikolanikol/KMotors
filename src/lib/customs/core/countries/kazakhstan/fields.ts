@@ -4,9 +4,9 @@ import { txt } from "@/lib/customs/core/text";
 /**
  * Схема формы для Казахстана.
  *
- * Месяц выпуска обязателен: регистрационный сбор считается по ПОЛНЫМ месяцам,
- * и разница в один месяц на границе 24 меняет его с 1 081 ₸ на 216 250 ₸.
- * Округлять возраст до года здесь нельзя.
+ * Месяц выпуска нужен ТОЛЬКО порогу 7 лет по таможенной пошлине. На
+ * регистрационный сбор он не влияет: ст. 830 НК РК считает его по календарному
+ * году выпуска. Раньше здесь стояло обратное — сверка 11.08.2026 это опровергла.
  */
 export const kazakhstanFields: FieldDef[] = [
   {
@@ -57,9 +57,11 @@ export const kazakhstanFields: FieldDef[] = [
     kind: "segmented",
     id: "fuel",
     label: txt("kazakhstan.fields.fuel"),
+    hint: txt("kazakhstan.fields.fuelHint"),
     options: [
       { value: "ice", label: txt("kazakhstan.fuel.ice") },
       { value: "hybrid", label: txt("kazakhstan.fuel.hybrid") },
+      { value: "erev", label: txt("kazakhstan.fuel.erev") },
       { value: "electric", label: txt("kazakhstan.fuel.electric") },
     ],
   },
