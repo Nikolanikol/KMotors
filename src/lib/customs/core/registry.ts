@@ -84,9 +84,9 @@ export interface CountryMeta {
 
 export const COUNTRIES: CountryMeta[] = [
   // Порядок табов — по значимости направления для трафика, а не по алфавиту.
-  // Россия, Казахстан и Узбекистан пришли из прежнего калькулятора сайта:
-  // их формулы перенесены дословно, но эталоном ещё не сверены, поэтому
-  // блока `verification` у них нет и дата актуальности не показывается.
+  // Казахстан и Узбекистан пришли из прежнего калькулятора сайта: их формулы
+  // перенесены дословно, но эталоном ещё не сверены, поэтому блока
+  // `verification` у них нет и дата актуальности не показывается.
   {
     id: "russia",
     tabLabel: txt("russia.tabLabel"),
@@ -96,6 +96,12 @@ export const COUNTRIES: CountryMeta[] = [
     stampTop: "RUSSIA",
     currency: "RUB",
     calculator: erase(russiaCalculator),
+    // Ссылки нет намеренно: источник называем, но трафик на чужой калькулятор
+    // ввоза из Кореи не отправляем. Сам эталон — tests/customs/golden/russia.golden.json.
+    verification: {
+      sourceName: txt("russia.source"),
+      verifiedAt: "2026-08-11",
+    },
   },
   {
     id: "kazakhstan",

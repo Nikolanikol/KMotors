@@ -133,15 +133,11 @@ function calcFlags(
 ): Flag[] {
   const flags: Flag[] = [];
 
+  // Прикидка теперь возможна ровно в одном случае — мощность не указана. Пока
+  // таблица утильсбора была неполной, тем же флагом помечались ещё и её
+  // «приближённые» ветки; после сверки с эталоном таких веток не осталось.
   if (recyclingApprox) {
-    flags.push({
-      level: "warn",
-      text: txt(
-        input.horsePower > 0
-          ? "russia.flags.recyclingApproxTable"
-          : "russia.flags.recyclingNoHp",
-      ),
-    });
+    flags.push({ level: "warn", text: txt("russia.flags.recyclingNoHp") });
   }
 
   if (input.fuel === "electric") {

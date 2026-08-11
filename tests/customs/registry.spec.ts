@@ -7,7 +7,7 @@ import { COUNTRIES, isVerificationStale } from "@/lib/customs/core/registry";
  * есть источник» просто исчезла бы, и следующая незаверенная страна проехала
  * бы молча. Убирать отсюда страну — по мере снятия golden-кейсов.
  */
-const VERIFICATION_PENDING = new Set(["russia", "kazakhstan", "uzbekistan"]);
+const VERIFICATION_PENDING = new Set(["kazakhstan", "uzbekistan"]);
 
 describe("Реестр стран", () => {
   it("страны, ожидающие сверки, перечислены явно и не выдают себя за сверенные", () => {

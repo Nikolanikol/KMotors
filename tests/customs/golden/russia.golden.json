@@ -1,0 +1,323 @@
+{
+  "_": "Эталон для России. Снят с калькулятора Дрома вручную: расчёт у него клиентский, отдельного API нет, поэтому значения считывались из готового блока «Детали расчета».",
+  "country": "russia",
+  "source": "https://www.drom.ru/world/calculator/korea/",
+  "sourceName": "Дром",
+  "takenAt": "2026-08-11",
+  "scenario": "Только личный ввоз физлицом (importPurpose=USAGE). Коммерческий ввоз и юрлица в эталон не входят — этот сценарий нас не интересует.",
+  "currentYear": 2026,
+  "currentMonth": 8,
+  "fx": {
+    "_": "Курсы ЦБ РФ на 11.08.2026 — ровно те, что стояли в форме источника в момент снятия (он показывает их округлёнными до копейки: 82.61 и 95.29). Подаются в ядро как rubPerUnit и rubPerEur.",
+    "rubPerUsd": 82.606,
+    "rubPerEur": 95.286
+  },
+  "tolerance": {
+    "_": "Разная точность у разных строк источника: сбор и утильсбор он печатает до рубля, пошлину — округляя евро вверх до целого и рубли до тысяч.",
+    "dutyEur": 1,
+    "dutyRub": 1000,
+    "exactRub": 0
+  },
+  "recheck": {
+    "_": "Эталон и таблица ядра выведены из одной сетки замеров, поэтому кейсы были ПОВТОРНО прогнаны на источнике ровно со своими входами — а не переносом коэффициента из соседней точки того же бракета. Это ловит ошибку в реконструкции границ: при ней таблица и эталон разошлись бы с источником согласованно и тест остался бы зелёным.",
+    "at": "2026-08-11",
+    "matched": "39 из 40 — утильсбор, таможенный сбор и пошлина (в евро и в рублях) совпали",
+    "mismatch": "ru-02 — граница льготы, расхождение намеренное, см. boundaryShift"
+  },
+  "boundaryShift": {
+    "_": "⚠ Источник трактует пороги мощности утильсбора на единицу ниже закона: льготу он снимает НА 160 л.с., хотя льгота действует ДО 160 включительно. То же на 190, 220, 250, 280, 310 и далее. Поэтому кейсы снимались СЕРЕДИНАМИ бракетов (165, 200, 225, 255, 285, 315, 405…) — там обе трактовки дают одно число, и эталон проверяет коэффициент, а не спор о границе. Единственный кейс прямо на границе — ru-02; у него ожидание стоит по закону, а показание источника вынесено в sourceShows.",
+    "law": "Льготный утильсбор физлица: мощность до 160 л.с. включительно и объём до 3000 см³ включительно."
+  },
+  "notes": [
+    "Возраст источник спрашивает бракетом (UNDER_3 / FROM_3_TO_5 / OVER_5), а ядро считает по году и месяцу выпуска. Даты в кейсах подобраны в середину бракета: 2025-01 → 1.6 года, 2022-01 → 4.6, 2018-01 → 8.6. Границы бракетов (ровно 3 и ровно 5 лет) эталоном не проверяются — источник их задать не позволяет, они закрыты инвариантами в russia.spec.ts.",
+    "Утильсбор зависит от возраста БИНАРНО: «3–5» и «старше 5» у источника дают одинаковый коэффициент (проверено на ДВС и на электро). Поэтому кейсы 3–5 и старше 5 различаются только ставкой пошлины.",
+    "У источника два типа двигателя: «Бензин или дизель» → fuel: ice и «Электро» → fuel: electric. Наш hybrid не сверяется: источник советует выбирать «Электро» для последовательных гибридов и «Бензин или дизель» для остальных, то есть отдельного режима у него нет.",
+    "dutyEur — пошлина, как её печатает источник; он округляет её ВВЕРХ до целого евро (1999 × 2.7 = 5397.3 показано как 5398). Отсюда допуск 1 €.",
+    "dutyRub источник округляет до тысяч, поэтому допуск 1000 ₽. Таможенный сбор и утильсбор он печатает точно — они сверяются до рубля.",
+    "null в expected — строка в этом прогоне не снималась (батчи по утильсбору читали только его). Тест такие поля пропускает.",
+    "У электромобиля объём двигателя источник не спрашивает вообще, поэтому volumeCc: 0."
+  ],
+  "cases": [
+    {
+      "id": "ru-01",
+      "car": "Kia K5 2.0, профиль до льготного порога мощности",
+      "probes": "3–5 лет; ставка 2.7 €/см³; льготный утильсбор физлица",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 159, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 5398, "dutyRub": 514000, "customsFeeRub": 13541, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-02",
+      "car": "тот же профиль, ровно 160 л.с.",
+      "probes": "ГРАНИЦА льготы. Закон: до 160 включительно → льгота. Источник снимает льготу уже на 160 — расхождение известное и оставлено на стороне источника",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 160, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 5398, "dutyRub": 514000, "customsFeeRub": 13541, "recyclingRub": 5200 },
+      "sourceShows": { "recyclingRub": 1492800 }
+    },
+    {
+      "id": "ru-03",
+      "car": "профиль 2.0 / 165 л.с.",
+      "probes": "первая ступень после льготы: коэффициент 74.64",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 165, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": 243000, "customsFeeRub": 13541, "recyclingRub": 1492800 }
+    },
+    {
+      "id": "ru-04",
+      "car": "профиль 1.5 / 200 л.с.",
+      "probes": "ступень до 220 л.с.: 79.2",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 200, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": 243000, "customsFeeRub": 13541, "recyclingRub": 1584000 }
+    },
+    {
+      "id": "ru-05",
+      "car": "Hyundai Avante 1.6 (профиль 1.5 / 100 л.с.)",
+      "probes": "3–5 лет; ставка 1.7 €/см³ на объёме ≤1500; льгота",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 100, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": 243000, "customsFeeRub": 13541, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-06",
+      "car": "Genesis G70 2.0T (профиль 2.0 / 225 л.с.)",
+      "probes": "ступень до 250 л.с.: 83.88",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 225, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": 243000, "customsFeeRub": 13541, "recyclingRub": 1677600 }
+    },
+    {
+      "id": "ru-07",
+      "car": "профиль 1.5 / 255 л.с.",
+      "probes": "ступень до 280 л.с.: 91.92",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 255, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": 243000, "customsFeeRub": 13541, "recyclingRub": 1838400 }
+    },
+    {
+      "id": "ru-08",
+      "car": "профиль 2.0 / 285 л.с.",
+      "probes": "ступень до 310 л.с.: 100.56 — её в прежней таблице не было вовсе",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 285, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 5398, "dutyRub": 514000, "customsFeeRub": 13541, "recyclingRub": 2011200 }
+    },
+    {
+      "id": "ru-09",
+      "car": "профиль 1.5 / 315 л.с.",
+      "probes": "ступень до 340 л.с.: 110.16",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 315, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": null, "customsFeeRub": 13541, "recyclingRub": 2203200 }
+    },
+    {
+      "id": "ru-10",
+      "car": "профиль 1.5 / 405 л.с.",
+      "probes": "ступень до 430 л.с.: 144.6",
+      "in": { "price": 15000, "volumeCc": 1499, "horsePower": 405, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2549, "dutyRub": null, "customsFeeRub": 13541, "recyclingRub": 2892000 }
+    },
+    {
+      "id": "ru-11",
+      "car": "профиль 2.0 / 475 л.с.",
+      "probes": "верх шкалы 1001–2000 см³: ступень до 490 л.с. — 173.4",
+      "in": { "price": 15000, "volumeCc": 1999, "horsePower": 475, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 3468000 }
+    },
+    {
+      "id": "ru-12",
+      "car": "Kia Morning 1.0 (профиль 1.0 / 200 л.с.)",
+      "probes": "объёмный бракет до 1000 см³: 29.28 (в прежней таблице стояло 24.4 — ставка другой редакции)",
+      "in": { "price": 15000, "volumeCc": 999, "horsePower": 200, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 585600 }
+    },
+    {
+      "id": "ru-13",
+      "car": "Kia Mohave 2.5D (профиль 2.5 / 200 л.с.)",
+      "probes": "3–5 лет; ставка 3.0 €/см³ на 2300–3000; утильсбор бракета 2001–3000",
+      "in": { "price": 15000, "volumeCc": 2500, "horsePower": 200, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 7500, "dutyRub": null, "customsFeeRub": 13541, "recyclingRub": 3501600 }
+    },
+    {
+      "id": "ru-14",
+      "car": "профиль 3.0 / 150 л.с., ровно 3000 см³",
+      "probes": "ГРАНИЦА объёма льготы: до 3000 см³ включительно льгота есть",
+      "in": { "price": 15000, "volumeCc": 3000, "horsePower": 150, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-15",
+      "car": "Genesis GV80 3.5T (профиль 3.2 / 150 л.с.)",
+      "probes": "на 3001 см³ льготы уже нет: 197.81 вместо 5 200 ₽",
+      "in": { "price": 15000, "volumeCc": 3200, "horsePower": 150, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 3956200 }
+    },
+    {
+      "id": "ru-16",
+      "car": "профиль 3.2 / 200 л.с.",
+      "probes": "3–5 лет; ставка 3.6 €/см³ выше 3000; утильсбор бракета 3001–3500",
+      "in": { "price": 15000, "volumeCc": 3200, "horsePower": 200, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 11520, "dutyRub": null, "customsFeeRub": 13541, "recyclingRub": 4044000 }
+    },
+    {
+      "id": "ru-17",
+      "car": "Hyundai Palisade 3.8 (профиль 3.8 / 295 л.с.)",
+      "probes": "объёмный бракет выше 3500 см³, ступень до 310 л.с.: 236.64",
+      "in": { "price": 15000, "volumeCc": 3778, "horsePower": 295, "year": 2022, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 4732800 }
+    },
+    {
+      "id": "ru-18",
+      "car": "Kia K5 2.0, до 3 лет",
+      "probes": "новый: max(48%, 5.5 €/см³) — побеждает объёмная часть; льготный утильсбор нового",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 150, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 10995, "dutyRub": 1048000, "customsFeeRub": 13541, "recyclingRub": 3400 }
+    },
+    {
+      "id": "ru-19",
+      "car": "тот же профиль, 200 л.с.",
+      "probes": "новый без льготы: ступень до 220 л.с. — 47.64",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 200, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 10995, "dutyRub": 1048000, "customsFeeRub": 13541, "recyclingRub": 952800 }
+    },
+    {
+      "id": "ru-20",
+      "car": "профиль 2.0 / 285 л.с., до 3 лет",
+      "probes": "новый: ступень до 310 л.с. — 64.56, в прежней таблице её не было",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 285, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 1291200 }
+    },
+    {
+      "id": "ru-21",
+      "car": "Hyundai Casper 1.0 (профиль 1.0 / 90 л.с.)",
+      "probes": "новый дешёвый: побеждает адвалорная часть 54%; ступень сбора 4 924 ₽",
+      "in": { "price": 8000, "volumeCc": 999, "horsePower": 90, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 3746, "dutyRub": 357000, "customsFeeRub": 4924, "recyclingRub": 3400 }
+    },
+    {
+      "id": "ru-22",
+      "car": "Genesis GV70 2.5T (профиль 2.5 / 255 л.с.)",
+      "probes": "новый дорогой: побеждает адвалорная часть 48%; ступень сбора 18 465 ₽; утильсбор 126.0",
+      "in": { "price": 50000, "volumeCc": 2500, "horsePower": 255, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 20807, "dutyRub": 1983000, "customsFeeRub": 18465, "recyclingRub": 2520000 }
+    },
+    {
+      "id": "ru-23",
+      "car": "профиль 3.2 / 165 л.с., до 3 лет",
+      "probes": "новый, бракет 3001–3500: 131.76",
+      "in": { "price": 15000, "volumeCc": 3200, "horsePower": 165, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 2635200 }
+    },
+    {
+      "id": "ru-24",
+      "car": "профиль 4.0 / 255 л.с., до 3 лет",
+      "probes": "новый, бракет выше 3500: 176.52",
+      "in": { "price": 15000, "volumeCc": 4000, "horsePower": 255, "year": 2025, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 3530400 }
+    },
+    {
+      "id": "ru-25",
+      "car": "Kia K5 2.0, старше 5 лет",
+      "probes": "старый: ставка 4.8 €/см³ на 1800–2300",
+      "in": { "price": 20000, "volumeCc": 1999, "horsePower": 150, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 9596, "dutyRub": 914000, "customsFeeRub": 13541, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-26",
+      "car": "Hyundai Avante 1.6 (профиль 1.5 / 120 л.с.), старше 5",
+      "probes": "старый: ставка 3.2 €/см³ на 1000–1500",
+      "in": { "price": 20000, "volumeCc": 1499, "horsePower": 120, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 4797, "dutyRub": 457000, "customsFeeRub": 13541, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-27",
+      "car": "профиль 2.5 / 200 л.с., старше 5",
+      "probes": "старый: ставка 5.0 €/см³ на 2300–3000; утильсбор тот же, что у 3–5 лет",
+      "in": { "price": 20000, "volumeCc": 2500, "horsePower": 200, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 12500, "dutyRub": 1191000, "customsFeeRub": 13541, "recyclingRub": 3501600 }
+    },
+    {
+      "id": "ru-28",
+      "car": "Kia Morning 1.0 (профиль 1.0 / 80 л.с.), старше 5",
+      "probes": "старый: ставка 3.0 €/см³ до 1000",
+      "in": { "price": 20000, "volumeCc": 999, "horsePower": 80, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 2997, "dutyRub": 286000, "customsFeeRub": 13541, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-29",
+      "car": "тот же профиль, цена 2 000 $",
+      "probes": "нижняя ступень таможенного сбора — 1 231 ₽",
+      "in": { "price": 2000, "volumeCc": 1999, "horsePower": 150, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 9596, "dutyRub": 914000, "customsFeeRub": 1231, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-30",
+      "car": "тот же профиль, цена 4 000 $",
+      "probes": "ступень таможенного сбора 2 462 ₽",
+      "in": { "price": 4000, "volumeCc": 1999, "horsePower": 150, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 9596, "dutyRub": 914000, "customsFeeRub": 2462, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-31",
+      "car": "тот же профиль, цена 40 000 $",
+      "probes": "ступень таможенного сбора 18 465 ₽",
+      "in": { "price": 40000, "volumeCc": 1999, "horsePower": 150, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 9596, "dutyRub": 914000, "customsFeeRub": 18465, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-32",
+      "car": "тот же профиль, цена 60 000 $",
+      "probes": "ступень таможенного сбора 21 344 ₽",
+      "in": { "price": 60000, "volumeCc": 1999, "horsePower": 150, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 9596, "dutyRub": 914000, "customsFeeRub": 21344, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-33",
+      "car": "тот же профиль, цена 150 000 $",
+      "probes": "верхняя ступень таможенного сбора — 73 860 ₽",
+      "in": { "price": 150000, "volumeCc": 1999, "horsePower": 150, "year": 2018, "month": 1, "fuel": "ice" },
+      "expected": { "dutyEur": 9596, "dutyRub": 914000, "customsFeeRub": 73860, "recyclingRub": 5200 }
+    },
+    {
+      "id": "ru-34",
+      "car": "Kia EV6 (профиль электро / 150 л.с.), 3–5 лет",
+      "probes": "электро: адвалорная пошлина 15%; льгота физлица к электро НЕ применяется",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 150, "year": 2022, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": 2601, "dutyRub": 248000, "customsFeeRub": 13541, "recyclingRub": 2227200 }
+    },
+    {
+      "id": "ru-35",
+      "car": "профиль электро / 109 л.с., 3–5 лет",
+      "probes": "электро, ступень до 130 л.с.: 95.64",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 109, "year": 2022, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": 2601, "dutyRub": 248000, "customsFeeRub": 13541, "recyclingRub": 1912800 }
+    },
+    {
+      "id": "ru-36",
+      "car": "профиль электро / 170 л.с., 3–5 лет",
+      "probes": "электро, ступень до 190 л.с.: 129.72",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 170, "year": 2022, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 2594400 }
+    },
+    {
+      "id": "ru-37",
+      "car": "профиль электро / 205 л.с., 3–5 лет",
+      "probes": "электро, ступень до 220 л.с.: 151.2",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 205, "year": 2022, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": 2601, "dutyRub": 248000, "customsFeeRub": 13541, "recyclingRub": 3024000 }
+    },
+    {
+      "id": "ru-38",
+      "car": "профиль электро / 150 л.с., до 3 лет",
+      "probes": "у электро утильсбор ЗАВИСИТ от возраста: то же авто новым дешевле (78.0 против 111.36)",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 150, "year": 2025, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": 2601, "dutyRub": 248000, "customsFeeRub": 13541, "recyclingRub": 1560000 }
+    },
+    {
+      "id": "ru-39",
+      "car": "профиль электро / 90 л.с., до 3 лет",
+      "probes": "электро, нижняя ступень до 100 л.с.: 49.56",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 90, "year": 2025, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": null, "dutyRub": null, "customsFeeRub": null, "recyclingRub": 991200 }
+    },
+    {
+      "id": "ru-40",
+      "car": "профиль электро / 300 л.с., старше 5",
+      "probes": "электро: пошлина 15% не зависит от возраста, верхняя ступень утильсбора 239.04",
+      "in": { "price": 20000, "volumeCc": 0, "horsePower": 300, "year": 2018, "month": 1, "fuel": "electric" },
+      "expected": { "dutyEur": 2601, "dutyRub": 248000, "customsFeeRub": 13541, "recyclingRub": 4780800 }
+    }
+  ]
+}
