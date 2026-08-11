@@ -14,6 +14,10 @@
   --axis-orange-bright: #FF6B1A;
   --axis-orange-deep:   #CC3300;
   --axis-amber:         #FF8C00;
+  /* Бронза логотипа. Тёмный конец даёт 3.85:1 на чёрном — он только для
+     градиента знака, текстом им не красить (см. --axis-bronze). */
+  --axis-bronze:        #DA9A67;
+  --axis-bronze-deep:   #9D5E34;
   --axis-white:         #F5F0EB;
   --axis-gray:          #8A8A8A;
   --axis-gray-dim:      #4A4A4A;

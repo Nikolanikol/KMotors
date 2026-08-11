@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 782 552" width="782" height="552" role="img" aria-label="Axis">
+  <defs>
+    <linearGradient id="axisBronze" gradientUnits="userSpaceOnUse" x1="42" y1="582" x2="465" y2="2">
+      <stop offset="0" stop-color="#9D5E34"/>
+      <stop offset="1" stop-color="#DA9A67"/>
+    </linearGradient>
+  </defs>
+  <!-- Знак без плашки — для шапки/футера сайта -->
+  <g fill="url(#axisBronze)">
+    <path d="M464.26 100.49 393.87 0.72 0.72 551.09 164.15 499.08Z"/>
+    <path d="M781.72 550.27 611.42 501.54 412.11 226.59 487.86 136.80Z"/>
+    <path d="M558.72 483.60 399.41 464.54 222.97 539.77 272.18 475.79 398.44 398.59Z"/>
+  </g>
+</svg>

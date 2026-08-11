@@ -15,17 +15,29 @@ import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
-const KAxisLogo = () => (
-  <svg width="32" height="32" viewBox="0 0 36 36" fill="none" className="transition-transform duration-300 group-hover:scale-110 flex-shrink-0">
-    <defs>
-      <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36">
-        <stop offset="0%" stopColor="#FF4500" />
-        <stop offset="100%" stopColor="#FF8C00" />
-      </linearGradient>
-    </defs>
-    <path d="M4 32L16 4H22L14 20L28 4H32L18 20L28 32H22L12 20L8 32H4Z" fill="url(#logoGrad)" strokeWidth="0.5" />
-    <path d="M20 4L32 4L24 14L20 4Z" fill="#FF6B1A" opacity="0.6" />
-  </svg>
+/**
+ * Логотип адаптируется КОМПОНОВКОЙ, а не размером: у горизонтального лок-апа
+ * штрих букв — 5.8% высоты, ниже ~32px слово превращается в кашу. Поэтому на
+ * узких экранах остаётся знак плюс название текстом, с sm — цельный лок-ап.
+ * width/height проставлены под соотношения файлов (1.42 и 4.23), чтобы не
+ * дёргалась вёрстка до загрузки.
+ */
+const BrandMark = ({ size = 30, className = "" }: { size?: number; className?: string }) => (
+  // eslint-disable-next-line @next/next/no-img-element -- статичный SVG в 533 B, next/image для векторов ничего не оптимизирует
+  <img
+    src="/logo/logo-mark.svg"
+    alt=""
+    width={Math.round(size * 1.4167)}
+    height={size}
+    style={{ height: size }}
+    className={`w-auto flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${className}`}
+  />
+);
+
+const BrandName = ({ className = "" }: { className?: string }) => (
+  <span className={`font-heading tracking-tight ${className}`} style={{ color: "var(--axis-white)" }}>
+    K<span style={{ color: "var(--axis-bronze)" }}>-Axis</span>
+  </span>
 );
 
 export default function Header() {
@@ -75,11 +87,19 @@ export default function Header() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href={`/${lang}`} className="flex items-center gap-2.5 group">
-            <KAxisLogo />
-            <span className="font-heading text-xl tracking-tight" style={{ color: "var(--axis-white)" }}>
-              K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
-            </span>
+          <Link href={`/${lang}`} className="flex items-center gap-2.5 group" aria-label="K-Axis">
+            {/* < sm: знак + название текстом */}
+            <BrandMark className="sm:hidden" />
+            <BrandName className="text-xl sm:hidden" />
+            {/* ≥ sm: горизонтальный лок-ап, слово уже внутри картинки */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- статичный SVG, см. BrandMark */}
+            <img
+              src="/logo/logo-horizontal.svg"
+              alt=""
+              width={152}
+              height={36}
+              className="hidden sm:block h-9 w-auto flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -189,11 +209,9 @@ export default function Header() {
       >
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between">
-            <Link href={`/${lang}`} className="flex items-center gap-2.5" onClick={() => setIsMobileMenuOpen(false)}>
-              <KAxisLogo />
-              <span className="font-heading text-xl" style={{ color: "var(--axis-white)" }}>
-                K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
-              </span>
+            <Link href={`/${lang}`} className="flex items-center gap-2.5 group" onClick={() => setIsMobileMenuOpen(false)}>
+              <BrandMark />
+              <BrandName className="text-xl" />
             </Link>
             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2" aria-label="Close menu">
               <X className="w-6 h-6" style={{ color: "var(--axis-white)" }} />

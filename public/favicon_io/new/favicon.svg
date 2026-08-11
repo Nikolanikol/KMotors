@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Axis">
+  <rect width="512" height="512" rx="100" fill="#141414"/>
+  <!-- Знак Axis, геометрия 1:1 из исходника (782x552), масштаб 0.5806, центрирован -->
+  <g transform="translate(29, 92) scale(0.5806)" fill="#DA9A67">
+    <path d="M464.26 100.49 393.87 0.72 0.72 551.09 164.15 499.08Z"/>
+    <path d="M781.72 550.27 611.42 501.54 412.11 226.59 487.86 136.80Z"/>
+  </g>
+</svg>
