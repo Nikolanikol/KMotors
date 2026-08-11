@@ -12,6 +12,13 @@ interface PageConfig {
   path: string; // e.g. "" for home, "catalog", "blog", etc.
   priority: number;
   changefreq: string;
+  /**
+   * Языки, на которых страница индексируема. По умолчанию все.
+   *
+   * Нужен там, где страница существует не на всех языках сразу: подавать в
+   * сайтмапе URL, который сам отдаёт noindex, — прямой конфликт сигналов.
+   */
+  langFilter?: (lang: string) => boolean;
 }
 
 const PAGES: PageConfig[] = [
@@ -19,7 +26,9 @@ const PAGES: PageConfig[] = [
   { path: "catalog", priority: 0.9, changefreq: "weekly"  },
   { path: "blog",    priority: 0.8, changefreq: "daily"   },
   { path: "parts",   priority: 0.8, changefreq: "weekly"  },
-  { path: "calculator", priority: 0.85, changefreq: "monthly" },
+  // Хаб калькулятора живёт по тому же правилу, что и страницы стран ниже:
+  // без словаря страница отдаётся с noindex, значит и в сайтмапе её нет.
+  { path: "calculator", priority: 0.85, changefreq: "monthly", langFilter: hasCustomsDictionary },
   { path: "buy",     priority: 0.7, changefreq: "monthly" },
   { path: "contact", priority: 0.6, changefreq: "monthly" },
 ];
@@ -29,14 +38,16 @@ function buildUrl(lang: string, path: string) {
   return path ? `${BASE}/${lang}/${path}` : `${BASE}/${lang}`;
 }
 
-function alternates(path: string) {
-  const links = LANGS.map(
+function alternates(path: string, langs: string[] = LANGS) {
+  const links = langs.map(
     (lang) => `    <xhtml:link rel="alternate" hreflang="${lang}" href="${buildUrl(lang, path)}"/>`
   );
-  // x-default points to Russian
-  links.push(
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${buildUrl("ru", path)}"/>`
-  );
+  // x-default points to Russian — но только если русская версия в кластере есть
+  if (langs.includes("ru")) {
+    links.push(
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${buildUrl("ru", path)}"/>`
+    );
+  }
   return links.join("\n");
 }
 
@@ -47,10 +58,11 @@ export async function GET() {
   const urlBlocks: string[] = [];
 
   for (const page of PAGES) {
-    for (const lang of LANGS) {
+    const langs = page.langFilter ? LANGS.filter(page.langFilter) : LANGS;
+    for (const lang of langs) {
       const loc = buildUrl(lang, page.path);
       urlBlocks.push(
-        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n${alternates(page.path)}\n  </url>`
+        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n${alternates(page.path, langs)}\n  </url>`
       );
     }
   }
@@ -66,19 +78,10 @@ export async function GET() {
     // её сегмент 301-редиректится туда же и в сайтмапе не нужен.
     if (country.id === DEFAULT_COUNTRY) continue;
     const countryPath = `calculator/${country.id}`;
-    const links = customsLangs.map(
-      (lang) =>
-        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${buildUrl(lang, countryPath)}"/>`
-    );
-    if (customsLangs.includes("ru")) {
-      links.push(
-        `    <xhtml:link rel="alternate" hreflang="x-default" href="${buildUrl("ru", countryPath)}"/>`
-      );
-    }
     for (const lang of customsLangs) {
       const loc = buildUrl(lang, countryPath);
       urlBlocks.push(
-        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n${links.join("\n")}\n  </url>`
+        `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n${alternates(countryPath, customsLangs)}\n  </url>`
       );
     }
   }
