@@ -25,6 +25,8 @@ interface OrderModalProps {
   subtitle?: string;
   /** Full custom message body (e.g. whole cart composition). Overrides the single-product lines. */
   messageLines?: string[];
+  /** Show a required free-form "delivery country" field (cart checkout). */
+  requireCountry?: boolean;
 }
 
 function projectLabel(): string {
@@ -49,6 +51,7 @@ export function OrderModal({
   title,
   subtitle,
   messageLines,
+  requireCountry = false,
 }: OrderModalProps) {
   const { t } = useTranslation();
 
@@ -56,6 +59,7 @@ export function OrderModal({
   const [phone, setPhone] = useState<Value | undefined>();
   const [messenger, setMessenger] = useState("whatsapp");
   const [tgUsername, setTgUsername] = useState("");
+  const [country, setCountry] = useState("");
   const [vin, setVin] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -94,12 +98,14 @@ export function OrderModal({
     name: attempted && !name.trim(),
     phone: attempted && !phone,
     tg: attempted && messenger === "telegram" && !tgUsername.trim(),
+    country: attempted && requireCountry && !country.trim(),
   };
 
   const isValid =
     name.trim() &&
     !!phone &&
-    (messenger !== "telegram" || tgUsername.trim());
+    (messenger !== "telegram" || tgUsername.trim()) &&
+    (!requireCountry || country.trim());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +124,10 @@ export function OrderModal({
             categoryName ? `📂 Категория: ${categoryName}` : "",
             `🔗 ${productUrl}`,
           ]
-      ).filter(Boolean).join("\n");
+      )
+        .concat(country.trim() ? [`🌍 Страна доставки: ${country.trim()}`] : [])
+        .filter(Boolean)
+        .join("\n");
       const res = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -150,6 +159,7 @@ export function OrderModal({
       setPhone(undefined);
       setMessenger("whatsapp");
       setTgUsername("");
+      setCountry("");
       setVin("");
       setSuccess(false);
       setAttempted(false);
@@ -264,6 +274,26 @@ export function OrderModal({
               />
               {errors.tg && (
                 <p className="text-xs text-red-400 -mt-2">{t("parts.order.tgRequired")}</p>
+              )}
+
+              {/* Delivery country */}
+              {requireCountry && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="order-country" className="text-sm font-medium text-[#e6e2e0]">
+                    {t("parts.order.countryLabel")} <span className="text-[#ff7a00]">*</span>
+                  </Label>
+                  <Input
+                    id="order-country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder={t("parts.order.countryPlaceholder")}
+                    autoComplete="country-name"
+                    className={`text-[#e6e2e0] placeholder:text-[#6f6b68] border-[#333] bg-[#201f1f] ${errors.country ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  />
+                  {errors.country && (
+                    <p className="text-xs text-red-400">{t("parts.order.countryRequired")}</p>
+                  )}
+                </div>
               )}
 
               {/* VIN (optional) */}

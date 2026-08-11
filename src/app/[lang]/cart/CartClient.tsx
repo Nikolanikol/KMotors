@@ -155,6 +155,7 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
         title={l.managerTitle}
         subtitle={l.managerSub}
         messageLines={messageLines}
+        requireCountry
       />
     </div>
   );
