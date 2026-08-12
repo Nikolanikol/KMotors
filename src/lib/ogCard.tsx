@@ -147,6 +147,234 @@ function Mark({ height }: { height: number }) {
   );
 }
 
+/** Панель со скриншотом: положение и размер в пикселях карточки 1200×630. */
+export const PANEL = { left: 596, top: 62, width: 604, height: 506 };
+
+/**
+ * Карточка со СКРИНШОТОМ интерфейса. Тоже собирается заранее.
+ *
+ * ⚠️ Скриншот кладётся КРОПОМ, а не целиком. Уменьшенный до 1200×630 снимок
+ * страницы — это и был `preview.png`: в превью мессенджера его ужимают ещё
+ * втрое, и весь интерфейс превращается в кашу. Поэтому берётся кусок с парой
+ * карточек авто в масштабе, близком к натуральному: название модели и цена
+ * остаются различимы, а обрез по правому краю честно говорит, что список
+ * продолжается.
+ *
+ * Кроп задаётся в `scripts/build-og-cards.tsx` в пикселях ИСХОДНИКА, а sharp
+ * заранее приводит его ровно к размеру панели — поэтому здесь не нужен
+ * `overflow: hidden`, с которым у Satori свои сложности.
+ */
+export function OgScreenshotCard({ headline, sub, shot }: OgCopy & { shot: string }) {
+  return (
+    <div
+      style={{
+        width: "1200px",
+        height: "630px",
+        display: "flex",
+        position: "relative",
+        background: BLACK,
+        fontFamily: "sans-serif",
+      }}
+    >
+      {/* Бронзовая подсветка за панелью — иначе панель висит в пустоте */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "1200px",
+          height: "630px",
+          background:
+            "linear-gradient(115deg, rgba(182,119,73,0.16) 0%, rgba(182,119,73,0.04) 40%, rgba(10,10,10,0) 70%)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: "8px",
+          height: "630px",
+          background: `linear-gradient(to bottom, ${BRONZE_DEEP}, ${BRONZE_LIGHT})`,
+        }}
+      />
+
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori рисует
+          картинку сам, next/image внутри ImageResponse не работает. */}
+      <img
+        src={shot}
+        alt=""
+        width={PANEL.width}
+        height={PANEL.height}
+        style={{
+          position: "absolute",
+          left: `${PANEL.left}px`,
+          top: `${PANEL.top}px`,
+          width: `${PANEL.width}px`,
+          height: `${PANEL.height}px`,
+          borderRadius: "16px",
+          border: `1px solid rgba(182,119,73,0.45)`,
+        }}
+      />
+
+      {/* Растушёвка левого края панели в чёрный, чтобы стык не был линейкой */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${PANEL.left - 2}px`,
+          top: `${PANEL.top}px`,
+          width: "110px",
+          height: `${PANEL.height}px`,
+          background: `linear-gradient(90deg, ${BLACK} 0%, rgba(10,10,10,0.55) 45%, rgba(10,10,10,0) 100%)`,
+        }}
+      />
+
+      <div style={{ position: "absolute", left: "72px", top: "150px", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "18px", marginBottom: "30px" }}>
+          <Mark height={58} />
+          <span style={{ fontSize: "48px", fontWeight: 800, color: WHITE, letterSpacing: "-1.5px", lineHeight: 1 }}>
+            K-Axis
+          </span>
+        </div>
+
+        <div
+          style={{
+            width: "110px",
+            height: "3px",
+            background: `linear-gradient(to right, ${BRONZE_DEEP}, ${BRONZE_LIGHT})`,
+            marginBottom: "28px",
+            borderRadius: "2px",
+          }}
+        />
+
+        <div
+          style={{
+            fontSize: "46px",
+            fontWeight: 700,
+            color: WHITE,
+            marginBottom: "16px",
+            letterSpacing: "-1px",
+            maxWidth: "470px",
+            lineHeight: 1.1,
+          }}
+        >
+          {headline}
+        </div>
+
+        <div style={{ fontSize: "23px", color: "#B9B0A8", maxWidth: "440px", lineHeight: 1.35 }}>{sub}</div>
+      </div>
+
+      <div style={{ position: "absolute", bottom: "34px", left: "72px", fontSize: "20px", color: BRONZE_LIGHT }}>
+        kmotors.shop
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Карточка с фотографией. Собирается ЗАРАНЕЕ скриптом `scripts/build-og-cards.tsx`
+ * в JPEG, в рантайме не рендерится.
+ *
+ * ⚠️ Причина ровно одна и она арифметическая: `ImageResponse` умеет отдавать
+ * только PNG, а PNG с фотографией весит 740–970 КБ (замерено 12.08.2026 на трёх
+ * глубинах затемнения). Лимит превью у WhatsApp ~300 КБ — карточка просто не
+ * показалась бы. Тот же кадр в JPEG q82 весит 55 КБ. Поэтому фото-карточки
+ * лежат готовыми файлами в `public/og/`, а маршрут их отдаёт с диска.
+ *
+ * Текст прижат влево и лежит на непрозрачной части шторы: фото читается справа,
+ * буквы не спорят с деталями кадра. Равномерное затемнение вместо шторы не
+ * годится — чтобы текст стал читаемым, фото приходится глушить настолько, что
+ * от него не остаётся смысла.
+ */
+export function OgPhotoCard({ headline, sub, photo }: OgCopy & { photo: string }) {
+  return (
+    <div
+      style={{
+        width: "1200px",
+        height: "630px",
+        display: "flex",
+        position: "relative",
+        background: BLACK,
+        fontFamily: "sans-serif",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori рисует
+          картинку сам, next/image внутри ImageResponse не работает. */}
+      <img
+        src={photo}
+        alt=""
+        width={1200}
+        height={630}
+        style={{ position: "absolute", top: 0, left: 0, width: "1200px", height: "630px", objectFit: "cover" }}
+      />
+
+      {/* Штора слева направо */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "1200px",
+          height: "630px",
+          background:
+            "linear-gradient(90deg, #0A0A0A 0%, #0A0A0A 34%, rgba(10,10,10,0.88) 52%, rgba(10,10,10,0.58) 78%, rgba(10,10,10,0.34) 100%)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: "8px",
+          height: "630px",
+          background: `linear-gradient(to bottom, ${BRONZE_DEEP}, ${BRONZE_LIGHT})`,
+        }}
+      />
+
+      <div style={{ position: "absolute", left: "72px", top: "148px", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "32px" }}>
+          <Mark height={64} />
+          <span style={{ fontSize: "54px", fontWeight: 800, color: WHITE, letterSpacing: "-1.5px", lineHeight: 1 }}>
+            K-Axis
+          </span>
+        </div>
+
+        <div
+          style={{
+            width: "120px",
+            height: "3px",
+            background: `linear-gradient(to right, ${BRONZE_DEEP}, ${BRONZE_LIGHT})`,
+            marginBottom: "30px",
+            borderRadius: "2px",
+          }}
+        />
+
+        <div
+          style={{
+            fontSize: "52px",
+            fontWeight: 700,
+            color: WHITE,
+            marginBottom: "18px",
+            letterSpacing: "-1px",
+            maxWidth: "620px",
+            lineHeight: 1.1,
+          }}
+        >
+          {headline}
+        </div>
+
+        <div style={{ fontSize: "26px", color: "#B9B0A8", maxWidth: "560px", lineHeight: 1.35 }}>{sub}</div>
+      </div>
+
+      <div style={{ position: "absolute", bottom: "36px", right: "48px", fontSize: "20px", color: BRONZE_LIGHT }}>
+        kmotors.shop
+      </div>
+    </div>
+  );
+}
+
 export function OgCard({ headline, sub }: OgCopy) {
   return (
     <div
