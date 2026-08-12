@@ -475,7 +475,7 @@ export default function AboutClient({ lang }: Props) {
       {/* ═══ 1. HERO ═══ */}
       <section className="relative overflow-hidden bg-[#002C5F]">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--axis-orange)] rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--axis-bronze-deep)] rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
           <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-400 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3" />
         </div>
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-28 text-center">

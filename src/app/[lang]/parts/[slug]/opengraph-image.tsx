@@ -83,7 +83,7 @@ export default async function Image({
             <h1 style={{ fontSize: 28, margin: 0, color: "#002C5F", maxWidth: "800px" }}>
               {title}
             </h1>
-            <p style={{ fontSize: 22, margin: 0, color: "#FF4500", fontWeight: 700 }}>K-Axis</p>
+            <p style={{ fontSize: 22, margin: 0, color: "#b67749", fontWeight: 700 }}>K-Axis</p>
           </div>
         </div>
       ),

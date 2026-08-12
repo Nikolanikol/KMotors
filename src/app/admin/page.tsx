@@ -577,7 +577,7 @@ export default async function AdminPage() {
                     "Переходы из поисковых систем": "#4285F4",
                     "Прямые заходы": "#6B7280",
                     "Переходы из социальных сетей": "#E1306C",
-                    "Переходы по рекламе": "#FF9800",
+                    "Переходы по рекламе": "#b67749",
                     "Переходы с других сайтов": "#9C27B0",
                   };
                   return (
@@ -732,7 +732,7 @@ export default async function AdminPage() {
                   const total = ga4Sources.reduce((a, s) => a + s.sessions, 0) || 1;
                   const srcColors: Record<string, string> = {
                     "Organic Search": "#4285F4", "Direct": "#6B7280",
-                    "Organic Social": "#E1306C", "Paid Search": "#FF9800",
+                    "Organic Social": "#E1306C", "Paid Search": "#b67749",
                     "Referral": "#9C27B0", "Email": "#00BCD4",
                   };
                   return (

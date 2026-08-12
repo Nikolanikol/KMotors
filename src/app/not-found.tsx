@@ -74,7 +74,7 @@ const CardLink = ({ href, icon: Icon, title, desc }: { href: string; icon: any; 
     >
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: "rgba(255,69,0,0.12)" }}>
+          style={{ backgroundColor: "rgba(182,119,73,0.12)" }}>
           <Icon className="w-6 h-6" style={{ color: "var(--axis-orange)" }} />
         </div>
         <div className="text-left">
@@ -99,7 +99,7 @@ export default function NotFound() {
       <div className="max-w-2xl w-full">
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-8"
-            style={{ backgroundColor: "rgba(255,69,0,0.12)" }}>
+            style={{ backgroundColor: "rgba(182,119,73,0.12)" }}>
             <AlertCircle className="w-12 h-12" style={{ color: "var(--axis-orange)" }} />
           </div>
           <h1 className="text-6xl md:text-7xl font-bold mb-4" style={{ color: "var(--axis-white)" }}>404</h1>
@@ -113,7 +113,7 @@ export default function NotFound() {
           <CardLink href={`/${lang}/catalog`} icon={Search} title={t.catalog} desc={t.catalogDesc} />
         </div>
 
-        <div className="rounded-2xl p-8" style={{ backgroundColor: "rgba(255,69,0,0.08)", border: "1px solid rgba(255,69,0,0.25)" }}>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: "rgba(182,119,73,0.08)", border: "1px solid rgba(182,119,73,0.25)" }}>
           <div className="flex items-start gap-4">
             <MessageCircle className="w-6 h-6 flex-shrink-0 mt-1" style={{ color: "var(--axis-orange)" }} />
             <div>
@@ -122,7 +122,7 @@ export default function NotFound() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <a href="https://t.me/avto_korea_nikolai" target="_blank" rel="noopener noreferrer"
                   className="inline-block font-bold py-2 px-6 rounded-lg text-white text-center transition-colors"
-                  style={{ backgroundColor: "var(--axis-orange)" }}>
+                  style={{ backgroundColor: "var(--axis-bronze-deep)" }}>
                   {t.telegram}
                 </a>
                 <a href="https://www.instagram.com/kmotors.shop/" target="_blank" rel="noopener noreferrer"

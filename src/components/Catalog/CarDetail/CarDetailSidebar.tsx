@@ -35,7 +35,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
       {/* Price — только десктоп, на мобиле показывается над фото */}
       <div className="hidden lg:block rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
         <p className="text-xs mb-2" style={{ color: "var(--axis-gray)" }}>{t("common:car.buyPrice")}</p>
-        <div className="rounded-xl px-5 py-4 mb-2" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 8px 24px rgba(255,69,0,0.25)" }}>
+        <div className="rounded-xl px-5 py-4 mb-2" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 8px 24px rgba(182,119,73,0.25)" }}>
           <p className="text-2xl font-bold text-white">{convertNumber(data.advertisement.price)}</p>
           <p className="text-white/70 text-sm">{t("common:common.won")}</p>
         </div>
@@ -51,8 +51,8 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         className="rounded-2xl overflow-hidden"
         style={{
           backgroundColor: "var(--axis-charcoal)",
-          border: "1.5px solid rgba(255,69,0,0.5)",
-          boxShadow: "0 0 24px rgba(255,69,0,0.12)",
+          border: "1.5px solid rgba(182,119,73,0.5)",
+          boxShadow: "0 0 24px rgba(182,119,73,0.12)",
         }}
       >
         {/* Акцентная полоска сверху */}
@@ -76,7 +76,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         <p className="text-xs font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("common:car.sellerInfo")}</p>
 
         <a href={`tel:${data.contact.no}`} className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(182,119,73,0.12)", color: "var(--axis-orange)" }}>
             <Phone className="w-4 h-4" />
           </div>
           <div>
@@ -86,7 +86,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         </a>
 
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: "rgba(182,119,73,0.08)", color: "var(--axis-gray)" }}>
             <MapPin className="w-4 h-4" />
           </div>
           <div>
@@ -96,7 +96,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(182,119,73,0.08)", color: "var(--axis-gray)" }}>
             <User className="w-4 h-4" />
           </div>
           <div>
@@ -114,7 +114,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         rel="noopener noreferrer"
         href={`https://www.encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${data?.vehicleId}`}
         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium transition-all duration-200"
-        style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-orange)", border: "1px solid rgba(255,69,0,0.2)" }}
+        style={{ backgroundColor: "rgba(182,119,73,0.08)", color: "var(--axis-orange)", border: "1px solid rgba(182,119,73,0.2)" }}
       >
         <ExternalLink className="w-4 h-4" />
         {t("common:car.encarReport")}

@@ -10,20 +10,38 @@
   --axis-black:         #0A0A0A;
   --axis-charcoal:      #141414;
   --axis-graphite:      #1E1E1E;
-  --axis-orange:        #FF4500;
-  --axis-orange-bright: #FF6B1A;
-  --axis-orange-deep:   #CC3300;
-  --axis-amber:         #FF8C00;
-  /* Бронза логотипа. Тёмный конец даёт 3.85:1 на чёрном — он только для
-     градиента знака, текстом им не красить (см. --axis-bronze). */
-  --axis-bronze:        #DA9A67;
+  /* ── Бронза. Единственный акцент сайта, взят из градиента логотипа ────
+     Одним значением обе роли закрыть НЕЛЬЗЯ, и это не вкусовщина: чтобы цвет
+     читался текстом на чёрном, нужна яркость L ≥ 0.190; чтобы на нём читался
+     белый текст — L ≤ 0.157. Диапазоны не пересекаются. Отсюда два токена:
+
+     --axis-bronze       #B67749  ТЕКСТ, иконки, рамки
+     --axis-bronze-deep  #9D5E34  низ градиента логотипа — ЗАЛИВКА, белый текст 5.14:1
+     --axis-bronze-bright #C88858 hover и верх градиентов
+
+     #B67749 — не «красивое число», а самый ТЁМНЫЙ тон бронзы, проходящий AA
+     на всех трёх фонах сайта разом: 5.40 на #0A0A0A, 5.02 на карточке #141414,
+     4.54 на графите #1E1E1E. Шаг темнее (#AF7043) роняет графит до 4.15.
+
+     Не менять местами: тёмной бронзой текст не красить (3.85:1 даже на чёрном),
+     светлой не заливать кнопки (белый на #DA9A67 даёт 2.11:1). */
+  --axis-bronze:        #B67749;
   --axis-bronze-deep:   #9D5E34;
+  --axis-bronze-bright: #C88858;
+
+  /* Исторические имена оставлены алиасами: их 330 вхождений по проекту,
+     переименование дало бы нечитаемый диff без единого изменения в поведении. */
+  --axis-orange:        var(--axis-bronze);
+  --axis-orange-bright: var(--axis-bronze-bright);
+  --axis-orange-deep:   var(--axis-bronze-deep);
+  --axis-amber:         var(--axis-bronze-bright);
+
   --axis-white:         #F5F0EB;
   --axis-gray:          #8A8A8A;
   --axis-gray-dim:      #4A4A4A;
   --axis-silver:        #C0C0C0;
-  --axis-glass:         rgba(255, 69, 0, 0.08);
-  --axis-glow:          rgba(255, 69, 0, 0.4);
+  --axis-glass:         rgba(182,119,73,0.10);
+  --axis-glow:          rgba(182,119,73,0.40);
 
   /* shadcn/ui tokens — dark theme via oklch */
   --radius: 0.75rem;
@@ -33,7 +51,7 @@
   --card-foreground:         oklch(0.96 0.01 60);
   --popover:                 oklch(0.12 0 0);
   --popover-foreground:      oklch(0.96 0.01 60);
-  --primary:                 oklch(0.62 0.22 34);
+  --primary:                 oklch(0.544 0.100 52.7);
   --primary-foreground:      oklch(0.96 0.01 60);
   --secondary:               oklch(0.16 0 0);
   --secondary-foreground:    oklch(0.96 0.01 60);
@@ -44,20 +62,20 @@
   --destructive:             oklch(0.577 0.245 27.325);
   --border:                  oklch(0.22 0 0);
   --input:                   oklch(0.22 0 0);
-  --ring:                    oklch(0.62 0.22 34);
-  --chart-1:                 oklch(0.62 0.22 34);
-  --chart-2:                 oklch(0.65 0.18 50);
+  --ring:                    oklch(0.584 0.100 54.3);
+  --chart-1:                 oklch(0.584 0.100 54.3);
+  --chart-2:                 oklch(0.681 0.101 56.9);
   --chart-3:                 oklch(0.55 0 0);
   --chart-4:                 oklch(0.40 0 0);
   --chart-5:                 oklch(0.25 0 0);
   --sidebar:                 oklch(0.10 0 0);
   --sidebar-foreground:      oklch(0.96 0.01 60);
-  --sidebar-primary:         oklch(0.62 0.22 34);
+  --sidebar-primary:         oklch(0.544 0.100 52.7);
   --sidebar-primary-foreground: oklch(0.96 0.01 60);
   --sidebar-accent:          oklch(0.16 0 0);
   --sidebar-accent-foreground: oklch(0.96 0.01 60);
   --sidebar-border:          oklch(0.22 0 0);
-  --sidebar-ring:            oklch(0.62 0.22 34);
+  --sidebar-ring:            oklch(0.584 0.100 54.3);
 }
 
 @theme inline {
@@ -189,8 +207,9 @@ body {
   background-clip: text;
 }
 
+/* Заливка, а не текст: идёт от тёмной бронзы, чтобы белый на ней читался. */
 .bg-gradient-orange {
-  background: linear-gradient(135deg, var(--axis-orange), var(--axis-amber));
+  background: linear-gradient(135deg, var(--axis-bronze-deep), var(--axis-bronze));
 }
 
 .orange-accent {
@@ -198,7 +217,7 @@ body {
 }
 
 .glow-orange {
-  box-shadow: 0 0 20px var(--axis-glow), 0 0 40px rgba(255, 69, 0, 0.2);
+  box-shadow: 0 0 20px var(--axis-glow), 0 0 40px rgba(182,119,73,0.2);
 }
 
 .glass-effect {
@@ -290,12 +309,12 @@ body {
 .car-detail-dark [class*="bg-blue-100"],
 .car-detail-dark [class*="bg-green-50"],
 .car-detail-dark [class*="bg-gray-100"] {
-  background-color: rgba(255,69,0,0.1) !important;
+  background-color: rgba(182,119,73,0.1) !important;
 }
 .car-detail-dark [class*="bg-red-50"],
 .car-detail-dark [class*="border-red-300"] {
-  background-color: rgba(255,69,0,0.08) !important;
-  border-color: rgba(255,69,0,0.3) !important;
+  background-color: rgba(182,119,73,0.08) !important;
+  border-color: rgba(182,119,73,0.3) !important;
 }
 .car-detail-dark [class*="bg-green-50"],
 .car-detail-dark [class*="border-green-300"] {
@@ -357,11 +376,13 @@ select.PhoneInputCountrySelect {
   /* Product image tile — soft off-white so photos don't glare on the dark page */
   --pn-image-bg: #e8e6e3;
 
-  /* Accent */
-  --pn-orange: #ff7a00;        /* CTA, price, active */
-  --pn-orange-soft: #ffb68b;   /* part numbers, subtle accent */
-  --pn-warm-orange: #ff9800;
-  --pn-light-orange: #ffb74d;
+  /* Accent — та же бронза, что у axis-*; имена оставлены прежними.
+     Роли разведены так же: -orange красит ТЕКСТ, -deep идёт в ЗАЛИВКУ. */
+  --pn-orange: #b67749;        /* цена, активный фильтр, ссылки — текст */
+  --pn-orange-deep: #9d5e34;   /* заливка кнопок, белый текст на ней */
+  --pn-orange-soft: #c88858;   /* артикулы, приглушённый акцент */
+  --pn-warm-orange: #c88858;
+  --pn-light-orange: #b67749;
   --pn-success: #00c853;
   --pn-error: #ff5449;
 
@@ -380,7 +401,7 @@ select.PhoneInputCountrySelect {
 .parts-page .pn-carbon {
   background-color: var(--pn-bg);
   background-image:
-    radial-gradient(circle at 50% 0%, rgba(255, 122, 0, 0.06), transparent 55%),
+    radial-gradient(circle at 50% 0%, rgba(182,119,73,0.06), transparent 55%),
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 6px);
 }
 
@@ -388,11 +409,11 @@ select.PhoneInputCountrySelect {
 .parts-page .pn-glow:focus,
 .parts-page .pn-glow:focus-within {
   border-color: var(--pn-orange);
-  box-shadow: 0 0 0 1px var(--pn-orange), 0 0 18px rgba(255, 122, 0, 0.18);
+  box-shadow: 0 0 0 1px var(--pn-orange), 0 0 18px rgba(182,119,73,0.18);
 }
 
 .parts-page .pn-btn-primary {
-  background-color: var(--pn-orange);
+  background-color: var(--pn-orange-deep);
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
@@ -440,7 +461,7 @@ select.PhoneInputCountrySelect {
   cursor: pointer;
 }
 .parts-page .pn-cart-icon-btn:hover {
-  background: var(--pn-orange);
+  background: var(--pn-orange-deep);
 }
 .parts-page .pn-cart-icon-btn:hover svg {
   color: white;

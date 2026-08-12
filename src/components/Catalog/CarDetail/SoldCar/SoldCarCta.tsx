@@ -64,7 +64,7 @@ export default function SoldCarCta({ carId, carName }: Props) {
         rel="noopener noreferrer"
         onClick={onSubscribe}
         className="flex items-center justify-center gap-2.5 w-full h-14 rounded-2xl font-bold text-base transition-all duration-200 hover:-translate-y-0.5"
-        style={{ backgroundColor: "var(--axis-orange)", color: "#fff" }}
+        style={{ backgroundColor: "var(--axis-bronze-deep)", color: "#fff" }}
       >
         <BellRing className="w-5 h-5" />
         {t("catalog.sold.subscribe")}

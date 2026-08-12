@@ -162,7 +162,7 @@ export function FilterSidebar({
         className={cn(
           "w-full mt-4 font-semibold transition-all",
           isDirty
-            ? "bg-[var(--pn-orange)] hover:brightness-110 text-white"
+            ? "bg-[var(--pn-orange-deep)] hover:brightness-110 text-white"
             : "bg-[var(--pn-surface-3)] text-[var(--pn-text-dim)] cursor-default"
         )}
         disabled={!isDirty}

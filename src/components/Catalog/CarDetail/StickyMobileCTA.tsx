@@ -53,7 +53,7 @@ export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps
         className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
         style={{
           backgroundColor: "var(--axis-charcoal)",
-          borderTop: "1px solid rgba(255,69,0,0.25)",
+          borderTop: "1px solid rgba(182,119,73,0.25)",
           boxShadow: "0 -4px 24px rgba(0,0,0,0.4)",
         }}
       >
@@ -90,7 +90,7 @@ export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps
             className="flex-1 h-12 rounded-xl font-bold text-sm text-white transition-all active:scale-95"
             style={{
               background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))",
-              boxShadow: "0 4px 16px rgba(255,69,0,0.3)",
+              boxShadow: "0 4px 16px rgba(182,119,73,0.3)",
             }}
           >
             {t("car.wantThisCar", "Хочу эту машину")}

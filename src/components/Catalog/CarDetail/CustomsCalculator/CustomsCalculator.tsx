@@ -130,9 +130,9 @@ export default function CustomsCalculator({
   ];
 
   return (
-    <div className="mt-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1.5px solid rgba(255,140,0,0.35)", boxShadow: "0 0 20px rgba(255,140,0,0.08)" }}>
+    <div className="mt-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--axis-charcoal)", border: "1.5px solid rgba(182,119,73,0.35)", boxShadow: "0 0 20px rgba(182,119,73,0.08)" }}>
       {/* Акцентная полоска */}
-      <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #FF8C00, #FF4500)" }} />
+      <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #9d5e34, #9d5e34)" }} />
       {/* Header с вкладками */}
       <div className="px-6 pt-4 pb-0" style={{ background: "linear-gradient(to right, var(--axis-graphite), #1a1a1a)" }}>
         <div className="flex items-start justify-between mb-3">
@@ -149,7 +149,7 @@ export default function CustomsCalculator({
               onClick={() => setCountry(tab.id)}
               className="px-4 py-2 text-sm font-medium rounded-t-lg transition-colors"
               style={country === tab.id
-                ? { backgroundColor: "var(--axis-orange)", color: "white" }
+                ? { backgroundColor: "var(--axis-bronze-deep)", color: "white" }
                 : { color: "var(--axis-gray)" }
               }
             >

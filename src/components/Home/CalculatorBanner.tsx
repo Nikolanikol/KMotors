@@ -40,8 +40,8 @@ export default function CalculatorBanner() {
         <div
           className="rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center gap-8"
           style={{
-            background: "linear-gradient(135deg, rgba(255,69,0,0.08) 0%, rgba(255,140,0,0.05) 100%)",
-            border: "1px solid rgba(255,69,0,0.2)",
+            background: "linear-gradient(135deg, rgba(182,119,73,0.08) 0%, rgba(182,119,73,0.05) 100%)",
+            border: "1px solid rgba(182,119,73,0.2)",
           }}
         >
           {/* Icon */}
@@ -49,7 +49,7 @@ export default function CalculatorBanner() {
             className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{
               background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))",
-              boxShadow: "0 8px 24px rgba(255,69,0,0.3)",
+              boxShadow: "0 8px 24px rgba(182,119,73,0.3)",
             }}
           >
             <Calculator className="w-8 h-8 text-white" />
@@ -90,17 +90,17 @@ export default function CalculatorBanner() {
               href={`/${lang}/calculator`}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold text-sm transition-all duration-200 whitespace-nowrap"
               style={{
-                backgroundColor: "var(--axis-orange)",
+                backgroundColor: "var(--axis-bronze-deep)",
                 color: "white",
-                boxShadow: "0 4px 16px rgba(255,69,0,0.3)",
+                boxShadow: "0 4px 16px rgba(182,119,73,0.3)",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange-bright)";
-                (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(255,69,0,0.45)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(182,119,73,0.45)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)";
-                (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(255,69,0,0.3)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(182,119,73,0.3)";
               }}
             >
               <Calculator className="w-4 h-4" />

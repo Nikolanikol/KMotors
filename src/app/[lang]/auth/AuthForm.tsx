@@ -274,7 +274,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
       {/* Logo */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold">
-          <span className="text-[#FF4500] font-extrabold">K</span>
+          <span className="text-[#b67749] font-extrabold">K</span>
           <span className="text-[#002C5F] font-light tracking-tight">-Axis</span>
         </h1>
       </div>

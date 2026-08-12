@@ -142,7 +142,7 @@ export default function LanguageSwitcher() {
                 onClick={() => changeLanguage(lang.code)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
                 style={{
-                  backgroundColor: currentLanguage.code === lang.code ? "rgba(255,69,0,0.12)" : "transparent",
+                  backgroundColor: currentLanguage.code === lang.code ? "rgba(182,119,73,0.12)" : "transparent",
                   color: currentLanguage.code === lang.code ? "var(--axis-orange)" : "var(--axis-gray)",
                 }}
               >

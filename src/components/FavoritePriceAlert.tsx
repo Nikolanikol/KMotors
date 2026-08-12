@@ -26,7 +26,7 @@ export default function FavoritePriceAlert() {
       className="fixed top-[72px] left-0 right-0 z-40 mx-4 sm:mx-auto sm:max-w-md rounded-2xl p-4 shadow-2xl"
       style={{
         backgroundColor: "var(--axis-charcoal)",
-        border: "1.5px solid rgba(255,69,0,0.4)",
+        border: "1.5px solid rgba(182,119,73,0.4)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
       }}
     >
@@ -57,7 +57,7 @@ export default function FavoritePriceAlert() {
         ))}
         {rises.map(c => (
           <div key={c.id} className="flex items-center gap-3 p-2.5 rounded-xl"
-            style={{ backgroundColor: "rgba(255,69,0,0.08)", border: "1px solid rgba(255,69,0,0.2)" }}>
+            style={{ backgroundColor: "rgba(182,119,73,0.08)", border: "1px solid rgba(182,119,73,0.2)" }}>
             <TrendingUp className="w-4 h-4 flex-shrink-0" style={{ color: "var(--axis-orange)" }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium truncate" style={{ color: "var(--axis-white)" }}>{c.name}</p>
@@ -73,7 +73,7 @@ export default function FavoritePriceAlert() {
         href={`/${lang}/favorites`}
         onClick={dismiss}
         className="block text-center text-xs mt-3 py-2 rounded-xl font-semibold transition-all"
-        style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
+        style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
       >
         Открыть избранное →
       </Link>

@@ -204,15 +204,15 @@ export default function Testimonials() {
                          text-left transition-all duration-300 hover:-translate-y-1"
               style={{
                 backgroundColor: "var(--axis-charcoal)",
-                border: "1px solid rgba(255,69,0,0.2)",
+                border: "1px solid rgba(182,119,73,0.2)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,69,0,0.5)";
+                e.currentTarget.style.borderColor = "rgba(182,119,73,0.5)";
                 e.currentTarget.style.boxShadow =
-                  "0 20px 40px rgba(255,69,0,0.1)";
+                  "0 20px 40px rgba(182,119,73,0.1)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,69,0,0.2)";
+                e.currentTarget.style.borderColor = "rgba(182,119,73,0.2)";
                 e.currentTarget.style.boxShadow = "none";
               }}
             >
@@ -233,7 +233,7 @@ export default function Testimonials() {
                              group-hover:opacity-100 group-hover:scale-100
                              group-focus-visible:opacity-100 group-focus-visible:scale-100"
                   style={{
-                    backgroundColor: "var(--axis-orange)",
+                    backgroundColor: "var(--axis-bronze-deep)",
                     color: "#fff",
                   }}
                   aria-hidden="true"

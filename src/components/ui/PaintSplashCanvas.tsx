@@ -28,7 +28,7 @@ export default function PaintSplashCanvas() {
   }, []);
 
   const createPaintDrop = useCallback((x: number, y: number) => {
-    const colors = ["#FF4500", "#FF6B1A", "#FF8C00", "#CC3300"];
+    const colors = ["#b67749", "#b67749", "#b67749", "#9d5e34"];
     for (let i = 0; i < 3 + Math.random() * 5; i++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = Math.random() * 60;
@@ -105,7 +105,7 @@ export default function PaintSplashCanvas() {
         const angle = Math.random() * Math.PI * 2;
         const grad = ctx.createLinearGradient(sx, sy, sx + Math.cos(angle) * len, sy + Math.sin(angle) * len);
         grad.addColorStop(0, "transparent");
-        grad.addColorStop(0.5, "#FF4500");
+        grad.addColorStop(0.5, "#b67749");
         grad.addColorStop(1, "transparent");
         ctx.strokeStyle = grad;
         ctx.lineWidth = 10 + Math.random() * 40;
@@ -133,7 +133,7 @@ export default function PaintSplashCanvas() {
           if (rr > 0) {
             ctx.beginPath();
             ctx.arc(r.x, r.y, rr, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 69, 0, ${r.opacity * (1 - i * 0.3)})`;
+            ctx.strokeStyle = `rgba(182,119,73,${r.opacity * (1 - i * 0.3)})`;
             ctx.lineWidth = r.lineWidth * (1 - i * 0.2);
             ctx.stroke();
           }
@@ -141,7 +141,7 @@ export default function PaintSplashCanvas() {
         ctx.beginPath();
         ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         const glow = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, r.radius);
-        glow.addColorStop(0, `rgba(255, 107, 26, ${r.opacity * 0.1})`);
+        glow.addColorStop(0, `rgba(200,136,88,${r.opacity * 0.1})`);
         glow.addColorStop(1, "transparent");
         ctx.fillStyle = glow;
         ctx.fill();
@@ -171,7 +171,7 @@ export default function PaintSplashCanvas() {
         ctx.beginPath();
         ctx.arc(mx, my, 40, 0, Math.PI * 2);
         const mg = ctx.createRadialGradient(mx, my, 0, mx, my, 40);
-        mg.addColorStop(0, "rgba(255, 69, 0, 0.15)");
+        mg.addColorStop(0, "rgba(182,119,73,0.15)");
         mg.addColorStop(1, "transparent");
         ctx.fillStyle = mg;
         ctx.fill();

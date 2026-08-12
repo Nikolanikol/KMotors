@@ -139,11 +139,11 @@ export default function Header() {
             <div className="flex items-center gap-2">
                 <Link
                   href={`/${lang}/cart`}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(255,69,0,0.4)]"
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)]"
                   style={{
-                    backgroundColor: cartCount > 0 ? "rgba(255,69,0,0.18)" : "rgba(255,255,255,0.08)",
+                    backgroundColor: cartCount > 0 ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
                     color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
-                    border: cartCount > 0 ? "1.5px solid rgba(255,69,0,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
+                    border: cartCount > 0 ? "1.5px solid rgba(182,119,73,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
                   }}
                   aria-label="Cart"
                 >
@@ -151,7 +151,7 @@ export default function Header() {
                   {cartCount > 0 && (
                     <span
                       className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] flex items-center justify-center px-1 text-[11px] font-bold rounded-full shadow-lg"
-                      style={{ backgroundColor: "var(--axis-orange)", color: "white", boxShadow: "0 2px 8px rgba(255,69,0,0.5)" }}
+                      style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white", boxShadow: "0 2px 8px rgba(182,119,73,0.5)" }}
                     >
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>
@@ -169,9 +169,9 @@ export default function Header() {
                   href={`/${lang}/cart`}
                   className="relative flex items-center justify-center w-9 h-9 rounded-full"
                   style={{
-                    backgroundColor: cartCount > 0 ? "rgba(255,69,0,0.18)" : "rgba(255,255,255,0.08)",
+                    backgroundColor: cartCount > 0 ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
                     color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
-                    border: cartCount > 0 ? "1.5px solid rgba(255,69,0,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
+                    border: cartCount > 0 ? "1.5px solid rgba(182,119,73,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
                   }}
                   aria-label="Cart"
                 >
@@ -179,7 +179,7 @@ export default function Header() {
                   {cartCount > 0 && (
                     <span
                       className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full"
-                      style={{ backgroundColor: "var(--axis-orange)", color: "white", boxShadow: "0 2px 6px rgba(255,69,0,0.5)" }}
+                      style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white", boxShadow: "0 2px 6px rgba(182,119,73,0.5)" }}
                     >
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>

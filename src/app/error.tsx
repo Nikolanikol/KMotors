@@ -23,7 +23,7 @@ export default function Error({
         {/* Icon */}
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
-          style={{ backgroundColor: "rgba(255,69,0,0.12)" }}
+          style={{ backgroundColor: "rgba(182,119,73,0.12)" }}
         >
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--axis-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
@@ -47,7 +47,7 @@ export default function Error({
           <button
             onClick={reset}
             className="px-6 py-3 rounded-full font-semibold text-sm text-white transition-colors"
-            style={{ backgroundColor: "var(--axis-orange)" }}
+            style={{ backgroundColor: "var(--axis-bronze-deep)" }}
           >
             Попробовать снова
           </button>

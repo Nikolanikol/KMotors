@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin", "cyrillic"], display: "swap" });
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#FF4500",
+  themeColor: "#b67749",
 };
 
 export const metadata: Metadata = {

@@ -40,7 +40,7 @@ const Main = () => {
           className="font-display mb-6 leading-tight w-full"
           style={{
             color: "var(--axis-white)",
-            textShadow: "0 0 60px rgba(255,69,0,0.3)",
+            textShadow: "0 0 60px rgba(182,119,73,0.3)",
             fontSize: "clamp(1.5rem, 7vw, 4.5rem)",
             wordBreak: "break-word",
             overflowWrap: "break-word",

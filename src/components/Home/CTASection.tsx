@@ -63,7 +63,7 @@ export default function CTASection() {
               type="submit"
               disabled={loading}
               className="px-8 py-4 font-semibold rounded-full transition-all duration-300 whitespace-nowrap flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ backgroundColor: "var(--axis-orange)", color: "white" }}
+              style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
               onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange-bright)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)"; }}
             >
@@ -73,7 +73,7 @@ export default function CTASection() {
           </form>
         ) : (
           <div className="px-8 py-4 rounded-full font-semibold inline-block"
-            style={{ backgroundColor: "rgba(255,69,0,0.15)", border: "1px solid rgba(255,69,0,0.4)", color: "var(--axis-orange)" }}>
+            style={{ backgroundColor: "rgba(182,119,73,0.15)", border: "1px solid rgba(182,119,73,0.4)", color: "var(--axis-orange)" }}>
             {t("cta.thanks")}
           </div>
         )}

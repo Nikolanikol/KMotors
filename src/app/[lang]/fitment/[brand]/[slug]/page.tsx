@@ -224,7 +224,7 @@ export default async function FitmentPage({ params, searchParams }: Props) {
               <span key={p} className="flex items-center gap-2">
                 {idx > 0 && arr[idx - 1] !== p - 1 && <span className="text-[var(--pn-text-dim)]">…</span>}
                 {p === page ? (
-                  <span className="px-3 py-1.5 rounded-lg bg-[var(--pn-orange)] text-white text-sm font-semibold shadow-lg shadow-[rgba(255,122,0,0.25)]">{p}</span>
+                  <span className="px-3 py-1.5 rounded-lg bg-[var(--pn-orange-deep)] text-white text-sm font-semibold shadow-lg shadow-[rgba(182,119,73,0.25)]">{p}</span>
                 ) : (
                   <Link
                     href={`/${lang}${path}${p > 1 ? `?page=${p}` : ""}`}

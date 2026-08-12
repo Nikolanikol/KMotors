@@ -47,7 +47,7 @@ export default function CarDetailError({
           <button
             onClick={reset}
             className="px-6 py-3 rounded-full font-semibold text-sm text-white"
-            style={{ backgroundColor: "var(--axis-orange)" }}
+            style={{ backgroundColor: "var(--axis-bronze-deep)" }}
           >
             {t.retry}
           </button>
