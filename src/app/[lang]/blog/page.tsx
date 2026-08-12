@@ -85,7 +85,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: meta.title,
       description: meta.description,
       url: "https://www.kmotors.shop/ru/blog",
-      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
+      // Картинку даёт blog/opengraph-image.tsx — см. комментарий на главной.
       type: "website",
     },
     alternates: {

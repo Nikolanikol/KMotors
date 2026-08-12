@@ -1,0 +1,19 @@
+{
+  "//": "Отдельный конфиг ТОЛЬКО для запуска скриптов через tsx. Корневой tsconfig держит jsx: preserve — это верно для Next, который компилирует JSX сам, но Node такой код выполнить не может. Здесь jsx: react-jsx, поэтому build-og-cards.tsx запускается. Не extends: paths из унаследованного конфига резолвятся относительно него, и алиас @/ уехал бы в scripts/.",
+  "//include": "⚠️ include обязан покрывать ../src: без него настройки конфига не применяются к импортированным оттуда файлам, ogCard.tsx собирается классическим JSX-трансформом и падает с 'React is not defined' — уже наступали 12.08.2026.",
+  "include": ["./**/*.ts", "./**/*.tsx", "../src/**/*.ts", "../src/**/*.tsx"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

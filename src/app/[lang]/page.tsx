@@ -64,20 +64,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "K-Axis",
       type: "website",
       locale: lang === "ko" ? "ko_KR" : lang === "ar" ? "ar_SA" : lang === "ka" ? "ka_GE" : lang === "en" ? "en_US" : "ru_RU",
-      images: [
-        {
-          url: "https://www.kmotors.shop/preview/preview.png",
-          width: 1200,
-          height: 630,
-          alt: meta.title,
-        },
-      ],
+      // images НЕ задаём: картинку подставляет [lang]/opengraph-image.tsx.
+      // Заданный здесь images перекрыл бы файловую конвенцию.
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: ["https://www.kmotors.shop/preview/preview.png"],
     },
     alternates: makeAlternates(lang, ""),
   };
@@ -120,7 +113,7 @@ export default async function Home({ params }: Props) {
     name: "K-Axis",
     url: "https://www.kmotors.shop",
     logo: "https://www.kmotors.shop/favicon_io/android-chrome-512x512.png",
-    image: "https://www.kmotors.shop/preview/preview.png",
+    image: `https://www.kmotors.shop/${lang}/opengraph-image`,
     telephone: "+821058654344",
     address: {
       "@type": "PostalAddress",

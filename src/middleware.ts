@@ -55,6 +55,13 @@ function isExcluded(path: string): boolean {
     path.includes(".xml") ||
     path.includes("robots") ||
     path.includes("sitemap") ||
+    // ⚠️ Карточки соцсетей файловой конвенции Next. Расширения в пути НЕТ,
+    // поэтому без этой строки корневой /opengraph-image уходит редиректом на
+    // /ru/opengraph-image, которого не существует: 307 → 404, и все ссылки на
+    // сайт репостятся без картинки. Иконки (icon.svg, apple-icon.png) спасает
+    // расширение, og-карточку спасать нечем.
+    path.includes("opengraph-image") ||
+    path.includes("twitter-image") ||
     path.match(/\.[a-zA-Z0-9]+$/) !== null
   );
 }

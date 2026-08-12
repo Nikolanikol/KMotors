@@ -78,20 +78,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: description ?? "",
       type: "website",
       url: `${SITE}/${lang}/calculator`,
-      images: [
-        {
-          url: `${SITE}/preview/preview.png`,
-          width: 1200,
-          height: 630,
-          alt: title ?? "",
-        },
-      ],
+      // Картинку даёт calculator/opengraph-image.tsx — заданный здесь images
+      // перекрыл бы файловую конвенцию.
     },
     twitter: {
       card: "summary_large_image",
       title: title ?? "",
       description: description ?? "",
-      images: [`${SITE}/preview/preview.png`],
     },
   };
 }
