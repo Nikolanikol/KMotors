@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "create-admin": "tsx scripts/create-admin.ts",
+    "build:og": "tsx --tsconfig scripts/tsconfig.json scripts/build-og-cards.tsx",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -1,14 +1,11 @@
-import { ImageResponse } from "next/og";
-import { OG_CONTENT_TYPE, OG_SIZE, OgCard, ogCopy } from "@/lib/ogCard";
+import { OG_SIZE, makeStaticOgRoute, ogContentType, ogCopy } from "@/lib/ogCard";
 
 /**
- * Легаси-блог без языкового префикса. `makeOgRoute` тут не подходит: у сегмента
- * нет параметра `lang`, а контент этих постов русский (`title_ru`).
+ * Легаси-блог без языкового префикса. У сегмента нет параметра `lang`, а
+ * контент этих постов русский (`title_ru`) — поэтому язык задан явно.
  */
 export const alt = ogCopy("blog", "ru").alt;
 export const size = OG_SIZE;
-export const contentType = OG_CONTENT_TYPE;
+export const contentType = ogContentType("blog");
 
-export default function Image() {
-  return new ImageResponse(<OgCard {...ogCopy("blog", "ru")} />, { ...size });
-}
+export default makeStaticOgRoute("blog", "ru");

@@ -1,9 +1,9 @@
-import { OG_CONTENT_TYPE, OG_SIZE, makeOgRoute, ogCopy } from "@/lib/ogCard";
+import { OG_SIZE, makeOgRoute, ogContentType, ogCopy } from "@/lib/ogCard";
 
 // Страница объявляет свой openGraph — значит нужен свой файл карточки,
 // иначе og:image не будет вовсе. См. makeOgRoute в src/lib/ogCard.tsx.
-export const alt = ogCopy("home", "ru").alt;
+export const alt = ogCopy("fallback", "ru").alt;
 export const size = OG_SIZE;
-export const contentType = OG_CONTENT_TYPE;
+export const contentType = ogContentType("fallback");
 
-export default makeOgRoute("home");
+export default makeOgRoute("fallback");

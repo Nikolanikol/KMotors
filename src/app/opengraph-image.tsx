@@ -1,5 +1,4 @@
-import { ImageResponse } from "next/og";
-import { OG_CONTENT_TYPE, OG_SIZE, OgCard, ogCopy } from "@/lib/ogCard";
+import { OG_SIZE, makeStaticOgRoute, ogContentType, ogCopy } from "@/lib/ogCard";
 
 /**
  * Корневая карточка — для маршрутов без языкового префикса (легаси
@@ -10,10 +9,8 @@ import { OG_CONTENT_TYPE, OG_SIZE, OgCard, ogCopy } from "@/lib/ogCard";
  * знает про `opengraph-image`: путь без расширения иначе уходит редиректом
  * на `/ru/opengraph-image`, которого нет (307 → 404).
  */
-export const alt = ogCopy("home", "ru").alt;
+export const alt = ogCopy("fallback", "ru").alt;
 export const size = OG_SIZE;
-export const contentType = OG_CONTENT_TYPE;
+export const contentType = ogContentType("fallback");
 
-export default function Image() {
-  return new ImageResponse(<OgCard {...ogCopy("home", "ru")} />, { ...size });
-}
+export default makeStaticOgRoute("fallback", "ru");

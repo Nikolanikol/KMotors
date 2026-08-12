@@ -1,8 +1,11 @@
 /**
  * Сборка og-карточек в готовые JPEG.
  *
- * Запуск:  npx tsx scripts/build-og-cards.tsx
- * Один раздел:  ONLY=catalog npx tsx scripts/build-og-cards.tsx
+ * Запуск:       npx tsx --tsconfig scripts/tsconfig.json scripts/build-og-cards.tsx
+ * Один раздел:  ONLY=catalog npx tsx --tsconfig scripts/tsconfig.json scripts/build-og-cards.tsx
+ *
+ * ⚠️ Флаг `--tsconfig` обязателен: корневой tsconfig держит `jsx: "preserve"`,
+ * и без своего конфига Node получит невыполнимый JSX.
  *
  * В базу НЕ ходит и сеть не трогает — читает исходники из `public/`, пишет в
  * `public/og/`. Единственный скрипт в этой папке, который безопасно запускать
@@ -21,7 +24,7 @@
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createRequire } from "node:module";
-import { OG_SIZE, PANEL, OgPhotoCard, OgScreenshotCard, ogCopy } from "@/lib/ogCard";
+import { OG_SIZE, PANEL, OgPhotoCard, OgScreenshotCard, ogCopy, type Section } from "@/lib/ogCard";
 
 // `next/og` не резолвится голым Node вне сборки Next — берём реализацию прямо.
 const require_ = createRequire(import.meta.url);
@@ -36,7 +39,6 @@ const WHATSAPP_LIMIT = 300 * 1024;
 /** Языки те же два, что знает `ogCopy`: шрифт Satori не держит ka/ar. */
 const LANGS = ["ru", "en"] as const;
 
-type Section = Parameters<typeof ogCopy>[0];
 type Crop = { left: number; top: number; width: number; height: number };
 type Source =
   /** Фотография во всю карточку, текст поверх шторы. */
@@ -59,17 +61,36 @@ type Source =
  * подогнать по первому же прогону.
  */
 const SOURCES: Partial<Record<Section, Source>> = {
-  // TODO: подставить свежие бронзовые скриншоты, когда владелец их положит.
-  // Исходники лежат в `assets/og-src/` — НЕ в `public/`: они по несколько
-  // мегабайт, раздавать их наружу незачем, в og уходит только сборка.
-  // home:    { kind: "screenshot", src: "assets/og-src/home.png",    crop: { left: 0, top: 0, width: 820, height: 690 } },
-  // catalog: { kind: "screenshot", src: "assets/og-src/catalog.png", crop: { left: 0, top: 0, width: 820, height: 690 } },
+  // Исходники лежат в `assets/og-src/` — НЕ в `public/`: они по мегабайту и
+  // больше, раздавать их наружу незачем, в og уходит только сборка.
+  //
+  // Кропы подобраны под соотношение панели (604×506 ≈ 1.194), чтобы sharp
+  // ничего не досрезал, и так, чтобы в кадр попали полторы карточки: целая
+  // читается, обрезанная показывает, что список продолжается.
 
-  // Запчасти пока на фотографии склада — снимок каталога запчастей не присылали.
-  parts: { kind: "photo", src: "public/images/about-mobis.jpg" },
+  // home.png и catalog.png — один и тот же файл (решение владельца: снимок
+  // каталога идёт и на главную). Карточки различаются только текстом.
+  home: { kind: "screenshot", src: "assets/og-src/home.png", crop: { left: 455, top: 10, width: 931, height: 780 } },
+  catalog: { kind: "screenshot", src: "assets/og-src/catalog.png", crop: { left: 455, top: 10, width: 931, height: 780 } },
 
-  // blog и calculator — без картинки: подходящего исходника нет, у них
-  // остаётся текстовая карточка, которую рисует маршрут через OgCard.
+  parts: { kind: "screenshot", src: "assets/og-src/parts.png", crop: { left: 415, top: 10, width: 931, height: 780 } },
+
+  // У калькулятора берётся правая колонка — готовый расчёт с итогом. Она
+  // светлая и контрастная, в отличие от формы слева, и одна несёт весь смысл.
+  calculator: {
+    kind: "screenshot",
+    src: "assets/og-src/calculator.png",
+    crop: { left: 812, top: 236, width: 776, height: 650 },
+  },
+
+  // fallback.png — снимок главной; идёт и блогу, и страницам без своего
+  // сюжета (о нас, контакты, партнёры, «как купить»).
+  blog: { kind: "screenshot", src: "assets/og-src/fallback.png", crop: { left: 45, top: 200, width: 884, height: 740 } },
+  fallback: {
+    kind: "screenshot",
+    src: "assets/og-src/fallback.png",
+    crop: { left: 45, top: 200, width: 884, height: 740 },
+  },
 };
 
 async function prepare(source: Source): Promise<string> {

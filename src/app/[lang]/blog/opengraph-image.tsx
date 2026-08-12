@@ -1,9 +1,8 @@
-import { OG_CONTENT_TYPE, OG_SIZE, makeOgRoute, ogCopy } from "@/lib/ogCard";
+import { OG_SIZE, makeOgRoute, ogContentType, ogCopy } from "@/lib/ogCard";
 
-// Лента блога. Статья с обложкой перекрывает файловую конвенцию своим
-// cover_url — это и нужно; сюда попадают посты без обложки.
+// Лента блога. Статья с обложкой перекрывает конвенцию своим cover_url.
 export const alt = ogCopy("blog", "ru").alt;
 export const size = OG_SIZE;
-export const contentType = OG_CONTENT_TYPE;
+export const contentType = ogContentType("blog");
 
 export default makeOgRoute("blog");

@@ -1,8 +1,8 @@
-import { OG_CONTENT_TYPE, OG_SIZE, makeOgRoute, ogCopy } from "@/lib/ogCard";
+import { OG_SIZE, makeOgRoute, ogContentType, ogCopy } from "@/lib/ogCard";
 
 // Хаб калькулятора. У страниц стран свой файл в [country]/.
 export const alt = ogCopy("calculator", "ru").alt;
 export const size = OG_SIZE;
-export const contentType = OG_CONTENT_TYPE;
+export const contentType = ogContentType("calculator");
 
 export default makeOgRoute("calculator");

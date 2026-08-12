@@ -17,6 +17,9 @@
  * подзаголовка и линий.
  */
 
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 
 const BLACK = "#0A0A0A";
@@ -31,7 +34,11 @@ export const OG_CONTENT_TYPE = "image/png";
 
 export type OgCopy = { headline: string; sub: string; alt: string };
 
-type Section = "home" | "catalog" | "parts" | "blog" | "calculator";
+/**
+ * `fallback` — для страниц без своего сюжета: «о нас», контакты, партнёры,
+ * «как купить». У них общий снимок главной и нейтральный текст.
+ */
+export type Section = "home" | "catalog" | "parts" | "blog" | "calculator" | "fallback";
 
 /**
  * Текст карточек. Держим строки здесь, а не в locales: у `opengraph-image`
@@ -99,6 +106,18 @@ const COPY: Record<Section, Record<"ru" | "en", OgCopy>> = {
       alt: "K-Axis — car import duty calculator",
     },
   },
+  fallback: {
+    ru: {
+      headline: "Авто и запчасти из Кореи",
+      sub: "Hyundai · Kia · Genesis — подбор, доставка, растаможка",
+      alt: "K-Axis — авто и запчасти из Кореи",
+    },
+    en: {
+      headline: "Korean cars and parts",
+      sub: "Hyundai · Kia · Genesis — sourcing, delivery, customs",
+      alt: "K-Axis — Korean cars and parts",
+    },
+  },
 };
 
 export function ogCopy(section: Section, lang?: string): OgCopy {
@@ -123,8 +142,50 @@ export function makeOgRoute(section: Section) {
     params: Promise<{ lang: string }>;
   }) {
     const { lang } = await params;
-    return new ImageResponse(<OgCard {...ogCopy(section, lang)} />, { ...OG_SIZE });
+    return serve(section, lang);
   };
+}
+
+/** То же для сегментов без параметра `lang` (легаси `/blog/[slug]`, корень). */
+export function makeStaticOgRoute(section: Section, lang: "ru" | "en") {
+  return async function Image() {
+    return serve(section, lang);
+  };
+}
+
+/** Путь к собранной карточке. Собирает `scripts/build-og-cards.tsx`. */
+function assetPath(section: Section, lang?: string) {
+  return path.join(process.cwd(), "public/og", `${section}-${lang === "ru" ? "ru" : "en"}.jpg`);
+}
+
+/**
+ * Отдаёт собранный JPEG, а если его нет — рисует текстовую карточку.
+ *
+ * Фолбэк не декоративный: пока картинка для раздела не собрана (или файл не
+ * доехал в образ), маршрут обязан отдать ХОТЬ ЧТО-ТО. Пустой ответ здесь — это
+ * ссылка без превью во всех мессенджерах сразу.
+ */
+async function serve(section: Section, lang?: string) {
+  try {
+    const buf = await readFile(assetPath(section, lang));
+    return new Response(new Uint8Array(buf), {
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "public, max-age=604800, immutable",
+      },
+    });
+  } catch {
+    return new ImageResponse(<OgCard {...ogCopy(section, lang)} />, { ...OG_SIZE });
+  }
+}
+
+/**
+ * Значение для `export const contentType` в файле маршрута — оно уходит в
+ * `og:image:type`. Проверяем наличие собранного файла синхронно, на загрузке
+ * модуля: тип обязан совпасть с тем, что реально отдаётся.
+ */
+export function ogContentType(section: Section): string {
+  return existsSync(assetPath(section, "ru")) ? "image/jpeg" : OG_CONTENT_TYPE;
 }
 
 /** Знак Axis — геометрия 1:1 из public/logo/logo-mark.svg. */
