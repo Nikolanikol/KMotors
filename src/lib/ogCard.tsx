@@ -1,5 +1,16 @@
+/** @jsxRuntime automatic */
+/** @jsxImportSource react */
+
 /**
  * Общая og-карточка 1200×630, из неё собраны все `opengraph-image.tsx`.
+ *
+ * ⚠️ Директивы @jsxRuntime/@jsxImportSource сверху — не украшение. Файл
+ * собирают ДВА разных инструмента: Next (там `jsx: "preserve"`, он всё делает
+ * сам) и esbuild внутри tsx, когда `scripts/build-og-cards.tsx` импортирует
+ * отсюда карточки. Без директив esbuild берёт классический трансформ, зовёт
+ * `React.createElement`, а импорта React в файле нет — прогон падает с
+ * `ReferenceError: React is not defined` (наступали 12.08.2026). Вторая
+ * страховка — `include` в `scripts/tsconfig.json`.
  *
  * Рисуется кодом через Satori (`next/og`), а не лежит картинкой в `public/`:
  * до 12.08.2026 на 13 маршрутах стоял `preview/preview.png` — скриншот старой
