@@ -62,9 +62,10 @@ export default async function RootLayout({
         {/* SEO: make content visible for bots that don't execute JS */}
         <noscript><style>{`.opacity-0{opacity:1!important}.translate-y-4,.translate-y-5,.translate-y-7,.translate-y-8,.-translate-x-8,.translate-x-8{transform:none!important}.scale-95{transform:none!important}`}</style></noscript>
         <link rel="manifest" href="/favicon_io/site.webmanifest" />
-        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-        <link rel="icon" type="image/png" href="/apple-touch-icon.png" sizes="192x192" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* Ссылки на иконки НЕ ставить руками: их подставляет файловая конвенция
+            Next из src/app/{icon.svg, favicon.ico, apple-icon.png}. Ручной <link>
+            рядом с конвенцией даёт дубль в <head>, а прежний вариант ещё и
+            подключал apple-touch-icon весом 815 КБ как фавиконку 192px. */}
 
         {/* LocalBusiness + AutoDealer JSON-LD — нативный script, не Next.js Script */}
         <script
