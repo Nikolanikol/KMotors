@@ -79,9 +79,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description: post.excerpt || post.title,
       url: selfUrl,
-      images: post.cover_url
-        ? [{ url: post.cover_url, alt: post.title }]
-        : [{ url: "https://www.kmotors.shop/preview/preview.png" }],
+      // Обложка перекрывает файловую конвенцию — это и нужно. Без обложки
+      // images остаётся undefined, и картинку даёт blog/opengraph-image.tsx.
+      images: post.cover_url ? [{ url: post.cover_url, alt: post.title }] : undefined,
       type: "article",
       publishedTime: post.published_at,
       siteName: "K-Axis",
@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt || post.title,
-      images: post.cover_url ? [post.cover_url] : ["https://www.kmotors.shop/preview/preview.png"],
+      images: post.cover_url ? [post.cover_url] : undefined,
     },
     alternates: makeAlternates(lang, `/blog/${slug}`),
   };
@@ -118,7 +118,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    image: post.cover_url || "https://www.kmotors.shop/preview/preview.png",
+    image: post.cover_url || `https://www.kmotors.shop/${lang}/blog/opengraph-image`,
     datePublished: post.published_at,
     dateModified: post.published_at,
     author: { "@type": "Organization", name: "K-Axis", url: "https://www.kmotors.shop/" },

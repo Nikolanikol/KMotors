@@ -53,7 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: m.title,
       description: m.description,
       url: `https://www.kmotors.shop/${lang}/partners`,
-      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
+      // Картинку даёт [lang]/opengraph-image.tsx — заданный здесь images
+      // перекрыл бы файловую конвенцию.
     },
     alternates: makeAlternates(lang, "/partners"),
   };

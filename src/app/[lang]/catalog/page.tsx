@@ -81,7 +81,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       title,
       description,
       url: `https://www.kmotors.shop/${lang}/catalog`,
-      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
+      // Картинку даёт catalog/opengraph-image.tsx — см. комментарий на главной.
     },
     alternates: makeAlternates(lang, "/catalog"),
   };

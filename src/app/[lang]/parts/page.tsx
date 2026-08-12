@@ -70,14 +70,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       title: meta.title,
       description: meta.description,
       url: cleanUrl,
-      images: [
-        {
-          url: `${BASE}/preview/preview.png`,
-          width: 1200,
-          height: 630,
-          alt: meta.title,
-        },
-      ],
+      // Картинку даёт parts/opengraph-image.tsx — см. комментарий на главной.
       type: "website",
     },
     alternates: {

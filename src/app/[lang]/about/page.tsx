@@ -53,7 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: m.title,
       description: m.description,
       url: `https://www.kmotors.shop/${lang}/about`,
-      images: [{ url: "https://www.kmotors.shop/preview/preview.png" }],
+      // Картинку даёт [lang]/opengraph-image.tsx — заданный здесь images
+      // перекрыл бы файловую конвенцию.
     },
     alternates: makeAlternates(lang, "/about"),
   };
@@ -76,7 +77,7 @@ export default async function AboutPage({ params }: Props) {
     "@type": "Organization",
     name: "K-Axis",
     url: "https://www.kmotors.shop",
-    logo: "https://www.kmotors.shop/preview/preview.png",
+    logo: "https://www.kmotors.shop/favicon_io/android-chrome-512x512.png",
     foundingDate: "2025",
     description: (META[lang] || META.ru).description,
     contactPoint: {
