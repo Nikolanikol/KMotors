@@ -111,7 +111,7 @@ export default function HowToBuyPage() {
                   </div>
 
                   <div className="md:hidden w-10 h-10 rounded-full flex items-center justify-center mb-3"
-                    style={{ backgroundColor: "var(--axis-bronze-deep)" }}>
+                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
                     <Icon className="w-5 h-5 text-white" />
                   </div>
 

@@ -156,7 +156,7 @@ const Filter = ({}) => {
           <Button
             onClick={() => handleCarNoSearch()}
             className="shrink-0 px-4 text-sm font-semibold"
-            style={{ backgroundColor: "var(--axis-bronze-deep)", color: "var(--axis-white)" }}
+            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "var(--axis-white)" }}
           >
             {t("filter.carNoButton")}
           </Button>

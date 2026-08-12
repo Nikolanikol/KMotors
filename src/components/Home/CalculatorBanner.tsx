@@ -90,7 +90,7 @@ export default function CalculatorBanner() {
               href={`/${lang}/calculator`}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-semibold text-sm transition-all duration-200 whitespace-nowrap"
               style={{
-                backgroundColor: "var(--axis-bronze-deep)",
+                backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)",
                 color: "white",
                 boxShadow: "0 4px 16px rgba(182,119,73,0.3)",
               }}

@@ -232,7 +232,7 @@ export default function FavoritesClient() {
                           href={`/${lang}/catalog/${car.id}`}
                           target="_blank"
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
-                          style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
+                          style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
                         >
                           {t("common:car.details")}
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -375,7 +375,7 @@ export default function FavoritesClient() {
           <button
             onClick={goCompare}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
-            style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
+            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
           >
             <GitCompare className="w-4 h-4" />
             Сравнить {selected.length}
@@ -400,7 +400,7 @@ function EmptyState({ lang, t, type }: { lang: string; t: (k: string) => string;
       <Link
         href={href}
         className="mt-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
-        style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
+        style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
       >
         {type === "cars" ? t("common:nav.catalog") : (t("common:nav.parts") ?? "Запчасти")}
       </Link>

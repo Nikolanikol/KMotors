@@ -548,11 +548,11 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
         {/* Header */}
         <div className={`text-center mb-8 lg:mb-12 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[var(--pn-orange-deep)]" />
+            <div className="h-px w-12 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]" />
             <span className="text-[var(--pn-orange)] text-sm font-medium tracking-wider uppercase">
               {t("parts.catalog.badge")}
             </span>
-            <div className="h-px w-12 bg-[var(--pn-orange-deep)]" />
+            <div className="h-px w-12 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[var(--pn-text)] mb-4">
             {t("parts.catalog.title")}
@@ -599,14 +599,14 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
               className={cn(
                 "lg:hidden flex items-center gap-2 px-4 py-2.5 mb-4 rounded-xl border text-sm font-medium transition-all w-full justify-center",
                 hasFilters
-                  ? "border-[var(--pn-orange)] bg-[var(--pn-orange-deep)]/10 text-[var(--pn-orange)]"
+                  ? "border-[var(--pn-orange)] bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 text-[var(--pn-orange)]"
                   : "border-[var(--pn-border)] bg-[var(--pn-surface)] text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)]/50"
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />
               {t("parts.catalog.filtersTitle")}
               {hasFilters && (
-                <span className="ml-1 w-5 h-5 rounded-full bg-[var(--pn-orange-deep)] text-white text-xs flex items-center justify-center">
+                <span className="ml-1 w-5 h-5 rounded-full bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white text-xs flex items-center justify-center">
                   {urlBrands.length + urlCats.length + (priceMin !== undefined || priceMax !== undefined ? 1 : 0)}
                 </span>
               )}
@@ -630,7 +630,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                         empty
                           ? "bg-[var(--pn-surface)] text-[var(--pn-text-dim)] border-transparent cursor-not-allowed opacity-50"
                           : active
-                          ? "bg-[var(--pn-orange-deep)] text-white border-[var(--pn-orange)]"
+                          ? "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white border-[var(--pn-orange)]"
                           : "bg-[var(--pn-surface)] text-[var(--pn-text-muted)] border-[var(--pn-border)] hover:border-[var(--pn-orange)]/50",
                         isPending && !empty && "opacity-60 cursor-wait"
                       )}
@@ -865,7 +865,7 @@ const SearchBar = memo(function SearchBar({
         </div>
         <button
           type="submit"
-          className="shrink-0 h-11 sm:h-[52px] px-5 sm:px-8 rounded-xl bg-[var(--pn-orange-deep)] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[var(--pn-orange)]/20 hover:brightness-110 active:scale-95 transition-all"
+          className="shrink-0 h-11 sm:h-[52px] px-5 sm:px-8 rounded-xl bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[var(--pn-orange)]/20 hover:brightness-110 active:scale-95 transition-all"
         >
           {submitLabel}
         </button>
@@ -904,7 +904,7 @@ function Pagination({
             onClick={() => onPageChange(p as number)}
             className={cn(
               "w-9 h-9 rounded-lg text-sm font-medium transition-all border",
-              p === page ? "bg-[var(--pn-orange-deep)] text-white border-[var(--pn-orange)] shadow-lg shadow-[var(--pn-orange)]/20" : "text-[var(--pn-text-muted)] border-[var(--pn-border)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
+              p === page ? "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white border-[var(--pn-orange)] shadow-lg shadow-[var(--pn-orange)]/20" : "text-[var(--pn-text-muted)] border-[var(--pn-border)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
             )}
           >
             {p}
@@ -929,7 +929,7 @@ function Pagination({
 
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--pn-orange-deep)]/10 border border-[var(--pn-orange)]/20 text-[var(--pn-orange)] text-xs font-semibold uppercase tracking-wide">
+    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 border border-[var(--pn-orange)]/20 text-[var(--pn-orange)] text-xs font-semibold uppercase tracking-wide">
       {label}
       <button onClick={onRemove} className="ml-0.5 hover:text-white transition-colors" aria-label="Remove filter">
         <X className="w-3 h-3" />

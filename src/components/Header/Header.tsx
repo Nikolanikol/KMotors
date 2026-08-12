@@ -151,7 +151,7 @@ export default function Header() {
                   {cartCount > 0 && (
                     <span
                       className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] flex items-center justify-center px-1 text-[11px] font-bold rounded-full shadow-lg"
-                      style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white", boxShadow: "0 2px 8px rgba(182,119,73,0.5)" }}
+                      style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white", boxShadow: "0 2px 8px rgba(182,119,73,0.5)" }}
                     >
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>
@@ -179,7 +179,7 @@ export default function Header() {
                   {cartCount > 0 && (
                     <span
                       className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full"
-                      style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white", boxShadow: "0 2px 6px rgba(182,119,73,0.5)" }}
+                      style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white", boxShadow: "0 2px 6px rgba(182,119,73,0.5)" }}
                     >
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>

@@ -338,11 +338,11 @@ export function ProductDetailClient({
           <div className="bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-2xl overflow-hidden self-start w-full">
             <div className="relative bg-white aspect-square flex items-center justify-center">
               {product.is_new && (
-                <span className="absolute top-4 left-4 z-10 bg-[var(--pn-orange-deep)] text-white text-[11px] px-2.5 py-1 rounded font-bold uppercase tracking-wide">
+                <span className="absolute top-4 left-4 z-10 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white text-[11px] px-2.5 py-1 rounded font-bold uppercase tracking-wide">
                   {t("parts.detail.newBadge")}
                 </span>
               )}
-              <span className="absolute top-4 right-4 z-10 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[var(--pn-orange)] bg-[var(--pn-orange-deep)]/10 border border-[var(--pn-orange)]/25 rounded px-2 py-1">
+              <span className="absolute top-4 right-4 z-10 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[var(--pn-orange)] bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 border border-[var(--pn-orange)]/25 rounded px-2 py-1">
                 <BadgeCheck className="w-3 h-3" />OEM
               </span>
               {product.image_url && !imgError ? (
@@ -451,7 +451,7 @@ export function ProductDetailClient({
                   disabled={cartProductIds.has(product.id)}
                   className={cn(
                     "h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all",
-                    inCartNow ? "bg-[var(--pn-success)] hover:bg-[var(--pn-success)] text-white" : "bg-[var(--pn-orange-deep)] hover:brightness-110 text-white"
+                    inCartNow ? "bg-[var(--pn-success)] hover:bg-[var(--pn-success)] text-white" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white"
                   )}
                 >
                   {inCartNow
@@ -486,7 +486,7 @@ export function ProductDetailClient({
                 className={cn(
                   "group inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95",
                   faved
-                    ? "border-[var(--pn-orange)]/50 bg-[var(--pn-orange-deep)]/10 text-[var(--pn-orange)]"
+                    ? "border-[var(--pn-orange)]/50 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 text-[var(--pn-orange)]"
                     : "border-[var(--pn-border)] bg-[var(--pn-surface)] text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
                 )}
               >
@@ -536,7 +536,7 @@ export function ProductDetailClient({
         </div>
 
         {/* ── Fitment CTA banner ─────────────────────────────────────────────── */}
-        <div className="bg-[var(--pn-orange-deep)] rounded-2xl p-6 sm:p-8 mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <div className="bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] rounded-2xl p-6 sm:p-8 mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div>
             <h3 className="text-xl sm:text-2xl font-extrabold text-[#3a1500]">{L(DL.fitmentBannerTitle, lang)}</h3>
             <p className="text-[#5c2800] text-sm mt-1.5 max-w-xl leading-relaxed">{L(DL.fitmentBannerText, lang)}</p>
@@ -569,7 +569,7 @@ export function ProductDetailClient({
         {compatibleBrands.length > 0 && (
           <div className="bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-2xl p-6 sm:p-8 mb-10">
             <h2 className="text-xl font-bold text-[var(--pn-text)] mb-6 flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[var(--pn-orange-deep)]/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 flex items-center justify-center">
                 <Car className="w-4 h-4 text-[var(--pn-orange)]" />
               </div>
               {t("parts.detail.fitsTitle")}
@@ -652,7 +652,7 @@ function InfoTile({ icon, title, desc }: { icon: ReactNode; title: string; desc:
 function TrustTile({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
   return (
     <div className="bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-xl p-5">
-      <div className="w-10 h-10 rounded-lg bg-[var(--pn-orange-deep)]/10 flex items-center justify-center mb-3">{icon}</div>
+      <div className="w-10 h-10 rounded-lg bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 flex items-center justify-center mb-3">{icon}</div>
       <div className="text-sm font-bold text-[var(--pn-text)] mb-1">{title}</div>
       <div className="text-xs text-[var(--pn-text-muted)] leading-relaxed">{desc}</div>
     </div>

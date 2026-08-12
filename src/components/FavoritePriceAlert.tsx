@@ -73,7 +73,7 @@ export default function FavoritePriceAlert() {
         href={`/${lang}/favorites`}
         onClick={dismiss}
         className="block text-center text-xs mt-3 py-2 rounded-xl font-semibold transition-all"
-        style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
+        style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
       >
         Открыть избранное →
       </Link>

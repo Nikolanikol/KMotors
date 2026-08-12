@@ -183,7 +183,7 @@ export default async function ModelPage({ params }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {content.benefits.map((b, i) => (
                 <div key={i} className="p-6 rounded-2xl  border ">
-                  <div className="w-10 h-10 rounded-full bg-[var(--axis-bronze-deep)]/10 flex items-center justify-center mb-4">
+                  <div className="w-10 h-10 rounded-full bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)]/10 flex items-center justify-center mb-4">
                     <span className="text-[#BB162B] font-bold">{i + 1}</span>
                   </div>
                   <h3 className="font-bold text-white mb-2">{b.title}</h3>
@@ -214,7 +214,7 @@ export default async function ModelPage({ params }: Props) {
               <Link
                 href={`/${lang}/catalog?manufacture=${encodeURIComponent(model.manufacturerEn)}`}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm transition-all"
-                style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
+                style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
               >
                 {isRu
                   ? `Все ${model.manufacturerEn} ${model.modelEn} в каталоге →`
@@ -234,7 +234,7 @@ export default async function ModelPage({ params }: Props) {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {content.steps.map((step, i) => (
                 <div key={i} className="text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[var(--axis-bronze-deep)] text-white font-bold text-lg flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-full bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] text-white font-bold text-lg flex items-center justify-center mx-auto">
                     {i + 1}
                   </div>
                   <h3 className="font-bold text-white text-sm">{step.title}</h3>

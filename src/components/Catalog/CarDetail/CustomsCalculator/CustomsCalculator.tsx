@@ -149,7 +149,7 @@ export default function CustomsCalculator({
               onClick={() => setCountry(tab.id)}
               className="px-4 py-2 text-sm font-medium rounded-t-lg transition-colors"
               style={country === tab.id
-                ? { backgroundColor: "var(--axis-bronze-deep)", color: "white" }
+                ? { backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }
                 : { color: "var(--axis-gray)" }
               }
             >

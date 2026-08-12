@@ -29,6 +29,22 @@
   --axis-bronze-deep:   #9D5E34;
   --axis-bronze-bright: #C88858;
 
+  /* Градиент заливки кнопок.
+
+     СВЕТЛЫЙ конец жёстко ограничен: светлее #9D5E34 нельзя — белый текст
+     на нём падает ниже AA (уже на #A36439 всего 4.18).
+
+     ТЁМНЫЙ выбран компромиссом. Перепад в 25% (#8B512B) на кнопке читается
+     как плоская заливка — площадь мала, градиент диагональный. 47% (#794323)
+     видно. Цена: нижне-правый край кнопки даёт к чёрной странице 2.49 при
+     ориентире 3.0 для нетекстового контраста; верхне-левый остаётся 3.85 и
+     границу кнопки держит именно он. Белый текст при этом только выигрывает:
+     5.14 на светлом конце, 7.95 на тёмном.
+
+     Если понадобится строгие 3.0 по всему периметру — не осветлять градиент,
+     а добавить кнопкам рамку 1px var(--axis-bronze). */
+  --axis-bronze-fill:   linear-gradient(135deg, #9D5E34 0%, #794323 100%);
+
   /* Исторические имена оставлены алиасами: их 330 вхождений по проекту,
      переименование дало бы нечитаемый диff без единого изменения в поведении. */
   --axis-orange:        var(--axis-bronze);
@@ -209,7 +225,7 @@ body {
 
 /* Заливка, а не текст: идёт от тёмной бронзы, чтобы белый на ней читался. */
 .bg-gradient-orange {
-  background: linear-gradient(135deg, var(--axis-bronze-deep), var(--axis-bronze));
+  background: var(--axis-bronze-fill);
 }
 
 .orange-accent {
@@ -380,6 +396,7 @@ select.PhoneInputCountrySelect {
      Роли разведены так же: -orange красит ТЕКСТ, -deep идёт в ЗАЛИВКУ. */
   --pn-orange: #b67749;        /* цена, активный фильтр, ссылки — текст */
   --pn-orange-deep: #9d5e34;   /* заливка кнопок, белый текст на ней */
+  --pn-fill: var(--axis-bronze-fill);  /* градиентная заливка, см. axis-bronze-fill */
   --pn-orange-soft: #c88858;   /* артикулы, приглушённый акцент */
   --pn-warm-orange: #c88858;
   --pn-light-orange: #b67749;
@@ -414,6 +431,7 @@ select.PhoneInputCountrySelect {
 
 .parts-page .pn-btn-primary {
   background-color: var(--pn-orange-deep);
+  background-image: var(--pn-fill);
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
@@ -462,6 +480,7 @@ select.PhoneInputCountrySelect {
 }
 .parts-page .pn-cart-icon-btn:hover {
   background: var(--pn-orange-deep);
+  background-image: var(--pn-fill);
 }
 .parts-page .pn-cart-icon-btn:hover svg {
   color: white;

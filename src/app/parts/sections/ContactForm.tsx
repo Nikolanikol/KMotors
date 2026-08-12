@@ -122,17 +122,17 @@ export function ContactForm() {
       ref={sectionRef}
       className="py-24 bg-gradient-to-br from-[var(--pn-surface)] to-[var(--pn-bg)] relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--pn-orange-deep)]/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
 
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 relative z-10">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[var(--pn-orange-deep)]" />
+            <div className="h-px w-12 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]" />
             <span className="text-[var(--pn-orange)] text-sm font-medium tracking-wider uppercase">
               {t("parts.contact.badge")}
             </span>
-            <div className="h-px w-12 bg-[var(--pn-orange-deep)]" />
+            <div className="h-px w-12 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
             {t("parts.contact.title")}
@@ -317,7 +317,7 @@ export function ContactForm() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[var(--pn-orange-deep)] hover:brightness-110 text-white py-6 text-base font-semibold"
+                  className="w-full bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white py-6 text-base font-semibold"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

@@ -47,7 +47,7 @@ export default function Error({
           <button
             onClick={reset}
             className="px-6 py-3 rounded-full font-semibold text-sm text-white transition-colors"
-            style={{ backgroundColor: "var(--axis-bronze-deep)" }}
+            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}
           >
             Попробовать снова
           </button>

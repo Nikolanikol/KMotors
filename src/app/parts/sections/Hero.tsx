@@ -60,7 +60,7 @@ export function Hero() {
             />
             <button
               type="submit"
-              className="shrink-0 px-6 sm:px-8 py-2.5 rounded-full bg-[var(--pn-orange-deep)] text-white font-bold text-sm hover:brightness-110 active:scale-95 transition-all"
+              className="shrink-0 px-6 sm:px-8 py-2.5 rounded-full bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-bold text-sm hover:brightness-110 active:scale-95 transition-all"
             >
               {t("parts.hero.searchButton")}
             </button>

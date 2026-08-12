@@ -75,7 +75,7 @@ const SlidingButton: React.FC<SlidingButtonProps> = ({
         "relative cursor-pointer overflow-hidden group px-6 h-10 rounded-full text-white font-semibold text-sm transition-all duration-300",
         className
       )}
-      style={{ backgroundColor: "var(--axis-bronze-deep)" }}
+      style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}
       {...props}
     >
       <div

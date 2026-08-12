@@ -125,7 +125,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
         {/* Year badge */}
         <div
           className="absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full text-white z-10"
-          style={{ backgroundColor: "var(--axis-bronze-deep)" }}
+          style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}
         >
           {year}
         </div>
@@ -217,7 +217,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             target="_blank"
             onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_details_click"); }}
             className="flex items-center justify-center gap-1.5 h-11 flex-1 rounded-xl text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5"
-            style={{ backgroundColor: "var(--axis-bronze-deep)", color: "var(--axis-white)" }}
+            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "var(--axis-white)" }}
           >
             {t("common:car.details")}
             <ArrowRight className="w-3.5 h-3.5" />

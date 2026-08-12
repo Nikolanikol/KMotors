@@ -122,7 +122,7 @@ export default function NotFound() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <a href="https://t.me/avto_korea_nikolai" target="_blank" rel="noopener noreferrer"
                   className="inline-block font-bold py-2 px-6 rounded-lg text-white text-center transition-colors"
-                  style={{ backgroundColor: "var(--axis-bronze-deep)" }}>
+                  style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
                   {t.telegram}
                 </a>
                 <a href="https://www.instagram.com/kmotors.shop/" target="_blank" rel="noopener noreferrer"

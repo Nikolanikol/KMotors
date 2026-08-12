@@ -82,7 +82,7 @@ export default function CookieBanner() {
       <button
         onClick={accept}
         className="px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-all duration-200"
-        style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}
+        style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
       >

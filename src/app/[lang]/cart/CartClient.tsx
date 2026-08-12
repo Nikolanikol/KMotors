@@ -73,7 +73,7 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
             <p className="text-sm text-[var(--pn-text-muted)]">{l.emptyDesc}</p>
             <Link
               href={`/${lang}/parts`}
-              className="inline-flex items-center gap-2 mt-2 px-6 py-2.5 rounded-full bg-[var(--pn-orange-deep)] text-white font-semibold text-sm hover:brightness-110 transition-all"
+              className="inline-flex items-center gap-2 mt-2 px-6 py-2.5 rounded-full bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-semibold text-sm hover:brightness-110 transition-all"
             >
               {l.toCatalog}
               <ArrowRight className="w-4 h-4" />
@@ -132,7 +132,7 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
 
               <button
                 onClick={() => setOrderOpen(true)}
-                className="w-full mt-5 h-12 rounded-xl bg-[var(--pn-orange-deep)] text-white font-semibold flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer"
+                className="w-full mt-5 h-12 rounded-xl bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-semibold flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer"
               >
                 {l.checkout}
                 <ArrowRight className="w-5 h-5" />

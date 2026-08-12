@@ -54,7 +54,7 @@ export function NoResultsBanner({
       <div className="max-w-2xl mx-auto rounded-2xl border border-[var(--pn-orange)]/30 bg-[var(--pn-surface)] overflow-hidden shadow-xl">
         {/* Шапка */}
         <div className="px-6 sm:px-8 pt-8 pb-6 text-center bg-gradient-to-b from-[var(--pn-orange)]/10 to-transparent">
-          <div className="w-14 h-14 rounded-full bg-[var(--pn-orange-deep)]/15 border border-[var(--pn-orange)]/30 flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 rounded-full bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/15 border border-[var(--pn-orange)]/30 flex items-center justify-center mx-auto mb-4">
             <SearchX className="w-7 h-7 text-[var(--pn-orange)]" />
           </div>
 
@@ -77,7 +77,7 @@ export function NoResultsBanner({
         <div className="px-6 sm:px-8 pb-6 space-y-3">
           <button
             onClick={openOrder}
-            className="w-full h-12 rounded-xl bg-[var(--pn-orange-deep)] text-white font-semibold text-base hover:brightness-110 transition-all shadow-lg shadow-[var(--pn-orange)]/20"
+            className="w-full h-12 rounded-xl bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-semibold text-base hover:brightness-110 transition-all shadow-lg shadow-[var(--pn-orange)]/20"
           >
             {t("parts.catalog.miss.cta")}
           </button>

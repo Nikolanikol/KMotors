@@ -233,7 +233,7 @@ export default function Testimonials() {
                              group-hover:opacity-100 group-hover:scale-100
                              group-focus-visible:opacity-100 group-focus-visible:scale-100"
                   style={{
-                    backgroundColor: "var(--axis-bronze-deep)",
+                    backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)",
                     color: "#fff",
                   }}
                   aria-hidden="true"

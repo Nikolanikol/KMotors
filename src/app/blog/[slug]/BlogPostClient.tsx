@@ -176,14 +176,14 @@ export default function BlogPostPage({ initialPost }: Props) {
                 {!isCatalogBlocked && (
                   <Link href={`/${lang}/catalog`}
                     className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white transition-colors"
-                    style={{ backgroundColor: "var(--axis-bronze-deep)" }}>
+                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
                     Смотреть каталог
                   </Link>
                 )}
                 <Link href={`/${lang}/calculator`}
                   className="flex-1 text-center px-5 py-3 font-semibold rounded-xl transition-colors"
                   style={isCatalogBlocked
-                    ? { backgroundColor: "var(--axis-bronze-deep)", color: "white" }
+                    ? { backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }
                     : { border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
                   🧮 Рассчитать растаможку
                 </Link>
@@ -223,7 +223,7 @@ export default function BlogPostPage({ initialPost }: Props) {
         <div className="mt-8 text-center">
           <button onClick={() => router.back()}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white transition-colors"
-            style={{ backgroundColor: "var(--axis-bronze-deep)" }}>
+            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
             <ArrowLeft className="w-4 h-4" />
             {t("blog.backToBlog")}
           </button>

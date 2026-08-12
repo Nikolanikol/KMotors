@@ -78,7 +78,7 @@ export default function Stage() {
               <ul className="space-y-2">
                 {step.desc.map((d, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--axis-gray)" }}>
-                    <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "var(--axis-bronze-deep)" }} />
+                    <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }} />
                     {d}
                   </li>
                 ))}

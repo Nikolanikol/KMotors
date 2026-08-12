@@ -99,7 +99,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ data }) => {
               {carInfoChanges.map((change, i) => (
                 <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-lg" style={{ backgroundColor: "var(--axis-graphite)" }}>
                   <span className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "var(--axis-bronze-deep)", color: "white" }}>{i + 1}</span>
+                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}>{i + 1}</span>
                   <span className="text-xs font-mono" style={{ color: "var(--axis-white)" }}>{change.carNo}</span>
                   <span className="text-xs ml-auto" style={{ color: "var(--axis-gray)" }}>{change.date?.slice(0, 10) ?? "—"}</span>
                 </div>

@@ -64,14 +64,14 @@ export function ProductCard({ product, productName, isVisible, index, href, onAd
             : <div className="flex flex-col items-center gap-1.5 text-gray-300"><Wrench className="w-8 h-8" /><span className="text-xs">{t("parts.catalog.noPhoto")}</span></div>}
         </div>
         {product.is_new && (
-          <div className="absolute top-3 left-3 bg-[var(--pn-orange-deep)] text-white text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+          <div className="absolute top-3 left-3 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
             {t("parts.catalog.newBadge")}
           </div>
         )}
         <button
           type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onQuickView(); }}
-          className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--pn-orange-deep)]"
+          className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--pn-orange-deep)] hover:bg-[image:var(--pn-fill)]"
           title="Quick view"
         >
           <Eye className="w-4 h-4" />
@@ -91,7 +91,7 @@ export function ProductCard({ product, productName, isVisible, index, href, onAd
             onClick={handleCart}
             className={cn(
               "h-9 w-9 p-0 rounded-xl text-white transition-all active:scale-95",
-              isInCart ? "bg-[var(--pn-success)] hover:bg-[var(--pn-success)] cursor-default" : "bg-[var(--pn-orange-deep)] hover:brightness-110 shadow-lg"
+              isInCart ? "bg-[var(--pn-success)] hover:bg-[var(--pn-success)] cursor-default" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 shadow-lg"
             )}
             title={cartLabel}
           >
