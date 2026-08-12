@@ -135,7 +135,7 @@ export default function BlogPostPage({ initialPost }: Props) {
                 {formatDate(post.published_at, lang)}
               </span>
               <span className="px-3 py-0.5 rounded-full font-medium text-xs"
-                style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}>
+                style={{ backgroundColor: "rgba(182,119,73,0.1)", color: "var(--axis-orange)" }}>
                 {t(CATEGORY_LABELS[post.category] || "blog.other")}
               </span>
             </div>
@@ -165,7 +165,7 @@ export default function BlogPostPage({ initialPost }: Props) {
 
             {/* CTA */}
             <div className="mt-2 p-6 rounded-2xl"
-              style={{ background: "rgba(255,69,0,0.08)", border: "1px solid rgba(255,69,0,0.25)" }}>
+              style={{ background: "rgba(182,119,73,0.08)", border: "1px solid rgba(182,119,73,0.25)" }}>
               <h3 className="text-lg font-bold mb-1" style={{ color: "var(--axis-white)" }}>
                 Готовы выбрать автомобиль?
               </h3>
@@ -176,14 +176,14 @@ export default function BlogPostPage({ initialPost }: Props) {
                 {!isCatalogBlocked && (
                   <Link href={`/${lang}/catalog`}
                     className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white transition-colors"
-                    style={{ backgroundColor: "var(--axis-orange)" }}>
+                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
                     Смотреть каталог
                   </Link>
                 )}
                 <Link href={`/${lang}/calculator`}
                   className="flex-1 text-center px-5 py-3 font-semibold rounded-xl transition-colors"
                   style={isCatalogBlocked
-                    ? { backgroundColor: "var(--axis-orange)", color: "white" }
+                    ? { backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }
                     : { border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
                   🧮 Рассчитать растаможку
                 </Link>
@@ -210,7 +210,7 @@ export default function BlogPostPage({ initialPost }: Props) {
                   {post.tags.map((tag) => (
                     <a key={tag} href={`/${lang}/blog/tag/${encodeURIComponent(tag)}`}
                       className="text-xs px-2.5 py-1 rounded-full transition-colors"
-                      style={{ backgroundColor: "rgba(255,69,0,0.08)", color: "var(--axis-gray)" }}>
+                      style={{ backgroundColor: "rgba(182,119,73,0.08)", color: "var(--axis-gray)" }}>
                       #{tag}
                     </a>
                   ))}
@@ -223,7 +223,7 @@ export default function BlogPostPage({ initialPost }: Props) {
         <div className="mt-8 text-center">
           <button onClick={() => router.back()}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white transition-colors"
-            style={{ backgroundColor: "var(--axis-orange)" }}>
+            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
             <ArrowLeft className="w-4 h-4" />
             {t("blog.backToBlog")}
           </button>

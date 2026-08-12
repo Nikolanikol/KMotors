@@ -58,7 +58,7 @@ export function About() {
             }`}
           >
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-px w-12 bg-[var(--pn-orange)]" />
+              <div className="h-px w-12 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]" />
               <span className="text-[var(--pn-orange)] text-sm font-medium tracking-wider uppercase">
                 {t("parts.about.badge")}
               </span>
@@ -102,7 +102,7 @@ export function About() {
                 }`}
                 style={{ transitionDelay: isVisible ? `${400 + index * 100}ms` : "0ms" }}
               >
-                <div className="w-14 h-14 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--pn-orange)] transition-colors">
+                <div className="w-14 h-14 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--pn-orange-deep)] group-hover:bg-[image:var(--pn-fill)] transition-colors">
                   <Icon className="w-7 h-7 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-[var(--pn-text)] mb-2">

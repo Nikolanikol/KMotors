@@ -296,7 +296,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
                 <span className="text-sm font-semibold" style={{ color: "var(--axis-white)" }}>
                   {t("car.standardOptions")}
                 </span>
-                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)" }}>
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(182,119,73,0.12)", color: "var(--axis-orange)" }}>
                   {standardOptions.length}
                 </span>
               </div>
@@ -320,7 +320,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
                   <span className="text-sm font-semibold" style={{ color: "var(--axis-white)" }}>
                     {t("car.choiceOptions")}
                   </span>
-                  <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(255,69,0,0.12)", color: "var(--axis-orange)" }}>
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: "rgba(182,119,73,0.12)", color: "var(--axis-orange)" }}>
                     {choiceOptions.length}
                   </span>
                 </div>

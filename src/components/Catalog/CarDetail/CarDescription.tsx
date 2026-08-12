@@ -203,9 +203,9 @@ export default function CarDescription({
             key={tag}
             className="text-xs px-2.5 py-1 rounded-full"
             style={{
-              backgroundColor: "rgba(255,69,0,0.08)",
+              backgroundColor: "rgba(182,119,73,0.08)",
               color: "var(--axis-orange)",
-              border: "1px solid rgba(255,69,0,0.2)",
+              border: "1px solid rgba(182,119,73,0.2)",
             }}
           >
             {tag}

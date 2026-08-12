@@ -182,7 +182,7 @@ export function OrderModal({
         <div className="bg-[#141414] border-b border-[#333] px-6 py-5 flex items-start justify-between gap-4">
           <div className="min-w-0">
             {(title || subtitle) && (
-              <p className="text-[#ff7a00] text-[11px] font-bold uppercase tracking-wider mb-1.5">{title}</p>
+              <p className="text-[#b67749] text-[11px] font-bold uppercase tracking-wider mb-1.5">{title}</p>
             )}
             <p className="text-[#a5a09c] text-xs mb-0.5 font-mono">{t("parts.order.partNumber")}: {partNumber}</p>
             <h2 className="text-white font-bold text-lg leading-snug line-clamp-2">{productName}</h2>
@@ -211,7 +211,7 @@ export function OrderModal({
               </div>
               <Button
                 onClick={handleClose}
-                className="bg-[#ff7a00] hover:brightness-110 text-white mt-2 px-8"
+                className="bg-[#9d5e34] hover:brightness-110 text-white mt-2 px-8"
               >
                 {t("parts.order.closeBtn")}
               </Button>
@@ -222,15 +222,15 @@ export function OrderModal({
 
               {/* Product chip */}
               <div className="flex items-center gap-2 bg-[#201f1f] border border-[#333] rounded-xl px-3 py-2.5">
-                <Package className="w-4 h-4 text-[#ff7a00] shrink-0" />
+                <Package className="w-4 h-4 text-[#b67749] shrink-0" />
                 <span className="text-xs text-[#e6e2e0] font-medium truncate">{t("parts.order.orderingPart")}: {partNumber}</span>
-                {priceText && <span className="ml-auto text-xs font-bold text-[#ff7a00]">{priceText}</span>}
+                {priceText && <span className="ml-auto text-xs font-bold text-[#b67749]">{priceText}</span>}
               </div>
 
               {/* Name */}
               <div className="space-y-1.5">
                 <Label htmlFor="order-name" className="text-sm font-medium text-[#e6e2e0]">
-                  {t("parts.order.nameLabel")} <span className="text-[#ff7a00]">*</span>
+                  {t("parts.order.nameLabel")} <span className="text-[#b67749]">*</span>
                 </Label>
                 <Input
                   id="order-name"
@@ -248,7 +248,7 @@ export function OrderModal({
               {/* Phone */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium text-[#e6e2e0]">
-                  {t("parts.order.phoneLabel")} <span className="text-[#ff7a00]">*</span>
+                  {t("parts.order.phoneLabel")} <span className="text-[#b67749]">*</span>
                 </Label>
                 <PhoneInput
                   value={phone}
@@ -280,7 +280,7 @@ export function OrderModal({
               {requireCountry && (
                 <div className="space-y-1.5">
                   <Label htmlFor="order-country" className="text-sm font-medium text-[#e6e2e0]">
-                    {t("parts.order.countryLabel")} <span className="text-[#ff7a00]">*</span>
+                    {t("parts.order.countryLabel")} <span className="text-[#b67749]">*</span>
                   </Label>
                   <Input
                     id="order-country"
@@ -316,7 +316,7 @@ export function OrderModal({
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#ff7a00] hover:brightness-110 text-white font-semibold text-base mt-2"
+                className="w-full h-12 bg-[#9d5e34] hover:brightness-110 text-white font-semibold text-base mt-2"
               >
                 {loading ? t("parts.order.sending") : t("parts.order.submitBtn")}
               </Button>

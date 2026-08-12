@@ -157,7 +157,7 @@ export default function CompareClient() {
                       >
                         {display}
                         {best && (
-                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(255,69,0,0.15)", color: "var(--axis-orange)" }}>
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: "rgba(182,119,73,0.15)", color: "var(--axis-orange)" }}>
                             ✓
                           </span>
                         )}

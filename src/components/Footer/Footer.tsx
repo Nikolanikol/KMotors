@@ -65,8 +65,8 @@ function PayCard({ label, children }: { label: string; children: ReactNode }) {
         border: "1px solid rgba(74,74,74,0.35)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,69,0,0.5)";
-        e.currentTarget.style.backgroundColor = "rgba(255,69,0,0.06)";
+        e.currentTarget.style.borderColor = "rgba(182,119,73,0.5)";
+        e.currentTarget.style.backgroundColor = "rgba(182,119,73,0.06)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "rgba(74,74,74,0.35)";
@@ -78,27 +78,18 @@ function PayCard({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+// Название рядом идёт текстом, поэтому знак декоративный — alt пустой,
+// иначе скринридер прочитает бренд дважды.
 const KAxisLogo = () => (
-  <svg
-    width="28"
-    height="28"
-    viewBox="0 0 36 36"
-    fill="none"
-    className="flex-shrink-0"
-  >
-    <defs>
-      <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="36" y2="36">
-        <stop offset="0%" stopColor="#FF4500" />
-        <stop offset="100%" stopColor="#FF8C00" />
-      </linearGradient>
-    </defs>
-    <path
-      d="M4 32L16 4H22L14 20L28 4H32L18 20L28 32H22L12 20L8 32H4Z"
-      fill="url(#footerLogoGrad)"
-      strokeWidth="0.5"
-    />
-    <path d="M20 4L32 4L24 14L20 4Z" fill="#FF6B1A" opacity="0.6" />
-  </svg>
+  // eslint-disable-next-line @next/next/no-img-element -- статичный SVG в 533 B, next/image для векторов ничего не оптимизирует
+  <img
+    src="/logo/logo-mark.svg"
+    alt=""
+    width={40}
+    height={28}
+    style={{ height: 28 }}
+    className="w-auto flex-shrink-0"
+  />
 );
 
 export default function Footer() {
@@ -146,7 +137,7 @@ export default function Footer() {
                 className="font-heading text-lg"
                 style={{ color: "var(--axis-white)" }}
               >
-                K<span style={{ color: "var(--axis-orange)" }}>-Axis</span>
+                K<span style={{ color: "var(--axis-bronze)" }}>-Axis</span>
               </span>
             </Link>
             <p
@@ -226,7 +217,7 @@ export default function Footer() {
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
                       style={{
-                        backgroundColor: "rgba(255,69,0,0.1)",
+                        backgroundColor: "rgba(182,119,73,0.1)",
                         color: "var(--axis-orange)",
                       }}
                     >
@@ -250,7 +241,7 @@ export default function Footer() {
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{
-                        backgroundColor: "rgba(255,69,0,0.08)",
+                        backgroundColor: "rgba(182,119,73,0.08)",
                         color: "var(--axis-orange)",
                       }}
                     >
@@ -276,20 +267,20 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
                     style={{
-                      backgroundColor: "rgba(255,69,0,0.08)",
+                      backgroundColor: "rgba(182,119,73,0.08)",
                       color: "var(--axis-gray)",
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.color =
                         "var(--axis-orange)";
                       (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(255,69,0,0.15)";
+                        "rgba(182,119,73,0.15)";
                     }}
                     onMouseLeave={(e) => {
                       (e.currentTarget as HTMLElement).style.color =
                         "var(--axis-gray)";
                       (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(255,69,0,0.08)";
+                        "rgba(182,119,73,0.08)";
                     }}
                     aria-label="Telegram"
                   >
@@ -301,20 +292,20 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
                     style={{
-                      backgroundColor: "rgba(255,69,0,0.08)",
+                      backgroundColor: "rgba(182,119,73,0.08)",
                       color: "var(--axis-gray)",
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.color =
                         "var(--axis-orange)";
                       (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(255,69,0,0.15)";
+                        "rgba(182,119,73,0.15)";
                     }}
                     onMouseLeave={(e) => {
                       (e.currentTarget as HTMLElement).style.color =
                         "var(--axis-gray)";
                       (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(255,69,0,0.08)";
+                        "rgba(182,119,73,0.08)";
                     }}
                     aria-label="WhatsApp"
                   >
@@ -326,20 +317,20 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
                     style={{
-                      backgroundColor: "rgba(255,69,0,0.08)",
+                      backgroundColor: "rgba(182,119,73,0.08)",
                       color: "var(--axis-gray)",
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.color =
                         "var(--axis-orange)";
                       (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(255,69,0,0.15)";
+                        "rgba(182,119,73,0.15)";
                     }}
                     onMouseLeave={(e) => {
                       (e.currentTarget as HTMLElement).style.color =
                         "var(--axis-gray)";
                       (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(255,69,0,0.08)";
+                        "rgba(182,119,73,0.08)";
                     }}
                     aria-label="TikTok"
                   >
@@ -441,9 +432,9 @@ export default function Footer() {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
             style={{
-              backgroundColor: "rgba(255,69,0,0.1)",
+              backgroundColor: "rgba(182,119,73,0.1)",
               color: "var(--axis-orange)",
-              border: "1px solid rgba(255,69,0,0.2)",
+              border: "1px solid rgba(182,119,73,0.2)",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.backgroundColor =
@@ -453,7 +444,7 @@ export default function Footer() {
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.backgroundColor =
-                "rgba(255,69,0,0.1)";
+                "rgba(182,119,73,0.1)";
               (e.currentTarget as HTMLElement).style.color =
                 "var(--axis-orange)";
             }}

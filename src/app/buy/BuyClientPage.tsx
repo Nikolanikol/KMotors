@@ -111,7 +111,7 @@ export default function HowToBuyPage() {
                   </div>
 
                   <div className="md:hidden w-10 h-10 rounded-full flex items-center justify-center mb-3"
-                    style={{ backgroundColor: "var(--axis-orange)" }}>
+                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
                     <Icon className="w-5 h-5 text-white" />
                   </div>
 
@@ -127,13 +127,13 @@ export default function HowToBuyPage() {
                     </p>
 
                     {step.hasHighlight && highlightText && step.highlightType === "important" && (
-                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(255,69,0,0.08)", borderColor: "var(--axis-orange)", color: "var(--axis-white)" }}>
+                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(182,119,73,0.08)", borderColor: "var(--axis-orange)", color: "var(--axis-white)" }}>
                         <span className="font-bold" style={{ color: "var(--axis-orange)" }}>{t('buy.important')}: </span>
                         {highlightText}
                       </div>
                     )}
                     {step.hasHighlight && highlightText && step.highlightType === "note" && (
-                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(255,140,0,0.08)", borderColor: "var(--axis-amber)", color: "var(--axis-white)" }}>
+                      <div dir="auto" className="mt-3 p-3 rounded-lg border-l-2 text-sm" style={{ backgroundColor: "rgba(182,119,73,0.08)", borderColor: "var(--axis-amber)", color: "var(--axis-white)" }}>
                         <span className="font-bold" style={{ color: "var(--axis-amber)" }}>{t('buy.note')}: </span>
                         {highlightText}
                       </div>

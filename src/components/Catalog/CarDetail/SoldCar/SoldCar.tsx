@@ -48,7 +48,7 @@ export default function SoldCar({ lang, carId, snapshot, similar, rates, carName
       <div className="max-w-2xl mx-auto">
         <div
           className="rounded-3xl overflow-hidden"
-          style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(255,69,0,0.25)" }}
+          style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(182,119,73,0.25)" }}
         >
           {photo && (
             <div className="relative w-full aspect-[4/3] sm:aspect-[16/10]">

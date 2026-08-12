@@ -25,7 +25,7 @@ function VinMileageSection({ vin, vehicleNo, mileage }: VinMileageSectionProps) 
   const Card = ({ icon: Icon, label, value, onCopy, copied }: { icon: any; label: string; value?: string; onCopy?: () => void; copied?: boolean }) => (
     <div className="rounded-xl p-4 group" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(255,69,0,0.1)", color: "var(--axis-orange)" }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(182,119,73,0.1)", color: "var(--axis-orange)" }}>
           <Icon className="w-4 h-4" />
         </div>
         <span className="text-xs font-medium" style={{ color: "var(--axis-gray)" }}>{label}</span>
@@ -36,7 +36,7 @@ function VinMileageSection({ vin, vehicleNo, mileage }: VinMileageSectionProps) 
         </code>
         {onCopy && (
           <button onClick={onCopy} className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ backgroundColor: "rgba(255,69,0,0.1)" }}>
+            style={{ backgroundColor: "rgba(182,119,73,0.1)" }}>
             <Copy className="w-3.5 h-3.5" style={{ color: copied ? "#22c55e" : "var(--axis-orange)" }} />
           </button>
         )}

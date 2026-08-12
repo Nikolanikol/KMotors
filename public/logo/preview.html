@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Axis — логотип, адаптивные размеры</title>
+<link rel="icon" href="/favicon_io/new/favicon.svg" type="image/svg+xml">
+<style>
+  :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: #0A0A0A; color: #E8E4E0; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 40px 24px 90px; }
+  h1 { font-size: 22px; margin: 0 0 6px; font-weight: 700; }
+  p.lead { margin: 0 0 36px; color: #8A8A8A; font-size: 14px; line-height: 1.65; max-width: 70ch; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #8A8A8A; margin: 40px 0 14px; font-weight: 700; }
+  .box { background: #141414; border: 1px solid #262626; border-radius: 14px; padding: 26px; }
+  .row { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
+  .item { text-align: center; }
+  .item img { display: block; margin: 0 auto 10px; }
+  .cap { font-size: 11px; color: #6f6f6f; font-variant-numeric: tabular-nums; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 6px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #262626; }
+  th { color: #8A8A8A; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  code { background: #1f1f1f; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #DA9A67; }
+  /* Живая шапка: знак на мобильном, горизонтальный лок-ап от 640px */
+  .hdr { display: flex; align-items: center; justify-content: space-between; background: #141414; border: 1px solid #262626; border-radius: 12px; padding: 0 20px; height: 64px; }
+  .hdr nav { display: flex; gap: 20px; font-size: 13px; color: #9a9a9a; }
+  .hdr .logo-full { display: none; height: 34px; }
+  .hdr .logo-mark { display: block; height: 30px; }
+  @media (min-width: 640px) {
+    .hdr .logo-full { display: block; }
+    .hdr .logo-mark { display: none; }
+  }
+  .note { font-size: 12px; color: #6f6f6f; line-height: 1.65; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Логотип Axis — три файла на все места</h1>
+  <p class="lead">
+    SVG масштабируется без потерь, поэтому «размеры под устройства» — это не набор растров разного размера,
+    а разная <b>компоновка</b>: на узком экране слово не помещается и не читается, значит там остаётся только знак.
+    Переключение — обычным CSS-медиазапросом, оба файла в разметке, лишних запросов нет.
+  </p>
+
+  <h2>Живая шапка — сузьте окно до 640px</h2>
+  <div class="hdr">
+    <img class="logo-full" src="/logo/logo-horizontal.svg" alt="K-Axis">
+    <img class="logo-mark" src="/logo/logo-mark.svg" alt="K-Axis">
+    <nav><span>Каталог</span><span>Запчасти</span><span>Блог</span><span>Калькулятор</span></nav>
+  </div>
+  <p class="note">Ниже 640px остаётся знак, выше — горизонтальный лок-ап. Порог правится одной строкой в CSS.</p>
+
+  <h2>Горизонтальный лок-ап — <code>logo-horizontal.svg</code></h2>
+  <div class="box"><div class="row">
+    <div class="item"><img src="/logo/logo-horizontal.svg" height="24" alt=""><div class="cap">24 px</div></div>
+    <div class="item"><img src="/logo/logo-horizontal.svg" height="32" alt=""><div class="cap">32 px</div></div>
+    <div class="item"><img src="/logo/logo-horizontal.svg" height="40" alt=""><div class="cap">40 px — рекомендую для шапки</div></div>
+  </div></div>
+  <p class="note">Пропорция 4.23:1. При высоте 40px штрих букв ≈ 2.3px — читается. При 24px ≈ 1.4px, уже на грани.</p>
+
+  <h2>Знак — <code>logo-mark.svg</code></h2>
+  <div class="box"><div class="row">
+    <div class="item"><img src="/logo/logo-mark.svg" height="24" alt=""><div class="cap">24 px</div></div>
+    <div class="item"><img src="/logo/logo-mark.svg" height="30" alt=""><div class="cap">30 px — мобильная шапка</div></div>
+    <div class="item"><img src="/logo/logo-mark.svg" height="48" alt=""><div class="cap">48 px</div></div>
+    <div class="item"><img src="/logo/logo-mark.svg" height="80" alt=""><div class="cap">80 px</div></div>
+  </div></div>
+
+  <h2>Вертикальный лок-ап — <code>logo-stacked.svg</code></h2>
+  <div class="box"><div class="row">
+    <div class="item"><img src="/logo/logo-stacked.svg" height="64" alt=""><div class="cap">64 px</div></div>
+    <div class="item"><img src="/logo/logo-stacked.svg" height="96" alt=""><div class="cap">96 px — футер</div></div>
+    <div class="item"><img src="/logo/logo-stacked.svg" height="140" alt=""><div class="cap">140 px</div></div>
+  </div></div>
+  <p class="note">Пропорция 1.70:1. Ниже 64px слово рассыпается — для шапки не годится, только для крупных мест.</p>
+
+  <h2>Куда что</h2>
+  <table>
+    <tr><th>Место</th><th>Файл</th><th>Высота</th></tr>
+    <tr><td>Шапка, мобильная (&lt; 640px)</td><td><code>logo-mark.svg</code></td><td>28–32 px</td></tr>
+    <tr><td>Шапка, десктоп (≥ 640px)</td><td><code>logo-horizontal.svg</code></td><td>36–40 px</td></tr>
+    <tr><td>Футер</td><td><code>logo-stacked.svg</code></td><td>96–120 px</td></tr>
+    <tr><td>Фавиконка, app-иконки</td><td><code>/favicon_io/new/</code></td><td>16–512 px</td></tr>
+    <tr><td>OG-картинки, соцсети</td><td>растр из <code>logo-stacked</code></td><td>≥ 200 px</td></tr>
+  </table>
+
+  <h2>Вес</h2>
+  <table>
+    <tr><th>Файл</th><th>Размер</th><th>gzip (как отдаёт сервер)</th></tr>
+    <tr><td><code>logo-mark.svg</code></td><td>533 B</td><td>379 B</td></tr>
+    <tr><td><code>logo-horizontal.svg</code></td><td>9 405 B</td><td>2 479 B</td></tr>
+    <tr><td><code>logo-stacked.svg</code></td><td>9 398 B</td><td>2 474 B</td></tr>
+  </table>
+  <p class="note">Исходник, из которого всё собрано, весил 9.9 МБ — там лежала JPEG-текстура «медная плита».</p>
+</div>
+</body>
+</html>

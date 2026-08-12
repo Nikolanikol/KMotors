@@ -648,9 +648,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{
-                    backgroundColor: "rgba(255,69,0,0.12)",
+                    backgroundColor: "rgba(182,119,73,0.12)",
                     color: "var(--axis-orange)",
-                    border: "1px solid rgba(255,69,0,0.3)",
+                    border: "1px solid rgba(182,119,73,0.3)",
                   }}
                 >
                   {carData}
@@ -670,7 +670,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 style={{
                   background:
                     "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))",
-                  boxShadow: "0 4px 20px rgba(255,69,0,0.25)",
+                  boxShadow: "0 4px 20px rgba(182,119,73,0.25)",
                 }}
               >
                 <div>

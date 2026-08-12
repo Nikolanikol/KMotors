@@ -15,8 +15,8 @@ const CARDS = [
     descKey: "navCards.catalogDesc",
     href: "/catalog",
     color: "var(--axis-orange)",
-    bg: "rgba(255,69,0,0.08)",
-    border: "rgba(255,69,0,0.2)",
+    bg: "rgba(182,119,73,0.08)",
+    border: "rgba(182,119,73,0.2)",
   },
   {
     icon: "🔧",

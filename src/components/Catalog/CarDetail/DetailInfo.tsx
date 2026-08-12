@@ -81,8 +81,8 @@ const DetailInfo: FC<DetailInfoProps> = ({ data }) => {
           ].map(({ label, value, bad }) => (
             <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
               style={{
-                backgroundColor: bad && value > 0 ? "rgba(255,69,0,0.12)" : "var(--axis-graphite)",
-                border: `1px solid ${bad && value > 0 ? "rgba(255,69,0,0.3)" : "rgba(74,74,74,0.3)"}`,
+                backgroundColor: bad && value > 0 ? "rgba(182,119,73,0.12)" : "var(--axis-graphite)",
+                border: `1px solid ${bad && value > 0 ? "rgba(182,119,73,0.3)" : "rgba(74,74,74,0.3)"}`,
                 color: bad && value > 0 ? "var(--axis-orange)" : "var(--axis-gray)",
               }}>
               <span style={{ color: bad && value > 0 ? "var(--axis-orange)" : "var(--axis-white)", fontWeight: 700 }}>{value}</span>
@@ -99,7 +99,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ data }) => {
               {carInfoChanges.map((change, i) => (
                 <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-lg" style={{ backgroundColor: "var(--axis-graphite)" }}>
                   <span className="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "var(--axis-orange)", color: "white" }}>{i + 1}</span>
+                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}>{i + 1}</span>
                   <span className="text-xs font-mono" style={{ color: "var(--axis-white)" }}>{change.carNo}</span>
                   <span className="text-xs ml-auto" style={{ color: "var(--axis-gray)" }}>{change.date?.slice(0, 10) ?? "—"}</span>
                 </div>

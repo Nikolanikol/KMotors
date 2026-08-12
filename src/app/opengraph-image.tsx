@@ -29,7 +29,7 @@ export default function Image() {
             transform: "translate(-50%, -50%)",
             width: "800px",
             height: "400px",
-            background: "radial-gradient(ellipse, rgba(255,69,0,0.18) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse, rgba(182,119,73,0.18) 0%, transparent 70%)",
             borderRadius: "50%",
           }}
         />
@@ -42,7 +42,7 @@ export default function Image() {
             top: "0",
             bottom: "0",
             width: "6px",
-            background: "linear-gradient(to bottom, #FF4500, #FF8C00)",
+            background: "linear-gradient(to bottom, #9d5e34, #9d5e34)",
           }}
         />
 
@@ -52,24 +52,24 @@ export default function Image() {
           <svg width="80" height="80" viewBox="0 0 36 36" fill="none">
             <defs>
               <linearGradient id="g" x1="0" y1="0" x2="36" y2="36">
-                <stop offset="0%" stopColor="#FF4500" />
-                <stop offset="100%" stopColor="#FF8C00" />
+                <stop offset="0%" stopColor="#b67749" />
+                <stop offset="100%" stopColor="#b67749" />
               </linearGradient>
             </defs>
             <path d="M4 32L16 4H22L14 20L28 4H32L18 20L28 32H22L12 20L8 32H4Z" fill="url(#g)" />
-            <path d="M20 4L32 4L24 14L20 4Z" fill="#FF6B1A" opacity="0.6" />
+            <path d="M20 4L32 4L24 14L20 4Z" fill="#b67749" opacity="0.6" />
           </svg>
 
           {/* Brand name */}
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span style={{ fontSize: "72px", fontWeight: "800", letterSpacing: "-2px", color: "#F5F0EB", lineHeight: 1 }}>
-              K<span style={{ color: "#FF4500" }}>-Axis</span>
+              K<span style={{ color: "#b67749" }}>-Axis</span>
             </span>
           </div>
         </div>
 
         {/* Divider */}
-        <div style={{ width: "120px", height: "3px", background: "linear-gradient(to right, #FF4500, #FF8C00)", marginBottom: "28px", borderRadius: "2px" }} />
+        <div style={{ width: "120px", height: "3px", background: "linear-gradient(to right, #9d5e34, #9d5e34)", marginBottom: "28px", borderRadius: "2px" }} />
 
         {/* Tagline */}
         <div style={{ fontSize: "36px", fontWeight: "600", color: "#F5F0EB", marginBottom: "16px", letterSpacing: "-0.5px" }}>
@@ -89,7 +89,7 @@ export default function Image() {
             { num: "12 лет", label: "на рынке" },
           ].map((s) => (
             <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-              <span style={{ fontSize: "32px", fontWeight: "800", color: "#FF4500" }}>{s.num}</span>
+              <span style={{ fontSize: "32px", fontWeight: "800", color: "#b67749" }}>{s.num}</span>
               <span style={{ fontSize: "14px", color: "#8A8A8A", textTransform: "uppercase", letterSpacing: "1px" }}>{s.label}</span>
             </div>
           ))}
