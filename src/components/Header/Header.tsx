@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { X, Menu, Heart, ShoppingCart } from "lucide-react";
+import { X, Menu, Heart, ShoppingCart, Instagram } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
@@ -14,6 +14,52 @@ import { useCartCount } from "@/hooks/useCartCount";
 import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+
+/** Ссылка без хвоста igsh/utm — это одноразовый токен шаринга из QR-кода. */
+const INSTAGRAM_URL = "https://www.instagram.com/axiskoreancar";
+
+/**
+ * Иконка Instagram в шапке — рядом с переключателем языков. На мобильной шапке
+ * размер совпадает с корзиной (36px), иначе ряд «языки + инстаграм + корзина +
+ * бургер» не помещается на узких телефонах.
+ */
+const InstagramLink = ({ position }: { position: "desktop" | "mobile" }) => (
+  <a
+    href={INSTAGRAM_URL}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Instagram"
+    onClick={() => trackEvent("contact", { method: "instagram_header", position })}
+    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
+      position === "mobile" ? "w-9 h-9" : "w-10 h-10"
+    }`}
+    style={{
+      backgroundColor: "rgba(225,48,108,0.16)",
+      color: "#F05C8E",
+      border: "1.5px solid rgba(225,48,108,0.4)",
+    }}
+    onMouseEnter={(e) => {
+      const el = e.currentTarget as HTMLElement;
+      el.style.color = "#FFFFFF";
+      el.style.backgroundImage =
+        "linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)";
+      el.style.borderColor = "rgba(225,48,108,0.75)";
+      el.style.boxShadow = "0 8px 20px -8px rgba(225,48,108,0.9)";
+    }}
+    onMouseLeave={(e) => {
+      const el = e.currentTarget as HTMLElement;
+      el.style.color = "#F05C8E";
+      el.style.backgroundImage = "none";
+      el.style.borderColor = "rgba(225,48,108,0.4)";
+      el.style.boxShadow = "none";
+    }}
+  >
+    <Instagram
+      className={position === "mobile" ? "w-[18px] h-[18px]" : "w-5 h-5"}
+      strokeWidth={2}
+    />
+  </a>
+);
 
 /**
  * Логотип адаптируется КОМПОНОВКОЙ, а не размером: у горизонтального лок-апа
@@ -123,6 +169,7 @@ export default function Header() {
           {/* Right side */}
           <div className="hidden lg:flex items-center gap-4">
             <LanguageSwitcher />
+            <InstagramLink position="desktop" />
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
               className="text-sm transition-colors"
@@ -164,6 +211,7 @@ export default function Header() {
           {/* Mobile right */}
           <div className="flex lg:hidden items-center gap-2">
             <LanguageSwitcher />
+            <InstagramLink position="mobile" />
             <div className="flex items-center gap-1.5">
                 <Link
                   href={`/${lang}/cart`}
