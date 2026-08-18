@@ -100,6 +100,10 @@
       "other": "Other"
     },
     "firstRegistration": "First Registration Date",
+    "share": "Share",
+    "shareClient": "Client link",
+    "shareManager": "Manager link",
+    "linkCopied": "Link copied",
     "sellerPhone": "Seller's Phone",
     "sellerAddress": "Address",
     "seller": "Seller",

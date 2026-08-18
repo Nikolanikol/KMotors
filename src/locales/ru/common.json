@@ -100,6 +100,10 @@
       "other": "Другое"
     },
     "firstRegistration": "Дата первой регистрации",
+    "share": "Поделиться",
+    "shareClient": "Ссылка для клиента",
+    "shareManager": "Ссылка для менеджера",
+    "linkCopied": "Ссылка скопирована",
     "sellerPhone": "Телефон продавца",
     "sellerAddress": "Адрес",
     "seller": "Продавец",

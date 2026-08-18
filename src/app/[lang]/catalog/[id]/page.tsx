@@ -6,6 +6,7 @@ import { MODEL_PAGES } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import RecommendedCars from "@/components/Catalog/CarDetail/Recommended/RecommendedCars";
+import ShareCar from "@/components/Catalog/CarDetail/ShareCar";
 import { FC, Suspense } from "react";
 import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSection";
 import { formatDate, formatYear } from "@/utils/formatDate";
@@ -644,7 +645,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                   </span>
                 )}
               </h1>
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex flex-wrap items-center gap-3 mt-2">
                 <span
                   className="px-3 py-1 rounded-full text-xs font-semibold"
                   style={{
@@ -655,6 +656,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 >
                   {carData}
                 </span>
+                <ShareCar title={fullCarName} />
               </div>
             </div>
             <CarouselLight
