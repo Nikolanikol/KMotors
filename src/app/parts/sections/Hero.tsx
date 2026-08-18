@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { UsedPartsPromo } from "./UsedPartsPromo";
 export function Hero() {
   const { t } = useTranslation();
   const [visible] = useState(true);
@@ -85,6 +86,10 @@ export function Hero() {
             </div>
           ))}
         </div>
+
+        {/* Второй магазин — полосой по ширине контейнера, чтобы не спорить с
+            центрированной композицией выше */}
+        <UsedPartsPromo className="mt-12 sm:mt-14" />
       </div>
     </section>
   );

@@ -414,6 +414,88 @@ select.PhoneInputCountrySelect {
   color: var(--pn-text);
 }
 
+/* ── Кросс-промо второго магазина (caranalizer.com) ──────────────
+   Палитра чужая и с бронзой контрастирует НАМЕРЕННО: ссылка ведёт на другой
+   бренд и должна читаться как другой бренд. Значения сняты с прода caranalizer
+   18.08.2026 — слейт #0f172a/#1e293b, янтарь #f59e0b, логотипный синий #3b82f6.
+   Плоская заливка слейтом на чёрной странице выглядит блёклой, поэтому цвет
+   держат два размытых пятна (--cz-orb), а не насыщенность фона. */
+.parts-page .cz-banner {
+  --cz-amber: #f59e0b;
+  --cz-blue: #3b82f6;
+  background-image: linear-gradient(115deg, #0a1020 0%, #101c33 45%, #17263f 100%);
+  border-color: #2c4066;
+}
+.parts-page .cz-banner:hover {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+
+/* Левый торец — единственное место, где оба акцента магазина стоят рядом */
+.parts-page .cz-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--cz-blue), var(--cz-amber));
+}
+
+.parts-page .cz-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(44px);
+}
+.parts-page .cz-orb-amber {
+  right: -70px;
+  top: -90px;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.4), transparent 68%);
+}
+.parts-page .cz-orb-blue {
+  left: 6%;
+  bottom: -150px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.32), transparent 70%);
+}
+
+/* Блик пробегает по наведению */
+.parts-page .cz-shine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -30%;
+  width: 20%;
+  transform: skewX(-18deg);
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), transparent);
+}
+
+/* Движение только тем, кто его не отключал системно */
+@media (prefers-reduced-motion: no-preference) {
+  .parts-page .cz-orb-amber {
+    animation: cz-pulse 6s ease-in-out infinite;
+  }
+  .parts-page .cz-orb-blue {
+    animation: cz-pulse 9s ease-in-out infinite reverse;
+  }
+  .parts-page .cz-banner:hover .cz-shine {
+    animation: cz-shine 0.9s ease-out;
+  }
+}
+
+@keyframes cz-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.14); }
+}
+@keyframes cz-shine {
+  0% { opacity: 0; left: -30%; }
+  18% { opacity: 1; }
+  100% { opacity: 0; left: 115%; }
+}
+
 /* Thin carbon texture for hero (subtle, non-noisy) */
 .parts-page .pn-carbon {
   background-color: var(--pn-bg);
