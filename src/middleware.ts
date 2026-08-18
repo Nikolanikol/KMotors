@@ -7,6 +7,23 @@ import { isLang, resolveLang } from "@/lib/lang";
 // IP адреса которые не трекаем (разработчики, владельцы)
 const EXCLUDED_IPS = ["14.5.115.104"];
 
+// Канонический хост публичного сайта. Всё остальное, что доезжает до origin
+// (служебный поддомен за Cloudflare Access, превью-домены Coolify, обращение по
+// IP), считается служебным входом: он не индексируется, не попадает в аналитику
+// и не подчиняется гео-скрытию ссылок на каталог.
+const CANONICAL_HOST = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop"
+).hostname;
+
+function isCanonicalHost(request: NextRequest): boolean {
+  const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
+  return (
+    host === CANONICAL_HOST ||
+    host === "localhost" ||
+    host === "127.0.0.1"
+  );
+}
+
 function shouldTrack(request: NextRequest): boolean {
   // Пропускаем RSC-запросы Next.js (React Server Component payload)
   const accept = request.headers.get("accept") || "";
@@ -20,7 +37,10 @@ function shouldTrack(request: NextRequest): boolean {
   const ua = request.headers.get("user-agent") || "";
   if (!ua || isbot(ua)) return false;
 
-  // Пропускаем владельца сайта по IP и по cookie админки
+  // Пропускаем владельца сайта: служебный хост, cookie админки, известный IP.
+  // Через служебный поддомен ходит только владелец — считать эти заходы
+  // трафиком значит портить собственную статистику.
+  if (!isCanonicalHost(request)) return false;
   const adminSession = request.cookies.get("admin_session");
   if (adminSession?.value) return false;
   const ip =
@@ -67,6 +87,23 @@ function isExcluded(path: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const response = await handle(request);
+
+  // ⚠️ Служебный хост обязан быть закрыт от индексации, иначе в выдаче окажется
+  // ПОЛНАЯ копия сайта на втором домене. Заголовок ставится здесь, поверх ЛЮБОГО
+  // ответа middleware, а не в отдельных ветках: их восемь, и новая забудется.
+  // Индексации мешают три независимых вещи — Cloudflare Access (крауле́р до
+  // страницы не доходит), этот заголовок и абсолютные canonical на www в самих
+  // страницах. Заголовок в HTML не запекается, поэтому общий кеш Next между
+  // хостами его не разносит.
+  if (!isCanonicalHost(request)) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+
+  return response;
+}
+
+async function handle(request: NextRequest) {
   const ua = request.headers.get("user-agent") || "";
 
   // --- Блокируем Electron-ботов/скраперов (кроме localhost) ---
@@ -113,6 +150,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // --- robots.txt служебного хоста: запрет целиком ---
+  // src/app/robots.ts отдаёт один и тот же файл на любом хосте — со ссылкой на
+  // sitemap.xml и разрешением обходить всё. На служебном поддомене это
+  // приглашение проиндексировать дубль сайта, поэтому подменяем ответ здесь.
+  if (path === "/robots.txt" && !isCanonicalHost(request)) {
+    return new NextResponse("User-agent: *\nDisallow: /\n", {
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
   // --- Пропускаем статику, API, sitemaps, файлы ---
   if (isExcluded(path)) {
     return NextResponse.next();
@@ -149,11 +196,18 @@ export async function middleware(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365, // 1 год
     });
 
-    // Страна пользователя — от Cloudflare (cf-ipcountry) или Vercel fallback
-    const country =
-      request.headers.get("cf-ipcountry") ||
-      request.headers.get("x-country") ||
-      "";
+    // Страна пользователя — от Cloudflare (cf-ipcountry) или Vercel fallback.
+    // ⚠️ На служебном хосте страну НЕ проставляем, и это и есть снятие слоя 2:
+    // из Кореи cf-ipcountry так и остаётся KR, а шесть компонентов и две
+    // серверные страницы сравнивают эту cookie с "KR" и прячут ссылки на
+    // каталог. Без обнуления служебный вход пускал бы на /catalog, но адрес
+    // приходилось бы набирать руками. Cookie host-only (Domain не задан),
+    // поэтому на www она не протекает.
+    const country = isCanonicalHost(request)
+      ? request.headers.get("cf-ipcountry") ||
+        request.headers.get("x-country") ||
+        ""
+      : "";
     response.cookies.set("x-user-country", country, {
       path: "/",
       sameSite: "lax",
