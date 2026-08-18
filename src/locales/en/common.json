@@ -354,6 +354,16 @@
       "statOriginal": "Genuine",
       "searchButton": "Search"
     },
+    "crossSell": {
+      "badge": "our partners",
+      "title": "Used OEM lighting from Korean yards",
+      "text": "Tail lights and fog lights bought directly from South Korean salvage yards. Every part is photographed on its own — you see exactly what ships.",
+      "factItems": "parts",
+      "factBrands": "brands",
+      "factDelivery": "delivery",
+      "factDeliveryNote": "worldwide",
+      "cta": "Browse Caranalizer"
+    },
     "catalog": {
       "badge": "CATALOG",
       "title": "Parts Catalog",

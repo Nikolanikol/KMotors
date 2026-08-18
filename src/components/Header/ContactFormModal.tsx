@@ -164,7 +164,7 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
                 </p>
               )}
             </form>
-            <hr />
+            <hr className="border-white/10" />
             <SocialRow />
           </DialogContent>
         </Dialog>
