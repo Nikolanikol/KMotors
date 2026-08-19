@@ -83,15 +83,56 @@ export default function ReviewsPopup() {
       if (cancelled || !gridRef.current) return;
 
       ctx = gsap.context(() => {
-        gsap.from("[data-review-card]", {
-          x: () => gsap.utils.random(-700, 700),
-          y: () => gsap.utils.random(-600, 600),
-          rotation: () => gsap.utils.random(-120, 120),
-          scale: 0.3,
+        const cards = gsap.utils.toArray<HTMLElement>("[data-review-card]");
+        // Подсказка компоновщику: карточек дюжина, и без неё браузер
+        // перерисовывает их на CPU — на слабом телефоне это и есть «дёргается».
+        //
+        // Снимается после приземления: двенадцать вечных слоёв на GPU — ровно
+        // то, от чего will-change предостерегают.
+        const setWillChange = (value: string) =>
+          cards.forEach((card) => {
+            card.style.willChange = value;
+          });
+        setWillChange("transform");
+
+        // Разлёт и проявление разведены на два твина НАМЕРЕННО. Одним твином
+        // прозрачность тянется всю дорогу, и карточка половину полёта висит
+        // полупрозрачной — глаз читает это как мерцание. Проявляется быстро,
+        // летит долго.
+        const stagger = { each: 0.045, from: "random" as const };
+
+        // ⚠️ fromTo, а не from, и остаточный наклон задан КОНЕЧНЫМ значением.
+        // GSAP сводит отдельные CSS-свойства rotate/translate/scale в общий
+        // transform и проставляет им `rotate: none` — наклон, выставленный
+        // стилем на элементе, он затирает. С `from` карточки приземлялись бы
+        // идеально ровными, и вся «куча» превращалась бы в строгую сетку.
+        gsap.fromTo(
+          cards,
+          {
+            x: () => gsap.utils.random(-380, 380),
+            y: () => gsap.utils.random(-300, 300),
+            rotation: () => gsap.utils.random(-42, 42),
+            scale: 0.78,
+          },
+          {
+            x: 0,
+            y: 0,
+            rotation: (_i: number, el: HTMLElement) => Number(el.dataset.tilt ?? 0),
+            scale: 1,
+            duration: 1.05,
+            // power3.out — торможение без отскока. back.out(1.4) стоял здесь
+            // раньше и давал перелёт с возвратом: он-то и читался как рывок.
+            ease: "power3.out",
+            stagger,
+            onComplete: () => setWillChange("auto"),
+          }
+        );
+
+        gsap.from(cards, {
           opacity: 0,
-          duration: 0.85,
-          ease: "back.out(1.4)",
-          stagger: { each: 0.07, from: "random" },
+          duration: 0.45,
+          ease: "power1.out",
+          stagger,
         });
       }, gridRef);
     })();
@@ -116,10 +157,12 @@ export default function ReviewsPopup() {
           aria-haspopup="dialog"
           className="group relative flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-full bg-[image:var(--axis-bronze-fill)] text-white shadow-[0_10px_30px_rgba(182,119,73,0.35)] transition-transform duration-300 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--axis-bronze)]"
         >
-          {/* Пульсирующее кольцо. motion-reduce его убирает — бесконечная
-              анимация относится ровно к тому, от чего эта настройка защищает. */}
+          {/* Пульсирующее кольцо. Штатный animate-ping идёт за секунду и
+              выглядит как резкий хлопок — растягиваем до 2.5с, получается
+              спокойное дыхание. motion-reduce убирает его совсем: бесконечная
+              анимация — ровно то, от чего эта настройка защищает. */}
           <span
-            className="absolute inset-0 animate-ping rounded-full border border-[var(--axis-bronze)] opacity-60 motion-reduce:hidden"
+            className="absolute inset-0 animate-ping rounded-full border border-[var(--axis-bronze)] opacity-60 [animation-duration:2.5s] motion-reduce:hidden"
             aria-hidden
           />
           <MessageSquareQuote className="h-6 w-6" strokeWidth={2} />
@@ -135,13 +178,16 @@ export default function ReviewsPopup() {
           role="dialog"
           aria-modal="true"
           aria-label={t("tracking.reviews.title")}
-          className="fixed inset-0 z-[70] overflow-y-auto bg-[rgba(10,10,10,0.96)] backdrop-blur-sm"
+          /* Подложка проявляется, а не возникает: раньше попап включался
+             мгновенно, и разлёт карточек начинался на уже готовом чёрном
+             фоне — вместе это и давало ощущение рывка. */
+          className="fixed inset-0 z-[70] overflow-y-auto bg-[rgba(10,10,10,0.96)] backdrop-blur-sm animate-in fade-in-0 duration-300 motion-reduce:animate-none"
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}
         >
           <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
-            <header className="mb-8 flex items-start justify-between gap-4">
+            <header className="mb-8 flex items-start justify-between gap-4 animate-in fade-in-0 slide-in-from-top-2 duration-500 motion-reduce:animate-none">
               <div>
                 <h2 className="text-2xl font-bold text-[var(--axis-white)] sm:text-3xl">
                   {t("tracking.reviews.title")}
@@ -168,20 +214,32 @@ export default function ReviewsPopup() {
                   data-review-card
                   type="button"
                   onClick={() => setLightboxIndex(i)}
-                  style={{ rotate: `${TILT[i % TILT.length]}deg` }}
-                  className="group overflow-hidden rounded-2xl border border-[var(--axis-bronze)]/20 bg-[var(--axis-charcoal)] text-left transition-transform duration-300 hover:!rotate-0 hover:scale-[1.03]"
+                  /* Наклон задан transform'ом и продублирован в data-tilt:
+                     стиль работает, пока GSAP не загрузился (и при отключённой
+                     анимации), а data-tilt — то же число для конечной точки
+                     твина. Ховер-масштаб живёт на вложенном узле: transform
+                     внешнего принадлежит GSAP, и CSS дралась бы с ним за него. */
+                  data-tilt={TILT[i % TILT.length]}
+                  style={{ transform: `rotate(${TILT[i % TILT.length]}deg)` }}
+                  className="group cursor-zoom-in overflow-hidden rounded-2xl border border-[var(--axis-bronze)]/20 bg-[var(--axis-charcoal)] text-left transition-colors duration-300 hover:border-[var(--axis-bronze)]/60"
                 >
+                 <span className="block transition-transform duration-500 ease-out group-hover:scale-[1.04]">
                   <Image
                     src={shot.src}
                     alt={shot.caption[lang]}
                     width={shot.w}
                     height={shot.h}
                     sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 260px"
+                    /* Первый экран грузим сразу: иначе карточки летят пустыми
+                       прямоугольниками, а картинки проявляются уже после
+                       приземления — самая заметная часть «дёрганья». */
+                    loading={i < 6 ? "eager" : "lazy"}
                     className="block h-auto w-full"
                   />
                   <span className="block border-t border-[rgba(74,74,74,0.3)] px-3 py-2.5 text-[11px] font-medium leading-snug text-[var(--axis-white)]">
                     {shot.caption[lang]}
                   </span>
+                 </span>
                 </button>
               ))}
             </div>
