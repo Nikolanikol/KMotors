@@ -12,6 +12,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import ReviewsPopup from "@/components/Reviews/ReviewsPopup";
 import { EMS_NUMBER_RE, EMS_PIPELINE, normalizeEmsNumber, type EmsStage, type EmsTrackingResult } from "@/lib/emsTracking";
 
 /** Ключ истории в localStorage. Хранится только список номеров, ничего больше. */
@@ -489,6 +490,12 @@ export default function TrackingClient() {
           </section>
         </article>
       )}
+
+      {/* Кнопка отзывов стоит в потоке, а не плавающей в углу: правый нижний
+          занят кружками WhatsApp и Telegram, второй круг там дрался бы с ними. */}
+      <div className="mt-10 flex justify-center">
+        <ReviewsPopup />
+      </div>
 
       {/* Распорка прижимает блок помощи к низу, когда результата ещё нет:
           иначе под ним оставалась дыра до футера и страница выглядела

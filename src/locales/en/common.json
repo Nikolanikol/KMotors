@@ -685,6 +685,13 @@
       "failed": "Item not delivered",
       "inTransit": "In transit"
     },
+    "reviews": {
+      "button": "Reviews",
+      "hint": "Screenshots of client chats — unedited",
+      "title": "What our clients say",
+      "subtitle": "WhatsApp conversations: ordering, shipping, delivery. Tap a screenshot to read the whole thing.",
+      "close": "Close reviews"
+    },
     "help": {
       "title": "Parcel missing or status stuck?",
       "text": "Send us the number — we will check through our channels in Korea and tell you what is going on.",
