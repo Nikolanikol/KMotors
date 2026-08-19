@@ -113,7 +113,13 @@
     "wantThisCarShort": "I want this car",
     "managerContact": "Manager will contact you within 1 hour",
     "sellerInfo": "Seller information",
-    "encarReport": "Report on Encar"
+    "encarReport": "Report on Encar",
+    "gallery": {
+      "open": "Open gallery",
+      "prev": "Previous photo",
+      "next": "Next photo",
+      "close": "Close gallery"
+    }
   },
   "filter": {
     "all": "All",

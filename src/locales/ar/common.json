@@ -113,7 +113,13 @@
     "wantThisCarShort": "أريد هذه السيارة",
     "managerContact": "سيتواصل معك المدير خلال ساعة واحدة",
     "sellerInfo": "معلومات البائع",
-    "encarReport": "تقرير على Encar"
+    "encarReport": "تقرير على Encar",
+    "gallery": {
+      "open": "فتح المعرض",
+      "prev": "الصورة السابقة",
+      "next": "الصورة التالية",
+      "close": "إغلاق المعرض"
+    }
   },
   "filter": {
     "all": "الكل",

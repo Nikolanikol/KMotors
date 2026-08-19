@@ -14,8 +14,11 @@ export function encarLoader({ src, width }: ImageLoaderProps): string {
 }
 
 /**
- * Loader для миниатюр (thumbnails) — квадратное соотношение
+ * Loader для миниатюр (thumbnails) — 3:2, ровно как отрисованная лента 90×60.
+ * Квадрат здесь был лишним кропом поверх кропа: CDN резал 1:1, CSS дорезал в
+ * 3:2 через object-cover, и мы тянули на треть больше пикселей, чем показываем.
  */
 export function encarThumbLoader({ src, width }: ImageLoaderProps): string {
-  return `${src}?impolicy=heightRate&rh=${width}&cw=${width}&ch=${width}&cg=Center&wtmk=${WTM}`;
+  const h = Math.round(width * 0.667); // 3:2
+  return `${src}?impolicy=heightRate&rh=${h}&cw=${width}&ch=${h}&cg=Center&wtmk=${WTM}`;
 }
