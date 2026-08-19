@@ -172,6 +172,7 @@ export default function Footer() {
       : []),
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
     { href: `/${lang}/parts`, labelKey: "nav.parts" },
+    { href: `/${lang}/tracking`, labelKey: "nav.tracking" },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },
     { href: `/${lang}/about`, labelKey: "nav.about" },
     { href: `/${lang}/partners`, labelKey: "nav.partners" },

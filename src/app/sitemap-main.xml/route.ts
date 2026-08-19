@@ -4,6 +4,7 @@ import { MODEL_PAGES } from "@/data/model-pages";
 import { getIndexableCategorySlugs } from "@/lib/partsCategories";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
 import { hasCustomsDictionary } from "@/lib/customs/serverDict";
+import { isTrackingIndexed } from "@/lib/emsTracking";
 
 const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ka", "ar"];
@@ -31,6 +32,9 @@ const PAGES: PageConfig[] = [
   { path: "calculator", priority: 0.85, changefreq: "monthly", langFilter: hasCustomsDictionary },
   { path: "buy",     priority: 0.7, changefreq: "monthly" },
   { path: "contact", priority: 0.6, changefreq: "monthly" },
+  // Отслеживание: словаря на ka/ar нет, страница там показывает английский и
+  // отдаётся с noindex — те же ворота, что в generateMetadata.
+  { path: "tracking", priority: 0.6, changefreq: "monthly", langFilter: isTrackingIndexed },
 ];
 
 function buildUrl(lang: string, path: string) {

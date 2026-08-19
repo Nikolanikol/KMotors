@@ -8,6 +8,8 @@ import Counter from "yet-another-react-lightbox/plugins/counter";
 // в конец страницы (нет fixed-оверлея). Обязательны для полноэкранного режима.
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
+// Список скриншотов общий с попапом отзывов на странице отслеживания.
+import { REVIEW_SHOTS as SHOTS, type ReviewLang as Lang } from "@/data/reviews";
 
 // Полноразмерные скрины (736×1600, ~130КБ каждый) грузятся только в лайтбоксе.
 // В сетке next/image отдаёт превью шириной с плитку.
@@ -15,121 +17,6 @@ const Lightbox = dynamic(() => import("yet-another-react-lightbox"), {
   ssr: false,
   loading: () => null,
 });
-
-type Lang = "ru" | "en" | "ka" | "ar";
-
-type Shot = {
-  src: string;
-  /** Размеры исходника — у скринов с разных телефонов они разные (736×1600 и 942×2048). */
-  w: number;
-  h: number;
-  /** Подпись под плиткой. Артикулы одинаковы во всех языках, поэтому в тексте. */
-  caption: Record<Lang, string>;
-};
-
-// Первыми — два скрина с развёрнутым отзывом, дальше подтверждения отправки.
-const SHOTS: Shot[] = [
-  {
-    src: "/review/0a843af4-fde7-4c4a-811c-ffdf59752f93.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Отзыв · Доминиканская Республика",
-      en: "Review · Dominican Republic",
-      ka: "შეფასება · დომინიკის რესპუბლიკა",
-      ar: "رأي · جمهورية الدومينيكان",
-    },
-  },
-  {
-    src: "/review/de04a340-66b6-4e94-a794-8b65b7108972.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Отзыв · Дженезис купе выхлоп в Германию",
-      en: "Review · Genesis coupe exhaust in Germany",
-      ka: "შეფასება · გენეს კუპე ვისხული გერმანისთვის",
-      ar: "رأي · Genesis coupe exhaust in Germany",
-    },
-  },
-  {
-    // Та же переписка, что в 4cd2727f, но в кадр попали и реплика клиента, и артикул.
-    src: "/review/7cbeb9b2-1ce8-48b0-a6ce-bdafcc65323e.jpg",
-    w: 942,
-    h: 2048,
-    caption: {
-      ru: "Отправка · Муфта для рулевой в Германию",
-      en: "Shipped · Rear diffuser in Germany",
-      ka: "გაგზავნა · მუფრესი რელევისთვის გერმანისთვის",
-      ar: "شحن · Rear diffuser in Germany",
-    },
-  },
-  {
-    src: "/review/66129b68-43f1-4d7a-8019-65fb9c541a50.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Отправка · Задний редуктор в Доминикану",
-      en: "Shipped · Rear transmission in Dominican Republic",
-      ka: "გაგზავნა · Rear transmission in Dominican Republic ",
-      ar: "شحن · Rear transmission in Dominican Republic AA0",
-    },
-  },
-  {
-    src: "/review/63ecba40-64cc-44d3-8cff-6962405b5af1.jpg",
-    w: 942,
-    h: 2048,
-    caption: {
-      ru: "Отправка · Хендай Дженезис выхлоп в Германию срочная отправка ",
-      en: "Shipped · Genesis coupe exhaust in Germany",
-      ka: "გაგზავნა · Genesis coupe exhaust in Germany",
-      ar: "شحن · Genesis coupe exhaust in Germany",
-    },
-  },
-  {
-    src: "/review/81384b35-f820-49de-b486-f8697b3c0400.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Хендай Старекс маслянные подддоны в Германию",
-      en: "Hyundai Starex oil pan in Germany",
-      ka: "ხენდაიური სტარეკი მასკული გერმანისთვის",
-      ar: "Hyundai Starex oil pan in Germany",
-    },
-  },
-  {
-    src: "/review/dce90a3c-68d6-46e3-9809-e51a8a54d783.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Редуктор Доминикана",
-      en: "Transmission Dominican Republic",
-      ka: "Transmission Dominican Republic",
-      ar: "Transmission Dominican Republic",
-    },
-  },
-  {
-    src: "/review/de04a340-66b6-4e94-a794-8b65b7108972.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Отзыв Германия",
-      en: "Review Germany",
-      ka: " Review Germany",
-      ar: " Review Germany",
-    },
-  },
-  {
-    src: "/review/0a843af4-fde7-4c4a-811c-ffdf59752f93.jpg",
-    w: 736,
-    h: 1600,
-    caption: {
-      ru: "Отзыв Доминикана",
-      en: "Review Dominican Republic",
-      ka: " Review Dominican Republic",
-      ar: " Review Dominican Republic",
-    },
-  },
-];
 
 const UI: Record<
   Lang,
