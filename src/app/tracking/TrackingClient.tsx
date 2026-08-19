@@ -24,14 +24,17 @@ const HISTORY_LIMIT = 8;
  */
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
+/**
+ * Локалей ровно две, по числу заполненных словарей. ka/ar показывают
+ * английский текст (fallbackLng), и даты там обязаны быть английскими —
+ * иначе получится строка вида «Checked 3 წუთის წინ».
+ */
 const DATE_LOCALES: Record<string, string> = {
   ru: "ru-RU",
   en: "en-GB",
-  ka: "ka-GE",
-  // Арабские названия месяцев с латинскими цифрами: номер посылки и даты
-  // клиент сверяет с чеком, где цифры латинские.
-  ar: "ar-u-nu-latn",
 };
+
+const dateLocale = (lang: string) => DATE_LOCALES[lang] || "en-GB";
 
 function formatEmsDate(raw: string, lang: string): string {
   const match = raw.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
@@ -41,7 +44,7 @@ function formatEmsDate(raw: string, lang: string): string {
 
   const date = new Date(Date.UTC(Number(match[3]), month, Number(match[1])));
   try {
-    const formatted = new Intl.DateTimeFormat(DATE_LOCALES[lang] || "en-GB", {
+    const formatted = new Intl.DateTimeFormat(dateLocale(lang), {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -51,6 +54,31 @@ function formatEmsDate(raw: string, lang: string): string {
     return formatted.replace(/\sг\.$/, "");
   } catch {
     return raw;
+  }
+}
+
+/**
+ * «только что» / «3 минуты назад» от момента запроса.
+ *
+ * Нужно потому, что ответ минуту лежит в памяти инстанса: без этой строки
+ * клиент жмёт «Обновить», экран не меняется — и кнопка выглядит сломанной.
+ * Особенно на посылке, у которой статус и так стоит сутками.
+ */
+function formatCheckedAt(iso: string, now: number, lang: string): string | null {
+  const elapsed = now - new Date(iso).getTime();
+  if (!Number.isFinite(elapsed) || elapsed < 0) return null;
+
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 1) return null; // «только что» приходит из словаря
+
+  try {
+    const rtf = new Intl.RelativeTimeFormat(dateLocale(lang), { numeric: "auto" });
+    if (minutes < 60) return rtf.format(-minutes, "minute");
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return rtf.format(-hours, "hour");
+    return rtf.format(-Math.floor(hours / 24), "day");
+  } catch {
+    return null;
   }
 }
 
@@ -189,6 +217,18 @@ export default function TrackingClient() {
   const result = state.kind === "done" ? state.result : null;
   const latestEvent = result?.events[result.events.length - 1];
 
+  // Строка «проверено N назад» обязана стареть сама, иначе на открытой
+  // вкладке она навсегда останется «только что».
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!result) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [result]);
+
+  const checkedAgo = result ? formatCheckedAt(result.fetchedAt, now, lang) : null;
+
   /** Докуда посылка реально дошла: максимум по ленте, а не только текущий статус. */
   const reachedIndex = useMemo(() => {
     if (!result) return -1;
@@ -325,14 +365,19 @@ export default function TrackingClient() {
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => void track(result.number)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-[var(--axis-gray)] transition-colors hover:border-[var(--axis-bronze)]/50 hover:text-[var(--axis-white)]"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                {t("tracking.refresh")}
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => void track(result.number)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-[var(--axis-gray)] transition-colors hover:border-[var(--axis-bronze)]/50 hover:text-[var(--axis-white)]"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  {t("tracking.refresh")}
+                </button>
+                <span className="text-[11px] text-[var(--axis-gray-dim)]">
+                  {t("tracking.checked")} {checkedAgo ?? t("tracking.justNow")}
+                </span>
+              </div>
             </div>
 
             {/* Шкала пути: пройденные шаги бронзовые, будущие — приглушённые. */}

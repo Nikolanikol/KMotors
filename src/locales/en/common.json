@@ -625,6 +625,8 @@
     "submit": "Track",
     "searching": "Searching…",
     "refresh": "Refresh",
+    "checked": "Checked",
+    "justNow": "just now",
     "copy": "Copy number",
     "timeline": "Movement history",
     "lastEvent": "Last scan",
