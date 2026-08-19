@@ -113,7 +113,13 @@
     "wantThisCarShort": "Хочу эту машину",
     "managerContact": "Менеджер свяжется в течение 1 часа",
     "sellerInfo": "Информация о продавце",
-    "encarReport": "Отчёт на Encar"
+    "encarReport": "Отчёт на Encar",
+    "gallery": {
+      "open": "Открыть галерею",
+      "prev": "Предыдущее фото",
+      "next": "Следующее фото",
+      "close": "Закрыть галерею"
+    }
   },
   "filter": {
     "all": "Все",

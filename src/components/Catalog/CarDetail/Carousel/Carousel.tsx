@@ -1,20 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent, PointerEvent } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { useTranslation } from "react-i18next";
 import { encarLoader, encarThumbLoader } from "@/utils/encarLoader";
-import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
-import Counter from "yet-another-react-lightbox/plugins/counter";
-// БЕЗ этих стилей лайтбокс рендерится position:static и фото вываливаются
-// в конец страницы (нет fixed-оверлея). Обязательны для полноэкранного режима.
-import "yet-another-react-lightbox/styles.css";
-import "yet-another-react-lightbox/plugins/thumbnails.css";
-import "yet-another-react-lightbox/plugins/counter.css";
 
-// Lightbox грузим только когда пользователь кликнул на фото
-const Lightbox = dynamic(() => import("yet-another-react-lightbox"), {
+// Лайтбокс (вместе с плагинами и их CSS) грузим только когда пользователь
+// кликнул на фото. Монтируем по клику ещё и потому, что ssr:false-компонент,
+// отсутствующий в дереве и на сервере, и при гидрации, не сдвигает radix useId
+// у соседних компонентов.
+const GalleryLightbox = dynamic(() => import("./GalleryLightbox"), {
   ssr: false,
   loading: () => null,
 });
@@ -34,60 +31,172 @@ interface Props {
   photoLabel?: string;
 }
 
+const ENCAR_CDN = "https://ci.encar.com";
+// Порог свайпа: ниже него жест считается тапом и открывает галерею.
+const SWIPE_PX = 40;
+// Ступенька 320 — не для слайда, а для ЛЕНТЫ лайтбокса: плагин Thumbnails
+// рисует те же slides в плитках 80×50 и берёт из srcSet самую маленькую
+// ступеньку. Без 320 на каждую плитку уезжало по 640px-фото (~32 КБ вместо
+// ~10 КБ). Замерено в дев-сборке: sizes="80px", currentSrc с cw=640.
+const LIGHTBOX_WIDTHS = [320, 640, 960, 1280, 1600, 1920];
+
+// ⚠️ Мастер-файл у Encar — 2200×1238, то есть 16:9 (замерено curl'ом по всем
+// типам кадров: OUTER, INNER, OPTION). Полноэкранные слайды просим тем же
+// соотношением: прежние 16:10 срезали ~10% ширины, и в лайтбоксе — там, где
+// покупатель как раз рассматривает машину, — кадр был подрезан с боков.
+const slideUrl = (base: string, w: number) => {
+  const h = Math.round(w * 0.5625);
+  return `${base}?impolicy=heightRate&rh=${h}&cw=${w}&ch=${h}&cg=Center`;
+};
+
 const CarouselLight = ({
   photos,
   mode,
   carName,
   photoLabel = "фото",
 }: Props) => {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
+  const [warm, setWarm] = useState(false);
+
+  const warmed = useRef(false);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
+
+  const total = photos?.length || 0;
 
   const getUrl = useCallback(
-    (photo: Photo | string, thumb = false) => {
-      if (mode === "static" || typeof photo === "string")
-        return photo as string;
-      const p = photo as Photo;
-      // thumb и full — возвращаем base URL без параметров, loader добавит нужный размер
-      return `https://ci.encar.com${p.path}`;
+    (photo: Photo | string) => {
+      if (mode === "static" || typeof photo === "string") return photo as string;
+      // Базовый URL без параметров — размер добавит loader.
+      return `${ENCAR_CDN}${(photo as Photo).path}`;
     },
     [mode],
   );
-  // Слайды полноэкранного просмотра с адаптивным srcSet: раньше отдавался
-  // голый base (оригинал encar, мегабайты). Даём набор ширин через encar-политику
-  // — браузер сам выбирает подходящий размер под экран и DPR (экономит трафик/память).
-  const LIGHTBOX_WIDTHS = [640, 960, 1280, 1600, 1920];
-  const sizedUrl = useCallback((base: string, w: number) => {
-    const h = Math.round(w * 0.625); // 16:10
-    return `${base}?impolicy=heightRate&rh=${h}&cw=${w}&ch=${h}&cg=Center`;
+
+  // Соседние кадры монтируются НЕ сразу. Окно предзагрузки держит листание
+  // мгновенным, но на первой отрисовке это три полноразмерных фото в вьюпорте
+  // (~300 КБ при DPR 2) ради действия, которое совершит меньшинство. Ждём
+  // простоя после первой отрисовки или первого действия — дальше как раньше.
+  const warmUp = useCallback(() => {
+    if (warmed.current) return;
+    warmed.current = true;
+    setWarm(true);
   }, []);
 
-  const slides = (photos || []).map((photo, i) => {
-    const base = getUrl(photo);
-    const alt = carName ? `${carName} — ${photoLabel} ${i + 1}` : `photo ${i + 1}`;
-    // Не-encar источники (static/строки) отдаём как есть, без параметров размера.
-    if (!base.startsWith("https://ci.encar.com")) {
-      return { src: base, alt, width: 1920, height: 1200 };
+  // ⚠️ Прогрев вешать на onLoad первой картинки НЕЛЬЗЯ: к моменту гидрации она
+  // обычно уже complete, событие не повторяется, и окно не открывалось бы
+  // вовсе (проверено в дев-сборке — 20 секунд на странице, один смонтированный
+  // кадр). Поэтому таймер простоя, а не событие загрузки.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("requestIdleCallback" in window)) {
+      const id = setTimeout(warmUp, 1500);
+      return () => clearTimeout(id);
     }
-    return {
-      src: sizedUrl(base, 1280), // фолбэк для браузеров без srcSet
-      alt,
-      width: 1920,
-      height: 1200,
-      srcSet: LIGHTBOX_WIDTHS.map((w) => ({
-        src: sizedUrl(base, w),
-        width: w,
-        height: Math.round(w * 0.625),
-      })),
-    };
-  });
+    const id = window.requestIdleCallback(warmUp, { timeout: 2500 });
+    return () => window.cancelIdleCallback(id);
+  }, [warmUp]);
 
-  const total = photos?.length || 0;
+  const goTo = useCallback(
+    (i: number) => {
+      warmUp();
+      setIndex(Math.max(0, Math.min(total - 1, i)));
+    },
+    [total, warmUp],
+  );
+
+  const slides = useMemo(
+    () =>
+      (photos || []).map((photo, i) => {
+        const base = getUrl(photo);
+        const alt = carName
+          ? `${carName} — ${photoLabel} ${i + 1}`
+          : `photo ${i + 1}`;
+        // Не-encar источники (static/строки) отдаём как есть, без параметров.
+        if (!base.startsWith(ENCAR_CDN)) {
+          return { src: base, alt, width: 1920, height: 1080 };
+        }
+        return {
+          src: slideUrl(base, 1280), // фолбэк для браузеров без srcSet
+          alt,
+          width: 1920,
+          height: 1080,
+          srcSet: LIGHTBOX_WIDTHS.map((w) => ({
+            src: slideUrl(base, w),
+            width: w,
+            height: Math.round(w * 0.5625),
+          })),
+        };
+      }),
+    [photos, getUrl, carName, photoLabel],
+  );
+
   // Окно предзагрузки: назад 1, вперёд 2. Соседние фото уже смонтированы и
   // закэшированы → листание стрелками мгновенное, без «мелькания» и залипания.
-  const windowIdx = Array.from(
-    new Set([index - 1, index, index + 1, index + 2]),
-  ).filter((i) => i >= 0 && i < total);
+  const windowIdx = useMemo(
+    () =>
+      warm
+        ? Array.from(new Set([index - 1, index, index + 1, index + 2])).filter(
+            (i) => i >= 0 && i < total,
+          )
+        : [index],
+    [warm, index, total],
+  );
+
+  // Активная миниатюра подкручивается в ленту сама: листая стрелками или
+  // свайпом, пользователь иначе терял её из виду. Крутим САМУ ленту, а не
+  // scrollIntoView — тот утягивает и страницу по вертикали, когда галерея
+  // видна не целиком.
+  useEffect(() => {
+    const strip = stripRef.current;
+    const btn = thumbRefs.current[index];
+    if (!strip || !btn) return;
+    const target = btn.offsetLeft - (strip.clientWidth - btn.clientWidth) / 2;
+    strip.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+  }, [index]);
+
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    swiped.current = false;
+  };
+
+  const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy)) {
+      // Гасим последующий click, иначе свайп открывал бы лайтбокс.
+      swiped.current = true;
+      goTo(index + (dx < 0 ? 1 : -1));
+    }
+  };
+
+  const handleClick = () => {
+    if (swiped.current) {
+      swiped.current = false;
+      return;
+    }
+    setOpen(true);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goTo(index - 1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      goTo(index + 1);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+    }
+  };
 
   return (
     <>
@@ -97,8 +206,16 @@ const CarouselLight = ({
         style={{
           aspectRatio: "16/10",
           backgroundColor: "var(--axis-graphite)",
+          // Горизонталь забираем под свайп, вертикаль оставляем странице.
+          touchAction: "pan-y",
         }}
-        onClick={() => setOpen(true)}
+        role="button"
+        tabIndex={0}
+        aria-label={t("car.gallery.open")}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
       >
         {windowIdx.map((i) => (
           <Image
@@ -135,16 +252,18 @@ const CarouselLight = ({
             backdropFilter: "blur(8px)",
           }}
         >
-          {index + 1} / {photos?.length || 0}
+          {index + 1} / {total}
         </div>
 
         {/* Arrows */}
-        {photos?.length > 1 && (
+        {total > 1 && (
           <>
             <button
+              type="button"
+              aria-label={t("car.gallery.prev")}
               onClick={(e) => {
                 e.stopPropagation();
-                setIndex((i) => Math.max(0, i - 1));
+                goTo(index - 1);
               }}
               disabled={index === 0}
               className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-all z-10 sm:opacity-0 sm:group-hover:opacity-100"
@@ -159,17 +278,19 @@ const CarouselLight = ({
               ‹
             </button>
             <button
+              type="button"
+              aria-label={t("car.gallery.next")}
               onClick={(e) => {
                 e.stopPropagation();
-                setIndex((i) => Math.min((photos?.length || 1) - 1, i + 1));
+                goTo(index + 1);
               }}
-              disabled={index === (photos?.length || 1) - 1}
+              disabled={index === total - 1}
               className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center transition-all z-10 sm:opacity-0 sm:group-hover:opacity-100"
               style={{
                 backgroundColor: "rgba(10,10,10,0.7)",
                 color: "white",
                 backdropFilter: "blur(8px)",
-                opacity: index === (photos?.length || 1) - 1 ? 0.3 : undefined,
+                opacity: index === total - 1 ? 0.3 : undefined,
                 fontSize: 22,
               }}
             >
@@ -187,17 +308,26 @@ const CarouselLight = ({
             backdropFilter: "blur(8px)",
           }}
         >
-          ⛶ Открыть галерею
+          ⛶ {t("car.gallery.open")}
         </div>
       </div>
 
       {/* Thumbnails strip */}
-      {photos?.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mt-2 pb-1">
+      {total > 1 && (
+        <div
+          ref={stripRef}
+          className="flex gap-2 overflow-x-auto scrollbar-hide mt-2 pb-1"
+        >
           {(photos as Photo[]).map((photo, i) => (
             <button
               key={i}
-              onClick={() => setIndex(i)}
+              type="button"
+              ref={(el) => {
+                thumbRefs.current[i] = el;
+              }}
+              onClick={() => goTo(i)}
+              aria-label={`${photoLabel} ${i + 1}`}
+              aria-current={i === index}
               className="relative flex-shrink-0 rounded-lg overflow-hidden transition-all duration-200"
               style={{
                 width: 90,
@@ -211,8 +341,8 @@ const CarouselLight = ({
             >
               <Image
                 loader={encarThumbLoader}
-                src={getUrl(photo, true)}
-                alt={`thumb ${i + 1}`}
+                src={getUrl(photo)}
+                alt=""
                 fill
                 className="object-cover"
                 sizes="90px"
@@ -222,36 +352,13 @@ const CarouselLight = ({
         </div>
       )}
 
-      {/* Fullscreen lightbox — монтируем только при открытии.
-          Это (а) убирает hydration-mismatch: ssr:false-компонент отсутствует в
-          дереве и на сервере, и на клиенте при гидрации, поэтому не сдвигает
-          radix useId у соседних компонентов; (б) не грузит JS/DOM лайтбокса до клика. */}
       {open && (
-        <Lightbox
-          open={open}
-          close={() => setOpen(false)}
-          index={index}
+        <GalleryLightbox
           slides={slides}
-          plugins={[Thumbnails, Zoom, Counter]}
-          styles={{
-            root: { "--yarl__color_backdrop": "rgba(10,10,10,0.97)" },
-          }}
-          thumbnails={{
-            position: "bottom",
-            width: 80,
-            height: 50,
-            gap: 8,
-            border: 2,
-            borderRadius: 8,
-            borderColor: "var(--axis-orange)",
-          }}
-          counter={{
-            container: {
-              style: { top: 16, right: 16, left: "unset", fontSize: 13 },
-            },
-          }}
-          zoom={{ maxZoomPixelRatio: 3 }}
-          on={{ view: ({ index: i }) => setIndex(i) }}
+          index={index}
+          onIndexChange={setIndex}
+          onClose={() => setOpen(false)}
+          closeLabel={t("car.gallery.close")}
         />
       )}
     </>
