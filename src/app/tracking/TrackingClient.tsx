@@ -239,7 +239,12 @@ export default function TrackingClient() {
   const statusText = (raw: string, key: string | null) => (key ? t(`tracking.status.${key}`) : raw);
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 md:py-14">
+    /* ⚠️ min-h держит футер на месте. У `main` глобально `min-h-[70vh]`, и без
+       этой строки короткие состояния (пустая форма, ошибка) сжимали страницу —
+       футер уезжал вверх на ~330px и въезжал в видимую часть экрана прямо на
+       глазах у клиента, стоило результату смениться ошибкой. 68px — высота
+       фиксированной шапки, её же компенсирует `pt-[68px]` у main. */
+    <div className="mx-auto flex min-h-[calc(100vh-68px)] w-full max-w-4xl flex-col px-4 py-10 sm:px-6 md:py-14">
       <header className="text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-[var(--axis-bronze)]/40 bg-[var(--axis-glass)] px-3 py-1 text-xs font-medium text-[var(--axis-bronze)]">
           <PackageSearch className="h-3.5 w-3.5" />
@@ -484,6 +489,14 @@ export default function TrackingClient() {
           </section>
         </article>
       )}
+
+      {/* Распорка прижимает блок помощи к низу, когда результата ещё нет:
+          иначе под ним оставалась дыра до футера и страница выглядела
+          оборванной. При длинном результате свободного места нет, и распорка
+          схлопывается в ноль. Отдельным узлом, а не `mt-auto` на секции: рядом
+          с `mt-10` это были бы два конфликтующих правила margin-top, и какое
+          победит, решал бы порядок в собранном CSS. */}
+      <div className="grow" aria-hidden />
 
       <section className="mt-10 rounded-2xl border border-white/10 bg-[var(--axis-graphite)] p-5 text-center sm:p-6">
         <h2 className="text-sm font-semibold text-[var(--axis-white)]">{t("tracking.help.title")}</h2>
