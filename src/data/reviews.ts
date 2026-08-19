@@ -45,6 +45,63 @@ export const REVIEW_SHOTS: ReviewShot[] = [
     },
   },
   {
+    src: "/review/bb8df463-c5d2-4acb-806c-bc16542e2819.jpg",
+    w: 942,
+    h: 2048,
+    caption: {
+      ru: "Отзыв · Посылка дошла быстро и в целости",
+      en: "Review · Parcel arrived fast and intact",
+      ka: "Review · Parcel arrived fast and intact",
+      ar: "Review · Parcel arrived fast and intact",
+    },
+  },
+  {
+    src: "/review/366972b3-36fd-49eb-81d1-a224df8c4c6d.jpg",
+    w: 942,
+    h: 2048,
+    caption: {
+      ru: "Оплата и упаковка · Молдинги заднего бампера",
+      en: "Paid and packed · Rear bumper mouldings",
+      ka: "Paid and packed · Rear bumper mouldings",
+      ar: "Paid and packed · Rear bumper mouldings",
+    },
+  },
+  {
+    src: "/review/38cb925c-d1d4-4c5d-a157-88d3a5f05088.jpg",
+    w: 942,
+    h: 2048,
+    caption: {
+      ru: "Сверка артикула · Повторитель в зеркале Hyundai",
+      en: "Part number check · Hyundai mirror lamp",
+      ka: "Part number check · Hyundai mirror lamp",
+      ar: "Part number check · Hyundai mirror lamp",
+    },
+  },
+  {
+    // 8ef84445 и 1cfad4f7 — один диалог подряд: сверка артикулов, затем отчёт
+    // по закупке. Идут парой и в этом порядке.
+    src: "/review/8ef84445-cff1-466c-ad1d-b9e7580734a8.jpg",
+    w: 942,
+    h: 2048,
+    caption: {
+      ru: "Сверка артикулов · Стопор бампера и молдинги порогов",
+      en: "Part numbers check · Bumper stopper and sill mouldings",
+      ka: "Part numbers check · Bumper stopper and sill mouldings",
+      ar: "Part numbers check · Bumper stopper and sill mouldings",
+    },
+  },
+  {
+    src: "/review/1cfad4f7-85e8-4b5e-af3a-e7b6ec5ce9a6.jpg",
+    w: 942,
+    h: 2048,
+    caption: {
+      ru: "Отчёт по закупке · Молдинги порогов с клипсами",
+      en: "Sourcing report · Sill mouldings with clips",
+      ka: "Sourcing report · Sill mouldings with clips",
+      ar: "Sourcing report · Sill mouldings with clips",
+    },
+  },
+  {
     // Та же переписка, что в 4cd2727f, но в кадр попали и реплика клиента, и артикул.
     src: "/review/7cbeb9b2-1ce8-48b0-a6ce-bdafcc65323e.jpg",
     w: 942,
