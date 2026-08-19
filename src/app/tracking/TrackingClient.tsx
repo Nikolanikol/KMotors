@@ -187,6 +187,7 @@ export default function TrackingClient() {
   };
 
   const result = state.kind === "done" ? state.result : null;
+  const latestEvent = result?.events[result.events.length - 1];
 
   /** Докуда посылка реально дошла: максимум по ленте, а не только текущий статус. */
   const reachedIndex = useMemo(() => {
@@ -314,6 +315,15 @@ export default function TrackingClient() {
                 <h2 className="mt-1 text-xl font-bold text-[var(--axis-white)] sm:text-2xl">
                   {statusText(result.currentStatus, result.currentStatusKey)}
                 </h2>
+                {/* Дата последней отметки — главный признак того, что посылка
+                    едет. Ближе к концу пути Korea Post повторяет один и тот же
+                    статус сутками, и без даты это читается как «застряла». */}
+                {latestEvent && (
+                  <p className="mt-1 text-xs text-[var(--axis-gray)]">
+                    {t("tracking.lastEvent")}: {formatEmsDate(latestEvent.date, lang)}
+                    {latestEvent.time && `, ${latestEvent.time}`}
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -375,12 +385,6 @@ export default function TrackingClient() {
                       </span>
                     )}
                   </dd>
-                </div>
-              )}
-              {result.destination && (
-                <div>
-                  <dt className="text-xs text-[var(--axis-gray-dim)]">{t("tracking.field.destination")}</dt>
-                  <dd className="mt-0.5 text-[var(--axis-white)]">{result.destination}</dd>
                 </div>
               )}
               {result.mailType && (

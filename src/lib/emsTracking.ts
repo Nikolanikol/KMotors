@@ -79,9 +79,14 @@ export interface EmsTrackingResult {
   sender: { name: string; date: string };
   recipient: { name: string; date: string };
   mailType: string;
-  /** Страна назначения из поля Details, если Korea Post её назвал. */
-  destination: string | null;
-  postingZip: string | null;
+  /**
+   * ⚠️ Поля «страна назначения» и «индекс отделения» из колонки Details тут
+   * НЕТ намеренно. Korea Post пишет в них мусор: на обеих проверенных посылках
+   * (внутренней и международной) в графе «Transit or Destination country»
+   * стояло KOREA, а в графе индекса — название отделения, не цифры. Показывать
+   * клиенту «Страна назначения: Korea» на посылке в СНГ хуже, чем не показывать
+   * ничего. Строки из Details прячет `isKnownDetail` в интерфейсе.
+   */
   events: EmsEvent[];
   fetchedAt: string;
 }
@@ -100,7 +105,13 @@ const STATUS_RULES: { test: RegExp; key: string; stage: EmsStage }[] = [
   { test: /out for delivery|delivery started|배달준비/i, key: "delivering", stage: "delivered" },
   { test: /held|detained|보류/i, key: "customsHeld", stage: "customs" },
   { test: /customs|clearance|통관/i, key: "customs", stage: "customs" },
+  // ⚠️ Экспедитор идёт ДО общего правила про «handed over»: Korea Post отдаёт
+  // посылку сначала транспортной компании, потом экспедитору, и одинаковый
+  // перевод дал бы в ленте два неразличимых события подряд.
+  { test: /forwarder/i, key: "handedToForwarder", stage: "departed" },
   { test: /handed over|transport company|airline|flight/i, key: "handedToCarrier", stage: "departed" },
+  // \b нужен, чтобы «Unloaded» не попал сюда как «погружена».
+  { test: /\bloaded\b/i, key: "loaded", stage: "departed" },
   { test: /departure from outward/i, key: "departureOutward", stage: "departed" },
   { test: /arrival at outward/i, key: "arrivalOutward", stage: "departed" },
   { test: /arrival at inward|received at the destination|arrival at destination/i, key: "arrivedDestination", stage: "arrived" },
@@ -186,8 +197,6 @@ function emptyResult(
     sender: { name: "", date: "" },
     recipient: { name: "", date: "" },
     mailType: "",
-    destination: null,
-    postingZip: null,
     events: [],
     fetchedAt: new Date().toISOString(),
   };
@@ -274,8 +283,6 @@ export function parseEmsHtml(number: string, html: string): EmsTrackingResult {
   }
 
   const events: EmsEvent[] = [];
-  let destination: string | null = null;
-  let postingZip: string | null = null;
 
   if (statusTable) {
     for (const row of extractRows(statusTable)) {
@@ -292,12 +299,6 @@ export function parseEmsHtml(number: string, html: string): EmsTrackingResult {
       const timeMatch = when.match(/^(\d{1,2}:\d{2})\s*/);
       const time = timeMatch ? timeMatch[1] : "";
       const date = timeMatch ? when.slice(timeMatch[0].length).trim() : when;
-
-      const country = details.match(/Transit or Destination country\s*:\s*([A-Za-z][A-Za-z\s]*)/i);
-      if (country) destination = humanizePlace(country[1].trim());
-
-      const zip = details.match(/Posting office zip code\s*:\s*(\d+)/i);
-      if (zip) postingZip = zip[1];
 
       const { key, stage } = classify(status);
       events.push({ time, date, status, statusKey: key, location, details, stage });
@@ -322,8 +323,6 @@ export function parseEmsHtml(number: string, html: string): EmsTrackingResult {
     sender: { name: senderName, date: senderDate },
     recipient: { name: recipientName, date: recipientDate },
     mailType,
-    destination,
-    postingZip,
     events,
     fetchedAt: new Date().toISOString(),
   };

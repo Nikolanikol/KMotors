@@ -627,7 +627,8 @@
     "refresh": "Refresh",
     "copy": "Copy number",
     "timeline": "Movement history",
-    "note": "Times before handover to the carrier are Korean (KST). Once the parcel leaves Korea, statuses and times come from the destination country's postal service and may lag by several days.",
+    "lastEvent": "Last scan",
+    "note": "Times are Korean (KST). Every scan carries a date — as long as the dates keep moving, so does the parcel. After handover to the forwarder, Korea Post stops adding detail and repeats the loading scan; that is normal, but Korean post will show nothing further under this number. Need the status after departure — message a manager.",
     "history": {
       "title": "Your numbers",
       "remove": "Remove number"
@@ -653,7 +654,6 @@
     "field": {
       "sender": "Sender / accepted",
       "recipient": "Addressee",
-      "destination": "Destination country",
       "mailType": "Mail type"
     },
     "stage": {
@@ -671,6 +671,8 @@
       "arrivalOutward": "Arrived at international centre",
       "departureOutward": "Left international centre",
       "handedToCarrier": "Handed over to the carrier",
+      "handedToForwarder": "Handed over to the forwarder",
+      "loaded": "Loaded onto transport",
       "arrivedDestination": "Arrived in the destination country",
       "customs": "Customs clearance",
       "customsHeld": "Held at customs",
