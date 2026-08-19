@@ -5,6 +5,8 @@
     "buy": "How to Buy",
     "contact": "Contact",
     "parts": "Parts",
+    "partsCatalog": "Parts catalog",
+    "tracking": "Track your order",
     "blog": "Blog",
     "calculator": "Calculator",
     "favorites": "Favorites",
@@ -612,5 +614,77 @@
     "remove": "Remove from favorites",
     "empty": "No favorites yet",
     "hint": "Add cars to favorites to compare prices"
+  },
+  "tracking": {
+    "badge": "Korea Post EMS",
+    "h1": "Track your parcel from Korea",
+    "intro": "Enter your EMS tracking number and see where the parcel is now, plus its full journey from the Korean post office. Data comes straight from Korea Post.",
+    "placeholder": "For example, UE005086520KR",
+    "inputLabel": "EMS tracking number",
+    "hint": "Format: two letters, nine digits and a country code — for example, UE005086520KR.",
+    "submit": "Track",
+    "searching": "Searching…",
+    "refresh": "Refresh",
+    "copy": "Copy number",
+    "timeline": "Movement history",
+    "note": "Times before handover to the carrier are Korean (KST). Once the parcel leaves Korea, statuses and times come from the destination country's postal service and may lag by several days.",
+    "history": {
+      "title": "Your numbers",
+      "remove": "Remove number"
+    },
+    "error": {
+      "invalid": {
+        "title": "Check the number",
+        "text": "An EMS tracking number has two letters, nine digits and a country code — for example, UE005086520KR."
+      },
+      "not_found": {
+        "title": "Korea Post doesn't know this number",
+        "text": "Data appears a few hours after the parcel is accepted at the post office. If the number was issued today, try again later. If the parcel is not shipped via EMS, track it on the carrier's own site."
+      },
+      "upstream": {
+        "title": "Korea Post is not responding",
+        "text": "This is an outage on the Korean postal side — nothing has happened to your parcel. Please try again in a few minutes."
+      },
+      "rate_limited": {
+        "title": "Too many requests",
+        "text": "Please wait a minute and try again."
+      }
+    },
+    "field": {
+      "sender": "Sender / accepted",
+      "recipient": "Addressee",
+      "destination": "Destination country",
+      "mailType": "Mail type"
+    },
+    "stage": {
+      "accepted": "Accepted",
+      "in_transit": "Across Korea",
+      "departed": "Left Korea",
+      "arrived": "Destination country",
+      "customs": "Customs",
+      "delivered": "Delivered"
+    },
+    "status": {
+      "posting": "Accepted at the post office",
+      "arrivalExchange": "Arrived at sorting centre",
+      "departureInward": "Left sorting centre",
+      "arrivalOutward": "Arrived at international centre",
+      "departureOutward": "Left international centre",
+      "handedToCarrier": "Handed over to the carrier",
+      "arrivedDestination": "Arrived in the destination country",
+      "customs": "Customs clearance",
+      "customsHeld": "Held at customs",
+      "delivering": "Out for delivery",
+      "delivered": "Delivered to the addressee",
+      "attempted": "Delivery attempt failed",
+      "returned": "Returning to sender",
+      "failed": "Item not delivered",
+      "inTransit": "In transit"
+    },
+    "help": {
+      "title": "Parcel missing or status stuck?",
+      "text": "Send us the number — we will check through our channels in Korea and tell you what is going on.",
+      "cta": "Message a manager"
+    }
   }
 }

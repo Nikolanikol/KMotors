@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Package, Loader2, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { krwToDisplayUsd } from "@/lib/pricing";
@@ -270,16 +271,30 @@ export default function OrdersTab({ lang, userId }: Props) {
                 <p className="text-xs text-gray-400 mt-0.5">
                   {formatDate(order.created_at)} · {shipLabel(order.shipping_method)} · {order.shipping_country}
                 </p>
+                {/* По умолчанию ведём на СВОЮ страницу отслеживания: раньше
+                    ссылка уносила клиента на корейский epost, откуда он к нам
+                    уже не возвращался. `tracking_url` остаётся ручным
+                    переопределением для посылок не через Korea Post — там
+                    отслеживать нечем, кроме сайта перевозчика. */}
                 {order.tracking_number && (
-                  <a
-                    href={order.tracking_url || `https://service.epost.go.kr/trace.RetrieveEmsRigiTraceList.comm?POST_CODE=${order.tracking_number}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    {l.tracking}: {order.tracking_number}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  order.tracking_url ? (
+                    <a
+                      href={order.tracking_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      {l.tracking}: {order.tracking_number}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : (
+                    <Link
+                      href={`/${lang}/tracking?n=${encodeURIComponent(order.tracking_number)}`}
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      {l.tracking}: {order.tracking_number}
+                    </Link>
+                  )
                 )}
               </div>
 

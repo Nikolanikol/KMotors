@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { X, Menu, Heart, ShoppingCart, Instagram } from "lucide-react";
+import { X, Menu, Heart, ShoppingCart, Instagram, ChevronDown } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
@@ -100,11 +100,20 @@ export default function Header() {
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
-  const navLinks = [
+  const navLinks: { href: string; labelKey: string; children?: { href: string; labelKey: string }[] }[] = [
     { href: `/${lang}/`, labelKey: "nav.home" },
     ...(!isCatalogBlocked ? [{ href: `/${lang}/catalog`, labelKey: "nav.catalog" }] : []),
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
-    { href: `/${lang}/parts`, labelKey: "nav.parts" },
+    {
+      href: `/${lang}/parts`,
+      labelKey: "nav.parts",
+      // Отслеживание живёт под запчастями, а не отдельным пунктом: трек-номер
+      // нужен ровно тем, кто уже что-то заказал, а шапка и так плотная.
+      children: [
+        { href: `/${lang}/parts`, labelKey: "nav.partsCatalog" },
+        { href: `/${lang}/tracking`, labelKey: "nav.tracking" },
+      ],
+    },
     { href: `/${lang}/blog`, labelKey: "nav.blog" },
     { href: `/${lang}/calculator`, labelKey: "nav.calculator" },
   ];
@@ -150,20 +159,60 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium tracking-wide transition-colors duration-200"
-                style={{
-                  color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
-                }}
-                onMouseEnter={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
-                onMouseLeave={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
-              >
-                {t(link.labelKey)}
-              </Link>
-            ))}
+            {navLinks.map((link) =>
+              link.children ? (
+                /* Выпадашка открывается по наведению и по фокусу с клавиатуры;
+                   отступ pt-3 держит мост между пунктом и панелью, иначе меню
+                   схлопывается, пока курсор идёт по зазору. */
+                <div key={link.href} className="relative group">
+                  <Link
+                    href={link.href}
+                    className="flex items-center gap-1 text-sm font-medium tracking-wide transition-colors duration-200"
+                    style={{
+                      color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
+                    }}
+                    onMouseEnter={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
+                    onMouseLeave={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                  >
+                    {t(link.labelKey)}
+                    <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-180" />
+                  </Link>
+
+                  <div className="absolute left-0 top-full pt-3 opacity-0 invisible translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
+                    <div
+                      className="min-w-[220px] rounded-xl border border-white/10 py-2 shadow-2xl"
+                      style={{ backgroundColor: "var(--axis-charcoal)" }}
+                    >
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className="block px-4 py-2 text-sm font-medium transition-colors duration-200"
+                          style={{ color: isActive(child.href) ? "var(--axis-orange)" : "var(--axis-gray)" }}
+                          onMouseEnter={(e) => { if (!isActive(child.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
+                          onMouseLeave={(e) => { if (!isActive(child.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                        >
+                          {t(child.labelKey)}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium tracking-wide transition-colors duration-200"
+                  style={{
+                    color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
+                  }}
+                  onMouseEnter={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
+                  onMouseLeave={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                >
+                  {t(link.labelKey)}
+                </Link>
+              )
+            )}
           </nav>
 
           {/* Right side */}
@@ -268,15 +317,31 @@ export default function Header() {
 
           <nav className="flex flex-col items-center justify-center flex-1 gap-6">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-2xl font-heading transition-colors"
-                style={{ color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-white)" }}
-              >
-                {t(link.labelKey)}
-              </Link>
+              <div key={link.href} className="flex flex-col items-center gap-2.5">
+                <Link
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl font-heading transition-colors"
+                  style={{ color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-white)" }}
+                >
+                  {t(link.labelKey)}
+                </Link>
+                {/* Выпадашки на мобильном нет — вложенные пункты просто идут
+                    следом помельче. Дубль самого родителя отсеиваем по href. */}
+                {link.children
+                  ?.filter((child) => child.href !== link.href)
+                  .map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-base transition-colors"
+                      style={{ color: isActive(child.href) ? "var(--axis-orange)" : "var(--axis-gray)" }}
+                    >
+                      {t(child.labelKey)}
+                    </Link>
+                  ))}
+              </div>
             ))}
           </nav>
 
