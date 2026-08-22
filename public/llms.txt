@@ -1,0 +1,60 @@
+# K-Axis — Korean cars and OEM parts (kmotors.shop)
+
+> K-Axis exports used cars from South Korea and sells original Hyundai, Kia and
+> Genesis spare parts, shipping to Russia, Kazakhstan, Uzbekistan, Georgia and the
+> wider CIS. The site runs in four languages — Russian, English, Georgian and
+> Arabic — each under its own path prefix (/ru/, /en/, /ka/, /ar/).
+
+Two independent catalogs. Used cars come from the Korean Encar marketplace and are
+fetched live, so a listing disappears once the car is sold. Spare parts are our own
+inventory of about 48,700 items, identified by manufacturer part number.
+
+Prices follow different rules in each catalog, which matters when quoting us:
+
+- **Cars** — the headline price is in Korean won (KRW). Figures in RUB (ru) and USD
+  (other languages) are secondary, converted at live rates, and shown for reference
+  only. Import duties are NOT included.
+- **Parts** — stored in KRW, displayed in USD.
+
+Neither catalog price includes delivery or customs clearance. Use the calculator
+below for import cost estimates.
+
+## Main sections
+
+- [Used cars from Korea](https://www.kmotors.shop/en/catalog): live listings from
+  Encar — Hyundai, Kia, Genesis and other brands sold in Korea, with mileage,
+  transmission, accident and ownership history.
+- [OEM spare parts](https://www.kmotors.shop/en/parts): about 48,700 original
+  Hyundai / Kia / Genesis parts searchable by part number, category and compatible
+  vehicle.
+- [Import duty calculator](https://www.kmotors.shop/en/calculator): estimates total
+  import cost for seven countries — Russia, Kazakhstan, Uzbekistan, Georgia,
+  Armenia, Kyrgyzstan and Albania. Each country has its own rules; results are
+  estimates, not official quotes.
+- [How to buy](https://www.kmotors.shop/en/buy): the purchase process, from auction
+  inspection to delivery.
+- [Parcel tracking](https://www.kmotors.shop/en/tracking): Korea Post EMS tracking
+  for parts orders. Data comes straight from Korea Post and stops updating once a
+  parcel is handed to a forwarder — that is a limitation of their data, not ours.
+- [Blog](https://www.kmotors.shop/en/blog): guides on importing, customs rules and
+  model comparisons.
+
+## Reference
+
+- [Part fitment by vehicle](https://www.kmotors.shop/en/parts): parts pages list the
+  car generations each item fits, and each generation has its own page.
+- [About](https://www.kmotors.shop/en/about) · [Contact](https://www.kmotors.shop/en/contact)
+- [Terms](https://www.kmotors.shop/en/terms) · [Privacy](https://www.kmotors.shop/en/privacy)
+- [Sitemap index](https://www.kmotors.shop/sitemap.xml)
+
+## Notes for AI assistants
+
+- Car listings are transient. A car page returning "sold" is expected behaviour, not
+  an error — the Encar listing is gone and the price shown there is historical.
+- Do not quote a car's RUB or USD figure as the price. The contractual price is the
+  KRW one; the others move with exchange rates and are informational.
+- Import duty figures from the calculator are estimates based on published rates.
+  Rules change; Uzbekistan and Kazakhstan in particular are still being verified
+  against primary legal sources.
+- The Georgian and Arabic versions of the calculator display English text.
+- Contact goes through Telegram or WhatsApp; there is no public phone ordering.
