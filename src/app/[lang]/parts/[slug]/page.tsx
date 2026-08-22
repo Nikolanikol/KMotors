@@ -14,6 +14,7 @@ import type {
 } from "@/app/parts/sections/ProductDetailClient";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import { makeAlternates } from "@/lib/seo";
+import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
 // Страницы продуктов рендерятся по требованию: generateStaticParams убран,
 // 50k × 4 langs при сборке неприемлемо. dynamicParams = true (дефолт) —
@@ -519,6 +520,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <>
+      <SectionDictionary lang={lang} sections={["parts"]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} logistics={data.logistics} />

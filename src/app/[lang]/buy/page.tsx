@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BuyClientPage from "@/app/buy/BuyClientPage";
 import { makeAlternates } from "@/lib/seo";
+import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
 const BUY_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -104,6 +105,7 @@ export default async function BuyPage({ params }: Props) {
 
   return (
     <>
+      <SectionDictionary lang={lang} sections={["buy"]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <BuyClientPage />
