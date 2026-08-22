@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useTranslation } from "react-i18next";
@@ -13,16 +13,22 @@ import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { generatePartSlug } from "@/utils/partSlug";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
+import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 const WA_PHONE = "821058654344";
 const TG_MANAGER = "axiskorea";
 
+// Форматтер ИТОГОВОЙ суммы — она уже посчитана в долларах через pricing.ts,
+// здесь только разделители тысяч, никакой конвертации.
 const usdFormatter = new Intl.NumberFormat("en-US");
-const formatUsd = (krw: number, rate: number) =>
-  "$" + usdFormatter.format(Math.ceil(krw * rate * 1.23));
 
-export default function FavoritesClient() {
+// ⚠️ Здесь была СВОЯ формула цены: Math.ceil(krw * rate * 1.23) плюс локальная
+// formatUsd, затенявшая настоящую. Она игнорировала тиеры маржи и фикс-надбавку из
+// pricing.ts, поэтому избранное показывало цены НИЖЕ каталога — на 6% у дорогих
+// позиций и до 40% у дешёвых (замер 23.08.2026). Цены считает только pricing.ts:
+// правило «не форматировать и не конвертировать цены на месте» — из CLAUDE.md.
+export default function FavoritesClient({ krwToUsd }: { krwToUsd: number }) {
   const { t, i18n } = useTranslation(["common", "cars"]);
   const { favorites: cars, removeFavorite: removeCar } = useFavorites();
   const { favorites: parts, removeFavorite: removePart } = usePartsFavorites();
@@ -32,17 +38,9 @@ export default function FavoritesClient() {
 
   const [tab, setTab] = useState<"cars" | "parts">("cars");
   const [selected, setSelected] = useState<string[]>([]);
-  const [krwToUsd, setKrwToUsd] = useState(0.00066); // June 2026
   const router = useRouter();
 
-  useEffect(() => {
-    fetch("/api/exchange-rate")
-      .then((r) => r.json())
-      .then((d) => { if (d?.krwToUsd) setKrwToUsd(d.krwToUsd); })
-      .catch(() => {});
-  }, []);
-
-  const totalPartsUsd = parts.reduce((sum, p) => sum + Math.ceil(p.price_krw * krwToUsd * 1.23), 0);
+  const totalPartsUsd = parts.reduce((sum, p) => sum + krwToDisplayUsd(p.price_krw, krwToUsd), 0);
 
   const PARTS_ORDER_TEXT: Record<string, { greeting: string; total: string }> = {
     ru: { greeting: "Здравствуйте! Хочу заказать запчасти из избранного:", total: "Итого" },

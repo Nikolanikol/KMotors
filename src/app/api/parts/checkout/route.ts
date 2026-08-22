@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
 import { krwToDisplayUsd } from "@/lib/pricing";
 import { sendOrderConfirmation } from "@/lib/email";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 interface ShippingAddress {
   name: string;
@@ -19,7 +20,8 @@ interface CheckoutBody {
   shippingCostUsd: number;
   shippingAddress: ShippingAddress;
   notes: string;
-  krwToUsd: number;
+  // krwToUsd клиент больше НЕ присылает: курс берётся сервером. Поле удалено из
+  // типа намеренно, чтобы его нельзя было случайно вернуть в расчёт.
 }
 
 function generateOrderNumber(): string {
@@ -51,7 +53,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as CheckoutBody;
-    const { country, shippingMethod, shippingCostUsd, shippingAddress, notes, krwToUsd } = body;
+    const { country, shippingMethod, shippingCostUsd, shippingAddress, notes } = body;
+
+    // ⚠️ Курс берётся ТОЛЬКО отсюда, а поле krwToUsd из тела запроса игнорируется
+    // намеренно. Раньше сумма заказа считалась по числу, которое присылал браузер:
+    // клиент задавал курс — сервер писал получившийся total_usd в `orders` и слал
+    // его менеджеру. Проверка стояла одна (0 < r <= 0.01), то есть занизить курс
+    // почти до нуля было можно. Даже без автоматической оплаты это расхождение:
+    // менеджер видел сумму, посчитанную не по нашему курсу.
+    // Клиентский курс остаётся только для показа цен в интерфейсе.
+    const { krwToUsd } = await getCurrencyRates();
 
     // ── Validation ───────────────────────────────────────────────────────────
     const ALLOWED_COUNTRIES = ["RU", "KZ", "GE", "AM", "KG", "UZ", "AZ", "AE", "SA", "QA", "KW", "BH", "OM"];
@@ -69,7 +80,9 @@ export async function POST(req: NextRequest) {
     if (!phone || phone.length < 6) errors.push("phone");
     if (!city || city.length < 2) errors.push("city");
     if (!address || address.length < 3) errors.push("address");
-    if (typeof krwToUsd !== "number" || krwToUsd <= 0 || krwToUsd > 0.01) errors.push("exchange_rate");
+    // Курс наш, но подстраховка остаётся: getCurrencyRates может уйти на фолбэк,
+    // а считать деньги по мусорному числу нельзя ни при каком источнике.
+    if (typeof krwToUsd !== "number" || !(krwToUsd > 0) || krwToUsd > 0.01) errors.push("exchange_rate");
     if (notes && typeof notes === "string" && notes.length > 2000) errors.push("notes_too_long");
 
     if (errors.length > 0) {

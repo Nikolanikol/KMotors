@@ -22,6 +22,8 @@ interface Props {
   lang: string;
   user: { id: string; email: string };
   profile: Profile | null;
+  /** Курс KRW→USD с сервера (getCurrencyRates, кеш 24ч). В браузере НЕ запрашивать. */
+  krwToUsd: number;
 }
 
 type Tab = "profile" | "cart" | "orders";
@@ -42,7 +44,7 @@ const BREADCRUMB: Record<string, { home: string; account: string }> = {
   ar: { home: "الرئيسية", account: "حسابي" },
 };
 
-export default function AccountClient({ lang, user, profile }: Props) {
+export default function AccountClient({ lang, user, profile, krwToUsd }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -117,7 +119,7 @@ export default function AccountClient({ lang, user, profile }: Props) {
             <ProfileForm lang={lang} user={user} profile={profile} />
           )}
           {activeTab === "cart" && (
-            <CartTab lang={lang} userId={user.id} profileCountry={profile?.country ?? null} />
+            <CartTab lang={lang} userId={user.id} profileCountry={profile?.country ?? null} krwToUsd={krwToUsd} />
           )}
           {activeTab === "orders" && (
             <OrdersTab lang={lang} userId={user.id} />

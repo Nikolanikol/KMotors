@@ -34,9 +34,10 @@ interface Props {
   lang: string;
   userId: string;
   profileCountry: string | null;
+  /** Курс KRW→USD с сервера (getCurrencyRates, кеш 24ч). В браузере НЕ запрашивать. */
+  krwToUsd: number;
 }
 
-const FALLBACK_KRW_TO_USD = 0.00066; // June 2026
 const usdFmt = new Intl.NumberFormat("en-US");
 
 const L: Record<string, Record<string, string>> = {
@@ -47,21 +48,11 @@ const L: Record<string, Record<string, string>> = {
   ar: { title: "السلة", empty: "السلة فارغة", emptyDesc: "أضف قطعًا من الكتالوج", toCatalog: "الذهاب إلى الكتالوج", total: "الإجمالي", checkout: "إتمام الطلب", remove: "حذف", loading: "جارٍ التحميل...", air: "EMS Korea", sea: "الشحن البحري", weight: "الوزن المحسوب", kg: "كغ", shipTo: "الشحن إلى", change: "تغيير", subtotal: "المنتجات", shipping: "الشحن", seaTbd: "يحدده المدير", ems: "EMS Korea", emsp: "EMS Korea", daysEms: "10–20 يوم", daysEmsp: "5–10 أيام", selectCountry: "اختر الدولة" },
 };
 
-export default function CartTab({ lang, userId, profileCountry }: Props) {
+export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Props) {
   const l = L[lang] ?? L.ru;
   const supabase = createClient();
   const [items, setItems] = useState<CartProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [krwToUsd, setKrwToUsd] = useState(FALLBACK_KRW_TO_USD);
-
-  // Загружаем курс валюты (тот же источник что и каталог)
-  useEffect(() => {
-    fetch("https://api.frankfurter.dev/v1/latest?from=KRW&to=USD")
-      .then(r => r.json())
-      .then(d => { if (d.rates?.USD) setKrwToUsd(d.rates.USD); })
-      .catch(() => {});
-  }, []);
-
   const fetchCart = async () => {
     setLoading(true);
 

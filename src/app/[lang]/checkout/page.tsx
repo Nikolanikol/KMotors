@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "./CheckoutClient";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 interface Props {
   params: Promise<{ lang: string }>;
@@ -95,12 +96,20 @@ export default async function CheckoutPage({ params }: Props) {
     .eq("id", user.id)
     .single();
 
+  // Курс считается ЗДЕСЬ, на сервере, и уезжает вниз пропсом. Раньше CheckoutClient
+  // ходил за ним из браузера прямо в api.frankfurter.dev, начиная с зашитой
+  // константы июня 2026 (0.00066 против 0.00072 на 21.08.2026 — минус 8%), и глушил
+  // ошибку через .catch(() => {}). При сбое запроса весь чек молча считался по
+  // устаревшему числу, и узнать об этом было неоткуда.
+  const { krwToUsd } = await getCurrencyRates();
+
   return (
     <CheckoutClient
       lang={lang}
       userId={user.id}
       items={items}
       profile={profile ?? {}}
+      krwToUsd={krwToUsd}
     />
   );
 }

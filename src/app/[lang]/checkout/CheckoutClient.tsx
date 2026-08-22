@@ -53,6 +53,8 @@ interface Props {
     address?: string | null;
     zip?: string | null;
   };
+  /** Курс KRW→USD с сервера (getCurrencyRates, кеш 24ч). НЕ запрашивать в браузере. */
+  krwToUsd: number;
 }
 
 // ─── Labels ───────────────────────────────────────────────────────────────────
@@ -315,12 +317,11 @@ const L: Record<string, Record<string, string>> = {
   },
 };
 
-const FALLBACK_RATE = 0.00066; // June 2026
 const usdFmt = new Intl.NumberFormat("en-US");
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CheckoutClient({ lang, userId, items, profile }: Props) {
+export default function CheckoutClient({ lang, userId, items, profile, krwToUsd }: Props) {
   const l = L[lang] ?? L.ru;
   const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 
@@ -334,7 +335,7 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
   });
   const [shippingMethod, setShippingMethod] = useState<"EMS" | "EMS_PREMIUM" | null>(null);
   const [notes, setNotes] = useState("");
-  const [krwToUsd, setKrwToUsd] = useState(FALLBACK_RATE);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
@@ -343,13 +344,6 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
   const [orderTotalUsd, setOrderTotalUsd] = useState(0);
   const [showPayPal, setShowPayPal] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
-
-  useEffect(() => {
-    fetch("https://api.frankfurter.dev/v1/latest?from=KRW&to=USD")
-      .then((r) => r.json())
-      .then((d) => { if (d.rates?.USD) setKrwToUsd(d.rates.USD); })
-      .catch(() => {});
-  }, []);
 
   // ── Shipping logic ──────────────────────────────────────────────────────────
   const airItems = useMemo(
@@ -425,7 +419,7 @@ export default function CheckoutClient({ lang, userId, items, profile }: Props) 
           shippingCostUsd: shippingCostUsd ?? 0,
           shippingAddress: { ...form, country },
           notes,
-          krwToUsd,
+          // krwToUsd НЕ отправляем: сумму заказа сервер считает по своему курсу.
         }),
       });
       const data = await res.json();
