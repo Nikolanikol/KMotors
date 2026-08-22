@@ -40,6 +40,32 @@ const BUNDLES = {
 type Dict = Record<string, unknown>;
 type Ns = "common" | "cars" | "customs";
 
+/**
+ * Разделы `common`, которые НЕ раздаются глобально: замер 22.08.2026 показал, что
+ * втроём они занимают 65% словаря (parts 36%, buy 16%, tracking 13%), а
+ * используются ровно на своих маршрутах — проверено поиском по всем вызовам.
+ * Раздел уезжает в RSC-payload КАЖДОЙ страницы, поэтому на главной, в блоге и в
+ * каталоге авто это был чистый балласт: 33 KB словаря против 8 KB нужного.
+ *
+ * ⚠️ Добавляя сюда раздел, СНАЧАЛА убедись, что его ключи не зовутся динамически
+ * из глобального компонента. Header зовёт навигацию как `t(link.labelKey)`, и
+ * поиск по `t("nav.` таких мест НЕ находит — вынос `nav` дал бы сырые ключи в
+ * шапке на всём сайте, чего не поймали бы ни lint, ни tsc, ни сборка.
+ * Раздел из этого списка обязан быть подключён на своих страницах через
+ * <SectionDictionary sections={[...]} />, иначе тексты станут сырыми ключами.
+ */
+export const ROUTE_SECTIONS = ["parts", "buy", "tracking"] as const;
+export type RouteSection = (typeof ROUTE_SECTIONS)[number];
+
+/** Оставить в словаре только перечисленные разделы либо, наоборот, выбросить их. */
+function filterSections(dict: Dict, sections: readonly string[], mode: "keep" | "omit"): Dict {
+  return Object.fromEntries(
+    Object.entries(dict).filter(([key]) =>
+      mode === "keep" ? sections.includes(key) : !sections.includes(key)
+    )
+  );
+}
+
 const isBranch = (v: unknown): v is Dict =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -100,6 +126,17 @@ export function loadCustomsResources(lang: string): Resource {
   return loadResources(lang, { customs: true, common: false });
 }
 
+/**
+ * Только перечисленные разделы `common` — для маршрутов, которым нужен раздел из
+ * ROUTE_SECTIONS. Подключается через <SectionDictionary/> на самой странице, а не
+ * в [lang]/layout, по той же причине, что `cars`: layout при клиентской навигации
+ * внутри [lang] не перерисовывается, поэтому переход с главной на /parts не донёс
+ * бы словарь и тексты остались бы сырыми ключами.
+ */
+export function loadSectionResources(lang: string, sections: readonly string[]): Resource {
+  return loadResources(lang, { sections });
+}
+
 export interface LocaleOptions {
   /**
    * Подключить неймспейс `cars` — словарь Encar (76 KB на en).
@@ -116,6 +153,12 @@ export interface LocaleOptions {
    * иначе словарь уезжал бы в RSC-payload каждой страницы сайта.
    */
   customs?: boolean;
+  /**
+   * Отдать из `common` ТОЛЬКО перечисленные разделы. Используется маршрутными
+   * догрузками (см. loadSectionResources); при отсутствии из `common`
+   * выбрасываются разделы ROUTE_SECTIONS.
+   */
+  sections?: readonly string[];
 }
 
 /** Ресурсы для i18next: активный язык + минимальный en-фолбэк. */
@@ -127,8 +170,19 @@ export function loadResources(lang: string, opts: LocaleOptions = {}): Resource 
   ];
   const active = (BUNDLES as Record<string, Record<Ns, Dict>>)[lang];
 
+  // `common` режется по разделам: либо ровно запрошенные (маршрутная догрузка),
+  // либо всё кроме ROUTE_SECTIONS (базовый набор для layout). Остальные
+  // неймспейсы (`cars`, `customs`) отдаются целиком — они и так подключаются
+  // только своими маршрутами.
+  const sliceCommon = (dict: Dict) =>
+    opts.sections
+      ? filterSections(dict, opts.sections, "keep")
+      : filterSections(dict, ROUTE_SECTIONS, "omit");
+
   const pick = (bundle: Record<Ns, Dict>) =>
-    Object.fromEntries(namespaces.map((ns) => [ns, bundle[ns]]));
+    Object.fromEntries(
+      namespaces.map((ns) => [ns, ns === "common" ? sliceCommon(bundle[ns]) : bundle[ns]])
+    );
 
   if (!active || lang === "en") {
     return { en: pick(BUNDLES.en as unknown as Record<Ns, Dict>) } as unknown as Resource;
@@ -136,7 +190,12 @@ export function loadResources(lang: string, opts: LocaleOptions = {}): Resource 
 
   const fallback = Object.fromEntries(
     namespaces
-      .map((ns) => [ns, trimmedFallback(lang, ns)] as const)
+      .map((ns) => {
+        const delta = trimmedFallback(lang, ns);
+        if (!delta || ns !== "common") return [ns, delta] as const;
+        const cut = sliceCommon(delta);
+        return [ns, Object.keys(cut).length ? cut : undefined] as const;
+      })
       .filter(([, delta]) => delta !== undefined)
   );
 

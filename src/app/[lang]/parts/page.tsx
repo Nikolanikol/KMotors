@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { Hero } from "@/app/parts/sections/Hero";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
 import { PopularModels } from "@/app/parts/sections/PopularModels";
+import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
 // Lazy load — грузятся после Hero
 const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").then(m => ({ default: m.PartsCatalog })));
@@ -131,6 +132,7 @@ export default async function PartsPage({ params }: Props) {
 
   return (
     <>
+      <SectionDictionary lang={lang} sections={["parts"]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
       <div className="parts-page min-h-screen" style={{ position: "relative" }}>

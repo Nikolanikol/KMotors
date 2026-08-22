@@ -17,6 +17,7 @@ import {
 } from "@/lib/partsCategories";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
+import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -232,6 +233,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <div className="parts-page min-h-screen">
+      <SectionDictionary lang={lang} sections={["parts"]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       {itemListSchema && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />

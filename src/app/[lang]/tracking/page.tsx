@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import TrackingClient from "@/app/tracking/TrackingClient";
 import { isTrackingIndexed } from "@/lib/emsTracking";
 import { makeAlternates } from "@/lib/seo";
+import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
 const BASE = "https://www.kmotors.shop";
 
@@ -78,6 +79,7 @@ export default async function TrackingPage({ params }: Props) {
 
   return (
     <>
+      <SectionDictionary lang={lang} sections={["tracking"]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <TrackingClient />
     </>

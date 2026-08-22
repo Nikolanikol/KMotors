@@ -9,6 +9,7 @@ import { makeAlternates } from "@/lib/seo";
 import { generatePartSlug } from "@/utils/partSlug";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
+import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
 // 24 часа, а не false: страница показывает цены (krwToUsd, кеш курса 24ч) и
 // списки деталей поколения, которые растут вместе с каталогом. При
@@ -202,6 +203,7 @@ export default async function FitmentPage({ params, searchParams }: Props) {
 
   return (
     <div className="parts-page min-h-screen">
+      <SectionDictionary lang={lang} sections={["parts"]} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <nav className="text-sm text-[var(--pn-text-dim)] mb-4 flex flex-wrap gap-1.5">
