@@ -7,6 +7,7 @@ import CookieBanner from "@/components/CookieBanner";
 import ProgressBar from "@/components/ProgressBar";
 import FavoritePriceAlert from "@/components/FavoritePriceAlert";
 import { loadResources } from "@/lib/loadLocale";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 const LANGS = ["ru", "en", "ka", "ar"];
 
@@ -42,10 +43,16 @@ export default async function LangLayout({ children, params }: Props) {
   // /parts → /catalog оставил бы каталог без словаря.
   const resources = loadResources(lang);
 
+  // Курс нужен выдвижной корзине в шапке — она показывает цены позиций. Правило
+  // прежнее: за курсом ходит ТОЛЬКО сервер, клиент получает готовое число пропсом.
+  // Оба запроса внутри идут с `next: { revalidate: 86400 }`, то есть на каждый
+  // рендер это чтение из кеша данных, а не поход по сети.
+  const { krwToUsd } = await getCurrencyRates();
+
   return (
     <I18nProvider lang={lang} resources={resources}>
       <ProgressBar />
-      <Header />
+      <Header krwToUsd={krwToUsd} />
       <main className="flex-grow min-h-[70vh] pt-[68px]">{children}</main>
       <Footer />
       <MessengerButtons />

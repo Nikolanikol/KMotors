@@ -1,18 +1,18 @@
 "use client";
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Wrench, ShoppingCart, Check, Eye } from "lucide-react";
+import { Wrench, ShoppingCart, Check, Eye, X } from "lucide-react";
 import { formatUsd } from "@/lib/pricing";
 import type { Product } from "./PartsCatalogClient";
 
 const CART_LABELS: Record<string, string> = {
   ru: "В корзину", en: "Add to cart", ko: "장바구니", ka: "კალათაში", ar: "للسلة",
 };
-const IN_CART_LABELS: Record<string, string> = {
-  ru: "В корзине", en: "In cart", ko: "담김", ka: "კალათაში", ar: "في السلة",
+const REMOVE_LABELS: Record<string, string> = {
+  ru: "Убрать из корзины", en: "Remove from cart", ko: "장바구니에서 삭제",
+  ka: "კალათიდან ამოღება", ar: "إزالة من السلة",
 };
 
 interface ProductCardProps {
@@ -22,31 +22,36 @@ interface ProductCardProps {
   index: number;
   href: string;
   onAddToCart: () => Promise<boolean>;
+  onRemoveFromCart: () => void;
   onQuickView: () => void;
   onNavigate: () => void;
   lang: string;
   t: (key: string) => string;
   krwToUsd: number;
-  inCart?: boolean;
+  inCart: boolean;
 }
 
-export function ProductCard({ product, productName, isVisible, index, href, onAddToCart, onQuickView, onNavigate, lang, t, krwToUsd, inCart }: ProductCardProps) {
+export function ProductCard({ product, productName, isVisible, index, href, onAddToCart, onRemoveFromCart, onQuickView, onNavigate, lang, t, krwToUsd, inCart }: ProductCardProps) {
   const delay = `${Math.min(index * 20, 400)}ms`;
-  const [cartAdded, setCartAdded] = useState(false);
 
+  // Кнопка — ПЕРЕКЛЮЧАТЕЛЬ: повторный клик убирает товар из корзины.
+  // Своего состояния «добавлено» тут нет: `inCart` приходит из стора корзины
+  // (`useCartProductIds`), который слушает событие синхронизации и обновляется
+  // сразу после записи. Локальный флаг только пережил бы удаление и на 2 секунды
+  // показывал бы галочку у товара, которого в корзине уже нет.
   const handleCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (inCart) return;
-    const added = await onAddToCart();
-    if (added) {
-      setCartAdded(true);
-      setTimeout(() => setCartAdded(false), 2000);
+    if (inCart) {
+      onRemoveFromCart();
+      return;
     }
+    await onAddToCart();
   };
 
-  const isInCart = inCart || cartAdded;
-  const cartLabel = isInCart ? (IN_CART_LABELS[lang] ?? IN_CART_LABELS.ru) : (CART_LABELS[lang] ?? CART_LABELS.ru);
+  const cartLabel = inCart
+    ? (REMOVE_LABELS[lang] ?? REMOVE_LABELS.ru)
+    : (CART_LABELS[lang] ?? CART_LABELS.ru);
 
   return (
     <div
@@ -90,12 +95,20 @@ export function ProductCard({ product, productName, isVisible, index, href, onAd
             size="sm"
             onClick={handleCart}
             className={cn(
-              "h-9 w-9 p-0 rounded-xl text-white transition-all active:scale-95",
-              isInCart ? "bg-[var(--pn-success)] hover:bg-[var(--pn-success)] cursor-default" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 shadow-lg"
+              "group/cart h-9 w-9 p-0 rounded-xl text-white transition-all active:scale-95",
+              inCart ? "bg-[var(--pn-success)] hover:bg-[var(--pn-error)]" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 shadow-lg"
             )}
             title={cartLabel}
+            aria-label={cartLabel}
           >
-            {isInCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+            {inCart ? (
+              <>
+                <Check className="w-4 h-4 group-hover/cart:hidden" />
+                <X className="w-4 h-4 hidden group-hover/cart:block" />
+              </>
+            ) : (
+              <ShoppingCart className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </div>

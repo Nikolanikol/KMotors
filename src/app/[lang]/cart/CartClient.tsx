@@ -1,50 +1,41 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, Trash2, ArrowRight, ArrowLeft, Wrench } from "lucide-react";
-import { usePartsCart, type CartItem } from "@/hooks/useCartCount";
-import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
-import { generatePartSlug } from "@/utils/partSlug";
+import { ShoppingCart, ArrowRight, ArrowLeft } from "lucide-react";
+import { usePartsCart } from "@/hooks/useCartCount";
 import { OrderModal } from "@/app/parts/sections/OrderModal";
+import { CartLineItem } from "@/components/Cart/CartLineItem";
+import { cartText, cartSubtotal, cartMessageLines, usdFmt } from "@/components/Cart/cartText";
 
-const usdFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-
-const L: Record<string, Record<string, string>> = {
-  ru: { title: "Корзина", empty: "Корзина пуста", emptyDesc: "Добавьте запчасти из каталога", toCatalog: "В каталог запчастей", back: "Назад в каталог", total: "Итого", subtotal: "Товары", checkout: "Оформить через менеджера", clear: "Очистить", note: "Оплата на сайте не требуется. Менеджер свяжется с вами, подтвердит наличие и рассчитает доставку.", items: "поз.", pcs: "шт.", cartOf: "Корзина", managerTitle: "Оформить заказ", managerSub: "Отправьте состав корзины — менеджер подтвердит наличие и рассчитает доставку." },
-  en: { title: "Cart", empty: "Cart is empty", emptyDesc: "Add parts from the catalog", toCatalog: "Go to catalog", back: "Back to catalog", total: "Total", subtotal: "Items", checkout: "Order via manager", clear: "Clear", note: "No online payment. A manager will contact you, confirm availability and calculate shipping.", items: "items", pcs: "pcs", cartOf: "Cart", managerTitle: "Place order", managerSub: "Send your cart — a manager will confirm availability and calculate shipping." },
-  ko: { title: "장바구니", empty: "장바구니가 비어있습니다", emptyDesc: "카탈로그에서 부품을 추가하세요", toCatalog: "카탈로그로 이동", back: "카탈로그로", total: "합계", subtotal: "상품", checkout: "담당자를 통해 주문", clear: "비우기", note: "온라인 결제 없음. 담당자가 연락하여 재고 확인 및 배송비를 계산합니다.", items: "품목", pcs: "개", cartOf: "장바구니", managerTitle: "주문하기", managerSub: "장바구니를 보내주시면 담당자가 재고와 배송비를 확인합니다." },
-  ka: { title: "კალათა", empty: "კალათა ცარიელია", emptyDesc: "დაამატეთ ნაწილები კატალოგიდან", toCatalog: "კატალოგში", back: "კატალოგში", total: "სულ", subtotal: "საქონელი", checkout: "მენეჯერით გაფორმება", clear: "გასუფთავება", note: "ონლაინ გადახდა არ არის. მენეჯერი დაგიკავშირდებათ და გამოთვლის მიტანას.", items: "პოზ.", pcs: "ცალი", cartOf: "კალათა", managerTitle: "შეკვეთა", managerSub: "გამოგზავნეთ კალათა — მენეჯერი დაადასტურებს და გამოთვლის მიტანას." },
-  ar: { title: "السلة", empty: "السلة فارغة", emptyDesc: "أضف قطعًا من الكتالوج", toCatalog: "إلى الكتالوج", back: "إلى الكتالوج", total: "الإجمالي", subtotal: "المنتجات", checkout: "الطلب عبر المدير", clear: "تفريغ", note: "لا دفع عبر الإنترنت. سيتواصل المدير معك ويؤكد التوفر ويحسب الشحن.", items: "عناصر", pcs: "قطعة", cartOf: "السلة", managerTitle: "إتمام الطلب", managerSub: "أرسل سلتك — سيؤكد المدير التوفر ويحسب الشحن." },
-};
-
-function itemName(i: CartItem, lang: string): string {
-  if (lang === "ko") return i.name_ko || i.name_en || i.name_ru || i.part_number;
-  if (lang === "en") return i.name_en || i.name_ru || i.part_number;
-  return i.name_ru || i.name_en || i.part_number;
-}
-
+/**
+ * Страница корзины. Просмотр и правка состава живут ещё и в выдвижной панели
+ * шапки (`CartDrawer`) — тексты, расчёт суммы и формат заявки общие, в
+ * `@/components/Cart/cartText`. Страница остаётся местом ОФОРМЛЕНИЯ: форма
+ * заявки переведена ключами `parts.order.*`, а этот раздел словаря подключён
+ * только здесь и на маршрутах запчастей.
+ */
 export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number }) {
-  const l = L[lang] ?? L.ru;
-  const { items, count, setQty, removeItem, clear } = usePartsCart();
+  const l = cartText(lang);
+  const { items, count, clear } = usePartsCart();
   const [orderOpen, setOrderOpen] = useState(false);
 
-  const subtotal = items.reduce((s, i) => s + krwToDisplayUsd(i.price_krw, krwToUsd) * i.quantity, 0);
+  // Возврат ровно туда, откуда ушли: фильтры каталога складывает карточка товара
+  // и сетка (`parts:filters`). Без этого «назад» высаживало на первую страницу
+  // каталога без фильтров и без позиции скролла.
+  const [backSearch, setBackSearch] = useState("");
+  useEffect(() => {
+    setBackSearch(sessionStorage.getItem("parts:filters") ?? "");
+  }, []);
 
-  const messageLines = [
-    `🛒 ${l.cartOf}: ${items.length} ${l.items}, ${count} ${l.pcs}`,
-    "",
-    ...items.map((i) => `• ${itemName(i, lang)} (${i.part_number}) ×${i.quantity} — ${formatUsd(i.price_krw, krwToUsd)}`),
-    "",
-    `💵 ${l.subtotal}: $${usdFmt.format(subtotal)}`,
-  ];
+  const subtotal = cartSubtotal(items, krwToUsd);
+  const messageLines = cartMessageLines(items, lang, krwToUsd);
 
   return (
     <div className="parts-page min-h-screen bg-[var(--pn-bg)]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <Link
-          href={`/${lang}/parts`}
+          href={`/${lang}/parts${backSearch}`}
           className="inline-flex items-center gap-1.5 text-sm text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition-colors mb-6 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -83,40 +74,9 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
           <>
             {/* Items */}
             <div className="space-y-3">
-              {items.map((i) => {
-                const href = `/${lang}/parts/${generatePartSlug(i.part_number, itemName(i, lang), lang as "ru" | "en" | "ko", i.id)}`;
-                return (
-                  <div key={i.id} className="flex gap-4 bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-xl p-3">
-                    <Link href={href} className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-                      {i.image_url ? (
-                        <Image src={i.image_url} alt={itemName(i, lang)} width={80} height={80} unoptimized className="object-contain w-full h-full p-1.5" />
-                      ) : (
-                        <Wrench className="w-7 h-7 text-gray-300" />
-                      )}
-                    </Link>
-
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <Link href={href} className="text-sm font-semibold text-[var(--pn-text)] line-clamp-2 hover:text-[var(--pn-orange)] transition-colors">
-                        {itemName(i, lang)}
-                      </Link>
-                      <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--pn-orange-soft)] mt-0.5">{i.part_number}</span>
-
-                      <div className="flex items-center justify-between mt-auto pt-2">
-                        <div className="flex items-center border border-[var(--pn-border)] bg-[var(--pn-surface-2)] rounded-lg">
-                          <button onClick={() => setQty(i.id, i.quantity - 1)} className="w-8 h-8 flex items-center justify-center text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg leading-none">−</button>
-                          <span className="w-8 text-center text-sm font-semibold text-[var(--pn-text)]">{i.quantity}</span>
-                          <button onClick={() => setQty(i.id, i.quantity + 1)} className="w-8 h-8 flex items-center justify-center text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg leading-none">+</button>
-                        </div>
-                        <span className="text-base font-bold text-[var(--pn-orange)]">{formatUsd(i.price_krw, krwToUsd)}</span>
-                      </div>
-                    </div>
-
-                    <button onClick={() => removeItem(i.id)} className="self-start text-[var(--pn-text-dim)] hover:text-[var(--pn-error)] transition-colors cursor-pointer shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                );
-              })}
+              {items.map((i) => (
+                <CartLineItem key={i.id} item={i} lang={lang} krwToUsd={krwToUsd} />
+              ))}
             </div>
 
             {/* Summary */}

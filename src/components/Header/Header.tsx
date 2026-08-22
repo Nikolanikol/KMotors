@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import ContactForm from "./ContactFormModal";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
@@ -11,6 +11,7 @@ import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCartCount } from "@/hooks/useCartCount";
+import { CartDrawer, CART_OPEN_EVENT } from "@/components/Cart/CartDrawer";
 import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -86,7 +87,12 @@ const BrandName = ({ className = "" }: { className?: string }) => (
   </span>
 );
 
-export default function Header() {
+/**
+ * `krwToUsd` приходит пропсом из серверного layout: курс запрашивает ТОЛЬКО
+ * сервер (`getCurrencyRates`), клиентские компоненты своих запросов не делают.
+ * Нужен он выдвижной корзине — она показывает цены позиций и сумму.
+ */
+export default function Header({ krwToUsd }: { krwToUsd: number }) {
   const pathname = usePathname();
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -96,6 +102,16 @@ export default function Header() {
   const favTotal = favCars.length + favParts.length;
   const { isCatalogBlocked } = useCountry();
   const cartCount = useCartCount();
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+
+  // Кнопки со страниц («Купить сейчас», «Перейти в корзину») открывают панель
+  // событием, чтобы не тянуть к себе состояние шапки.
+  useEffect(() => {
+    const open = () => setIsCartOpen(true);
+    window.addEventListener(CART_OPEN_EVENT, open);
+    return () => window.removeEventListener(CART_OPEN_EVENT, open);
+  }, []);
 
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
@@ -233,9 +249,12 @@ export default function Header() {
 
             {/* Cart + User — grouped together */}
             <div className="flex items-center gap-2">
-                <Link
-                  href={`/${lang}/cart`}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)]"
+                <button
+                  type="button"
+                  onClick={() => setIsCartOpen((v) => !v)}
+                  aria-expanded={isCartOpen}
+                  aria-controls="cart-drawer"
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)] cursor-pointer"
                   style={{
                     backgroundColor: cartCount > 0 ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
                     color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
@@ -252,7 +271,7 @@ export default function Header() {
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>
                   )}
-                </Link>
+                </button>
 
             </div>
           </div>
@@ -262,9 +281,12 @@ export default function Header() {
             <LanguageSwitcher />
             <InstagramLink position="mobile" />
             <div className="flex items-center gap-1.5">
-                <Link
-                  href={`/${lang}/cart`}
-                  className="relative flex items-center justify-center w-9 h-9 rounded-full"
+                <button
+                  type="button"
+                  onClick={() => setIsCartOpen((v) => !v)}
+                  aria-expanded={isCartOpen}
+                  aria-controls="cart-drawer"
+                  className="relative flex items-center justify-center w-9 h-9 rounded-full cursor-pointer"
                   style={{
                     backgroundColor: cartCount > 0 ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
                     color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
@@ -281,7 +303,7 @@ export default function Header() {
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>
                   )}
-                </Link>
+                </button>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
@@ -359,6 +381,12 @@ export default function Header() {
         </div>
       </div>
 
+      <CartDrawer
+        open={isCartOpen}
+        onClose={closeCart}
+        lang={lang}
+        krwToUsd={krwToUsd}
+      />
     </>
   );
 }

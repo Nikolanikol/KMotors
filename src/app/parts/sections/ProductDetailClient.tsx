@@ -28,8 +28,9 @@ import { OrderModal } from "./OrderModal";
 import type { Product } from "./PartsCatalogClient";
 import { useRouter } from "next/navigation";
 import { formatUsd } from "@/lib/pricing";
-import { ShoppingCart } from "lucide-react";
-import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
+import { ShoppingCart, X } from "lucide-react";
+import { addToPartsCart, removeFromPartsCart, useCartProductIds } from "@/hooks/useCartCount";
+import { openCartDrawer } from "@/components/Cart/CartDrawer";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,7 @@ const DL = {
   genuine: { ru: "Оригинал OEM", en: "Genuine OEM", ko: "정품 OEM", ka: "ორიგინალი OEM", ar: "أصلي OEM" },
   inStock: { ru: "В наличии", en: "In Stock", ko: "재고 있음", ka: "მარაგშია", ar: "متوفر" },
   buyNow: { ru: "Купить сейчас", en: "Buy Now", ko: "바로 구매", ka: "ახლავე ყიდვა", ar: "اشترِ الآن" },
+  goToCart: { ru: "Перейти в корзину", en: "Go to cart", ko: "장바구니로 이동", ka: "კალათაში გადასვლა", ar: "الذهاب إلى السلة" },
   wishlist: { ru: "В избранное", en: "Wishlist", ko: "위시리스트", ka: "სასურველი", ar: "المفضلة" },
   inWishlist: { ru: "В избранном", en: "Saved", ko: "저장됨", ka: "შენახული", ar: "محفوظ" },
   share: { ru: "Поделиться", en: "Share", ko: "공유", ka: "გაზიარება", ar: "مشاركة" },
@@ -150,10 +152,9 @@ export function ProductDetailClient({
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { cartProductIds } = useCartProductIds();
+  const inCartNow = cartProductIds.has(product.id);
   const [copied, setCopied] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [cartAdded, setCartAdded] = useState(false);
-  const [cartError, setCartError] = useState("");
   const [qty, setQty] = useState(1);
   const [backSearch, setBackSearch] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
@@ -224,7 +225,6 @@ export function ProductDetailClient({
   const backHref = `/${lang}/parts${backSearch}`;
 
   const addToCartCore = (): boolean => {
-    setCartError("");
     return addToPartsCart({
       id: product.id,
       name_ru: product.name_ru,
@@ -237,14 +237,24 @@ export function ProductDetailClient({
     }, qty);
   };
 
-  const handleAddToCart = () => {
-    if (addToCartCore()) {
-      setCartAdded(true);
-      setTimeout(() => setCartAdded(false), 2500);
+  // Кнопка — переключатель, как в сетке каталога и в быстром просмотре:
+  // `cartProductIds` приходит из стора корзины и обновляется сразу после записи.
+  const handleCart = () => {
+    if (inCartNow) {
+      removeFromPartsCart(product.id);
+      return;
     }
+    addToCartCore();
   };
 
+  // Товар уже в корзине — показываем её панелью, не уводя человека со страницы,
+  // и не добавляем позицию повторно (иначе количество молча удваивалось бы).
+  // «Купить сейчас» для нового товара — намеренный уход на страницу оформления.
   const handleBuyNow = () => {
+    if (inCartNow) {
+      openCartDrawer();
+      return;
+    }
     if (addToCartCore()) router.push(`/${lang}/cart`);
   };
 
@@ -289,8 +299,6 @@ export function ProductDetailClient({
 
   // Используем стабильный URL без window — предотвращает hydration mismatch #418
   const productUrl = `https://www.kmotors.shop/${lang}/parts/${partSlug}`;
-
-  const inCartNow = cartAdded || cartProductIds.has(product.id);
 
   return (
     <div className="parts-page min-h-screen bg-[var(--pn-bg)]">
@@ -446,18 +454,24 @@ export function ProductDetailClient({
                   <button onClick={() => setQty(q => q + 1)} className="w-10 h-12 flex items-center justify-center text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg">+</button>
                 </div>
                 <Button
-                  onClick={handleAddToCart}
+                  onClick={handleCart}
                   size="lg"
-                  disabled={cartProductIds.has(product.id)}
+                  title={inCartNow ? t("parts.detail.removeFromCart") : t("parts.detail.addToCart")}
                   className={cn(
-                    "h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all",
-                    inCartNow ? "bg-[var(--pn-success)] hover:bg-[var(--pn-success)] text-white" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white"
+                    "group/cart h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all",
+                    inCartNow ? "bg-[var(--pn-success)] hover:bg-[var(--pn-error)] text-white" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white"
                   )}
                 >
-                  {inCartNow
-                    ? <><Check className="w-5 h-5" />{cartAdded ? "✓" : t("parts.products.inCart")}</>
-                    : <><ShoppingCart className="w-5 h-5" />{t("parts.detail.addToCart")}</>
-                  }
+                  {inCartNow ? (
+                    <>
+                      <Check className="w-5 h-5 group-hover/cart:hidden" />
+                      <X className="w-5 h-5 hidden group-hover/cart:block" />
+                      <span className="group-hover/cart:hidden">{t("parts.products.inCart")}</span>
+                      <span className="hidden group-hover/cart:block">{t("parts.detail.removeFromCart")}</span>
+                    </>
+                  ) : (
+                    <><ShoppingCart className="w-5 h-5" />{t("parts.detail.addToCart")}</>
+                  )}
                 </Button>
               </div>
 
@@ -466,10 +480,8 @@ export function ProductDetailClient({
                 className="w-full mt-3 h-12 rounded-xl border border-[var(--pn-border)] text-[var(--pn-text)] font-semibold flex items-center justify-center gap-2 hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)] transition-all"
               >
                 <Zap className="w-5 h-5" />
-                {L(DL.buyNow, lang)}
+                {inCartNow ? L(DL.goToCart, lang) : L(DL.buyNow, lang)}
               </button>
-
-              {cartError && <p className="text-sm text-[var(--pn-error)] mt-3">{cartError}</p>}
             </div>
 
             {/* Info tiles */}

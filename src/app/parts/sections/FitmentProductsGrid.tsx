@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
+import { addToPartsCart, removeFromPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { generatePartSlug } from "@/utils/partSlug";
 import { ProductCard } from "./ProductCard";
 import type { Product } from "./PartsCatalogClient";
@@ -64,6 +64,7 @@ export function FitmentProductsGrid({
             index={index}
             href={href}
             onAddToCart={() => handleAddToCart(product)}
+            onRemoveFromCart={() => removeFromPartsCart(product.id)}
             onQuickView={() => {}}
             onNavigate={() => {}}
             lang={lang}

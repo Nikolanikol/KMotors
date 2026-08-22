@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { clarityEvent } from "@/utils/clarity";
 import { displayUsdToKrw } from "@/lib/pricing";
-import { addToPartsCart, useCartProductIds } from "@/hooks/useCartCount";
+import { addToPartsCart, removeFromPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { QuickViewModal } from "./QuickViewModal";
 import { ProductCard } from "./ProductCard";
 import { FilterSidebar, type PendingFilters } from "./FilterSidebar";
@@ -713,6 +713,7 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
                         index={index}
                         href={`/${lang}/parts/${generatePartSlug(product.part_number, productName, lang as "ru" | "en" | "ko", product.id)}`}
                         onAddToCart={() => handleAddToCart(product)}
+                        onRemoveFromCart={() => removeFromPartsCart(product.id)}
                         onQuickView={() => setQuickViewProduct(product)}
                         onNavigate={() => { sessionStorage.setItem("parts:filters", window.location.search); clarityEvent("part_card_click"); }}
                         lang={lang}

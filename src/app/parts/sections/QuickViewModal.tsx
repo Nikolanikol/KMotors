@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import Image from "next/image";
 import type { Product } from "./PartsCatalogClient";
 import { formatUsd } from "@/lib/pricing";
-import { addToPartsCart } from "@/hooks/useCartCount";
+import { addToPartsCart, removeFromPartsCart } from "@/hooks/useCartCount";
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -13,7 +13,7 @@ interface QuickViewModalProps {
   onClose: () => void;
   krwToUsd: number;
   lang: string;
-  inCart?: boolean;
+  inCart: boolean;
 }
 
 export function QuickViewModal({
@@ -26,8 +26,6 @@ export function QuickViewModal({
 }: QuickViewModalProps) {
   const { t } = useTranslation();
   const [qty, setQty] = useState(1);
-  const [cartAdded, setCartAdded] = useState(false);
-  const [cartError, setCartError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -60,8 +58,14 @@ export function QuickViewModal({
 
   const price = formatUsd(product.price_krw, krwToUsd);
 
-  const handleAddToCart = () => {
-    setCartError("");
+  // Как и на карточке товара в сетке, кнопка — переключатель: `inCart` приходит
+  // из стора корзины и обновляется сразу после записи, поэтому своего состояния
+  // «добавлено» тут нет.
+  const handleCart = () => {
+    if (inCart) {
+      removeFromPartsCart(product.id);
+      return;
+    }
     addToPartsCart({
       id: product.id,
       name_ru: product.name_ru,
@@ -72,8 +76,6 @@ export function QuickViewModal({
       image_url: product.image_url,
       is_new: product.is_new,
     }, qty);
-    setCartAdded(true);
-    setTimeout(() => setCartAdded(false), 2500);
   };
 
   return (
@@ -155,22 +157,25 @@ export function QuickViewModal({
               </div>
             </div>
 
-            {inCart || cartAdded ? (
-              <div className="w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold bg-green-500 text-white">
-                <Check className="w-4 h-4" />
-                {cartAdded ? "✓ Добавлено" : t("parts.products.inCart")}
-              </div>
+            {inCart ? (
+              <button
+                onClick={handleCart}
+                title={t("parts.detail.removeFromCart")}
+                className="group/cart w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold bg-[var(--pn-success)] hover:bg-[var(--pn-error)] text-white transition-colors"
+              >
+                <Check className="w-4 h-4 group-hover/cart:hidden" />
+                <X className="w-4 h-4 hidden group-hover/cart:block" />
+                <span className="group-hover/cart:hidden">{t("parts.products.inCart")}</span>
+                <span className="hidden group-hover/cart:block">{t("parts.detail.removeFromCart")}</span>
+              </button>
             ) : (
               <button
-                onClick={handleAddToCart}
+                onClick={handleCart}
                 className="w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold pn-btn-primary transition-all"
               >
                 <ShoppingCart className="w-4 h-4" />
                 {t("parts.detail.addToCart")}
               </button>
-            )}
-            {cartError && (
-              <p className="text-sm text-red-500 -mt-1 mb-2">{cartError}</p>
             )}
           </div>
         </div>
