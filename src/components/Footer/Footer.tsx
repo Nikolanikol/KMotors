@@ -119,9 +119,17 @@ function SocialLink({
   );
 }
 
+// ⚠️ role="img" обязателен и это не украшение. Иконка внутри помечена aria-hidden,
+// поэтому единственное имя карточки — aria-label на контейнере. На голом <div>
+// (неявная роль generic) спецификация ARIA запрещает aria-label, и скринридер его
+// ИГНОРИРУЕТ: блок платёжных систем оказывался безымянным целиком. Ошибка нашлась
+// аудитом Lighthouse 23.08.2026 («Elements must only use permitted ARIA attributes»).
+// role="img" делает карточку изображением с текстовой альтернативой — тогда ярлык
+// разрешён и читается, а декоративное содержимое не озвучивается.
 function PayCard({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div
+      role="img"
       title={label}
       aria-label={label}
       className="h-16 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
