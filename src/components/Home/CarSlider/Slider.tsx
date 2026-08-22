@@ -36,6 +36,11 @@ export default function AutoSlider({ data, krwToRub, krwToUsd }: AutoSliderProps
         1440: { slidesPerView: 3 },
       }}
     >
+      {/* ⚠️ Фото читается через опциональную цепочку: у части объявлений Encar
+          фотографий нет вовсе, и прежнее item.Photos[0].location роняло ВЕСЬ
+          слайдер целиком (найдено в логах дев-сервера 23.08.2026). Соседи по коду —
+          CarsRow и SoldCar — давно читают фото так же, а CarCard принимает photo
+          необязательным пропом и сам показывает заглушку. */}
       {data &&
         data.map((item, i) => (
           <SwiperSlide key={i} className="h-[400px] ">
@@ -43,7 +48,7 @@ export default function AutoSlider({ data, krwToRub, krwToUsd }: AutoSliderProps
             <CarCard
               id={item.Id}
               manufacture={item.Manufacturer}
-              photo={item.Photos[0].location}
+              photo={item.Photos?.[0]?.location}
               model={item.Model}
               year={item.FormYear}
               mileage={item.Mileage}
