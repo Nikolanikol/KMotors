@@ -5,7 +5,14 @@ import Main from "@/components/Home/Main";
 import NavCards from "@/components/Home/NavCards";
 import { makeAlternates } from "@/lib/seo";
 
-// Выше fold — SSR для LCP
+// SSR ради LCP и SEO.
+// ⚠️ «Выше fold» — НЕВЕРНО, замер в браузере 22.08.2026: при высоте экрана 720px
+// CarSlider начинается на 850px, а сам Swiper внутри — на 1002px, то есть заметно
+// НИЖЕ первого экрана (в первый попадают только Main и край NavCards).
+// Ленивая загрузка через next/dynamic здесь НЕ работает: компонент серверный и
+// рендерится на сервере, поэтому его чанк остаётся в графе страницы — проверено
+// манифестом сборки. Убирать Swiper из критического пути надо обёрткой с
+// IntersectionObserver по образцу RecommendedCars, сохранив SSR карточек.
 import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
