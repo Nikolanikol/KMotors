@@ -1,6 +1,6 @@
 import { ICarResponce } from "./dataType";
 import AutoSlider from "./Slider";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getCarRates } from "@/lib/kbFx";
 
 const getCars = async (reqString: string) => {
   try {
@@ -35,7 +35,7 @@ type CarSliderProps = {
 const CarSlider = async ({ reqString, title }: CarSliderProps) => {
   const [data, rates] = await Promise.all([
     getCars(reqString),
-    getCurrencyRates(),
+    getCarRates(),
   ]);
 
   if (!data || data.length === 0) return null;

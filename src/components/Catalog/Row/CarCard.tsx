@@ -2,7 +2,8 @@
 
 import { useRef, useCallback } from "react";
 import { trackEvent } from "@/utils/gtag";
-import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
+import { convertNumberKm } from "@/utils/splitNumber";
+import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { ArrowRight, Heart } from "lucide-react";
 import Image from "next/image";
@@ -73,14 +74,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
     if (glossyRef.current) glossyRef.current.style.background = "transparent";
   }, []);
 
-  const krw = typeof price === "number" ? (price as unknown as number) * 10000 : Number(price) * 1000;
-
-  const convertedPrice = (() => {
-    if (!krw || isNaN(krw)) return null;
-    if (lang === "ru" && krwToRub) return { value: Math.round(krw * krwToRub).toLocaleString("ru-RU"), symbol: "₽" };
-    if (lang !== "ko" && krwToUsd) return { value: Math.round(krw * krwToUsd).toLocaleString("en-US"), symbol: "$" };
-    return null;
-  })();
+  const convertedPrice = convertedCarPrice(price, lang, { krwToRub, krwToUsd });
 
   const carName = `${manufacture} ${model} ${year}`;
   const waUrl = `https://wa.me/${WA_PHONE}?text=${encodeURIComponent((WA_CAR_TEXT[lang] ?? WA_CAR_TEXT.ru)(id, carName))}`;
@@ -171,7 +165,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
         <div>
           <p className="text-xs mb-1" style={{ color: "var(--axis-gray)" }}>{t("common:car.buyPrice")}</p>
           <p className="text-xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
-            {convertNumber(price)}
+            {formatCarKrw(price)}
             <span className="text-sm font-normal ml-1" style={{ color: "var(--axis-gray)" }}>
               {t("common:common.won")}
             </span>

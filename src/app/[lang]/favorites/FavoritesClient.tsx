@@ -8,7 +8,8 @@ import { Heart, Trash2, ArrowRight, Car, Wrench, GitCompare, X, MessageCircle, S
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
+import { convertNumberKm } from "@/utils/splitNumber";
+import { formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { generatePartSlug } from "@/utils/partSlug";
 import { cn } from "@/lib/utils";
@@ -223,7 +224,7 @@ export default function FavoritesClient({ krwToUsd }: { krwToUsd: number }) {
                       </div>
                       <div className="flex items-center justify-between">
                         <p className="text-lg font-bold" style={{ color: "var(--axis-orange)" }}>
-                          {convertNumber(car.price)}
+                          {formatCarKrw(car.price)}
                           <span className="text-xs font-normal ml-1" style={{ color: "var(--axis-gray)" }}>{t("common:common.won")}</span>
                         </p>
                         <Link
