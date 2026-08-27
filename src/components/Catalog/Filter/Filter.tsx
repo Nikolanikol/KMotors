@@ -32,6 +32,16 @@ import MyFilterYear from "./FilterComponents/MyFilterYear";
 
 /*************  ✨ Windsurf Command ⭐  *************/
 
+/**
+ * Значение пункта «любой» во всех выпадашках фильтра.
+ *
+ * ⚠️ Раньше у таких пунктов стояло `value={null}`, и это ломалось молча: Radix
+ * ждёт строку, а обработчик марки делал `data.filter(...)[0].title` — на сбросе
+ * совпадений нет, `[0]` это undefined, и фильтр падал целиком в границу ошибок.
+ * Пустую строку Radix тоже не принимает, отсюда служебная константа.
+ */
+const ANY_VALUE = "__any";
+
 const Filter = ({}) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -105,6 +115,20 @@ const Filter = ({}) => {
   const [badgeGroupDrill, setBadgeGroupDrill] = useState<string | null>(null);
   const [badgeDrill, setBadgeDrill] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>(initAction);
+
+  /**
+   * Сброс всех уровней ниже марки.
+   *
+   * ⚠️ Без него сброс марки оставлял модель, поколение и комплектацию от
+   * ПРЕЖНЕГО бренда: ModelsRow чистит только собственное значение и вниз
+   * ничего не отдаёт.
+   */
+  const resetChain = () => {
+    setModelActionDrill(null);
+    setGenerationDrill(null);
+    setBadgeGroupDrill(null);
+    setBadgeDrill(null);
+  };
 
   const handleAction = (value: string | null) => {
     if (value != null) {
@@ -199,20 +223,25 @@ const Filter = ({}) => {
       <h2 className="text-sm font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("filter.manufacturer")}</h2>
 
       <Select
-        value={manufactureAction}
+        value={manufactureAction ?? ANY_VALUE}
         onValueChange={(e) => {
-          setAction(e);
-          setManufactureAction(e);
-          const title = data.filter((item) => item.Action == e)[0].title;
-          setManufacture(() => title);
-          trackEvent("filter_manufacturer", { manufacturer: title });
+          const next = e === ANY_VALUE ? null : e;
+          // find, а не filter(...)[0]: на сбросе совпадений нет вовсе.
+          const title = data.find((item) => item.Action === next)?.title ?? null;
+
+          setAction(next);
+          setManufactureAction(next);
+          setManufacture(title);
+          resetChain();
+
+          if (title) trackEvent("filter_manufacturer", { manufacturer: title });
         }}
       >
         <SelectTrigger className="filter-select">
           <SelectValue placeholder={t("filter.manufacturer")} />
         </SelectTrigger>
         <SelectContent className="filter-menu">
-          <SelectItem value={null}>{t("filter.selectManufacturer")}</SelectItem>
+          <SelectItem value={ANY_VALUE}>{t("filter.selectManufacturer")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
               {item.title}
@@ -306,13 +335,17 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
   const prevActionRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (prevActionRef.current !== action) {
+      setModelAction(null);
+      // Марка сменилась или сброшена — поколение и всё ниже обязаны обнулиться.
+      setModelActionDrill(null);
+      if (action == null) setData([]);
+    }
     if (action != null) {
       fetchModels(action).then((res) => setData(res));
-      prevActionRef.current = action;
     }
-    if (prevActionRef.current != action) {
-      setModelAction(null);
-    }
+    prevActionRef.current = action;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
   return (
@@ -321,19 +354,21 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
       {/* {action} */}
       <Select
         disabled={action == null}
-        value={modelAction}
+        value={modelAction ?? ANY_VALUE}
         onValueChange={(e) => {
-          setAction(e);
-          setModelAction(e);
-          setModelActionDrill(e);
+          const next = e === ANY_VALUE ? null : e;
+          // На сбросе возвращаемся к запросу марки, иначе «Показать» ушёл бы с
+          // пустым action и кнопка молча ничего не делала.
+          setAction(next ?? action);
+          setModelAction(next);
+          setModelActionDrill(next);
         }}
-        defaultValue={null}
       >
         <SelectTrigger className="filter-select">
           <SelectValue placeholder={t("filter.model")} />
         </SelectTrigger>
         <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
-          <SelectItem value={null}>{t("filter.selectModel")}</SelectItem>
+          <SelectItem value={ANY_VALUE}>{t("filter.selectModel")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block">
@@ -364,16 +399,17 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
   const [data, setData] = useState<GenerationResponce[]>([]);
   const prevActionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (prevActionRef.current != action) {
+    if (prevActionRef.current !== action) {
       setGenerationAction(null);
       // Сменилась модель — нижние уровни обязаны обнулиться, иначе в запросе
       // останется комплектация от прежней машины.
       onSelect?.(null);
+      if (action == null) setData([]);
     }
     if (action != null) {
       fetchGeneration(action).then((res) => setData(res));
-      prevActionRef.current = action;
     }
+    prevActionRef.current = action;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
@@ -382,11 +418,12 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
       <h2 className="text-sm font-semibold tracking-wide mt-1" style={{ color: "var(--axis-gray)" }}>{t("filter.generation")}</h2>
 
       <Select
-        value={GenerationAction}
+        value={GenerationAction ?? ANY_VALUE}
         onValueChange={(e) => {
-          setAction(e);
-          setGenerationAction(e);
-          onSelect?.(e);
+          const next = e === ANY_VALUE ? null : e;
+          setAction(next ?? action);
+          setGenerationAction(next);
+          onSelect?.(next);
         }}
         disabled={action == null}
       >
@@ -394,7 +431,7 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
           <SelectValue placeholder={t("filter.generation")} />
         </SelectTrigger>
         <SelectContent className="filter-menu">
-          <SelectItem value={null}>{t("filter.selectGeneration")}</SelectItem>
+          <SelectItem value={ANY_VALUE}>{t("filter.selectGeneration")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
               <div className="w-full block">
@@ -408,9 +445,6 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
     </div>
   );
 };
-
-/** Служебное значение пункта «любой»: Radix не принимает пустую строку. */
-const ANY_VALUE = "__any";
 
 interface NavRowProps {
   label: string;
