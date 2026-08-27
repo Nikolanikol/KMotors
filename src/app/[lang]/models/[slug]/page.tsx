@@ -7,6 +7,7 @@ import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
+import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 export const revalidate = 86400;
 
@@ -27,7 +28,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const model = getModelBySlug(slug);
   if (!model) return { title: "Not found" };
 
-  const content = model.content[lang as "ru" | "en"] ?? model.content.ru;
+  // ⚠️ Фолбэк на АНГЛИЙСКИЙ, а не на русский. Тексты заведены только для ru и
+  // en, и прежний `?? content.ru` отдавал грузинским и арабским адресам русский
+  // текст — при том, что H1 и цена у них уже были английскими, а все 4 языка
+  // лежат в sitemap-main с приоритетом 0.8 и без noindex. То есть Google
+  // получал русские описания под /ka/ и /ar/ (решение владельца 27.08.2026).
+  const content = lang === "ru" ? model.content.ru : model.content.en;
 
   return {
     title: content.title,
@@ -48,8 +54,29 @@ export default async function ModelPage({ params }: Props) {
   const model = getModelBySlug(slug);
   if (!model) notFound();
 
-  const content = model.content[lang as "ru" | "en"] ?? model.content.ru;
+  // ⚠️ Фолбэк на АНГЛИЙСКИЙ, а не на русский. Тексты заведены только для ru и
+  // en, и прежний `?? content.ru` отдавал грузинским и арабским адресам русский
+  // текст — при том, что H1 и цена у них уже были английскими, а все 4 языка
+  // лежат в sitemap-main с приоритетом 0.8 и без noindex. То есть Google
+  // получал русские описания под /ka/ и /ar/ (решение владельца 27.08.2026).
+  const content = lang === "ru" ? model.content.ru : model.content.en;
   const isRu = lang === "ru";
+
+  // Бейдж «цена под ключ» задан в ТЫСЯЧАХ РУБЛЕЙ (priceFrom/priceTo — ручные
+  // маркетинговые диапазоны, к ценам Encar отношения не имеют). Для нерусских
+  // локалей он переводится в доллары по ЖИВОМУ курсу ЦБ.
+  //
+  // ⚠️ Здесь стоял множитель 10.9 — то есть курс 91.74 ₽/$, зашитый числом.
+  // К 27.08.2026 ЦБ давал 84.28, и англоязычная витрина обещала цену на 8.9%
+  // ниже той, что видел русский посетитель: на GV80 это −$9 649 по верхней
+  // границе. Константы курса в коде запрещены (CLAUDE.md, «Цены и курсы»).
+  //
+  // Округление до $500: это диапазон «от и до», а не расчёт — «$26 103»
+  // выглядел бы точностью, которой у ручной вилки нет.
+  const { rubToUsd } = await getCurrencyRates();
+  const usdBadge = (thousandsRub: number) =>
+    Math.round((thousandsRub * 1000 * rubToUsd) / 500) * 500;
+
   const cookieStore = await cookies();
   const isCatalogBlocked = cookieStore.get("x-user-country")?.value === "KR";
 
@@ -122,12 +149,12 @@ export default async function ModelPage({ params }: Props) {
               <span className="text-white font-bold text-xl">
                 {isRu
                   ? `от ${model.priceFrom.toLocaleString("ru-RU")} 000 ₽`
-                  : `from $${Math.round(model.priceFrom * 10.9).toLocaleString("en-US")}`}
+                  : `from $${usdBadge(model.priceFrom).toLocaleString("en-US")}`}
               </span>
               <span className="text-white/40 text-sm">
                 {isRu
                   ? `до ${model.priceTo.toLocaleString("ru-RU")} 000 ₽`
-                  : `to $${Math.round(model.priceTo * 10.9).toLocaleString("en-US")}`}
+                  : `to $${usdBadge(model.priceTo).toLocaleString("en-US")}`}
               </span>
             </div>
 
