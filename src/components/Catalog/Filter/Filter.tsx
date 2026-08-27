@@ -332,6 +332,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
   const { t, i18n } = useTranslation();
   const [data, setData] = useState<ModelsResponce[]>([]);
   const [modelAction, setModelAction] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const prevActionRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -342,7 +343,10 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
       if (action == null) setData([]);
     }
     if (action != null) {
-      fetchModels(action).then((res) => setData(res));
+      setLoading(true);
+      fetchModels(action)
+        .then((res) => setData(res))
+        .finally(() => setLoading(false));
     }
     prevActionRef.current = action;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -353,7 +357,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
       <h2 className="text-sm font-semibold tracking-wide mt-1" style={{ color: "var(--axis-gray)" }}>{t("filter.model")}</h2>
       {/* {action} */}
       <Select
-        disabled={action == null}
+        disabled={action == null || loading}
         value={modelAction ?? ANY_VALUE}
         onValueChange={(e) => {
           const next = e === ANY_VALUE ? null : e;
@@ -365,7 +369,7 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
         }}
       >
         <SelectTrigger className="filter-select">
-          <SelectValue placeholder={t("filter.model")} />
+          <SelectValue placeholder={loading ? t("filter.loading") : t("filter.model")} />
         </SelectTrigger>
         <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
           <SelectItem value={ANY_VALUE}>{t("filter.selectModel")}</SelectItem>
@@ -397,6 +401,7 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
   const { t } = useTranslation();
   const [GenerationAction, setGenerationAction] = useState<string | null>(null);
   const [data, setData] = useState<GenerationResponce[]>([]);
+  const [loading, setLoading] = useState(false);
   const prevActionRef = useRef<string | null>(null);
   useEffect(() => {
     if (prevActionRef.current !== action) {
@@ -407,7 +412,10 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
       if (action == null) setData([]);
     }
     if (action != null) {
-      fetchGeneration(action).then((res) => setData(res));
+      setLoading(true);
+      fetchGeneration(action)
+        .then((res) => setData(res))
+        .finally(() => setLoading(false));
     }
     prevActionRef.current = action;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -425,10 +433,10 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
           setGenerationAction(next);
           onSelect?.(next);
         }}
-        disabled={action == null}
+        disabled={action == null || loading}
       >
         <SelectTrigger className="filter-select">
-          <SelectValue placeholder={t("filter.generation")} />
+          <SelectValue placeholder={loading ? t("filter.loading") : t("filter.generation")} />
         </SelectTrigger>
         <SelectContent className="filter-menu">
           <SelectItem value={ANY_VALUE}>{t("filter.selectGeneration")}</SelectItem>
@@ -479,6 +487,7 @@ const NavRow: React.FC<NavRowProps> = ({
   const { t } = useTranslation();
   const [data, setData] = useState<NavFacet[]>([]);
   const [value, setValue] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const prevActionRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -490,21 +499,38 @@ const NavRow: React.FC<NavRowProps> = ({
     }
     prevActionRef.current = action;
 
-    if (action == null) return;
+    if (action == null) {
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
-    fetcher(action).then((res) => {
-      // Ответы приходят не в том порядке, в каком уходили запросы: без этого
-      // флага медленный ответ по прежнему поколению перезаписал бы свежий.
-      if (!cancelled) setData(res);
-    });
+    setLoading(true);
+    fetcher(action)
+      .then((res) => {
+        // Ответы приходят не в том порядке, в каком уходили запросы: без этого
+        // флага медленный ответ по прежнему поколению перезаписал бы свежий.
+        if (!cancelled) setData(res);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
-  if (action == null || data.length === 0) return null;
+  // ⚠️ Строка НЕ скрывается, даже когда выбирать нечего (решение владельца
+  // 27.08.2026). Скрытие дёргало вёрстку: цена, пробег и год прыгали вверх-вниз
+  // на каждый выбор, — и делало эти три уровня непохожими на «Модель» и
+  // «Поколение», которые всегда на месте и просто отключены.
+  const disabled = action == null || loading || data.length === 0;
+  const hint = loading
+    ? t("filter.loading")
+    : action != null && data.length === 0
+      ? t("filter.noOptions")
+      : label;
 
   return (
     <div>
@@ -515,6 +541,7 @@ const NavRow: React.FC<NavRowProps> = ({
         {label}
       </h2>
       <Select
+        disabled={disabled}
         value={value ?? ANY_VALUE}
         onValueChange={(e) => {
           // ANY_VALUE — «любой», то есть возврат к запросу родителя: пустую
@@ -527,7 +554,7 @@ const NavRow: React.FC<NavRowProps> = ({
         }}
       >
         <SelectTrigger className="filter-select">
-          <SelectValue placeholder={label} />
+          <SelectValue placeholder={hint} />
         </SelectTrigger>
         <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
           <SelectItem value={ANY_VALUE}>{placeholder}</SelectItem>

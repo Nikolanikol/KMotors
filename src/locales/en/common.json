@@ -157,7 +157,9 @@
     "carNoSearch": "Search by car number",
     "carNoPlaceholder": "E.g.: 123가4567",
     "carNoButton": "Search",
-    "carNoInvalid": "Enter a Korean plate number, e.g.: 317주9018"
+    "carNoInvalid": "Enter a Korean plate number, e.g.: 317주9018",
+    "loading": "Loading…",
+    "noOptions": "No options"
   },
   "fuel": {
     "gasoline": "Gasoline",

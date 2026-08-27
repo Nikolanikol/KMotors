@@ -155,7 +155,9 @@
     "carNoSearch": "البحث برقم السيارة",
     "carNoPlaceholder": "مثال: 123가4567",
     "carNoButton": "بحث",
-    "carNoInvalid": "أدخل رقم اللوحة الكورية، مثال: 317주9018"
+    "carNoInvalid": "أدخل رقم اللوحة الكورية، مثال: 317주9018",
+    "loading": "جارٍ التحميل…",
+    "noOptions": "لا توجد خيارات"
   },
   "fuel": {
     "gasoline": "بنزين",
