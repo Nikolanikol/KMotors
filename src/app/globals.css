@@ -615,3 +615,99 @@ select.PhoneInputCountrySelect {
     radial-gradient(circle at 100% 100%, #1b1712 0%, transparent 50%);
   color: var(--color-calc-fg);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Селекты фильтра каталога авто (27.08.2026)
+
+   ⚠️ Классы, а не правка `src/components/ui/select.tsx`: тот же примитив
+   используют каталог запчастей (у него своя палитра --pn-*) и поле телефона,
+   и общая правка утащила бы их за собой.
+
+   ⚠️ Выпадающий список Radix рендерится в ПОРТАЛЕ, вне разметки фильтра,
+   поэтому достать его потомком (`.car-filter .item`) нельзя — класс
+   .filter-menu вешается прямо на SelectContent.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.filter-select {
+  background-color: var(--axis-graphite);
+  border-color: rgba(74, 74, 74, 0.4);
+  color: var(--axis-white);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.filter-select:hover {
+  border-color: var(--axis-bronze);
+  background-color: color-mix(in oklch, var(--axis-graphite) 88%, var(--axis-bronze));
+  box-shadow: 0 0 0 1px rgba(182, 119, 73, 0.25);
+}
+
+/* Отключённый уровень: выбирать нечего или данные ещё грузятся. Ховер обязан
+   молчать — CSS :hover срабатывает и на disabled-кнопке, и бронзовая подсветка
+   обещала бы клик, которого не будет. Строки при этом НЕ скрываются: иначе
+   вёрстка прыгает на каждый выбор (решение владельца 27.08.2026). */
+.filter-select:disabled,
+.filter-select:disabled:hover {
+  border-color: rgba(74, 74, 74, 0.25);
+  background-color: color-mix(in oklch, var(--axis-graphite) 60%, transparent);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Открытый список — то же состояние, что ховер: кнопка не должна «гаснуть»,
+   пока пользователь выбирает. */
+.filter-select[data-state="open"] {
+  border-color: var(--axis-bronze);
+  box-shadow: 0 0 0 1px rgba(182, 119, 73, 0.35);
+}
+
+.filter-select .lucide-chevron-down {
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+.filter-select[data-state="open"] .lucide-chevron-down {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+.filter-menu {
+  background-color: var(--axis-charcoal);
+  border-color: rgba(74, 74, 74, 0.45);
+  color: var(--axis-white);
+}
+
+/* Пункт списка. Radix помечает наведённый/выбранный клавиатурой пункт как
+   data-highlighted — мышь и клавиатура должны выглядеть одинаково. */
+.filter-menu [role="option"] {
+  position: relative;
+  border-radius: 8px;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    padding-left 0.14s ease;
+}
+
+.filter-menu [role="option"][data-highlighted] {
+  background-color: rgba(182, 119, 73, 0.14);
+  color: var(--axis-white);
+  padding-left: 1rem;
+}
+
+/* Бронзовая засечка слева — она и даёт «чёткость», которой не хватало
+   одному изменению фона. */
+.filter-menu [role="option"][data-highlighted]::before {
+  content: "";
+  position: absolute;
+  left: 0.25rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--axis-bronze);
+}
+
+.filter-menu [role="option"][data-state="checked"] {
+  color: var(--axis-bronze);
+  font-weight: 600;
+}

@@ -67,10 +67,10 @@ const MyFilterYear = ({
           onValueChange={handleminPriceChange}
           value={minPrice.toString()}
         >
-          <SelectTrigger className="flex-1 min-w-0">
+          <SelectTrigger className="filter-select flex-1 min-w-0">
             <SelectValue placeholder="Select a fruit" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="filter-menu">
             <SelectGroup>
               <SelectLabel>{minPrice}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">
@@ -87,10 +87,10 @@ const MyFilterYear = ({
           onValueChange={handlemaxPriceChange}
           value={maxPrice.toString()}
         >
-          <SelectTrigger className="flex-1 min-w-0">
+          <SelectTrigger className="filter-select flex-1 min-w-0">
             <SelectValue placeholder="Select a fruit" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="filter-menu">
             <SelectGroup>
               <SelectLabel>{maxPrice}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">

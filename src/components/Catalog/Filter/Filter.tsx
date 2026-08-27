@@ -16,16 +16,31 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
+  fetchBadge,
+  fetchBadgeDetail,
+  fetchBadgeGroup,
   fetchGeneration,
   fetchModels,
   GenerationResponce,
   ModelsResponce,
+  NO_TRIM,
+  NavFacet,
 } from "./FilterService";
 import MyFilterPrice from "./FilterComponents/MyFilterPrice";
 import MyFilterMileage from "./FilterComponents/MyFilterMileage";
 import MyFilterYear from "./FilterComponents/MyFilterYear";
 
 /*************  ✨ Windsurf Command ⭐  *************/
+
+/**
+ * Значение пункта «любой» во всех выпадашках фильтра.
+ *
+ * ⚠️ Раньше у таких пунктов стояло `value={null}`, и это ломалось молча: Radix
+ * ждёт строку, а обработчик марки делал `data.filter(...)[0].title` — на сбросе
+ * совпадений нет, `[0]` это undefined, и фильтр падал целиком в границу ошибок.
+ * Пустую строку Radix тоже не принимает, отсюда служебная константа.
+ */
+const ANY_VALUE = "__any";
 
 const Filter = ({}) => {
   const { t, i18n } = useTranslation();
@@ -93,7 +108,27 @@ const Filter = ({}) => {
   const [manufactureAction, setManufactureAction] = useState<string | null>(null);
   const [manufacture, setManufacture] = useState<string | null>(initManufacture);
   const [modelActionDrill, setModelActionDrill] = useState<string | null>(null);
+  // Цепочка вниз: поколение → топливо/привод → объём → комплектация. Каждый
+  // уровень отдаёт СВОЙ Action следующему, потому что дерево iNav раскрывает
+  // фасеты уровня N только когда в запросе выбран N−1.
+  const [generationDrill, setGenerationDrill] = useState<string | null>(null);
+  const [badgeGroupDrill, setBadgeGroupDrill] = useState<string | null>(null);
+  const [badgeDrill, setBadgeDrill] = useState<string | null>(null);
   const [action, setAction] = useState<string | null>(initAction);
+
+  /**
+   * Сброс всех уровней ниже марки.
+   *
+   * ⚠️ Без него сброс марки оставлял модель, поколение и комплектацию от
+   * ПРЕЖНЕГО бренда: ModelsRow чистит только собственное значение и вниз
+   * ничего не отдаёт.
+   */
+  const resetChain = () => {
+    setModelActionDrill(null);
+    setGenerationDrill(null);
+    setBadgeGroupDrill(null);
+    setBadgeDrill(null);
+  };
 
   const handleAction = (value: string | null) => {
     if (value != null) {
@@ -188,20 +223,25 @@ const Filter = ({}) => {
       <h2 className="text-sm font-semibold tracking-wide" style={{ color: "var(--axis-gray)" }}>{t("filter.manufacturer")}</h2>
 
       <Select
-        value={manufactureAction}
+        value={manufactureAction ?? ANY_VALUE}
         onValueChange={(e) => {
-          setAction(e);
-          setManufactureAction(e);
-          const title = data.filter((item) => item.Action == e)[0].title;
-          setManufacture(() => title);
-          trackEvent("filter_manufacturer", { manufacturer: title });
+          const next = e === ANY_VALUE ? null : e;
+          // find, а не filter(...)[0]: на сбросе совпадений нет вовсе.
+          const title = data.find((item) => item.Action === next)?.title ?? null;
+
+          setAction(next);
+          setManufactureAction(next);
+          setManufacture(title);
+          resetChain();
+
+          if (title) trackEvent("filter_manufacturer", { manufacturer: title });
         }}
       >
-        <SelectTrigger>
+        <SelectTrigger className="filter-select">
           <SelectValue placeholder={t("filter.manufacturer")} />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={null}>{t("filter.selectManufacturer")}</SelectItem>
+        <SelectContent className="filter-menu">
+          <SelectItem value={ANY_VALUE}>{t("filter.selectManufacturer")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
               {item.title}
@@ -218,7 +258,38 @@ const Filter = ({}) => {
       />
 
       {/* ////////////////////////Generation */}
-      <GenerationRow action={modelActionDrill} setAction={setAction} />
+      <GenerationRow
+        action={modelActionDrill}
+        setAction={setAction}
+        onSelect={setGenerationDrill}
+      />
+
+      {/* Топливо и привод → объём → комплектация. Каждый уровень скрывается,
+          пока Encar не отдал по нему ни одного фасета: у части поколений их
+          нет вовсе, и пустая выпадашка выглядела бы поломкой. */}
+      <NavRow
+        label={t("filter.engine")}
+        placeholder={t("filter.selectEngine")}
+        action={generationDrill}
+        fetcher={fetchBadgeGroup}
+        setAction={setAction}
+        onSelect={setBadgeGroupDrill}
+      />
+      <NavRow
+        label={t("filter.trimGroup")}
+        placeholder={t("filter.selectTrimGroup")}
+        action={badgeGroupDrill}
+        fetcher={fetchBadge}
+        setAction={setAction}
+        onSelect={setBadgeDrill}
+      />
+      <NavRow
+        label={t("filter.trim")}
+        placeholder={t("filter.selectTrim")}
+        action={badgeDrill}
+        fetcher={fetchBadgeDetail}
+        setAction={setAction}
+      />
 
       <MyFilterPrice setPrice={setPrice} defaultMin={initPriceMin} defaultMax={initPriceMax} />
       <MyFilterMileage setMileage={setMileage} defaultMin={initMileageMin} defaultMax={initMileageMax} />
@@ -261,16 +332,24 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
   const { t, i18n } = useTranslation();
   const [data, setData] = useState<ModelsResponce[]>([]);
   const [modelAction, setModelAction] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const prevActionRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (action != null) {
-      fetchModels(action).then((res) => setData(res));
-      prevActionRef.current = action;
-    }
-    if (prevActionRef.current != action) {
+    if (prevActionRef.current !== action) {
       setModelAction(null);
+      // Марка сменилась или сброшена — поколение и всё ниже обязаны обнулиться.
+      setModelActionDrill(null);
+      if (action == null) setData([]);
     }
+    if (action != null) {
+      setLoading(true);
+      fetchModels(action)
+        .then((res) => setData(res))
+        .finally(() => setLoading(false));
+    }
+    prevActionRef.current = action;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
   return (
@@ -278,23 +357,25 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
       <h2 className="text-sm font-semibold tracking-wide mt-1" style={{ color: "var(--axis-gray)" }}>{t("filter.model")}</h2>
       {/* {action} */}
       <Select
-        disabled={action == null}
-        value={modelAction}
+        disabled={action == null || loading}
+        value={modelAction ?? ANY_VALUE}
         onValueChange={(e) => {
-          setAction(e);
-          setModelAction(e);
-          setModelActionDrill(e);
+          const next = e === ANY_VALUE ? null : e;
+          // На сбросе возвращаемся к запросу марки, иначе «Показать» ушёл бы с
+          // пустым action и кнопка молча ничего не делала.
+          setAction(next ?? action);
+          setModelAction(next);
+          setModelActionDrill(next);
         }}
-        defaultValue={null}
       >
-        <SelectTrigger>
-          <SelectValue placeholder={t("filter.model")} />
+        <SelectTrigger className="filter-select">
+          <SelectValue placeholder={loading ? t("filter.loading") : t("filter.model")} />
         </SelectTrigger>
-        <SelectContent className="max-h-[min(384px,var(--radix-select-content-available-height))]">
-          <SelectItem value={null}>{t("filter.selectModel")}</SelectItem>
+        <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
+          <SelectItem value={ANY_VALUE}>{t("filter.selectModel")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
-              <div className="w-full block border-2 ">
+              <div className="w-full block">
                 <span>
                   {i18n.language === "ko"
                     ? item.DisplayValue
@@ -313,20 +394,31 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
 interface GenerationRowProps {
   action: string | null;
   setAction: React.Dispatch<React.SetStateAction<string | null>>;
+  /** Отдаёт выбранное поколение вниз — уровню «топливо и привод». */
+  onSelect?: (value: string | null) => void;
 }
-const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
+const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSelect }) => {
   const { t } = useTranslation();
   const [GenerationAction, setGenerationAction] = useState<string | null>(null);
   const [data, setData] = useState<GenerationResponce[]>([]);
+  const [loading, setLoading] = useState(false);
   const prevActionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (prevActionRef.current != action) {
+    if (prevActionRef.current !== action) {
       setGenerationAction(null);
+      // Сменилась модель — нижние уровни обязаны обнулиться, иначе в запросе
+      // останется комплектация от прежней машины.
+      onSelect?.(null);
+      if (action == null) setData([]);
     }
     if (action != null) {
-      fetchGeneration(action).then((res) => setData(res));
-      prevActionRef.current = action;
+      setLoading(true);
+      fetchGeneration(action)
+        .then((res) => setData(res))
+        .finally(() => setLoading(false));
     }
+    prevActionRef.current = action;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
   return (
@@ -334,24 +426,146 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction }) => {
       <h2 className="text-sm font-semibold tracking-wide mt-1" style={{ color: "var(--axis-gray)" }}>{t("filter.generation")}</h2>
 
       <Select
-        value={GenerationAction}
+        value={GenerationAction ?? ANY_VALUE}
         onValueChange={(e) => {
-          setAction(e);
-          setGenerationAction(e);
+          const next = e === ANY_VALUE ? null : e;
+          setAction(next ?? action);
+          setGenerationAction(next);
+          onSelect?.(next);
         }}
-        disabled={action == null}
+        disabled={action == null || loading}
       >
-        <SelectTrigger>
-          <SelectValue placeholder={t("filter.generation")} />
+        <SelectTrigger className="filter-select">
+          <SelectValue placeholder={loading ? t("filter.loading") : t("filter.generation")} />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={null}>{t("filter.selectGeneration")}</SelectItem>
+        <SelectContent className="filter-menu">
+          <SelectItem value={ANY_VALUE}>{t("filter.selectGeneration")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
-              <div className="w-full block border-2 ">
+              <div className="w-full block">
                 <span>{translateGenerationRow(item.DisplayValue, t)}</span>{" "}
                 <span className="font-bold ">{`(${item.Count})`}</span>
               </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
+
+interface NavRowProps {
+  label: string;
+  placeholder: string;
+  /** Запрос родительского уровня. null — родитель не выбран, уровня нет. */
+  action: string | null;
+  fetcher: (query: string) => Promise<NavFacet[]>;
+  setAction: React.Dispatch<React.SetStateAction<string | null>>;
+  /** Отдаёт выбранное значение следующему уровню вниз. */
+  onSelect?: (value: string | null) => void;
+}
+
+/**
+ * Один уровень дерева iNav: топливо/привод, объём или комплектация.
+ *
+ * Три уровня устроены одинаково, поэтому компонент один — в отличие от
+ * ModelsRow и GenerationRow, которые писались до него и различаются только
+ * способом подписи.
+ *
+ * ⚠️ Пока Encar не вернул ни одного фасета, строка не рендерится ВООБЩЕ. У
+ * части поколений нижних уровней нет, и пустая выпадашка читалась бы как
+ * поломка фильтра, а не как «здесь нечего выбирать».
+ */
+const NavRow: React.FC<NavRowProps> = ({
+  label,
+  placeholder,
+  action,
+  fetcher,
+  setAction,
+  onSelect,
+}) => {
+  const { t } = useTranslation();
+  const [data, setData] = useState<NavFacet[]>([]);
+  const [value, setValue] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const prevActionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (prevActionRef.current !== action) {
+      // Родитель сменился — сбрасываем себя и всех, кто ниже.
+      setValue(null);
+      onSelect?.(null);
+      setData([]);
+    }
+    prevActionRef.current = action;
+
+    if (action == null) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    fetcher(action)
+      .then((res) => {
+        // Ответы приходят не в том порядке, в каком уходили запросы: без этого
+        // флага медленный ответ по прежнему поколению перезаписал бы свежий.
+        if (!cancelled) setData(res);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [action]);
+
+  // ⚠️ Строка НЕ скрывается, даже когда выбирать нечего (решение владельца
+  // 27.08.2026). Скрытие дёргало вёрстку: цена, пробег и год прыгали вверх-вниз
+  // на каждый выбор, — и делало эти три уровня непохожими на «Модель» и
+  // «Поколение», которые всегда на месте и просто отключены.
+  const disabled = action == null || loading || data.length === 0;
+  const hint = loading
+    ? t("filter.loading")
+    : action != null && data.length === 0
+      ? t("filter.noOptions")
+      : label;
+
+  return (
+    <div>
+      <h2
+        className="text-sm font-semibold tracking-wide mt-1"
+        style={{ color: "var(--axis-gray)" }}
+      >
+        {label}
+      </h2>
+      <Select
+        disabled={disabled}
+        value={value ?? ANY_VALUE}
+        onValueChange={(e) => {
+          // ANY_VALUE — «любой», то есть возврат к запросу родителя: пустую
+          // строку Radix в SelectItem не принимает, а null не проходит типами
+          // (соседние строки фильтра его передают, и tsc на них ругается).
+          const next = e === ANY_VALUE ? null : e;
+          setAction(next ?? action);
+          setValue(next);
+          onSelect?.(next);
+        }}
+      >
+        <SelectTrigger className="filter-select">
+          <SelectValue placeholder={hint} />
+        </SelectTrigger>
+        <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
+          <SelectItem value={ANY_VALUE}>{placeholder}</SelectItem>
+          {data.map((item) => (
+            <SelectItem key={item.Action} value={item.Action}>
+              <span>
+                {item.DisplayValue === NO_TRIM
+                  ? t("filter.noTrim")
+                  : translateGenerationRow(item.DisplayValue, t)}
+              </span>{" "}
+              <span className="font-bold">{`(${item.Count})`}</span>
             </SelectItem>
           ))}
         </SelectContent>

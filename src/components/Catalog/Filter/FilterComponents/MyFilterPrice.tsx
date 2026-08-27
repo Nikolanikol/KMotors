@@ -68,10 +68,10 @@ const MyFilterPrice = ({
           onValueChange={handleminPriceChange}
           value={minPrice.toString()}
         >
-          <SelectTrigger className="flex-1 min-w-0">
+          <SelectTrigger className="filter-select flex-1 min-w-0">
             <SelectValue placeholder="Select a fruit" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="filter-menu">
             <SelectGroup defaultValue={"a"}>
               <SelectLabel>{convertNumber(minPrice)} {t('common.won')}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">
@@ -88,10 +88,10 @@ const MyFilterPrice = ({
           onValueChange={handlemaxPriceChange}
           value={maxPrice.toString()}
         >
-          <SelectTrigger className="flex-1 min-w-0">
+          <SelectTrigger className="filter-select flex-1 min-w-0">
             <SelectValue placeholder="Select a fruit" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="filter-menu">
             <SelectGroup>
               <SelectLabel>{convertNumber(maxPrice)} {t('common.won')}</SelectLabel>{" "}
               <div className="max-h-80 overflow-y-scroll">

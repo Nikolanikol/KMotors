@@ -140,6 +140,13 @@
     "selectModel": "اختر الموديل",
     "generation": "الجيل",
     "selectGeneration": "اختر الجيل",
+    "engine": "الوقود والدفع",
+    "selectEngine": "اختر الوقود والدفع",
+    "trimGroup": "المحرك",
+    "selectTrimGroup": "اختر المحرك",
+    "trim": "فئة التجهيز",
+    "selectTrim": "اختر فئة التجهيز",
+    "noTrim": "بدون فئة تجهيز",
     "show": "عرض",
     "updating": "⏳ جار التحديث...",
     "price": "السعر",
@@ -148,7 +155,9 @@
     "carNoSearch": "البحث برقم السيارة",
     "carNoPlaceholder": "مثال: 123가4567",
     "carNoButton": "بحث",
-    "carNoInvalid": "أدخل رقم اللوحة الكورية، مثال: 317주9018"
+    "carNoInvalid": "أدخل رقم اللوحة الكورية، مثال: 317주9018",
+    "loading": "جارٍ التحميل…",
+    "noOptions": "لا توجد خيارات"
   },
   "fuel": {
     "gasoline": "بنزين",

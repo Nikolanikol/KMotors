@@ -142,6 +142,13 @@
     "selectModel": "Select model",
     "generation": "Generation",
     "selectGeneration": "Select generation",
+    "engine": "Fuel & drive",
+    "selectEngine": "Select fuel and drive",
+    "trimGroup": "Engine",
+    "selectTrimGroup": "Select engine",
+    "trim": "Trim",
+    "selectTrim": "Select trim",
+    "noTrim": "No trim specified",
     "show": "Show",
     "updating": "⏳ Updating...",
     "price": "Price",
@@ -150,7 +157,9 @@
     "carNoSearch": "Search by car number",
     "carNoPlaceholder": "E.g.: 123가4567",
     "carNoButton": "Search",
-    "carNoInvalid": "Enter a Korean plate number, e.g.: 317주9018"
+    "carNoInvalid": "Enter a Korean plate number, e.g.: 317주9018",
+    "loading": "Loading…",
+    "noOptions": "No options"
   },
   "fuel": {
     "gasoline": "Gasoline",
