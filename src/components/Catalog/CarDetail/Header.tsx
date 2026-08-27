@@ -40,6 +40,9 @@ const Header = ({ data }) => {
             <p className="text-3xl font-bold text-white">{formatCarKrw(data.advertisement.price)}</p>
             <p className="text-white/70 text-sm mt-0.5">{t("common:common.won")}</p>
           </div>
+          <p className="text-[11px] leading-tight max-w-[220px] lg:text-right" style={{ color: "var(--axis-gray)" }}>
+            {t("common:car.storageFeeIncluded")}
+          </p>
         </div>
       </div>
 

@@ -407,6 +407,16 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     ka: "ვონი",
     ar: "وون",
   };
+  // Дубль ключа common:car.storageFeeIncluded: этот блок серверный, инстанса
+  // i18next у него нет — ровно та же причина, по которой рядом живут
+  // BUY_PRICE_LABEL и WON_LABEL. Меняешь текст в словаре — меняй и здесь.
+  const STORAGE_FEE_LABEL: Record<string, string> = {
+    ru: "Дилерский стояночный сбор включён в цену",
+    en: "Dealer parking fee included in the price",
+    ko: "딜러 보관료가 가격에 포함되어 있습니다",
+    ka: "ფასში შედის დილერის სადგომის საფასური",
+    ar: "السعر يشمل رسوم إيقاف السيارة لدى الوكيل",
+  };
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -697,6 +707,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                       ₽
                     </p>
                   )}
+                  <p className="text-white/70 text-[10px] leading-tight mt-1">
+                    {STORAGE_FEE_LABEL[lang] ?? STORAGE_FEE_LABEL.ru}
+                  </p>
                 </div>
               </div>
             )}

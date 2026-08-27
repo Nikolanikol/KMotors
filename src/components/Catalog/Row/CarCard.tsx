@@ -175,6 +175,10 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
               ≈ {convertedPrice.value} {convertedPrice.symbol}
             </p>
           )}
+          {/* Сбор сидит внутри цены (carPricing) — подпись говорит об этом вслух. */}
+          <p className="text-[10px] leading-tight mt-1" style={{ color: "var(--axis-gray)" }}>
+            {t("common:car.storageFeeIncluded")}
+          </p>
         </div>
 
         {/* Buttons row */}

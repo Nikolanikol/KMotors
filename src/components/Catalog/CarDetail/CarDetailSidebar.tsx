@@ -41,6 +41,9 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
             ≈ {convertedPrice.value} {convertedPrice.symbol}
           </p>
         )}
+        <p className="text-[11px] leading-tight mt-1.5" style={{ color: "var(--axis-gray)" }}>
+          {t("common:car.storageFeeIncluded")}
+        </p>
       </div>
 
       {/* Request form */}
