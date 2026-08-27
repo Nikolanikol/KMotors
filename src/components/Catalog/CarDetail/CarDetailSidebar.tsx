@@ -1,6 +1,6 @@
 "use client";
 
-import { convertNumber } from "@/utils/splitNumber";
+import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { Phone, MapPin, User, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CarRequestForm from "./CarRequestForm";
@@ -22,13 +22,10 @@ interface Props {
 export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd, lang, priceKRW, yearMonth, engineVolume, fuelType }: Props) {
   const { t } = useTranslation(["common"]);
 
-  const krw = data?.advertisement?.price * 10000;
-  const convertedPrice = (() => {
-    if (!krw || isNaN(krw)) return null;
-    if (lang === "ru" && krwToRub) return { value: Math.round(krw * krwToRub).toLocaleString("ru-RU"), symbol: "₽" };
-    if (lang !== "ko" && krwToUsd) return { value: Math.round(krw * krwToUsd).toLocaleString("en-US"), symbol: "$" };
-    return null;
-  })();
+  const convertedPrice = convertedCarPrice(data?.advertisement?.price, lang, {
+    krwToRub,
+    krwToUsd,
+  });
 
   return (
     <div className="space-y-4">
@@ -36,7 +33,7 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
       <div className="hidden lg:block rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
         <p className="text-xs mb-2" style={{ color: "var(--axis-gray)" }}>{t("common:car.buyPrice")}</p>
         <div className="rounded-xl px-5 py-4 mb-2" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 8px 24px rgba(182,119,73,0.25)" }}>
-          <p className="text-2xl font-bold text-white">{convertNumber(data.advertisement.price)}</p>
+          <p className="text-2xl font-bold text-white">{formatCarKrw(data.advertisement.price)}</p>
           <p className="text-white/70 text-sm">{t("common:common.won")}</p>
         </div>
         {convertedPrice && (
@@ -44,6 +41,9 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
             ≈ {convertedPrice.value} {convertedPrice.symbol}
           </p>
         )}
+        <p className="text-[11px] leading-tight mt-1.5" style={{ color: "var(--axis-gray)" }}>
+          {t("common:car.storageFeeIncluded")}
+        </p>
       </div>
 
       {/* Request form */}

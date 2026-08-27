@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDate } from "@/utils/formatDate";
-import { convertNumber } from "@/utils/splitNumber";
+import { formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { Phone, MapPin, User } from "lucide-react";
 import React from "react";
@@ -37,9 +37,12 @@ const Header = ({ data }) => {
         <div className="flex flex-col items-start lg:items-end gap-1">
           <p className="text-xs" style={{ color: "var(--axis-gray)" }}>{t("common:car.buyPrice")}</p>
           <div className="px-6 py-4 rounded-2xl" style={{ background: "linear-gradient(135deg, var(--axis-orange), var(--axis-amber))", boxShadow: "0 8px 32px rgba(182,119,73,0.3)" }}>
-            <p className="text-3xl font-bold text-white">{convertNumber(data.advertisement.price)}</p>
+            <p className="text-3xl font-bold text-white">{formatCarKrw(data.advertisement.price)}</p>
             <p className="text-white/70 text-sm mt-0.5">{t("common:common.won")}</p>
           </div>
+          <p className="text-[11px] leading-tight max-w-[220px] lg:text-right" style={{ color: "var(--axis-gray)" }}>
+            {t("common:car.storageFeeIncluded")}
+          </p>
         </div>
       </div>
 

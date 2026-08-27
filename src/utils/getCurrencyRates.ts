@@ -14,8 +14,8 @@
 
 // Фолбэки — на случай, когда источник недоступен. Держать близкими к реальности
 // и датировать: молчаливое расхождение здесь дороже, чем кажется.
-const FALLBACK_KRW_TO_RUB = 0.0537; // ЦБ РФ, 29.07.2026
-const FALLBACK_KRW_TO_USD = 0.00069; // frankfurter, 28.07.2026
+const FALLBACK_KRW_TO_RUB = 0.0609; // ЦБ РФ, 27.08.2026
+const FALLBACK_KRW_TO_USD = 0.00072; // frankfurter, 26.08.2026
 
 export interface CurrencyRates {
   krwToRub: number;

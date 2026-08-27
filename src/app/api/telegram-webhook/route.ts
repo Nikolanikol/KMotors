@@ -7,7 +7,8 @@ import { publishApproved } from "@/lib/seo-publish";
 import { getCarSnapshot } from "@/lib/carsSeen";
 import { deactivateAllForChat, deactivateOwn, saveSubscription } from "@/lib/savedSearches";
 import { normalizeBrand } from "@/lib/carLabels";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getCarRates } from "@/lib/kbFx";
+import { carPriceKrw } from "@/lib/carPricing";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -168,15 +169,13 @@ export async function POST(req: NextRequest) {
       // Цену показываем в вонах и долларах: 만원 (десятки тысяч вон) — внутренняя
       // единица Encar, читать её в чате невозможно.
       //
-      // Намеренно НЕ в рублях: krwToRub из getCurrencyRates сейчас недостоверен.
-      // Источник (frankfurter.dev) RUB не отдаёт вообще — в его списке валют
-      // такой нет, — поэтому значение всегда сваливается на зашитую константу
-      // 0.058 от июня 2026 при реальном курсе ЦБ 0.0537, то есть завышает на 8%.
-      // Курс USD оттуда же приходит живым и ему верить можно.
+      // Доллары, а не рубли: сообщение уходит владельцу как сводка по лиду,
+      // и одной валюты тут достаточно. Цена — через carPriceKrw, со стояночным
+      // сбором, чтобы совпадала с тем, что человек видел на сайте.
       let soldPriceLine = "";
       if (soldSnapshot?.price_manwon) {
-        const krw = soldSnapshot.price_manwon * 10000;
-        const { krwToUsd } = await getCurrencyRates();
+        const krw = carPriceKrw(soldSnapshot.price_manwon);
+        const { krwToUsd } = await getCarRates();
         soldPriceLine =
           ` — было ${krw.toLocaleString("ru-RU")} ₩` +
           ` (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`;

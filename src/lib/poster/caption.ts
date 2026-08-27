@@ -1,4 +1,5 @@
 // Сборка продающей HTML-подписи под медиагруппу.
+import { carPriceKrw } from '@/lib/carPricing';
 import { translateModelName, translateGradeText, MANUFACTURER_MAP } from './translations';
 import { kmotorsUrl, type Listing } from './encar';
 import { POST_CONFIG } from './config';
@@ -93,9 +94,14 @@ export function buildCaption(
   return lines.join('\n');
 }
 
-/** Конвертирует цену в 만원 в подпись USD "$10,700" по курсу krwToUsd. */
+/**
+ * Конвертирует цену в 만원 в подпись USD "$10,700" по курсу krwToUsd.
+ *
+ * Через carPriceKrw: в канале обязана стоять та же цена, что на сайте — со
+ * стояночным сбором. Иначе человек приходит из телеграма на цену выше.
+ */
 export function usdLabel(priceMan: number, krwToUsd: number): string {
-  const usd = priceMan * 10000 * krwToUsd;
+  const usd = carPriceKrw(priceMan) * krwToUsd;
   const rounded = Math.round(usd / 100) * 100;
   return '$' + rounded.toLocaleString('en-US');
 }

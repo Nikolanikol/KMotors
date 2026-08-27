@@ -5,7 +5,7 @@ import { CarSearchParams } from "./utils/Types";
 import CarCard from "./CarCard";
 import { Suspense } from "react";
 import { headers } from "next/headers";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getCarRates } from "@/lib/kbFx";
 import { catalogPageSize } from "@/utils/device";
 import { Search, WifiOff } from "lucide-react";
 
@@ -51,7 +51,7 @@ const CarsRow = async ({ searchParams, lang = "ru" }: { searchParams: CarSearchP
 
   const [{ data, count, failed }, rates] = await Promise.all([
     getCars(newString, offset, pageSize),
-    getCurrencyRates(),
+    getCarRates(),
   ]);
 
   // Апстрим не ответил — это не «пустая выдача», сообщение должно отличаться.

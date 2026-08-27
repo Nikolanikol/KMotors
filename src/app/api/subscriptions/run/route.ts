@@ -17,7 +17,8 @@ import {
   MAX_CARS_PER_MESSAGE,
   type SavedSearch,
 } from "@/lib/savedSearches";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getCarRates } from "@/lib/kbFx";
+import { carPriceKrw } from "@/lib/carPricing";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
@@ -146,14 +147,18 @@ function carLine(c: Candidate, krwToUsd: number): string {
       .join(" ")
       .trim() || `Автомобиль ${c.id}`;
 
-  const krw = Number(c.detail?.advertisement?.price) * 10000;
+  // Через carPriceKrw: подписчику уходит та же цена, что стоит на сайте.
+  const krw = carPriceKrw(c.detail?.advertisement?.price);
   const mileageRaw = Number(c.detail?.spec?.mileage ?? c.listing?.Mileage);
   const mileage = Number.isFinite(mileageRaw)
     ? ` · ${mileageRaw.toLocaleString("ru-RU")} км`
     : "";
-  const price = Number.isFinite(krw)
-    ? ` — ${krw.toLocaleString("ru-RU")} ₩ (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`
-    : "";
+  // Проверка «> 0», а не Number.isFinite: carPriceKrw отдаёт 0 на машине без
+  // внятной цены, и isFinite пропустил бы в рассылку строку « — 0 ₩».
+  const price =
+    krw > 0
+      ? ` — ${krw.toLocaleString("ru-RU")} ₩ (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`
+      : "";
   return `• <a href="${SITE}/ru/catalog/${c.id}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=subscription">${esc(name)}</a>${mileage}${price}`;
 }
 
@@ -210,7 +215,7 @@ export async function GET(req: NextRequest) {
     byQuery.set(s.query, list);
   }
 
-  const { krwToUsd } = await getCurrencyRates();
+  const { krwToUsd } = await getCarRates();
   const results: SendResult[] = [];
   let checked = 0;
   let failedQueries = 0;

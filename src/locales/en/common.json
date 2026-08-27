@@ -52,6 +52,7 @@
     "available": "Available",
     "sold": "Sold",
     "buyPrice": "Purchase price",
+    "storageFeeIncluded": "Dealer parking fee included in the price",
     "views": "Views",
     "carStatus": "Car Status",
     "detailedInfo": "Detailed Information",

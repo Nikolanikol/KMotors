@@ -11,7 +11,8 @@ import { FC, Suspense } from "react";
 import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSection";
 import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getCarRates } from "@/lib/kbFx";
+import { carPriceKrw, carPriceRub, formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
@@ -131,16 +132,14 @@ export async function generateMetadata({
 
   const year = formatYear(data?.category?.yearMonth);
   // пробег теперь приходит из buildSpecBits — с локализованной единицей
-  const krwPrice = data?.advertisement?.price
-    ? data.advertisement.price * 10000
-    : null;
+  const krwPrice = carPriceKrw(data?.advertisement?.price) || null;
 
   // Цена в сниппете обязана совпадать с той, что человек увидит на странице,
-  // иначе клик заканчивается разочарованием. Повторяем логику CarDetailSidebar:
-  // ru → ₽, остальные → $, курс живой (раньше здесь был зашит 0.065 — он
-  // завышал рублёвую цену примерно на 12% относительно фактического курса).
+  // иначе клик заканчивается разочарованием. Поэтому и цифра, и курс берутся
+  // из тех же модулей, что питают карточку: carPricing (цена + стояночный
+  // сбор) и getCarRates (курс KB, по которому считается инвойс).
   // Соц-краулерам курс не ждём: у них жёсткий таймаут на превью.
-  const rates = isSocialBot ? null : await getCurrencyRates();
+  const rates = isSocialBot ? null : await getCarRates();
   const priceLabel = (() => {
     if (!krwPrice || !rates) return null;
     if (lang === "ru" && rates.krwToRub)
@@ -286,7 +285,7 @@ async function SoldCarPage({ lang, id }: { lang: string; id: string }) {
   const snapshot = await getCarSnapshot(id);
   const [similar, rates] = await Promise.all([
     getSimilarCars(snapshot),
-    getCurrencyRates(),
+    getCarRates(),
   ]);
 
   // Имя собираем только из английских полей: если снимок пришёл из бэкфилла,
@@ -356,7 +355,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     .filter(Boolean)
     .join(" ");
   const carData = formatDate(data?.category?.yearMonth);
-  const rates = await getCurrencyRates();
+  const rates = await getCarRates();
   const mainPhoto = data?.photos?.[0]?.path
     ? `https://ci.encar.com${data.photos[0].path}`
     : null;
@@ -407,6 +406,16 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     ko: "원",
     ka: "ვონი",
     ar: "وون",
+  };
+  // Дубль ключа common:car.storageFeeIncluded: этот блок серверный, инстанса
+  // i18next у него нет — ровно та же причина, по которой рядом живут
+  // BUY_PRICE_LABEL и WON_LABEL. Меняешь текст в словаре — меняй и здесь.
+  const STORAGE_FEE_LABEL: Record<string, string> = {
+    ru: "Дилерский стояночный сбор включён в цену",
+    en: "Dealer parking fee included in the price",
+    ko: "딜러 보관료가 가격에 포함되어 있습니다",
+    ka: "ფასში შედის დილერის სადგომის საფასური",
+    ar: "السعر يشمل رسوم إيقاف السيارة لدى الوكيل",
   };
 
   const breadcrumbSchema = {
@@ -492,7 +501,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       // конвертация в ₽/$ идёт ниже как справочная. Валюта в разметке обязана
       // совпадать с видимой ценой, иначе Google бракует Offer.
       priceCurrency: "KRW",
-      price: data?.advertisement?.price * 10000,
+      // Через carPriceKrw, а не сырое ×10000: в цене на странице сидит
+      // стояночный сбор, и Offer обязан нести ту же сумму.
+      price: carPriceKrw(data?.advertisement?.price),
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/UsedCondition",
       seller: {
@@ -541,9 +552,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
   };
 
   const fullCarName = `${carName} ${carData}`;
-  const krwPrice = data?.advertisement?.price
-    ? data.advertisement.price * 10000
-    : null;
+  const krwPrice = carPriceKrw(data?.advertisement?.price) || null;
 
   // Ищем совпадение в MODEL_PAGES для правильного catalogFilter
   const mfrLower = (data.category.manufacturerEnglishName ?? "").toLowerCase();
@@ -606,6 +615,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
               style={{ scrollbarWidth: "none" }}
             >
               <CustomsCalculator
+                // Намеренно БЕЗ стояночного сбора (решение владельца
+                // 27.08.2026): база таможни — стоимость сделки, наш сбор в неё
+                // не входит. Не «приводить к carPriceKrw».
                 priceKRW={data.advertisement.price * 10000}
                 yearMonth={data?.category?.yearMonth || ""}
                 engineVolume={data?.spec?.displacement ?? 0}
@@ -680,20 +692,24 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                     {BUY_PRICE_LABEL[lang] ?? BUY_PRICE_LABEL.ru}
                   </p>
                   <p className="text-white text-2xl font-bold leading-tight">
-                    {(data.advertisement.price * 10000).toLocaleString("ru-RU")}{" "}
+                    {formatCarKrw(data.advertisement.price)}{" "}
                     <span className="text-base font-normal">
                       {WON_LABEL[lang] ?? WON_LABEL.ru}
                     </span>
                   </p>
-                  {rates.krwToRub && (
+                  {carPriceRub(data.advertisement.price, rates.krwToRub) && (
                     <p className="text-white/80 text-sm mt-0.5">
                       ≈{" "}
-                      {Math.round(
-                        data.advertisement.price * 10000 * rates.krwToRub,
-                      ).toLocaleString("ru-RU")}{" "}
+                      {carPriceRub(
+                        data.advertisement.price,
+                        rates.krwToRub,
+                      )?.toLocaleString("ru-RU")}{" "}
                       ₽
                     </p>
                   )}
+                  <p className="text-white/70 text-[10px] leading-tight mt-1">
+                    {STORAGE_FEE_LABEL[lang] ?? STORAGE_FEE_LABEL.ru}
+                  </p>
                 </div>
               </div>
             )}
@@ -723,6 +739,10 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
               krwToRub={rates.krwToRub}
               krwToUsd={rates.krwToUsd}
               lang={lang}
+              // ⚠️ Проп мёртвый: CarDetailSidebar импортирует CustomsCalculator,
+              // но не рендерит его, и priceKRW/yearMonth/engineVolume/fuelType
+              // внутри не читаются (lint: «defined but never used»). Оставлено
+              // как есть — чистка сайдбара к ценам отношения не имеет.
               priceKRW={data?.advertisement?.price * 10000}
               yearMonth={data?.category?.yearMonth}
               engineVolume={data?.spec?.displacement ?? 0}

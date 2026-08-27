@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { ArrowRight, Tag } from "lucide-react";
 import CarCard from "@/components/Catalog/Row/CarCard";
 import { encarLoader } from "@/utils/encarLoader";
-import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
+import { convertNumberKm } from "@/utils/splitNumber";
+import { carPriceKrw, convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import type { CarSnapshot } from "@/lib/carsSeen";
 import SoldCarCta from "./SoldCarCta";
@@ -40,7 +41,14 @@ interface Props {
 export default function SoldCar({ lang, carId, snapshot, similar, rates, carName }: Props) {
   const { t } = useTranslation(["common", "cars"]);
 
-  const priceKrw = snapshot?.price_manwon ? snapshot.price_manwon * 10000 : null;
+  // Снимок хранит 만원 «как отдаёт Encar» — в воны переводит carPricing, он же
+  // прибавляет стояночный сбор: «было/стало» обязано считаться так же, как
+  // живая цена, иначе перечёркнутая сумма врёт на величину сбора.
+  const priceKrw = carPriceKrw(snapshot?.price_manwon) || null;
+  const converted = convertedCarPrice(snapshot?.price_manwon, lang, {
+    krwToRub: rates?.krwToRub,
+    krwToUsd: rates?.krwToUsd,
+  });
   const photo = snapshot?.photo_path ?? null;
 
   return (
@@ -103,13 +111,10 @@ export default function SoldCar({ lang, carId, snapshot, similar, rates, carName
                     label={t("catalog.sold.wasPrice")}
                     value={
                       <span style={{ textDecoration: "line-through", opacity: 0.75 }}>
-                        {convertNumber(String(priceKrw))} ₩
-                        {rates && (
+                        {formatCarKrw(snapshot.price_manwon)} ₩
+                        {converted && (
                           <span className="ml-2 text-xs" style={{ textDecoration: "none" }}>
-                            ≈{" "}
-                            {lang === "ru"
-                              ? `${Math.round(priceKrw * rates.krwToRub).toLocaleString("ru-RU")} ₽`
-                              : `$${Math.round(priceKrw * rates.krwToUsd).toLocaleString("en-US")}`}
+                            ≈ {converted.value} {converted.symbol}
                           </span>
                         )}
                       </span>

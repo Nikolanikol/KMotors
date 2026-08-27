@@ -7,7 +7,8 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { convertNumber, convertNumberKm } from "@/utils/splitNumber";
+import { convertNumberKm } from "@/utils/splitNumber";
+import { formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -22,7 +23,7 @@ type Row = {
 
 const ROWS: Row[] = [
   { label: "Год", key: "year", format: (v) => v?.toString().slice(0, 4) ?? v, best: "max" },
-  { label: "Цена", key: "price", format: (v) => convertNumber(v), best: "min" },
+  { label: "Цена", key: "price", format: (v) => formatCarKrw(v), best: "min" },
   { label: "Пробег", key: "mileage", format: (v) => `${convertNumberKm(v)} км`, best: "min" },
   { label: "Топливо", key: "fuel", format: (v, t) => translateGenerationRow(v, t) },
   { label: "КПП", key: "transmission", format: (v, t) => translateGenerationRow(v, t) },
