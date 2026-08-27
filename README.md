@@ -114,6 +114,24 @@ PAYPAL_API_BASE=
 RESEND_API_KEY=
 EMAIL_FROM=
 
+# Pricing — cars (src/lib/carPricing.ts)
+NEXT_PUBLIC_CAR_STORAGE_FEE_KRW=440000
+                          # dealer parking fee in KRW, flat per car, folded into
+                          # EVERY displayed price incl. the KRW headline figure.
+                          # Code default is 440000, so a missing var still prices
+                          # correctly — but set it in Coolify to change it there.
+                          # FX for cars comes from KB Kookmin (src/lib/kbFx.ts),
+                          # not from these vars.
+
+# Pricing — parts (src/lib/pricing.ts)
+NEXT_PUBLIC_PARTS_PAYMENT_BUFFER=1.06
+                          # payment/conversion buffer multiplier
+NEXT_PUBLIC_PARTS_FIXED_FEE_KRW=5000
+                          # default flat fee for tiers that omit their own
+NEXT_PUBLIC_PARTS_MARGIN_TIERS=5000:1.45:2000,10000:1.4:3000,30000:1.35:3500,100000:1.28:5000,999999999:1.22:8000
+                          # "max_krw:multiplier[:flat_krw]" ascending; a product
+                          # takes the first tier its price falls under
+
 # Blog
 PEXELS_API_KEY=           # stock images for AI-generated posts
 POSTER_CRON_SECRET=       # guards /api/poster/run, /api/rss-sync, /api/blog-generate
