@@ -208,10 +208,10 @@ const Filter = ({}) => {
           trackEvent("filter_manufacturer", { manufacturer: title });
         }}
       >
-        <SelectTrigger>
+        <SelectTrigger className="filter-select">
           <SelectValue placeholder={t("filter.manufacturer")} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="filter-menu">
           <SelectItem value={null}>{t("filter.selectManufacturer")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
@@ -329,14 +329,14 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
         }}
         defaultValue={null}
       >
-        <SelectTrigger>
+        <SelectTrigger className="filter-select">
           <SelectValue placeholder={t("filter.model")} />
         </SelectTrigger>
-        <SelectContent className="max-h-[min(384px,var(--radix-select-content-available-height))]">
+        <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
           <SelectItem value={null}>{t("filter.selectModel")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
-              <div className="w-full block border-2 ">
+              <div className="w-full block">
                 <span>
                   {i18n.language === "ko"
                     ? item.DisplayValue
@@ -390,14 +390,14 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
         }}
         disabled={action == null}
       >
-        <SelectTrigger>
+        <SelectTrigger className="filter-select">
           <SelectValue placeholder={t("filter.generation")} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="filter-menu">
           <SelectItem value={null}>{t("filter.selectGeneration")}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action} className="">
-              <div className="w-full block border-2 ">
+              <div className="w-full block">
                 <span>{translateGenerationRow(item.DisplayValue, t)}</span>{" "}
                 <span className="font-bold ">{`(${item.Count})`}</span>
               </div>
@@ -492,10 +492,10 @@ const NavRow: React.FC<NavRowProps> = ({
           onSelect?.(next);
         }}
       >
-        <SelectTrigger>
+        <SelectTrigger className="filter-select">
           <SelectValue placeholder={label} />
         </SelectTrigger>
-        <SelectContent className="max-h-[min(384px,var(--radix-select-content-available-height))]">
+        <SelectContent className="filter-menu max-h-[min(384px,var(--radix-select-content-available-height))]">
           <SelectItem value={ANY_VALUE}>{placeholder}</SelectItem>
           {data.map((item) => (
             <SelectItem key={item.Action} value={item.Action}>
