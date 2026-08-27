@@ -16,26 +16,54 @@
 // и датировать: молчаливое расхождение здесь дороже, чем кажется.
 const FALLBACK_KRW_TO_RUB = 0.0609; // ЦБ РФ, 27.08.2026
 const FALLBACK_KRW_TO_USD = 0.00072; // frankfurter, 26.08.2026
+const FALLBACK_RUB_TO_USD = 1 / 84.28; // ЦБ РФ, 27.08.2026
 
 export interface CurrencyRates {
   krwToRub: number;
   krwToUsd: number;
+  /**
+   * Рубли → доллары. Нужен там, где цена ЗАДАНА в рублях, а показать её надо в
+   * долларах: бейдж «цена под ключ» на модельных страницах. К ценам Encar
+   * отношения не имеет — те живут в вонах и считаются курсом KB (`kbFx.ts`).
+   */
+  rubToUsd: number;
   updatedAt: string;
 }
 
-/** KRW→RUB от ЦБ РФ. Valute.KRW приходит как Value за Nominal (обычно 1000). */
-async function fetchKrwToRub(): Promise<{ rate: number; date: string } | null> {
+/** Рублей за единицу валюты: Value приходит за Nominal (у KRW обычно 1000). */
+function perUnit(valute: unknown): number | null {
+  const v = valute as { Value?: unknown; Nominal?: unknown } | undefined;
+  const value = Number(v?.Value);
+  const nominal = Number(v?.Nominal);
+  if (!Number.isFinite(value) || !Number.isFinite(nominal) || nominal <= 0) return null;
+  return value / nominal;
+}
+
+/**
+ * ЦБ РФ одним запросом отдаёт ВСЕ валюты, поэтому и KRW→RUB, и RUB→USD берутся
+ * из одного ответа: второго похода в сеть здесь нет, а `revalidate` общий.
+ */
+async function fetchCbrRates(): Promise<{
+  krwToRub: number | null;
+  rubToUsd: number | null;
+  date: string;
+} | null> {
   try {
     const res = await fetch("https://www.cbr-xml-daily.ru/daily_json.js", {
       next: { revalidate: 86400 },
     });
     if (!res.ok) throw new Error(`CBR ${res.status}`);
     const data = await res.json();
-    const krw = data?.Valute?.KRW;
-    const value = Number(krw?.Value);
-    const nominal = Number(krw?.Nominal);
-    if (!Number.isFinite(value) || !Number.isFinite(nominal) || nominal <= 0) return null;
-    return { rate: value / nominal, date: String(data?.Date ?? "").slice(0, 10) };
+
+    const krwToRub = perUnit(data?.Valute?.KRW);
+    // ЦБ котирует «рублей за доллар» — нам нужна обратная величина.
+    const rubPerUsd = perUnit(data?.Valute?.USD);
+
+    return {
+      krwToRub,
+      rubToUsd: rubPerUsd && rubPerUsd > 0 ? 1 / rubPerUsd : null,
+      date: String(data?.Date ?? "").slice(0, 10),
+    };
   } catch {
     return null;
   }
@@ -62,13 +90,23 @@ async function fetchKrwToUsd(): Promise<{ rate: number; date: string } | null> {
  * опрашиваются параллельно и независимо — падение одного не роняет второй.
  */
 export async function getCurrencyRates(): Promise<CurrencyRates> {
-  const [rub, usd] = await Promise.all([fetchKrwToRub(), fetchKrwToUsd()]);
+  const [cbr, usd] = await Promise.all([fetchCbrRates(), fetchKrwToUsd()]);
+
+  // Падение на фолбэк ЛОГИРУЕТСЯ поимённо: молча подставленная константа — это
+  // не подстраховка, а место, где расхождение цен становится невидимым.
+  const stale: string[] = [];
+  if (!cbr?.krwToRub) stale.push("KRW→RUB (ЦБ РФ)");
+  if (!cbr?.rubToUsd) stale.push("RUB→USD (ЦБ РФ)");
+  if (!usd?.rate) stale.push("KRW→USD (frankfurter)");
+  if (stale.length) {
+    console.error("[currency] курс на фолбэке, цены могут расходиться:", stale.join(", "));
+  }
 
   return {
-    krwToRub: rub?.rate ?? FALLBACK_KRW_TO_RUB,
+    krwToRub: cbr?.krwToRub ?? FALLBACK_KRW_TO_RUB,
     krwToUsd: usd?.rate ?? FALLBACK_KRW_TO_USD,
-    updatedAt:
-      rub?.date || usd?.date || "fallback",
+    rubToUsd: cbr?.rubToUsd ?? FALLBACK_RUB_TO_USD,
+    updatedAt: cbr?.date || usd?.date || "fallback",
   };
 }
 
