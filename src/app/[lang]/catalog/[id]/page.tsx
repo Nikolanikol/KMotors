@@ -12,7 +12,7 @@ import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSec
 import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getCarRates } from "@/lib/kbFx";
-import { carPriceKrw, carPriceRub, formatCarKrw } from "@/lib/carPricing";
+import { carPriceKrw, convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
@@ -407,6 +407,18 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     ka: "ვონი",
     ar: "وون",
   };
+  // Справочная цена под вонами в МОБИЛЬНОЙ плашке. Ровно та же функция, что у
+  // CarDetailSidebar и карточек каталога: ₽ на ru, $ на остальных языках.
+  // ⚠️ Здесь стоял прямой carPriceRub + символ «₽» без ветки по языку, поэтому
+  // англоязычная (и ka/ar) витрина на мобильном показывала рубли под вонами,
+  // хотя десктопный сайдбар на том же URL показывал доллары. Локальной формулы
+  // цены в этом файле быть не должно — см. CLAUDE.md, «Цены и курсы».
+  const mobileConvertedPrice = convertedCarPrice(
+    data?.advertisement?.price,
+    lang,
+    rates,
+  );
+
   // Дубль ключа common:car.storageFeeIncluded: этот блок серверный, инстанса
   // i18next у него нет — ровно та же причина, по которой рядом живут
   // BUY_PRICE_LABEL и WON_LABEL. Меняешь текст в словаре — меняй и здесь.
@@ -697,14 +709,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                       {WON_LABEL[lang] ?? WON_LABEL.ru}
                     </span>
                   </p>
-                  {carPriceRub(data.advertisement.price, rates.krwToRub) && (
+                  {mobileConvertedPrice && (
                     <p className="text-white/80 text-sm mt-0.5">
-                      ≈{" "}
-                      {carPriceRub(
-                        data.advertisement.price,
-                        rates.krwToRub,
-                      )?.toLocaleString("ru-RU")}{" "}
-                      ₽
+                      ≈ {mobileConvertedPrice.value} {mobileConvertedPrice.symbol}
                     </p>
                   )}
                   <p className="text-white/70 text-[10px] leading-tight mt-1">
