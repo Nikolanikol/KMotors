@@ -157,8 +157,22 @@ export async function syncSales(
     result.upserted = await upsertChunked("auction_results", rows, (slice) =>
       createServerClient()
         .from("auction_results")
-        .upsert(slice, { onConflict: "source,external_id" }));
-    result.notes = { ...result.notes, perSession };
+        .upsert(slice, { onConflict: "source,external_id,session" }));
+
+    // ⚠️ Признаки sold и relisted_later размечает БАЗА, и только после того,
+    // как загружены все строки. По одному наблюдению их не вычислить: «лот
+    // продан» означает «больше не выставлялся», а это видно лишь по всей
+    // истории лота. Непроданный возвращается на следующие торги с тем же
+    // идентификатором, и площадка ставит ему цену молотка равной старту —
+    // если поверить этой цене, медиана премии падает с 13.8% до 8.2%.
+    const { data: touched, error: refreshError } = await createServerClient()
+      .rpc("auction_results_refresh_sold");
+    if (refreshError) {
+      // Данные легли, разметка — нет. Прогноз будет считаться по устаревшим
+      // флагам, поэтому это не «почти успех», а провал прогона.
+      throw new Error(`auction_results_refresh_sold: ${refreshError.message}`);
+    }
+    result.notes = { ...result.notes, perSession, resoldMarked: touched ?? 0 };
     result.ok = true;
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);

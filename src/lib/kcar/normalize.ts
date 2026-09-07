@@ -149,7 +149,6 @@ export function toResult(
   const carId = str(raw.CAR_ID);
   if (!carId) return null;
 
-  const hammer = hammerKrw(raw);
   return {
     source,
     external_id: carId,
@@ -173,7 +172,11 @@ export function toResult(
 
     start_price_krw: num(raw.AUC_STRT_PRC),
     reserve_price_krw: num(raw.AUC_STRT_HOPE),
-    hammer_price_krw: hammer,
-    sold: hammer != null,
+    hammer_price_krw: hammerKrw(raw),
+    // Оба флага — забота базы: разметить строку в отрыве от остальных
+    // наблюдений того же лота невозможно. Пишем нейтральные значения,
+    // auction_results_refresh_sold() их пересчитает.
+    relisted_later: false,
+    sold: false,
   };
 }

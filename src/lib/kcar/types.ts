@@ -166,7 +166,17 @@ export interface AuctionResult {
 
   start_price_krw: number | null;
   reserve_price_krw: number | null;
+  /**
+   * ⚠️ Цена молотка в вонах. НЕ признак продажи: у непроданных лотов
+   * площадка подставляет сюда стартовую цену. Смотреть на `sold`.
+   */
   hammer_price_krw: number | null;
+  /**
+   * Оба признака проставляет БАЗА — функцией auction_results_refresh_sold()
+   * после загрузки. По одной строке их не вычислить: «продан» означает
+   * «больше не выставлялся», а это видно только по всей истории лота.
+   */
+  relisted_later: boolean;
   sold: boolean;
 }
 
