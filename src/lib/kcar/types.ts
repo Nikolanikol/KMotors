@@ -1,9 +1,9 @@
-// Типы модуля аукциона K Car.
+// Типы модуля аукционов.
 //
 // Разделены на три слоя, и это не формальность:
-//   RawLot   — что реально приходит от площадки (236 полей, все строками)
-//   Detail   — VIN, лист осмотра и галерея, которых в списочном API нет
-//   KcarLot  — нормализованная запись, которая ложится в kcar_lots
+//   RawLot      — что реально приходит от площадки (236 полей, все строками)
+//   LotDetail   — VIN, лист осмотра и галерея, которых в списочном API нет
+//   AuctionLot  — нормализованная запись, которая ложится в auction_lots
 // Смешивать их нельзя: у площадки цена молотка приходит в 만원, стартовая —
 // в вонах, а пустое значение выглядит как "" и как "0" одновременно.
 
@@ -79,9 +79,13 @@ export interface ParsedRemarks {
 
 export type NoticeLevel = "block" | "bad" | "warn" | "info";
 
-/** Строка kcar_lots. */
-export interface KcarLot {
-  car_id: string;
+/** Площадки. Пока подключён только KCar, но ключ и схема рассчитаны на все. */
+export type AuctionSource = "kcar" | "lotte" | "sk";
+
+/** Строка auction_lots. */
+export interface AuctionLot {
+  source: AuctionSource;
+  external_id: string;
   session: number | null;
   lane: string | null;
   auction_code: string | null;
@@ -115,6 +119,7 @@ export interface KcarLot {
 
   start_price_krw: number | null;
   reserve_price_krw: number | null;
+  hammer_price_krw: number | null;
   status: string | null;
 
   remarks: string | null;
@@ -137,9 +142,10 @@ export interface KcarLot {
   updated_at: string;
 }
 
-/** Строка kcar_sales. Цены уже приведены к вонам. */
-export interface KcarSale {
-  car_id: string;
+/** Строка auction_results. Цены уже приведены к вонам. */
+export interface AuctionResult {
+  source: AuctionSource;
+  external_id: string;
   session: number;
   lane: string | null;
   auction_date: string | null;

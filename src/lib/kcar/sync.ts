@@ -9,15 +9,17 @@
 // по мере обхода: частичная запись при обрыве сети оставила бы витрину со
 // смесью новых и позавчерашних лотов без признака, что данные неполные.
 //
-// ⚠️ Старые лоты не удаляем. Прошедший лот остаётся в kcar_lots как история
-// того, что выставлялось; фильтровать по auction_date — задача витрины.
-// Удаление здесь означало бы, что упавший парсер молча стирает каталог.
+// ⚠️ Старые лоты не удаляем. Прошедший лот остаётся в auction_lots как
+// история того, что выставлялось; фильтровать по auction_date — задача
+// витрины. Удаление здесь означало бы, что упавший парсер молча стирает
+// каталог. Чистить рабочий набор по дате можно отдельной операцией — итоги
+// сделок к тому времени уже лежат в auction_results и не пострадают.
 
 import { createServerClient } from "@/lib/supabase";
 import { fetchWeekly } from "./api";
 import { fetchDetails } from "./detail";
-import { toLot, toSale } from "./normalize";
-import type { KcarLot, KcarSale, LotDetail, SyncResult } from "./types";
+import { toLot, toResult } from "./normalize";
+import type { AuctionLot, AuctionResult, LotDetail, SyncResult } from "./types";
 
 /** Supabase не любит гигантские запросы — пишем пачками. */
 const CHUNK = 200;
@@ -46,7 +48,7 @@ async function upsertChunked<T>(
 
 async function logRun(kind: "lots" | "sales", result: SyncResult, startedAt: string) {
   try {
-    await createServerClient().from("kcar_sync_runs").insert({
+    await createServerClient().from("auction_sync_runs").insert({
       kind,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
@@ -59,7 +61,7 @@ async function logRun(kind: "lots" | "sales", result: SyncResult, startedAt: str
     });
   } catch (e) {
     // Журнал не должен ронять синхронизацию — но и молчать о себе не должен.
-    console.error("[kcar] не удалось записать kcar_sync_runs:", e);
+    console.error("[kcar] не удалось записать auction_sync_runs:", e);
   }
 }
 
@@ -104,14 +106,16 @@ export async function syncLots(
       }
     }
 
-    const rows: KcarLot[] = [];
+    const rows: AuctionLot[] = [];
     for (const r of raw) {
       const row = toLot(r, null, details.get(String(r.CAR_ID ?? "")));
       if (row) rows.push(row);
     }
 
-    result.upserted = await upsertChunked("kcar_lots", rows, (slice) =>
-      createServerClient().from("kcar_lots").upsert(slice, { onConflict: "car_id" }));
+    result.upserted = await upsertChunked("auction_lots", rows, (slice) =>
+      createServerClient()
+        .from("auction_lots")
+        .upsert(slice, { onConflict: "source,external_id" }));
     result.ok = true;
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);
@@ -136,7 +140,7 @@ export async function syncSales(
   const perSession: Record<number, number> = {};
 
   try {
-    const rows: KcarSale[] = [];
+    const rows: AuctionResult[] = [];
     for (const session of sessions) {
       const { lots: raw, errors } = await fetchWeekly("wRst", session, opts.signal);
       perSession[session] = raw.length;
@@ -145,13 +149,15 @@ export async function syncSales(
         result.notes = { ...result.notes, [`errors_${session}`]: errors };
       }
       for (const r of raw) {
-        const row = toSale(r, session);
+        const row = toResult(r, session);
         if (row) rows.push(row);
       }
     }
 
-    result.upserted = await upsertChunked("kcar_sales", rows, (slice) =>
-      createServerClient().from("kcar_sales").upsert(slice, { onConflict: "car_id" }));
+    result.upserted = await upsertChunked("auction_results", rows, (slice) =>
+      createServerClient()
+        .from("auction_results")
+        .upsert(slice, { onConflict: "source,external_id" }));
     result.notes = { ...result.notes, perSession };
     result.ok = true;
   } catch (e) {

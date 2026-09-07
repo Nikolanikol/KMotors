@@ -14,7 +14,7 @@
 
 import { DEFECT_PARTS, FUEL, MAKERS, TRANSMISSION, USAGE, COLORS, tr, translateModel } from "./dict";
 import { parseRemarks } from "./remarks";
-import type { KcarLot, KcarSale, LotDetail, RawLot } from "./types";
+import type { AuctionLot, AuctionResult, AuctionSource, LotDetail, RawLot } from "./types";
 
 /** 만원 → воны. */
 const MANWON = 10_000;
@@ -58,12 +58,13 @@ function trim(raw: RawLot): string | null {
   return t || null;
 }
 
-/** Сырой лот + детали (если добрались) → строка kcar_lots. */
+/** Сырой лот + детали (если добрались) → строка auction_lots. */
 export function toLot(
   raw: RawLot & { _lane?: string },
   session: number | null,
   detail?: LotDetail,
-): KcarLot | null {
+  source: AuctionSource = "kcar",
+): AuctionLot | null {
   const carId = str(raw.CAR_ID);
   if (!carId) return null;                       // без ключа строка бессмысленна
 
@@ -71,7 +72,8 @@ export function toLot(
   const photos = detail?.photos ?? [];
 
   return {
-    car_id: carId,
+    source,
+    external_id: carId,
     session,
     lane: str(raw._lane),
     auction_code: str(raw.AUC_CD),
@@ -105,6 +107,7 @@ export function toLot(
 
     start_price_krw: num(raw.AUC_STRT_PRC),
     reserve_price_krw: num(raw.AUC_STRT_HOPE),
+    hammer_price_krw: hammerKrw(raw),
     status: str(raw.AUC_STAT_NM),
 
     remarks: str(raw.UNQUS),
@@ -128,14 +131,28 @@ export function toLot(
   };
 }
 
-/** Сырой лот из результатов торгов → строка kcar_sales. */
-export function toSale(raw: RawLot & { _lane?: string }, session: number): KcarSale | null {
+/**
+ * Цена молотка в ВОНАХ. Площадка отдаёт её в 만원 — это единственное место
+ * во всём коде, где живёт множитель.
+ */
+function hammerKrw(raw: RawLot): number | null {
+  const manwon = num(raw.SCSBID_PRC);
+  return manwon != null ? manwon * MANWON : null;
+}
+
+/** Сырой лот из результатов торгов → строка auction_results. */
+export function toResult(
+  raw: RawLot & { _lane?: string },
+  session: number,
+  source: AuctionSource = "kcar",
+): AuctionResult | null {
   const carId = str(raw.CAR_ID);
   if (!carId) return null;
 
-  const hammerManwon = num(raw.SCSBID_PRC);
+  const hammer = hammerKrw(raw);
   return {
-    car_id: carId,
+    source,
+    external_id: carId,
     session,
     lane: str(raw._lane),
     auction_date: ymd(raw.AUC_STRT_DT),
@@ -156,7 +173,7 @@ export function toSale(raw: RawLot & { _lane?: string }, session: number): KcarS
 
     start_price_krw: num(raw.AUC_STRT_PRC),
     reserve_price_krw: num(raw.AUC_STRT_HOPE),
-    hammer_price_krw: hammerManwon != null ? hammerManwon * MANWON : null,
-    sold: hammerManwon != null,
+    hammer_price_krw: hammer,
+    sold: hammer != null,
   };
 }

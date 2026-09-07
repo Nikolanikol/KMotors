@@ -75,20 +75,23 @@ export async function buildPremiumIndex(): Promise<{
   const overall: number[] = [];
 
   const db = createServerClient();
-  // ⚠️ .range() по неуникальному ключу обязан иметь вторым ключом id
-  // (CLAUDE.md, постмортем про пропадающие строки). Здесь ключ уникальный —
-  // car_id — и сортировка по нему же, поэтому страницы не разъезжаются.
+  // ⚠️ Сортировка идёт по ОБЕИМ колонкам первичного ключа, а не по одному
+  // external_id. Он уникален только внутри площадки, и как только к kcar
+  // добавятся lotte и sk, на совпадающих значениях порядок станет
+  // неопределённым, а строки начнут пропадать между страницами — ровно тот
+  // постмортем про .range() по неуникальному ключу из CLAUDE.md.
   const PAGE = 1000;
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await db
-      .from("kcar_sales")
+      .from("auction_results")
       .select("maker, model, grade_int, start_price_krw, hammer_price_krw")
       .eq("sold", true)
-      .order("car_id")
+      .order("source")
+      .order("external_id")
       .range(from, from + PAGE - 1);
 
     if (error) {
-      console.error("[kcar] не удалось прочитать kcar_sales:", error.message);
+      console.error("[kcar] не удалось прочитать auction_results:", error.message);
       break;
     }
     const rows = (data ?? []) as SaleRow[];
