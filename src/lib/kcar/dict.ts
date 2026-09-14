@@ -243,3 +243,145 @@ export function translateModel(name: string | null | undefined): string | null {
   for (const [ko, en] of MODEL_TOKENS) out = out.split(ko).join(en);
   return out.replace(/\s+/g, " ").trim() || null;
 }
+
+/**
+ * Кузовные и трансмиссионные слова из названия комплектации. MODEL_TOKENS их
+ * не берёт: там названия моделей, а здесь хвост вроде «그란쿠페» (Gran Coupe).
+ */
+export const TRIM_TOKENS: [string, string][] = [
+  ["그란쿠페", "Gran Coupe"], ["그란turismo", "Gran Turismo"],
+  ["시리즈", "Series"], ["쿠페", "Coupe"], ["컨버터블", "Convertible"],
+  ["세단", "Sedan"], ["해치백", "Hatchback"], ["왜건", "Wagon"],
+  ["밴", "Van"], ["트럭", "Truck"], ["리무진", "Limousine"],
+  ["가솔린", "Gasoline"], ["디젤", "Diesel"], ["하이브리드", "Hybrid"],
+  ["전기", "Electric"], ["사륜구동", "AWD"], ["이륜구동", "2WD"],
+  ["고급형", "Luxury"], ["기본형", "Base"], ["영업용", "Commercial"],
+  ["승용", "Passenger"], ["장축", "Long"], ["단축", "Short"],
+
+  // Маркеры поколения — они лепятся к названию модели у всех марок подряд
+  // («NF 쏘나타 트랜스폼», «더뉴 아반떼»), поэтому лежат здесь, а не в
+  // MODEL_TOKENS: те про сами модели.
+  ["트랜스폼", "Transform"], ["더뉴", "The New"], ["올뉴", "All New"],
+  ["뉴", "New"], ["신형", "New"], ["구형", "Old"], ["페이스리프트", "Facelift"],
+];
+
+const HANGUL = /[ㄱ-힣]/;
+
+/**
+ * Приводит смешанную корейско-латинскую строку к читаемой.
+ *
+ * Сперва подставляет известные слова, затем ВЫБРАСЫВАЕТ то, что осталось
+ * хангылем: «640d xDrive 그란쿠페» → «640d xDrive Gran Coupe», а незнакомое
+ * слово просто исчезает.
+ *
+ * ⚠️ Отличие от carLabels.localizeSpec намеренное. Тот выбрасывает поле
+ * ЦЕЛИКОМ — и правильно, потому что пишет в title и description, где половина
+ * фразы по-корейски хуже пустоты. Здесь строка смешанная, и в ней ровно та
+ * часть, ради которой её и читают («640d xDrive»), латиницей. Терять её из-за
+ * одного непереведённого слова — хуже, чем потерять слово.
+ */
+export function readableKorean(value: string | null | undefined): string | null {
+  let out = (value ?? "").trim();
+  if (!out) return null;
+  // ⚠️ Порядок подстановки — от ДЛИННОГО ключа к короткому, иначе короткий
+  // съедает часть длинного. Живой случай: в MODEL_TOKENS есть «쿠페» (Coupe),
+  // и он превращал «그란쿠페» в «그란Coupe» — длинный ключ «그란쿠페» после
+  // этого не совпадал, а слово с остатком хангыля отсеивалось целиком, и из
+  // «640d xDrive Gran Coupe» получалось «640d xDrive». Внутри самого
+  // MODEL_TOKENS порядок выдержан руками, но при слиянии двух списков он
+  // теряется, поэтому сортируем явно.
+  const tokens = [...MODEL_TOKENS, ...TRIM_TOKENS].sort((a, b) => b[0].length - a[0].length);
+  for (const [ko, en] of tokens) out = out.split(ko).join(en);
+  const kept = out
+    .split(/\s+/)
+    .filter((word) => word && !HANGUL.test(word))
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return kept || null;
+}
+
+/**
+ * Статус лота у площадки. Словарь МАЛЕНЬКИЙ и с запасным выходом: незнакомый
+ * статус возвращается как есть. Страница служебная, и «출품마감» менеджеру
+ * полезнее пустоты — в отличие от витрины, где хангыль недопустим.
+ */
+const AUCTION_STATUS: Record<string, string> = {
+  "출품마감": "Приём заявок закрыт",
+  "경매대기": "Ожидает торгов",
+  "경매진행": "Торги идут",
+  "진행중": "Торги идут",
+  "낙찰": "Продан",
+  "유찰": "Не продан",
+  "취소": "Снят",
+};
+
+export function auctionStatus(value: string | null | undefined): string | null {
+  const v = (value ?? "").trim();
+  return v ? (AUCTION_STATUS[v] ?? v) : null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Подписи характеристик для ДВУХ языков витрины
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// ⚠️ Ключ здесь — ЗНАЧЕНИЕ ИЗ БАЗЫ, а не корейский оригинал, и это вынужденно.
+// У KCar словари выше переводят корейское в русское ПРИ ЗАГРУЗКЕ, у Lotte
+// витрина-посредник отдаёт сразу английское. То есть в auction_lots лежит
+// смесь: «Дизель» у одной площадки и «Diesel» у другой. Переводить корейское
+// на лету мы уже не можем — оригинала в базе нет.
+//
+// Отсюда таблица принимает оба входа и отдаёт пару. Побочная польза: русская
+// витрина перестаёт показывать английские значения Lotte, а английская —
+// русские значения KCar. До этого каждая показывала чужое.
+//
+// Незнакомое значение возвращается КАК ЕСТЬ: на служебной странице лучше
+// увидеть сырое, чем пустоту, а на публичной такие значения ловятся глазами.
+
+type SpecPair = { ru: string; en: string };
+
+const SPEC_I18N: Record<string, SpecPair> = {};
+
+function pair(ru: string, en: string) {
+  SPEC_I18N[ru] = { ru, en };
+  SPEC_I18N[en] = { ru, en };
+}
+
+// Топливо — двенадцать значений KCar плюс то, как их называет Lotte.
+pair("Бензин", "Gasoline");
+pair("Дизель", "Diesel");
+pair("Газ (LPG)", "LPG");
+pair("Гибрид", "Hybrid");
+pair("Гибрид (дизель)", "Diesel hybrid");
+pair("Гибрид (LPG)", "LPG hybrid");
+pair("Электро", "Electric");
+pair("Водород", "Hydrogen");
+pair("Бензин/газ", "Gasoline/LPG");
+pair("Бензин/CNG", "Gasoline/CNG");
+pair("CNG", "CNG");
+pair("Прочее", "Other");
+
+// Коробка. «Auto» и «Manual» — как их пишет витрина Lotte.
+pair("АКПП", "Auto");
+pair("МКПП", "Manual");
+pair("CVT", "CVT");
+pair("Робот", "DCT");
+
+// Происхождение лота — только у KCar, у Lotte этого поля нет.
+pair("Дилерский", "Dealer");
+pair("Прокат", "Rental");
+pair("Такси/коммерческая", "Taxi / commercial");
+pair("Лизинг", "Leasing");
+pair("Государственная", "Government");
+
+/**
+ * Значение характеристики на языке витрины.
+ * Незнакомое отдаём как есть — пустое поле хуже непереведённого.
+ */
+export function specLabel(value: string | null | undefined, lang: string): string | null {
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  const p = SPEC_I18N[v];
+  if (!p) return v;
+  return lang === "ru" ? p.ru : p.en;
+}
