@@ -118,7 +118,16 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
 
   const navLinks: { href: string; labelKey: string; children?: { href: string; labelKey: string }[] }[] = [
     { href: `/${lang}/`, labelKey: "nav.home" },
-    ...(!isCatalogBlocked ? [{ href: `/${lang}/catalog`, labelKey: "nav.catalog" }] : []),
+    // ⚠️ Аукцион под тем же гейтом, что каталог авто: это те же корейские
+    // машины, и правило блокировки Кореи распространяется на них целиком.
+    // Забыть здесь — значит оставить корейскому посетителю живую ссылку на
+    // раздел, который для него закрыт.
+    ...(!isCatalogBlocked
+      ? [
+          { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
+          { href: `/${lang}/auction`, labelKey: "nav.auction" },
+        ]
+      : []),
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
     {
       href: `/${lang}/parts`,

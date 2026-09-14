@@ -11,7 +11,8 @@
     "calculator": "Calculator",
     "favorites": "Favorites",
     "about": "About",
-    "partners": "Partners"
+    "partners": "Partners",
+    "auction": "Auction"
   },
   "catalog": {
     "title": "Korean Cars Catalog",
@@ -708,5 +709,45 @@
       "text": "Send us the number — we will check through our channels in Korea and tell you what is going on.",
       "cta": "Message a manager"
     }
+  },
+  "auction": {
+    "title": "Korean car auctions",
+    "subtitle": "Lots from the upcoming K Car and Lotte sales. We place the bid — you pick the car.",
+    "priceNote": "This is the STARTING price of the auction, not the final one. In our records a lot sells about 14% above the start; on top of that come the auction fee, shipping and customs.",
+    "found": "Found {{count}}",
+    "empty": "Nothing matched the filter.",
+    "failed": "The catalogue is temporarily unavailable. This does not mean there are no lots.",
+    "request": "Ask for the landed price",
+    "search": "model, make or lot number",
+    "find": "Search",
+    "reset": "Reset",
+    "allMakers": "all makes",
+    "sortLot": "by lot number",
+    "sortPriceAsc": "price ↑",
+    "sortPriceDesc": "price ↓",
+    "sortYear": "year ↓",
+    "sortMileage": "mileage ↑",
+    "start": "start",
+    "forecast": "hammer forecast",
+    "noForecast": "no forecast",
+    "noPhoto": "no photo",
+    "km": "km",
+    "grade": "grade",
+    "body": "body",
+    "defects": "defects",
+    "lane": "lane",
+    "lot": "lot",
+    "exportBlocked": "export blocked",
+    "mortgage": "lien",
+    "seizure": "seizure",
+    "won": "₩",
+    "today": "sale today",
+    "tomorrow": "sale tomorrow",
+    "inDays": "in {{count}} days",
+    "past": "sale is over",
+    "basisModel": "from {{count}} sales of this model",
+    "basisGrade": "by grade, {{count}} sales",
+    "basisMarket": "market-wide, {{count}} sales",
+    "showPast": "show past sales"
   }
 }
