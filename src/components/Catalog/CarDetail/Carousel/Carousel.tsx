@@ -29,6 +29,28 @@ interface Props {
   mode?: string;
   carName?: string;
   photoLabel?: string;
+  /**
+   * Откуда картинки: "encar" (по умолчанию) или "raw" — отдать адрес как есть.
+   *
+   * ⚠️ Признак СТРОКОЙ, а не функцией-загрузчиком, намеренно: компонент
+   * клиентский, зовут его в том числе серверные страницы, а функцию через
+   * границу сервер→клиент передать нельзя — пропсы обязаны сериализоваться.
+   *
+   * ⚠️ "raw" нужен для ЧУЖИХ CDN. encarLoader дописывает к ЛЮБОМУ адресу
+   * параметры Encar, включая водяной знак с ci.encar.com: на картинке другого
+   * источника это и бессмысленно (их CDN параметры игнорирует — проверено на
+   * imgmk.lotteautoauction.net), и неверно — мы просим чужой сервер наложить
+   * наш водяной знак с третьего хоста.
+   */
+  imageSource?: "encar" | "raw";
+  /**
+   * Готовые подписи вместо словаря.
+   *
+   * ⚠️ Существуют ради страниц ВНЕ [lang]: в админке инстанса i18next нет, и
+   * t() вернул бы там сырые ключи прямо в aria-label. Публичные страницы
+   * проп не передают и работают как раньше.
+   */
+  labels?: { open?: string; prev?: string; next?: string; close?: string };
 }
 
 const ENCAR_CDN = "https://ci.encar.com";
@@ -54,8 +76,24 @@ const CarouselLight = ({
   mode,
   carName,
   photoLabel = "фото",
+  imageSource = "encar",
+  labels,
 }: Props) => {
   const { t } = useTranslation("common");
+  // Подпись из пропа, иначе из словаря — порядок важен: хук вызывается всегда
+  // (условных хуков не бывает), но его результат нужен только публичным
+  // страницам.
+  const label = (key: keyof NonNullable<Props["labels"]>) =>
+    labels?.[key] ?? t(`car.gallery.${key}`);
+
+  // ⚠️ Чужой CDN размеры менять не умеет, поэтому вместо загрузчика —
+  // unoptimized. Загрузчик, игнорирующий width, Next ругает сам и правильно:
+  // он обещает адаптивные ступеньки, которых нет, и на каждую миниатюру
+  // уезжал бы полноразмерный кадр в 217 КБ. С unoptimized браузер берёт один
+  // файл и переиспользует его из кеша во всех размерах.
+  const raw = imageSource === "raw";
+  const imageProps = raw ? { unoptimized: true } : { loader: encarLoader };
+  const thumbProps = raw ? { unoptimized: true } : { loader: encarThumbLoader };
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [warm, setWarm] = useState(false);
@@ -211,7 +249,7 @@ const CarouselLight = ({
         }}
         role="button"
         tabIndex={0}
-        aria-label={t("car.gallery.open")}
+        aria-label={label("open")}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         onPointerDown={handlePointerDown}
@@ -220,7 +258,7 @@ const CarouselLight = ({
         {windowIdx.map((i) => (
           <Image
             key={i}
-            loader={encarLoader}
+            {...imageProps}
             src={getUrl(photos[i])}
             alt={
               carName
@@ -260,7 +298,7 @@ const CarouselLight = ({
           <>
             <button
               type="button"
-              aria-label={t("car.gallery.prev")}
+              aria-label={label("prev")}
               onClick={(e) => {
                 e.stopPropagation();
                 goTo(index - 1);
@@ -279,7 +317,7 @@ const CarouselLight = ({
             </button>
             <button
               type="button"
-              aria-label={t("car.gallery.next")}
+              aria-label={label("next")}
               onClick={(e) => {
                 e.stopPropagation();
                 goTo(index + 1);
@@ -308,7 +346,7 @@ const CarouselLight = ({
             backdropFilter: "blur(8px)",
           }}
         >
-          ⛶ {t("car.gallery.open")}
+          ⛶ {label("open")}
         </div>
       </div>
 
@@ -340,7 +378,7 @@ const CarouselLight = ({
               }}
             >
               <Image
-                loader={encarThumbLoader}
+                {...thumbProps}
                 src={getUrl(photo)}
                 alt=""
                 fill
@@ -358,7 +396,7 @@ const CarouselLight = ({
           index={index}
           onIndexChange={setIndex}
           onClose={() => setOpen(false)}
-          closeLabel={t("car.gallery.close")}
+          closeLabel={label("close")}
         />
       )}
     </>
