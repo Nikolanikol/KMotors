@@ -32,6 +32,11 @@ export interface RawLot {
   EXTERIOR_COLOR_NM?: string;
   CAR_USE_NM?: string;
 
+  /** Миниатюра 370px, ОТНОСИТЕЛЬНЫЙ путь: «2039/CA20390012/CA…_370.JPG». */
+  THUMBNAIL?: string;
+  /** Она же 640px — берём её, карточке нужен размер побольше. */
+  THUMBNAIL_MOBILE?: string;
+
   CAR_POINT?: string | number;
   CAR_POINT2?: string;
   EX_CNT?: string | number;
@@ -47,7 +52,6 @@ export interface RawLot {
   SCSBID_PRC?: string | number;
 
   UNQUS?: string;
-  THUMBNAIL?: string;
 }
 
 /** Что удалось добрать из карточки лота: VIN, осмотр, вся галерея. */
@@ -136,11 +140,39 @@ export interface AuctionLot {
   inspection: Record<string, string> | null;
   photos: string[];
   photo_count: number;
+  /**
+   * Миниатюра с сервера площадки, АБСОЛЮТНЫЙ адрес. В отличие от photos
+   * приходит в списочном ответе, то есть есть у лота сразу, без добора.
+   */
+  thumb_url: string | null;
   diagram_url: string | null;
   source_url: string | null;
 
   updated_at: string;
 }
+
+/**
+ * Колонки, которые заполняет ТОЛЬКО добор (enrich). Вынесены в тип, а не
+ * перечислены по месту, потому что от этого списка зависит целостность
+ * данных: см. AuctionLotBase.
+ */
+export type EnrichedLotFields =
+  | "vin" | "engine_cc" | "body_type" | "seats" | "drive"
+  | "inspection" | "photos" | "photo_count" | "diagram_url" | "source_url";
+
+/**
+ * Лот БЕЗ полей добора — то, что собирается из одного списочного ответа.
+ *
+ * ⚠️ Эти ключи ОТСУТСТВУЮТ, а не равны null, и это принципиально. upsert
+ * пишет ровно те колонки, что есть в объекте: пропущенные он не трогает, а
+ * присланные со значением null — обнуляет. Раньше toLot всегда отдавал
+ * полный объект с null'ами, и ЕЖЕДНЕВНЫЙ синк лотов затирал VIN, галерею и
+ * лист осмотра, собранные еженедельным добором: результат 35-минутного
+ * обхода жил до следующего утра.
+ *
+ * thumb_url сюда НЕ входит — миниатюра приходит в списочном ответе.
+ */
+export type AuctionLotBase = Omit<AuctionLot, EnrichedLotFields>;
 
 /** Строка auction_results. Цены уже приведены к вонам. */
 export interface AuctionResult {

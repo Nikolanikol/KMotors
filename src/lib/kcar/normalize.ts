@@ -14,7 +14,14 @@
 
 import { DEFECT_PARTS, FUEL, MAKERS, TRANSMISSION, USAGE, COLORS, tr, translateModel } from "./dict";
 import { parseRemarks } from "./remarks";
-import type { AuctionLot, AuctionResult, AuctionSource, LotDetail, RawLot } from "./types";
+import type {
+  AuctionLot,
+  AuctionLotBase,
+  AuctionResult,
+  AuctionSource,
+  LotDetail,
+  RawLot,
+} from "./types";
 
 /** 만원 → воны. */
 const MANWON = 10_000;
@@ -64,14 +71,23 @@ export function toLot(
   session: number | null,
   detail?: LotDetail,
   source: AuctionSource = "kcar",
-): AuctionLot | null {
+): AuctionLot | AuctionLotBase | null {
   const carId = str(raw.CAR_ID);
   if (!carId) return null;                       // без ключа строка бессмысленна
 
   const rem = parseRemarks(raw.UNQUS);
-  const photos = detail?.photos ?? [];
 
-  return {
+  // ⚠️ Миниатюра приходит ОТНОСИТЕЛЬНЫМ путём и только у KCar. Склеиваем
+  // здесь, а не в разметке: в таблице лежат лоты нескольких площадок, у
+  // каждой свой хост, и «базовый + путь» на первой же не-KCar строке дал бы
+  // битую картинку. 640px, а не 370: карточка каталога шире.
+  const thumb = str(raw.THUMBNAIL_MOBILE) ?? str(raw.THUMBNAIL);
+  const thumbUrl =
+    source === "kcar" && thumb
+      ? `https://www.kcarauction.com/auction/IMAGE_UPLOAD/CAR/${thumb}`
+      : null;
+
+  const base: AuctionLotBase = {
     source,
     external_id: carId,
     session,
@@ -116,18 +132,28 @@ export function toLot(
     blocked_export: rem.blockedExport,
     doc_days: rem.docDays,
 
-    vin: detail?.vin ?? null,
-    engine_cc: detail?.engineCc ?? null,
-    body_type: detail?.bodyType ?? null,
-    seats: detail?.seats ?? null,
-    drive: detail?.drive ?? null,
-    inspection: detail ? detail.inspection : null,
-    photos,
-    photo_count: photos.length,
-    diagram_url: detail?.diagramUrl ?? null,
-    source_url: detail?.sourceUrl ?? null,
+    thumb_url: thumbUrl,
 
     updated_at: new Date().toISOString(),
+  };
+
+  // ⚠️ Без добора поля добора НЕ ДОБАВЛЯЮТСЯ вовсе. Вернуть их со значением
+  // null значит обнулить колонки в базе при каждом ежедневном синке — см.
+  // AuctionLotBase. Отсутствие ключа оставляет то, что уже лежит.
+  if (!detail) return base;
+
+  return {
+    ...base,
+    vin: detail.vin,
+    engine_cc: detail.engineCc,
+    body_type: detail.bodyType,
+    seats: detail.seats,
+    drive: detail.drive,
+    inspection: detail.inspection,
+    photos: detail.photos,
+    photo_count: detail.photos.length,
+    diagram_url: detail.diagramUrl,
+    source_url: detail.sourceUrl,
   };
 }
 

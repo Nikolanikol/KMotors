@@ -19,7 +19,13 @@ import { createServerClient } from "@/lib/supabase";
 import { fetchWeekly } from "./api";
 import { fetchDetails } from "./detail";
 import { toLot, toResult } from "./normalize";
-import type { AuctionLot, AuctionResult, LotDetail, SyncResult } from "./types";
+import type {
+  AuctionLot,
+  AuctionLotBase,
+  AuctionResult,
+  LotDetail,
+  SyncResult,
+} from "./types";
 
 /** Supabase не любит гигантские запросы — пишем пачками. */
 const CHUNK = 200;
@@ -98,7 +104,19 @@ export async function syncLots(
         const got = await fetchDetails(wanted, opts.signal);
         details = got.details;
         result.enriched = details.size;
-        result.notes = { ...result.notes, scanned: got.scanned, failed: got.failed };
+        // ⚠️ Счётчики разводят ЧЕТЫРЕ разных исхода, которые раньше сливались
+        // в «enriched: 0» с ok: true: страница не отдалась (failed), лот чужой
+        // площадки (skipped по провайдерам), лот KCar не из наших торгов
+        // (unmatched) и обход, прерванный предпроверкой (aborted). Без этого
+        // 53-минутный прогон 12.09.2026 отчитался успехом, ничего не собрав.
+        result.notes = {
+          ...result.notes,
+          scanned: got.scanned,
+          failed: got.failed,
+          skipped: got.skipped,
+          unmatched: got.unmatched,
+          ...(got.aborted ? { aborted: got.aborted } : {}),
+        };
       } catch (e) {
         // Витрина недоступна — пишем лоты без VIN и осмотра, это лучше, чем ничего.
         console.error("[kcar] добор деталей не удался:", e);
@@ -106,16 +124,37 @@ export async function syncLots(
       }
     }
 
-    const rows: AuctionLot[] = [];
+    // ⚠️ Строки РАЗВОДЯТСЯ на две группы, и это не косметика.
+    //
+    // Лот без добора приходит вообще БЕЗ колонок vin / photos / inspection —
+    // upsert их не трогает и оставляет то, что собрал прошлый обход. Раньше
+    // toLot подставлял туда null, и ежедневный прогон стирал результат
+    // еженедельного добора к следующему утру.
+    //
+    // Писать их одним вызовом нельзя: PostgREST требует ОДИНАКОВОГО набора
+    // ключей у всех объектов массива, а при частично удачном доборе половина
+    // лотов идёт с деталями, половина без. Отсюда два upsert'а.
+    const enriched: AuctionLot[] = [];
+    const plain: AuctionLotBase[] = [];
     for (const r of raw) {
       const row = toLot(r, null, details.get(String(r.CAR_ID ?? "")));
-      if (row) rows.push(row);
+      if (!row) continue;
+      if ("vin" in row) enriched.push(row);
+      else plain.push(row);
     }
 
-    result.upserted = await upsertChunked("auction_lots", rows, (slice) =>
-      createServerClient()
-        .from("auction_lots")
-        .upsert(slice, { onConflict: "source,external_id" }));
+    // Замыкания РАЗДЕЛЬНЫЕ, а не один generic-хелпер: с параметром типа
+    // supabase-js перестаёт выводить тип строки и upsert не проверяется
+    // вовсе — та же причина, по которой имя таблицы здесь литералом.
+    result.upserted =
+      (await upsertChunked("auction_lots", plain, (slice) =>
+        createServerClient()
+          .from("auction_lots")
+          .upsert(slice, { onConflict: "source,external_id" }))) +
+      (await upsertChunked("auction_lots+детали", enriched, (slice) =>
+        createServerClient()
+          .from("auction_lots")
+          .upsert(slice, { onConflict: "source,external_id" })));
     result.ok = true;
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);

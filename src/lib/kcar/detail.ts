@@ -34,6 +34,12 @@ const UA =
 const PAGE_SIZE = 30;
 const DELAY_MS = 1200;
 const MAX_PAGES = 80;
+/**
+ * Сколько карточек посмотреть, прежде чем решить, что лотов KCar на витрине
+ * нет вовсе. 12 — при полностью чужом разделе этого достаточно, а при нашем
+ * они попадаются с первых же страниц.
+ */
+const PROBE_SIZE = 12;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -105,6 +111,18 @@ function parseJsonLd(html: string): LdCar {
 function toInt(v: unknown): number | null {
   const n = Number(v);
   return Number.isFinite(n) && n !== 0 ? Math.round(n) : null;
+}
+
+/**
+ * Площадка, которой принадлежит карточка витрины.
+ *
+ * Нужен ОТДЕЛЬНО от parseDetail, хотя тот проверяет то же самое: parseDetail
+ * возвращает null и на чужом лоте, и на сменившейся разметке, и на битой
+ * странице — три разные беды под одним ответом. Обходу нужно их различать,
+ * иначе «витрина переехала на другой аукцион» выглядит как «ничего не нашлось».
+ */
+export function readProvider(html: string): string | null {
+  return /"provider":"(\w+)"/.exec(html.split('\\"').join('"'))?.[1] ?? null;
 }
 
 /** Разбирает страницу лота. Возвращает null, если это не лот K Car. */
@@ -188,26 +206,71 @@ export function parseDetail(html: string): LotDetail | null {
  * Обходит карточки и возвращает детали по CAR_ID.
  * `wanted` ограничивает работу лотами, которые реально есть в торгах.
  */
+export interface DetailsResult {
+  details: Map<string, LotDetail>;
+  /** Сколько карточек витрины реально открыли. */
+  scanned: number;
+  /** Страница не отдалась вовсе (сеть, 404, таймаут). */
+  failed: number;
+  /** Открылась, но принадлежит другой площадке: { lotte: 1401 }. */
+  skipped: Record<string, number>;
+  /** Лот KCar, которого нет в наших торгах — прошлая сессия у витрины. */
+  unmatched: number;
+  /** Заполнено, если обход прерван предпроверкой. */
+  aborted?: string;
+}
+
 export async function fetchDetails(
   wanted: Set<string>,
   signal?: AbortSignal,
-): Promise<{ details: Map<string, LotDetail>; scanned: number; failed: number }> {
+): Promise<DetailsResult> {
   const details = new Map<string, LotDetail>();
+  const skipped: Record<string, number> = {};
   let scanned = 0;
   let failed = 0;
+  let unmatched = 0;
+  let kcarSeen = 0;
+  let aborted: string | undefined;
 
   const ids = await collectDetailIds(signal);
   for (const id of ids) {
     if (details.size >= wanted.size) break;                 // всё нужное собрано
     const html = await getHtml(`${ORIGIN}/ru/car/${id}`, signal);
     scanned++;
+
     if (!html) {
       failed++;
     } else {
-      const d = parseDetail(html);
-      if (d && wanted.has(d.carId)) details.set(d.carId, d);
+      // Провайдер читается ДО parseDetail: тот на чужом лоте вернёт null, и
+      // счётчик показал бы «ничего не нашлось» вместо «это другой аукцион».
+      const provider = readProvider(html);
+      if (provider === "kcar") {
+        kcarSeen++;
+        const d = parseDetail(html);
+        if (d && wanted.has(d.carId)) details.set(d.carId, d);
+        else unmatched++;
+      } else {
+        const key = provider ?? "разметка не распознана";
+        skipped[key] = (skipped[key] ?? 0) + 1;
+      }
     }
+
+    // ⚠️ ПРЕДПРОВЕРКА. Витрина — чужая, и её наполнение меняется без
+    // предупреждения: 12.09.2026 она целиком переехала на Lotte, и обход
+    // всех 1401 карточки отработал 53 минуты, чтобы вернуть enriched: 0 с
+    // ok: true. Если в первых PROBE_SIZE карточках нет НИ ОДНОГО лота KCar,
+    // дальше идти незачем — ответ уже известен, и он должен стоить минуту,
+    // а не час.
+    if (scanned >= PROBE_SIZE && kcarSeen === 0) {
+      aborted =
+        `в первых ${scanned} карточках витрины нет лотов KCar ` +
+        `(${Object.entries(skipped).map(([k, n]) => `${k}: ${n}`).join(", ") || "все страницы не отдались"})`;
+      console.error(`[kcar] добор прерван: ${aborted}`);
+      break;
+    }
+
     await sleep(DELAY_MS);
   }
-  return { details, scanned, failed };
+
+  return { details, scanned, failed, skipped, unmatched, aborted };
 }
