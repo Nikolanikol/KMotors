@@ -1,6 +1,9 @@
 // POST /api/poster/run — один тик автопостинга авто с Encar в Telegram-канал.
 //
-// Дёргается по расписанию (systemd timer на VPS) с секретом в заголовке:
+// Дёргается по расписанию с секретом в заголовке. Никакого systemd-таймера у
+// задания нет и не было — строка про таймер стояла здесь и в README и была
+// неверной; расписание живёт в crontab на VPS и переезжает в задачи Coolify
+// (`node ./scripts/cron/run.mjs poster`), см. раздел «Расписания» в CLAUDE.md.
 //   curl -X POST -H "x-poster-secret: $POSTER_CRON_SECRET" https://www.kmotors.shop/api/poster/run
 //
 // Для ручной отладки: ?dry=1 (собрать пост, не отправляя), ?preset=N (форс пресета).

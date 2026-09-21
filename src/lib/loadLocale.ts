@@ -54,7 +54,7 @@ type Ns = "common" | "cars" | "customs";
  * Раздел из этого списка обязан быть подключён на своих страницах через
  * <SectionDictionary sections={[...]} />, иначе тексты станут сырыми ключами.
  */
-export const ROUTE_SECTIONS = ["parts", "buy", "tracking"] as const;
+export const ROUTE_SECTIONS = ["parts", "buy", "tracking", "auction"] as const;
 export type RouteSection = (typeof ROUTE_SECTIONS)[number];
 
 /** Оставить в словаре только перечисленные разделы либо, наоборот, выбросить их. */
