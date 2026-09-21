@@ -1,4 +1,4 @@
-// Публичная витрина аукционов, вкладка Lotte.
+// Публичная витрина аукционов, вкладка SK.
 //
 // Отличается от вкладки K Car ровно одним: прогноза цены молотка здесь нет и
 // быть не может — история прошедших торгов есть только у K Car, а премия
@@ -25,7 +25,7 @@ export async function generateMetadata({
   return { title: L.title, description: L.subtitle, robots: { index: false, follow: true } };
 }
 
-export default async function LotteAuctionPage({
+export default async function SKAuctionPage({
   params,
   searchParams,
 }: {
@@ -33,5 +33,5 @@ export default async function LotteAuctionPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ lang }, sp] = await Promise.all([params, searchParams]);
-  return <PlatformPage lang={lang} searchParams={sp} source="lotte" />;
+  return <PlatformPage lang={lang} searchParams={sp} source="sk" />;
 }

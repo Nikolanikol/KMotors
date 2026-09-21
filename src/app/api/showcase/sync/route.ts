@@ -1,13 +1,13 @@
 // Синхронизация каталога Lotte. Дёргается кроном с VPS, как и kcar.
 //
-//   GET /api/lotte/sync          обойти витрину и записать лоты
-//   GET /api/lotte/sync?dry=1    то же, но БЕЗ записи — проверить парсер
+//   GET /api/showcase/sync          обойти витрину и записать лоты
+//   GET /api/showcase/sync?dry=1    то же, но БЕЗ записи — проверить парсер
 //
 // Режим dry существует не для удобства: источник — чужая RSC-разметка, и
 // проверять, что она ещё разбирается, нужно уметь не трогая прод.
 
 import { NextRequest, NextResponse } from "next/server";
-import { syncLotte } from "@/lib/lotte/sync";
+import { syncShowcase } from "@/lib/showcase/sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await syncLotte({ dry: req.nextUrl.searchParams.get("dry") === "1" });
+    const result = await syncShowcase({ dry: req.nextUrl.searchParams.get("dry") === "1" });
     return NextResponse.json(result);
   } catch (err) {
     console.error("[lotte] sync route:", err);

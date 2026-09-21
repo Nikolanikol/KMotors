@@ -127,7 +127,24 @@ function applySort(
   }
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+/**
+ * С какой даты торги ещё считаются предстоящими.
+ *
+ * ⚠️ Сравнивать с СЕГОДНЯШНЕЙ датой нельзя. Торги заканчиваются в 04:00 UTC
+ * (см. auctionTime), а лот с датой «сегодня» проходил бы фильтр до полуночи —
+ * то есть двадцать часов витрина показывала бы машины, которых на аукционе
+ * уже нет. Замер 21.09.2026: сразу после дедлайна площадка вычистила партию
+ * Lotte целиком, 1 451 лот за полчаса, а у нас они остались бы висеть.
+ *
+ * Поэтому после 04:00 UTC отсечка переезжает на завтра.
+ */
+const AUCTION_END_HOUR_UTC = 4;
+
+const activeFrom = () => {
+  const now = new Date();
+  if (now.getUTCHours() >= AUCTION_END_HOUR_UTC) now.setUTCDate(now.getUTCDate() + 1);
+  return now.toISOString().slice(0, 10);
+};
 
 export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
   const empty: LotsPage = { rows: [], total: 0, makers: [], failed: false };
@@ -151,7 +168,7 @@ export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
       const { head = false, withMaker = true } = opt;
       let q = db.from("auction_lots").select(select, head ? { count: "exact", head: true } : { count: "exact" });
       if (opts.source) q = q.eq("source", opts.source);
-      if (upcoming) q = q.gte("auction_date", today());
+      if (upcoming) q = q.gte("auction_date", activeFrom());
       if (withMaker && opts.maker) q = q.eq("maker", opts.maker);
       const needle = opts.q ? safeSearch(opts.q) : "";
       if (needle) {
@@ -240,7 +257,7 @@ export async function getAuctionSummary(): Promise<AuctionSummary> {
   };
   try {
     const db = createServerClient();
-    const day = today();
+    const day = activeFrom();
 
     const [upcoming, archive, nearest, observations, sales, last] = await Promise.all([
       db.from("auction_lots").select("site", { count: "exact" }).gte("auction_date", day),
@@ -362,26 +379,40 @@ export async function getLot(externalId: string): Promise<FullLotRow | null> {
   }
 }
 
+/** Площадки каталога. Порядок задаёт порядок вкладок на витрине. */
+export const AUCTION_SOURCES = ["kcar", "lotte", "sk"] as const;
+export type AuctionSourceId = (typeof AUCTION_SOURCES)[number];
+
 /**
- * Сколько лотов у каждой площадки — для подписей табов.
+ * Сколько лотов у каждой площадки — для подписей вкладок.
  *
- * Два head-запроса вместо GROUP BY: PostgREST группировать не умеет, а
- * тянуть ради двух чисел все полторы тысячи строк было бы расточительно.
+ * Head-запрос на площадку вместо GROUP BY: PostgREST группировать не умеет, а
+ * тянуть ради трёх чисел две с лишним тысячи строк было бы расточительно.
  */
-export async function getSourceCounts(): Promise<{ kcar: number; lotte: number }> {
+export async function getSourceCounts(): Promise<Record<AuctionSourceId, number>> {
+  const empty = { kcar: 0, lotte: 0, sk: 0 } as Record<AuctionSourceId, number>;
   try {
     const db = createServerClient();
-    const [kcar, lotte] = await Promise.all([
-      db.from("auction_lots").select("*", { count: "exact", head: true })
-        .eq("source", "kcar").gte("auction_date", today()),
-      db.from("auction_lots").select("*", { count: "exact", head: true }).eq("source", "lotte"),
-    ]);
-    // ⚠️ У KCar считаем только предстоящие торги, у Lotte — всё. Это не
-    // небрежность: у лотов KCar есть дата торгов и прошедшие лежат архивом,
-    // а у Lotte даты нет вовсе — списочный обход витрины её не отдаёт.
-    return { kcar: kcar.count ?? 0, lotte: lotte.count ?? 0 };
+    const day = activeFrom();
+    // ⚠️ Считаем ТОЛЬКО предстоящие торги, и теперь это возможно для всех
+    // площадок: каталог приходит с витрины-агрегатора, а там дата окончания
+    // торгов есть у каждого лота (замер 21.09.2026: 2 315 из 2 315). Заодно
+    // это само убирает из витрины отработавшие лоты — удалять ничего не надо.
+    const counts = await Promise.all(
+      AUCTION_SOURCES.map((source) =>
+        db
+          .from("auction_lots")
+          .select("*", { count: "exact", head: true })
+          .eq("source", source)
+          .gte("auction_date", day),
+      ),
+    );
+    return AUCTION_SOURCES.reduce((acc, source, i) => {
+      acc[source] = counts[i].count ?? 0;
+      return acc;
+    }, { ...empty });
   } catch (e) {
     console.error("[auction] getSourceCounts:", e);
-    return { kcar: 0, lotte: 0 };
+    return empty;
   }
 }

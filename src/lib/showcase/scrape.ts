@@ -1,40 +1,80 @@
-// Сбор лотов аукциона Lotte.
+// Сбор лотов корейских автоаукционов с витрины-агрегатора.
 //
-// ⚠️ ИСТОЧНИК — ЧУЖАЯ ВИТРИНА, а не сам аукцион. У Lotte, в отличие от KCar,
-// публичного списочного API нет: на lotteautoauction.net открыты только вход,
-// ЧАВО и новости, всё про машины лежит под /hp/auct/ за логином (проверено
-// 12.09.2026). Поэтому данные берутся с motors.wasigroupsa.com — витрины с
-// членским доступом, той же, что раньше служила источником добора для KCar.
+// ⚠️ ИСТОЧНИК — ЧУЖАЯ ВИТРИНА, а не сами аукционы. Публичный списочный API из
+// трёх площадок есть только у K Car; у Lotte и SK всё про машины лежит за
+// логином (проверено: auction.skcarrental.com отдаёт оболочку с 로그인).
+// dokanmazad.com — платформа, которая публикует лоты всех трёх сразу, и с неё
+// мы берём КАТАЛОГ.
 //
-// Из этого следует всё остальное:
-//   • источник может исчезнуть без предупреждения — он уже убрал оттуда KCar,
-//     поэтому модуль обязан деградировать, а не падать;
+// ⚠️ Не путать с motors.wasigroupsa.com: это витрина ОДНОГО клиента той же
+// платформы, и показывала она только Lotte. Замер 21.09.2026 по всему
+// разделу: 2 315 лотов — Lotte 1 451, SK 516, K Car 348.
+//
+// Почему каталог отсюда, а не из прямого API K Car: тот отдаёт ОДНУ миниатюру
+// на лот, здесь у тех же машин по 30 фотографий и диаграмма состояния кузова.
+// Для витрины, которая должна завлекать, это решает. Прямой API K Car остаётся
+// ради того, чего у посредника нет вовсе, — истории прошедших торгов, на
+// которой стоит прогноз цены молотка.
+//
+// Из «источник чужой» следует всё остальное:
+//   • он может исчезнуть без предупреждения — этот уже убирал K Car с витрины
+//     клиента, поэтому модуль обязан деградировать, а не падать;
 //   • разметка — отрисованное дерево RSC, а не JSON: карточки разбираются по
 //     форме пропсов, и это хрупко по своей природе. Сменят вёрстку — парсер
-//     вернёт пусто, и это должно быть ВИДНО в счётчиках, а не тихо.
+//     вернёт пусто, и это должно быть ВИДНО в счётчиках, а не тихо;
+//   • origin у них подтормаживает (ловили Cloudflare 525), поэтому страницы
+//     берутся с повторами: без них прогон молча терял бы по паре страниц.
 //
-// Два уровня, как у KCar, и по той же причине:
-//   fetchList   — 47 страниц по 30 карточек, ~4 минуты. Даёт каталожную сетку.
-//   fetchDetail — одна страница лота: 37 фото, диаграмма кузова, спецификация.
+// Два уровня:
+//   fetchList   — 78 страниц по 30 карточек, ~3 минуты. Даёт каталожную сетку.
+//   fetchDetail — страница лота: 30–38 фото, диаграмма кузова, спецификация.
 //                 Дёргается ПО ТРЕБОВАНИЮ при открытии лота, а не массовым
-//                 обходом: 1401 страница с паузой — это час, и почти весь он
-//                 пришёлся бы на лоты, которые никто не откроет.
+//                 обходом: 2 315 страниц с паузой — это полтора часа, и почти
+//                 весь он пришёлся бы на лоты, которые никто не откроет.
 
-const ORIGIN = process.env.LOTTE_SHOWCASE_ORIGIN ?? "https://motors.wasigroupsa.com";
+const ORIGIN = process.env.AUCTION_SHOWCASE_ORIGIN ?? "https://www.dokanmazad.com";
 // ⚠️ currency=KRW обязателен. Без него витрина отдаёт цены в ДОЛЛАРАХ, которые
-// сама же и пересчитала (замер: ₩38 784 000 против $28 894, курс ≈1342.3).
-// Вона у аукциона исходная, а доллар — производная от чужого курса, который мы
-// не контролируем и не знаем. Правило проекта на этот счёт прямое: чужая
-// валюта хранится как есть, конвертации живут в одном месте.
+// сама же и пересчитала (замер: ₩16 544 500 против $11 929). Вона у аукциона
+// исходная, а доллар — производная от чужого курса, который мы не
+// контролируем. Правило проекта прямое: чужая валюта хранится как есть,
+// конвертации живут в одном месте.
 const LIST_PATH = "/en/cars?sellType=auction&currency=KRW";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
+/**
+ * Площадка определяется по ХОСТУ ФОТОГРАФИИ, а не по полю в разметке.
+ *
+ * ⚠️ Поле `provider` есть только на странице лота, в списке его нет вовсе — а
+ * знать площадку надо уже при обходе каталога. Хост картинки выдаёт её
+ * однозначно: каждый аукцион раздаёт снимки со своего сервера.
+ */
+const PROVIDER_BY_IMAGE_HOST: [string, AuctionSource][] = [
+  ["aucmark.skcarrental.com", "sk"],
+  ["imgmk.lotteautoauction.net", "lotte"],
+  ["kcarauction.com", "kcar"],
+];
+
+export type AuctionSource = "kcar" | "lotte" | "sk";
+
+/** Площадки, чьи страницы лотов мы умеем разбирать. */
+const KNOWN_PROVIDERS = new Set<string>(PROVIDER_BY_IMAGE_HOST.map(([, source]) => source));
+
+function providerFromUrl(url: string | null | undefined): AuctionSource | null {
+  const u = url ?? "";
+  for (const [host, source] of PROVIDER_BY_IMAGE_HOST) if (u.includes(host)) return source;
+  return null;
+}
+
 const PAGE_DELAY_MS = 600;
+/** Пауза перед повтором, растёт с попыткой. */
+const RETRY_DELAY_MS = 1200;
 const MAX_PAGES = 80;
 
-export interface LotteCard {
+export interface ShowcaseCard {
+  /** Площадка лота. null — снимок с незнакомого хоста, такие мы не берём. */
+  source: AuctionSource | null;
   externalId: string;
   maker: string | null;
   model: string | null;
@@ -52,7 +92,7 @@ export interface LotteCard {
   sourceUrl: string;
 }
 
-export interface LotteDetail {
+export interface ShowcaseDetail {
   /** «Kia Niro PLUS (E) 2023» — как площадка называет лот целиком. */
   name: string | null;
   /** Строка-сводка: «2023 | Automatic | 125,050 km | Electric». */
@@ -79,17 +119,31 @@ export interface LotteDetail {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function getHtml(url: string, signal?: AbortSignal): Promise<string | null> {
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml" },
-      signal,
-      cache: "no-store",
-    });
-    return res.ok ? await res.text() : null;
-  } catch {
-    return null;
+/**
+ * Страница витрины с ПОВТОРАМИ.
+ *
+ * ⚠️ Повторы обязательны, а не «на всякий случай»: origin у платформы
+ * подтормаживает и отдаёт Cloudflare 525. Замер 21.09.2026: без повторов из
+ * шести страниц не отдались две, с тремя попытками — 78 из 78. Без этого
+ * каждый прогон молча терял бы по паре страниц каталога, и заметить это было
+ * бы нечем: счётчик «страниц обойдено» выглядел бы нормальным.
+ */
+async function getHtml(url: string, signal?: AbortSignal, tries = 3): Promise<string | null> {
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml" },
+        signal,
+        cache: "no-store",
+      });
+      if (res.ok) return await res.text();
+    } catch {
+      /* сеть моргнула — пробуем ещё */
+    }
+    if (attempt < tries) await sleep(RETRY_DELAY_MS * attempt);
   }
+  console.error(`[showcase] страница не отдалась после ${tries} попыток: ${url}`);
+  return null;
 }
 
 /**
@@ -150,11 +204,11 @@ function resolveRefs(chunk: string, map: Map<string, string>): string {
  * ["$","$1","<id>",{ — по нему и режем: каждый кусок до следующего маркера
  * принадлежит одной машине.
  */
-export function parseList(html: string): LotteCard[] {
+export function parseList(html: string): ShowcaseCard[] {
   const u = unescape(html);
   const map = chunkMap(u);
   const marks = [...u.matchAll(/"\$1","(\d{6,12})",\{/g)].map((m) => ({ id: m[1], at: m.index ?? 0 }));
-  const cards: LotteCard[] = [];
+  const cards: ShowcaseCard[] = [];
 
   for (let i = 0; i < marks.length; i++) {
     const raw = u.slice(marks[i].at, marks[i + 1]?.at ?? marks[i].at + 6000);
@@ -192,6 +246,11 @@ export function parseList(html: string): LotteCard[] {
     );
     const maker = nodes.find((n) => /^[A-Z][A-Za-z-]{1,18}$/.test(n) && !FUELS.has(n) && !GEARBOXES.has(n)) ?? null;
 
+    // Первый снимок карточки: он же определяет площадку. Хост НЕ зашит —
+    // платформа мешает лоты трёх аукционов в одном списке, и у каждого свой
+    // сервер картинок.
+    const thumb = /"src":"(https:\/\/[^"]+\.(?:jpe?g|png|webp)[^"]*)"/i.exec(chunk)?.[1] ?? null;
+
     cards.push({
       externalId: marks[i].id,
       maker: maker === "View" ? null : maker,
@@ -209,7 +268,8 @@ export function parseList(html: string): LotteCard[] {
         const d = /"date":"(\d{4}-\d{2}-\d{2})/.exec(chunk)?.[1] ?? null;
         return d && !d.startsWith("2099") ? d : null;
       })(),
-      thumbUrl: /"src":"(https:\/\/[^"]*lotteautoauction[^"]+)"/.exec(chunk)?.[1] ?? null,
+      thumbUrl: thumb,
+      source: providerFromUrl(thumb),
       sourceUrl: `${ORIGIN}/en/car/${marks[i].id}`,
     });
   }
@@ -248,9 +308,13 @@ function grabArray(text: string, key: string): unknown[] | null {
  * машин, — и первое вхождение к открытому лоту отношения не имеет: у Kia Niro
  * 2023 оно давало 2015.
  */
-export function parseDetail(html: string): LotteDetail | null {
+export function parseDetail(html: string): ShowcaseDetail | null {
   const u = unescape(html);
-  if (/"provider":"(\w+)"/.exec(u)?.[1] !== "lotte") return null;
+  // ⚠️ Принимаем ЛЮБУЮ известную площадку, а не одну. Раньше здесь стояла
+  // жёсткая проверка на lotte — с ней страница лота SK разбиралась в null, и
+  // карточка молча деградировала до одной миниатюры без диаграммы кузова.
+  const provider = /"provider":"(\w+)"/.exec(u)?.[1] ?? "";
+  if (!KNOWN_PROVIDERS.has(provider)) return null;
 
   const car = findCarJsonLd(html);
 
@@ -353,8 +417,8 @@ function findCarJsonLd(html: string): Record<string, unknown> | null {
 /** Обходит список постранично. Не бросает: вернём, что успели, плюс причину. */
 export async function fetchList(
   signal?: AbortSignal,
-): Promise<{ cards: LotteCard[]; pages: number; error?: string }> {
-  const out: LotteCard[] = [];
+): Promise<{ cards: ShowcaseCard[]; pages: number; error?: string }> {
+  const out: ShowcaseCard[] = [];
   const seen = new Set<string>();
   let pages = 0;
 
@@ -387,7 +451,7 @@ export async function fetchList(
 }
 
 /** Детали одного лота. По требованию, не массовым обходом. */
-export async function fetchDetail(externalId: string, signal?: AbortSignal): Promise<LotteDetail | null> {
+export async function fetchDetail(externalId: string, signal?: AbortSignal): Promise<ShowcaseDetail | null> {
   const html = await getHtml(`${ORIGIN}/en/car/${externalId}?currency=KRW`, signal);
   return html ? parseDetail(html) : null;
 }

@@ -11,13 +11,16 @@
 
 import Link from "next/link";
 
-export type AuctionSourceTab = "kcar" | "lotte";
+import type { AuctionSourceId } from "@/lib/kcar/query";
+
+export type AuctionSourceTab = AuctionSourceId;
 
 // Имена площадок не переводятся: это бренды, и на всех языках они пишутся
 // латиницей — как Hyundai в каталоге.
 const TABS: { id: AuctionSourceTab; label: string; path: string }[] = [
   { id: "kcar", label: "K Car", path: "" },
   { id: "lotte", label: "Lotte", path: "/lotte" },
+  { id: "sk", label: "SK", path: "/sk" },
 ];
 
 export default function AuctionTabs({
@@ -27,7 +30,7 @@ export default function AuctionTabs({
   ariaLabel = "Площадка аукциона",
 }: {
   active: AuctionSourceTab;
-  counts: { kcar: number; lotte: number };
+  counts: Record<AuctionSourceTab, number>;
   /** «/admin/auction» у служебной витрины, «/ru/auction» у публичной. */
   base?: string;
   ariaLabel?: string;
@@ -62,7 +65,7 @@ export default function AuctionTabs({
                 color: on ? "var(--axis-bronze)" : "var(--axis-gray)",
               }}
             >
-              {counts[tab.id].toLocaleString("ru-RU")}
+              {(counts[tab.id] ?? 0).toLocaleString("ru-RU")}
             </span>
           </Link>
         );

@@ -20,6 +20,7 @@
 
 import Link from "next/link";
 
+import AuctionCountdown from "@/components/Auction/AuctionCountdown";
 import { daysUntilAuction, pluralDays } from "@/components/Auction/carAge";
 import { readableKorean, specLabel } from "@/lib/kcar/dict";
 import type { Estimate } from "@/lib/kcar/estimate";
@@ -108,7 +109,14 @@ export default function LotCard({
    */
   lang?: string;
 }) {
-  const isLotte = lot.source === "lotte";
+  // ⚠️ Прогноз молотка существует ТОЛЬКО у K Car: история прошедших торгов
+  // есть только у неё. У остальных площадок строка «прогноза нет» была бы
+  // шумом на каждой карточке — там нечему быть.
+  const hasForecast = lot.source === "kcar";
+  // ⚠️ Путь к карточке лота зависит от площадки: у K Car она лежит в корне
+  // раздела, у остальных — в своей папке. Собирается здесь, чтобы в трёх
+  // местах разметки не разъехалось.
+  const lotHref = `${hrefBase}/${lot.source === "kcar" ? "" : `${lot.source}/`}${lot.external_id}`;
   // ⚠️ Комплектация у KCar приходит смешанной: «640d xDrive 그란쿠페».
   // Непереведённые корейские слова из ПОДПИСИ выбрасываем — здесь, в отличие
   // от описи состояния на детальной, фраза не техническая, и потеря слова не
@@ -161,7 +169,7 @@ export default function LotCard({
       }}
     >
       <Link
-        href={`${hrefBase}/${isLotte ? "lotte/" : ""}${lot.external_id}`}
+        href={lotHref}
         aria-label={title}
         className="relative block aspect-[16/10] overflow-hidden"
         style={{ backgroundColor: "var(--axis-graphite)" }}
@@ -207,15 +215,19 @@ export default function LotCard({
           // ⚠️ Бейдж внизу слева, а не в углу к остальным: сверху уже стоят
           // класс с оценкой (слева) и полоса с номером лота (справа), и третий
           // угловой ярлык превратил бы фото в доску объявлений.
-          <span
+          // ⚠️ Отсчёт тикает на клиенте, но ПЕРВЫЙ кадр — серверная подпись
+          // («торги завтра»). Иначе 24 карточки разошлись бы с разметкой на
+          // гидрации: сервер и браузер считают время в разные моменты.
+          <AuctionCountdown
+            date={lot.auction_date}
+            fallback={countdown.label}
+            labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? T.past }}
             className="absolute bottom-2 left-2 rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none"
             style={{
               backgroundColor: "rgba(0,0,0,0.65)",
               color: countdown.soon ? "var(--axis-bronze)" : "var(--axis-gray)",
             }}
-          >
-            {countdown.label}
-          </span>
+          />
         )}
 
         {(lot.lane || lot.lot_no != null) && (
@@ -231,7 +243,7 @@ export default function LotCard({
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div>
           <h3 className="text-sm font-semibold leading-tight" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-            <Link href={`${hrefBase}/${isLotte ? "lotte/" : ""}${lot.external_id}`} className="hover:underline">
+            <Link href={lotHref} className="hover:underline">
               {title}
             </Link>{" "}
             {lot.year ? <span style={{ color: "var(--axis-gray)" }}>· {lot.year}</span> : null}
@@ -281,7 +293,7 @@ export default function LotCard({
             </span>
           </div>
 
-          {!isLotte && estimate ? (
+          {hasForecast && estimate ? (
             <div className="mt-1 flex items-baseline justify-between gap-2">
               <span className="text-[11px]" style={{ color: "var(--axis-gray)" }}>
                 {T.forecast}
@@ -291,13 +303,13 @@ export default function LotCard({
                 <span className="ml-1 text-[11px] font-normal">+{estimate.premiumPct}%</span>
               </span>
             </div>
-          ) : isLotte ? null : (
+          ) : hasForecast ? (
             <p className="mt-1 text-[11px]" style={{ color: "var(--axis-gray)" }}>
               {T.noForecast}
             </p>
-          )}
+          ) : null}
 
-          {!isLotte && estimate && (
+          {hasForecast && estimate && (
             <p className="mt-0.5 text-right text-[11px]" style={{ color: "var(--axis-gray)" }}>
               {basisLabel(estimate, T)}
             </p>
