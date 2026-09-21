@@ -318,13 +318,34 @@ const cachedPools = unstable_cache(
   { revalidate: 3600, tags: ["kcar-premium-index"] },
 );
 
+/**
+ * Никогда не бросает — как и остальные чтения в этом файле.
+ *
+ * ⚠️ Это НЕ перестраховка. Прогноз идёт третьим элементом в Promise.all на
+ * трёх страницах (публичный shell, служебный shell, служебная карточка), а
+ * Promise.all реджектится, если упал ЛЮБОЙ элемент. Соседние getLots и
+ * getSourceCounts сбой переживают и отдают пустоту, поэтому брошенное отсюда
+ * исключение роняло бы страницу целиком — включая /[lang]/auction, вкладку по
+ * умолчанию. Путь до броска короткий и реальный: createServerClient зовёт
+ * createClient с `!` на переменных окружения, а тот бросает синхронно, если
+ * URL пуст. Достаточно потерять переменную в панели — и витрина отдаёт 500
+ * вместо списка лотов.
+ *
+ * Пустой индекс — это «прогноза нет», и карточка так и нарисуется: лот со
+ * стартовой ценой без оценки молотка. Список машин важнее прогноза к нему.
+ */
 export async function getPremiumIndex(): Promise<Awaited<ReturnType<typeof buildPremiumIndex>>> {
-  const pools = await cachedPools();
-  return {
-    byModel: new Map(pools.byModel),
-    byGrade: new Map(pools.byGrade),
-    overall: pools.overall,
-  };
+  try {
+    const pools = await cachedPools();
+    return {
+      byModel: new Map(pools.byModel),
+      byGrade: new Map(pools.byGrade),
+      overall: pools.overall,
+    };
+  } catch (e) {
+    console.error("[kcar] getPremiumIndex упал, прогноз не строим:", e);
+    return { byModel: new Map(), byGrade: new Map(), overall: [] };
+  }
 }
 
 /** Лот целиком — всё, что есть в строке, включая поля добора. */
