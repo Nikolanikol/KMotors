@@ -120,10 +120,24 @@ export default async function ShowcaseLotPage({
   const lot = await getLot(id);
   if (!lot || lot.source !== source) notFound();
 
-  const [detail, similar] = await Promise.all([
+  const [detailResult, similar] = await Promise.all([
     getShowcaseDetail(id),
     getSimilarLots({ source: lot.source, externalId: id, maker: lot.maker, priceKrw: lot.start_price_krw }),
   ]);
+
+  /**
+   * ⚠️ Деталей может не быть по ДВУМ разным причинам, и клиенту они значат
+   * противоположное. `gone` — витрина отдала 404: лот ушёл с торгов, обратно
+   * не вернётся, и честно сказать об этом лучше, чем показать полупустую
+   * страницу. `unavailable` — витрина не ответила: лот, возможно, жив, и
+   * объявлять его проданным значит врать. То же правило, что у проданных
+   * машин Encar, где схлопывание этих веток стоило постмортема.
+   *
+   * Страница в обоих случаях РАБОТАЕТ: снимок, характеристики и цена старта
+   * лежат в нашей базе, они не зависят от витрины.
+   */
+  const detail = detailResult.status === "ok" ? detailResult.detail : null;
+  const gone = detailResult.status === "gone";
 
   const locale = lang === "ru" ? "ru-RU" : "en-US";
   const title = detail?.name ?? [lot.maker, lot.model].filter(Boolean).join(" ") ?? lot.external_id;
@@ -135,6 +149,26 @@ export default async function ShowcaseLotPage({
         <Link href={`${hrefBase}/${source === "kcar" ? "" : source}`} className="text-xs" style={{ color: "var(--axis-bronze)" }}>
           ← {T.back}
         </Link>
+
+        {detailResult.status !== "ok" && (
+          <div
+            className="mt-3 rounded-xl px-4 py-3"
+            style={{
+              backgroundColor: "var(--axis-charcoal)",
+              border: `1px solid ${gone ? "var(--axis-bronze)" : "rgba(74,74,74,0.45)"}`,
+            }}
+          >
+            <p
+              className="text-sm font-semibold"
+              style={{ color: gone ? "var(--axis-bronze)" : "var(--axis-cream, #F5F0EB)" }}
+            >
+              {gone ? T.goneTitle : T.staleTitle}
+            </p>
+            <p className="mt-1 text-xs" style={{ color: "var(--axis-gray)" }}>
+              {gone ? T.goneHint : T.staleHint}
+            </p>
+          </div>
+        )}
 
         <header className="mb-5 mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -170,7 +204,7 @@ export default async function ShowcaseLotPage({
               площадок разные расписания торгов (замер 21.09.2026 — Lotte 21-го,
               SK и K Car 22-го). Время окончания добавляет auctionTime.
             */}
-            {(lot.auction_date ?? detail?.auctionEnd) && (
+            {!gone && (lot.auction_date ?? detail?.auctionEnd) && (
               // Плашка, а не строчка: до конца торгов — единственное, что на
               // этой странице устаревает, и оно должно читаться первым.
               <div
@@ -221,14 +255,13 @@ export default async function ShowcaseLotPage({
           </div>
         </header>
 
-        {!detail && (
-          <p
-            className="mb-4 rounded-xl p-3 text-xs"
-            style={{ backgroundColor: "var(--axis-charcoal)", color: "var(--axis-bronze)" }}
-          >
-            {T.noDetail}
-          </p>
-        )}
+        {/*
+          Здесь стояла оговорка «витрина не ответила» — она показывалась при
+          ЛЮБОМ отсутствии деталей и теперь противоречила бы плашке наверху:
+          у ушедшего лота витрина ответила прекрасно, ответом «такого нет».
+          Оба случая разводит одна плашка в начале страницы, вторая подпись
+          про то же самое только путала бы. Ключ T.noDetail остался в словаре.
+        */}
 
         {gallery.length > 0 && (
           <div className="mb-3">

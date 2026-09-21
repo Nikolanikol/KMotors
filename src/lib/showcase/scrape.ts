@@ -128,7 +128,19 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * каждый прогон молча терял бы по паре страниц каталога, и заметить это было
  * бы нечем: счётчик «страниц обойдено» выглядел бы нормальным.
  */
-async function getHtml(url: string, signal?: AbortSignal, tries = 3): Promise<string | null> {
+/**
+ * Результат похода на витрину. ТРИ исхода, а не два.
+ *
+ * ⚠️ «Страницы нет» и «витрина не ответила» схлопывать НЕЛЬЗЯ — это то же
+ * правило, что у fetchVehicleData с Encar, и цена ошибки та же. 404 означает,
+ * что лот ушёл с торгов и больше не вернётся: это факт, его можно показать
+ * человеку и закешировать. Таймаут или 525 означает, что витрина лежит: лот,
+ * возможно, жив, и объявлять его проданным — врать клиенту. Снаружи оба
+ * случая выглядят как «деталей нет».
+ */
+type Fetched = { html: string } | { gone: true } | { failed: true };
+
+async function getHtml(url: string, signal?: AbortSignal, tries = 3): Promise<Fetched> {
   for (let attempt = 1; attempt <= tries; attempt++) {
     try {
       const res = await fetch(url, {
@@ -136,14 +148,18 @@ async function getHtml(url: string, signal?: AbortSignal, tries = 3): Promise<st
         signal,
         cache: "no-store",
       });
-      if (res.ok) return await res.text();
+      if (res.ok) return { html: await res.text() };
+      // ⚠️ 404 НЕ повторяем: ответ не изменится, а три попытки с паузами
+      // 1.2 + 2.4 с — это 3.6 секунды ожидания на странице, которая всё равно
+      // отрисуется без деталей, плюс два лишних запроса к чужому серверу.
+      if (res.status === 404) return { gone: true };
     } catch {
       /* сеть моргнула — пробуем ещё */
     }
     if (attempt < tries) await sleep(RETRY_DELAY_MS * attempt);
   }
   console.error(`[showcase] страница не отдалась после ${tries} попыток: ${url}`);
-  return null;
+  return { failed: true };
 }
 
 /**
@@ -423,7 +439,10 @@ export async function fetchList(
   let pages = 0;
 
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const html = await getHtml(`${ORIGIN}${LIST_PATH}&page=${page}`, signal);
+    const fetched = await getHtml(`${ORIGIN}${LIST_PATH}&page=${page}`, signal);
+    // Для обхода списка разница между «нет страницы» и «не ответила» роли не
+    // играет: и там и там на этой странице карточек нет.
+    const html = "html" in fetched ? fetched.html : null;
     if (!html) {
       const error = `страница ${page} не отдалась`;
       console.error(`[lotte] ${error}`);
@@ -450,8 +469,26 @@ export async function fetchList(
   return { cards: out, pages };
 }
 
+/**
+ * Исход запроса деталей лота.
+ *
+ * `gone` — витрина отдала 404: лот ушёл с торгов. Это устойчивый факт, его
+ * можно кешировать и показывать человеку.
+ * `failed` — витрина не ответила ЛИБО ответила мусором, который не разобрался.
+ * Лот, возможно, жив; объявлять его ушедшим нельзя.
+ */
+export type DetailResult =
+  | { status: "ok"; detail: ShowcaseDetail }
+  | { status: "gone" }
+  | { status: "failed" };
+
 /** Детали одного лота. По требованию, не массовым обходом. */
-export async function fetchDetail(externalId: string, signal?: AbortSignal): Promise<ShowcaseDetail | null> {
-  const html = await getHtml(`${ORIGIN}/en/car/${externalId}?currency=KRW`, signal);
-  return html ? parseDetail(html) : null;
+export async function fetchDetail(externalId: string, signal?: AbortSignal): Promise<DetailResult> {
+  const fetched = await getHtml(`${ORIGIN}/en/car/${externalId}?currency=KRW`, signal);
+  if ("gone" in fetched) return { status: "gone" };
+  if ("failed" in fetched) return { status: "failed" };
+  const detail = parseDetail(fetched.html);
+  // Страница отдалась, но не разобралась — это поломка парсера или смена
+  // разметки, а не ушедший лот. Ошибкой, а не пропажей.
+  return detail ? { status: "ok", detail } : { status: "failed" };
 }

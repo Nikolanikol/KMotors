@@ -162,7 +162,7 @@ function applySort(
  */
 const AUCTION_END_HOUR_UTC = 4;
 
-const activeFrom = () => {
+export const activeFrom = () => {
   const now = new Date();
   if (now.getUTCHours() >= AUCTION_END_HOUR_UTC) now.setUTCDate(now.getUTCDate() + 1);
   return now.toISOString().slice(0, 10);
