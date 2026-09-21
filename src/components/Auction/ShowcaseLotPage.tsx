@@ -152,7 +152,13 @@ export default async function ShowcaseLotPage({
               {detail?.adNumber ? ` · объявление ${detail.adNumber}` : ""}
             </p>
           </div>
-          <div className="text-right">
+          {/*
+            ⚠️ Вправо колонка равняется только с sm. На узком экране шапка
+            переносится в одну колонку, и правое выравнивание цены смотрелось
+            бы рассогласованно с плашкой таймера и кнопкой — те занимают всю
+            ширину и всегда начинаются слева.
+          */}
+          <div className="text-left sm:text-right">
             <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
               {T.startLabel}
             </div>
@@ -165,13 +171,52 @@ export default async function ShowcaseLotPage({
               SK и K Car 22-го). Время окончания добавляет auctionTime.
             */}
             {(lot.auction_date ?? detail?.auctionEnd) && (
-              <AuctionCountdown
-                date={lot.auction_date ?? detail?.auctionEnd}
-                fallback={`${T.until} ${lot.auction_date ?? detail?.auctionEnd}`}
-                labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? "" }}
-                className="mt-1 block text-base font-semibold"
-                style={{ color: "var(--axis-bronze)" }}
-              />
+              // Плашка, а не строчка: до конца торгов — единственное, что на
+              // этой странице устаревает, и оно должно читаться первым.
+              <div
+                className="mt-2 inline-flex items-center gap-2 rounded-xl px-3 py-2"
+                style={{
+                  backgroundColor: "var(--axis-charcoal)",
+                  border: "1px solid var(--axis-bronze)",
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: "var(--axis-bronze)" }}
+                />
+                <AuctionCountdown
+                  date={lot.auction_date ?? detail?.auctionEnd}
+                  fallback={`${T.until} ${lot.auction_date ?? detail?.auctionEnd}`}
+                  labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? "" }}
+                  className="block text-xl font-bold leading-none tracking-tight"
+                  style={{ color: "var(--axis-bronze)" }}
+                />
+              </div>
+            )}
+
+            {/*
+              ⚠️ Кнопка ДУБЛИРУЕТСЯ: эта в шапке, вторая под характеристиками
+              внизу. Это не недосмотр — страница длинная (галерея, спецификация,
+              лист осмотра, похожие лоты), и решение написать обычно приходит
+              либо сразу от цены, либо в конце от подробностей. Одна кнопка
+              внизу заставляла бы первых скроллить, одна вверху — вторых
+              возвращаться.
+            */}
+            {contactHref && (
+              <a
+                href={contactHref}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-90"
+                style={{
+                  backgroundImage: "var(--axis-bronze-fill)",
+                  backgroundColor: "var(--axis-bronze-deep)",
+                  color: "#fff",
+                }}
+              >
+                {T.ask}
+              </a>
             )}
           </div>
         </header>

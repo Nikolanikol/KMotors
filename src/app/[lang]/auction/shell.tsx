@@ -158,6 +158,7 @@ export async function PlatformPage({
         premiumIndex={premiumIndex}
         numberLocale={lang === "ru" ? "ru-RU" : "en-US"}
         filtersApplied={hasFilters(query)}
+        showContact
       />
     </AuctionShell>
   );
