@@ -169,7 +169,7 @@ export default async function ShowcaseLotPage({
                 date={lot.auction_date ?? detail?.auctionEnd}
                 fallback={`${T.until} ${lot.auction_date ?? detail?.auctionEnd}`}
                 labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? "" }}
-                className="mt-1 block text-sm font-semibold"
+                className="mt-1 block text-base font-semibold"
                 style={{ color: "var(--axis-bronze)" }}
               />
             )}

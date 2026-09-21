@@ -222,7 +222,7 @@ export default function LotCard({
             date={lot.auction_date}
             fallback={countdown.label}
             labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? T.past }}
-            className="absolute bottom-2 left-2 rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none"
+            className="absolute bottom-2 left-2 rounded px-2 py-1 text-sm font-semibold leading-none"
             style={{
               backgroundColor: "rgba(0,0,0,0.65)",
               color: countdown.soon ? "var(--axis-bronze)" : "var(--axis-gray)",
