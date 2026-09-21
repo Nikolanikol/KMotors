@@ -21,6 +21,11 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Планировщик Coolify выполняет команду ВНУТРИ этого контейнера, поэтому раннер
+# крон-заданий обязан здесь лежать. Сам по себе он не доедет: standalone-сборка
+# тянет только то, что трассировка Next видит из импортов приложения, а этот
+# файл приложение не импортирует — его зовёт планировщик снаружи.
+COPY --from=builder /app/scripts/cron ./scripts/cron
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000

@@ -44,7 +44,7 @@
 | LLM | Gemini or Groq (Llama 3.3 70B) — provider-agnostic, one env var swap (`src/lib/llm.ts`) |
 | Payments | PayPal |
 | Email | Resend |
-| Deployment | Coolify on VPS (push to `main` redeploys); cron via system crontab + `scripts/*-cron.sh` |
+| Deployment | Coolify on VPS (push to `main` redeploys); schedules via Coolify Scheduled Tasks → `scripts/cron/run.mjs`, legacy jobs still in crontab |
 | External APIs | Encar.com (cars), Search Console, Telegram Bot API |
 
 ---
@@ -196,22 +196,57 @@ Deployed on **Coolify on the VPS** — every push to `main` triggers a productio
 `vercel.json` is kept for headers only. It used to declare `crons`, but Vercel cron
 is executed by Vercel and nothing else — on the VPS those entries were inert, and the
 blog quietly stopped publishing (2 posts/month instead of ~10). **Do not put schedules
-there.** Every scheduled job is a shell script in `scripts/` plus a line in the VPS
-crontab:
+there.**
 
-| Job | Endpoint | Method | Schedule | Guard |
-|---|---|---|---|---|
-| Telegram car poster | `/api/poster/run` | POST | `0 */2 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
-| Telegram parts poster | `/api/poster/parts/run` | POST | `30 */2 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
-| Blog article draft | `/api/blog-generate` | POST | `0 10 */3 * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
-| RSS news sync | `/api/rss-sync` | GET | `0 9 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
-| GSC stats collect | `/api/seo/collect` | POST | `35 4 * * *` | `x-seo-secret: $SEO_CRON_SECRET` |
-| SEO drafts | `/api/seo/generate?limit=15` | POST | `0 5 * * *` | `x-seo-secret: $SEO_CRON_SECRET` |
-| Saved-search digest | `/api/subscriptions/run` | GET | `0 11 * * *` | `x-poster-secret: $POSTER_CRON_SECRET` |
+### Scheduled jobs
+
+Schedules are moving to **Coolify → Application → Scheduled Tasks**, where the active
+jobs and every run's output are visible in the UI instead of behind `crontab -l` over
+ssh. One runner serves every job:
+
+| field | value |
+|---|---|
+| Name | `showcase` |
+| Command | `node ./scripts/cron/run.mjs showcase` |
+| Frequency | `0 */4 * * *` |
+
+| Job | Runner arg | Endpoint | Method | Schedule | Guard | Runs from |
+|---|---|---|---|---|---|---|
+| Auction lots | `showcase` | `/api/showcase/sync` | GET | `0 */4 * * *` | `x-poster-secret` | Coolify |
+| Telegram car poster | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | `x-poster-secret` | crontab |
+| Telegram parts poster | `poster-parts` | `/api/poster/parts/run` | POST | `30 */2 * * *` | `x-poster-secret` | crontab |
+| Blog article draft | `blog` | `/api/blog-generate` | POST | `0 10 */3 * *` | `x-poster-secret` | crontab |
+| RSS news sync | `rss` | `/api/rss-sync` | GET | `0 9 * * *` | `x-poster-secret` | crontab |
+| GSC stats collect | `seo-collect` | `/api/seo/collect` | POST | `35 4 * * *` | `x-seo-secret` | crontab |
+| SEO drafts | `seo-generate` | `/api/seo/generate?limit=15` | POST | `0 5 * * *` | `x-seo-secret` | crontab |
+| Saved-search digest | `subscriptions` | `/api/subscriptions/run` | GET | `0 11 * * *` | `x-poster-secret` | crontab |
+
+`node scripts/cron/run.mjs --list` prints the same table from the runner itself.
+
+A Coolify task runs **inside the application container**, which rules out the obvious
+command shapes: `node:20-alpine` ships busybox and no `curl`, and global `fetch` would
+abort at undici's 300 s `headersTimeout` while a ~6-minute crawl is still succeeding
+server-side. The runner therefore speaks `node:http` to `127.0.0.1:$PORT` — no curl, no
+timeout ceiling, and no DNS/TLS/Cloudflare in the path. The `COPY … /app/scripts/cron`
+line in the `Dockerfile` is what puts it in the image; Next's standalone trace would not.
+
+Exit codes: `0` success, `1` unreachable or non-2xx, `2` body contains `"ok":false`,
+`3` non-zero `unknownSource`. Code `2` exists because these endpoints answer 200 both
+when there was nothing to do and when the upstream returned nothing at all.
+
+**Migrating a job:** add the Coolify task, wait for one green run, then remove the
+crontab line. While both schedulers are live the job fires twice — harmless except for
+the car poster, where per-vehicle dedup prevents a duplicate post but the posting rate
+doubles until the daily cap. Remove that crontab line *before* the first Coolify run.
+
+The Supabase backup (`/opt/backups/supabase/backup.sh`, `0 3 * * *`) stays in crontab:
+it runs a script on the host, outside the repo and outside the app container.
+
+#### While jobs remain in crontab
 
 **The repo is not checked out on the VPS.** Production is built by Coolify into Docker;
-`/var/www/kmotors/` does not exist. Every crontab line is therefore a direct `curl` to the
-endpoint — all the work happens inside the Next process:
+`/var/www/kmotors/` does not exist. Every remaining crontab line is therefore a direct
+`curl` to the endpoint — all the work happens inside the Next process:
 
 ```
 0 9 * * * curl -fsS --max-time 300 -H "x-poster-secret: $SECRET" https://www.kmotors.shop/api/rss-sync >> /var/log/rss-sync.log 2>&1
