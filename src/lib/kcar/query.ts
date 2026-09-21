@@ -67,6 +67,26 @@ export interface LotQuery {
   /** Площадка. Каталоги разных площадок не смешиваются: у них разные цены. */
   source?: string | null;
   maker?: string | null;
+  /** Модель. Осмысленна только вместе с маркой — см. resetChain в LotFilters. */
+  model?: string | null;
+  /**
+   * Потолок стартовой цены в вонах, порог года и потолок пробега.
+   *
+   * ⚠️ Все три фильтруют ПО ВСЕМ ТРЁМ ПЛОЩАДКАМ, и это не случайность:
+   * маркa, модель, год, пробег и цена — единственные поля, которые есть и у
+   * K Car (свой API), и у SK с Lotte (витрина-посредник отдаёт ровно то, что
+   * показывает на карточке). Всё остальное — цвет, кузов, привод, объём,
+   * оценка кузова — есть только у K Car, и фильтр по нему работал бы на
+   * одной вкладке из трёх.
+   *
+   * ⚠️ Строка с NULL в колонке фильтр НЕ проходит: .gte("year", 2020) на лоте
+   * без года даёт false. Это верное поведение — «год от 2020» не может
+   * включать машины, про год которых мы ничего не знаем, — но заметное:
+   * года нет примерно у каждого восьмого лота.
+   */
+  priceMax?: number | null;
+  yearMin?: number | null;
+  mileageMax?: number | null;
   q?: string | null;
   sort?: LotSort;
   page?: number;
@@ -79,6 +99,8 @@ export interface LotsPage {
   total: number;
   /** Марки с числом лотов — для выпадашки фильтра. */
   makers: { maker: string; count: number }[];
+  /** Модели ВЫБРАННОЙ марки. Пусто, пока марка не выбрана. */
+  models: { model: string; count: number }[];
   failed: boolean;
 }
 
@@ -147,7 +169,7 @@ const activeFrom = () => {
 };
 
 export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
-  const empty: LotsPage = { rows: [], total: 0, makers: [], failed: false };
+  const empty: LotsPage = { rows: [], total: 0, makers: [], models: [], failed: false };
   const page = Math.max(1, opts.page ?? 1);
   const sort: LotSort = opts.sort ?? "lot";
   const upcoming = opts.upcoming !== false;
@@ -161,15 +183,25 @@ export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
      * считаться по выдаче БЕЗ фильтра по марке: иначе после выбора SsangYong в
      * списке остаётся один SsangYong, и сменить марку нечем — только сбросом
      * через адрес. Ровно это и происходило: намерение было записано
-     * комментарием у collectMakers, а код фильтр применял.
+     * комментарием у сборщика фасетов, а код фильтр применял.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const base = (select: string, opt: { head?: boolean; withMaker?: boolean } = {}): any => {
-      const { head = false, withMaker = true } = opt;
+    const base = (
+      select: string,
+      opt: { head?: boolean; withMaker?: boolean; withModel?: boolean } = {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ): any => {
+      const { head = false, withMaker = true, withModel = true } = opt;
       let q = db.from("auction_lots").select(select, head ? { count: "exact", head: true } : { count: "exact" });
       if (opts.source) q = q.eq("source", opts.source);
       if (upcoming) q = q.gte("auction_date", activeFrom());
       if (withMaker && opts.maker) q = q.eq("maker", opts.maker);
+      if (withModel && opts.model) q = q.eq("model", opts.model);
+      // Диапазоны применяются ВСЕГДА, в том числе при сборе фасетов: счётчик
+      // марки обязан показывать, сколько лотов этой марки попадёт в текущую
+      // выдачу, а не сколько их в базе вообще.
+      if (opts.priceMax) q = q.lte("start_price_krw", opts.priceMax);
+      if (opts.yearMin) q = q.gte("year", opts.yearMin);
+      if (opts.mileageMax) q = q.lte("mileage_km", opts.mileageMax);
       const needle = opts.q ? safeSearch(opts.q) : "";
       if (needle) {
         q = q.or(
@@ -185,9 +217,18 @@ export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
       .order("external_id")
       .range(from, from + LOTS_PAGE_SIZE - 1);
 
-    const [{ data, count, error }, makers] = await Promise.all([
+    const [{ data, count, error }, makerRows, modelRows] = await Promise.all([
       listQuery,
-      collectMakers(base("maker", { withMaker: false })),
+      // ⚠️ Марки — БЕЗ фильтра по марке И по модели. Без первого выпадашка
+      // схлопывается до выбранной марки; без второго — до марки выбранной
+      // модели, то есть ровно к той же ловушке с другой стороны.
+      collectFacet(base("maker", { withMaker: false, withModel: false }), "maker"),
+      // Модели — С фильтром по марке (иначе в списке все модели всех марок)
+      // и БЕЗ фильтра по модели. Пока марка не выбрана, список не нужен:
+      // выпадашка стоит отключённой, и запрос был бы выброшен впустую.
+      opts.maker
+        ? collectFacet(base("model", { withModel: false }), "model")
+        : Promise.resolve([] as { value: string; count: number }[]),
     ]);
 
     if (error) {
@@ -198,7 +239,8 @@ export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
     return {
       rows: (data ?? []) as LotRow[],
       total: count ?? 0,
-      makers,
+      makers: makerRows.map(({ value, count: n }) => ({ maker: value, count: n })),
+      models: modelRows.map(({ value, count: n }) => ({ model: value, count: n })),
       failed: false,
     };
   } catch (e) {
@@ -208,15 +250,16 @@ export async function getLots(opts: LotQuery = {}): Promise<LotsPage> {
 }
 
 /**
- * Счётчики марок. PostgREST не умеет GROUP BY, поэтому считаем на своей
- * стороне — колонка одна, строк меньше тысячи, это дешевле отдельной вьюхи.
+ * Счётчики по одной колонке. PostgREST не умеет GROUP BY, поэтому считаем на
+ * своей стороне — колонка одна, строк меньше тысячи, это дешевле вьюхи.
  *
- * ⚠️ Вызывать ТОЛЬКО с base(..., { withMaker: false }). Список марок обязан
- * оставаться полным независимо от выбранной: иначе выпадашка схлопывается до
- * одного пункта и сменить марку можно лишь правкой адреса.
+ * ⚠️ Вызывать ТОЛЬКО с base(), где СВОЁ измерение выключено: список марок
+ * собирается при `withMaker: false`, список моделей при `withModel: false`.
+ * Иначе выпадашка схлопывается до единственного выбранного пункта и сменить
+ * его можно лишь правкой адреса — так уже было с марками.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function collectMakers(query: any): Promise<{ maker: string; count: number }[]> {
+async function collectFacet(query: any, column: string): Promise<{ value: string; count: number }[]> {
   const tally = new Map<string, number>();
   const PAGE = 1000;
   // ⚠️ .order() у билдера PostgREST НАКАПЛИВАЕТСЯ, а билдер здесь один на все
@@ -226,16 +269,19 @@ async function collectMakers(query: any): Promise<{ maker: string; count: number
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await ordered.range(from, from + PAGE - 1);
     if (error) {
-      console.error("[kcar] счётчики марок:", error.message);
+      console.error(`[kcar] счётчики по ${column}:`, error.message);
       break;
     }
-    const rows = (data ?? []) as { maker: string | null }[];
-    for (const r of rows) if (r.maker) tally.set(r.maker, (tally.get(r.maker) ?? 0) + 1);
+    const rows = (data ?? []) as Record<string, string | null>[];
+    for (const r of rows) {
+      const v = r[column];
+      if (v) tally.set(v, (tally.get(v) ?? 0) + 1);
+    }
     if (rows.length < PAGE) break;
   }
   return [...tally.entries()]
-    .map(([maker, count]) => ({ maker, count }))
-    .sort((a, b) => b.count - a.count || a.maker.localeCompare(b.maker, "ru"));
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value, "ru"));
 }
 
 export interface AuctionSummary {

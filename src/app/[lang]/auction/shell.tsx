@@ -17,12 +17,37 @@ export const SORTS = new Set<LotSort>(["lot", "price_asc", "price_desc", "year_d
 export function readParams(sp: Record<string, string | string[] | undefined>) {
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k]) ?? null;
   const sortRaw = one("sort");
+  /**
+   * ⚠️ Числа из адреса проверяются, а не просто приводятся. В ?priceMax
+   * прилетает что угодно — от мусора сканеров до ручной правки, — а
+   * Number("abc") это NaN, и NaN в .lte() уходит в PostgREST строкой "NaN":
+   * запрос отвечает 400, и getLots отдаёт «временно недоступно» вместо лотов.
+   * Отрицательные значения отсекаются по той же причине, что и NaN: они дают
+   * заведомо пустую выдачу, неотличимую для человека от поломки.
+   */
+  const num = (k: string) => {
+    const v = Number(one(k));
+    return Number.isFinite(v) && v > 0 ? Math.floor(v) : null;
+  };
   return {
     maker: one("maker"),
+    model: one("model"),
+    priceMax: num("priceMax"),
+    yearMin: num("yearMin"),
+    mileageMax: num("mileageMax"),
     q: one("q"),
     sort: (sortRaw && SORTS.has(sortRaw as LotSort) ? sortRaw : "lot") as LotSort,
     page: Math.max(1, Number(one("page") ?? "1") || 1),
   };
+}
+
+/**
+ * Применён ли хоть один фильтр. Нужно, чтобы отличить «под фильтр ничего не
+ * подошло» от «торги этой площадки уже прошли»: снаружи оба состояния —
+ * пустая сетка, а значат прямо противоположное.
+ */
+export function hasFilters(p: ReturnType<typeof readParams>): boolean {
+  return Boolean(p.maker || p.model || p.q || p.priceMax || p.yearMin || p.mileageMax);
 }
 
 export function filterLabels(L: AuctionLabels): LotFilterLabels {
@@ -31,6 +56,14 @@ export function filterLabels(L: AuctionLabels): LotFilterLabels {
     find: L.find,
     reset: L.reset,
     allMakers: L.allMakers,
+    allModels: L.allModels,
+    priceAny: L.priceAny,
+    yearAny: L.yearAny,
+    mileageAny: L.mileageAny,
+    upTo: L.upTo,
+    from: L.from,
+    mlnWon: L.mlnWon,
+    thsKm: L.thsKm,
     sortLot: L.sortLot,
     sortPriceAsc: L.sortPriceAsc,
     sortPriceDesc: L.sortPriceDesc,
@@ -124,7 +157,7 @@ export async function PlatformPage({
         lang={lang}
         premiumIndex={premiumIndex}
         numberLocale={lang === "ru" ? "ru-RU" : "en-US"}
-        filtersApplied={Boolean(query.maker || query.q)}
+        filtersApplied={hasFilters(query)}
       />
     </AuctionShell>
   );

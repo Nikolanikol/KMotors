@@ -39,7 +39,7 @@ export default function PlatformCatalog({
 }) {
   return (
     <>
-      <LotFilters makers={lots.makers} labels={filterLabels} showUpcomingToggle={false} />
+      <LotFilters makers={lots.makers} models={lots.models} labels={filterLabels} showUpcomingToggle={false} />
 
       {lots.failed ? (
         <p className="mt-6 text-sm" style={{ color: "#C4563F" }}>

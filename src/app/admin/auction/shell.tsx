@@ -13,9 +13,13 @@ import AuctionTabs, { type AuctionSourceTab } from "@/components/Auction/Auction
 import { RU_LOT_LABELS } from "@/components/Auction/LotCard";
 import { RU_FILTER_LABELS } from "@/components/Auction/LotFilters";
 import PlatformCatalog from "@/components/Auction/PlatformCatalog";
-import { getLots, getPremiumIndex, getSourceCounts, type LotSort } from "@/lib/kcar/query";
-
-const SORTS = new Set<LotSort>(["lot", "price_asc", "price_desc", "year_desc", "mileage_asc"]);
+import { getLots, getPremiumIndex, getSourceCounts } from "@/lib/kcar/query";
+// ⚠️ Разбор адреса берётся у публичной витрины, а не копируется сюда. Раньше
+// обе страницы читали searchParams своими руками, и любой новый фильтр
+// пришлось бы заводить дважды — то есть однажды забыть. Фильтры у витрин
+// одинаковые по замыслу: служебная отличается только гейтом, подписями и
+// отсутствием оговорок для клиента.
+import { hasFilters, readParams } from "@/app/[lang]/auction/shell";
 
 /** Служебные подписи сетки: русские, словарь здесь не подключить. */
 const RU_GRID_LABELS = {
@@ -47,17 +51,10 @@ export async function AdminPlatformPage({
 }) {
   await requireAdmin();
 
-  const one = (k: string) => (Array.isArray(searchParams[k]) ? searchParams[k][0] : searchParams[k]) ?? null;
-  const sortRaw = one("sort");
+  const query = readParams(searchParams);
 
   const [lots, counts, premiumIndex] = await Promise.all([
-    getLots({
-      source,
-      maker: one("maker"),
-      q: one("q"),
-      sort: (sortRaw && SORTS.has(sortRaw as LotSort) ? sortRaw : "lot") as LotSort,
-      page: Math.max(1, Number(one("page") ?? "1") || 1),
-    }),
+    getLots({ ...query, source }),
     getSourceCounts(),
     withForecast ? getPremiumIndex() : Promise.resolve(undefined),
   ]);
@@ -89,7 +86,7 @@ export async function AdminPlatformPage({
           filterLabels={RU_FILTER_LABELS}
           hrefBase="/admin/auction"
           lang="ru"
-          filtersApplied={Boolean(one("maker") || one("q"))}
+          filtersApplied={hasFilters(query)}
           premiumIndex={premiumIndex}
         />
       </div>
