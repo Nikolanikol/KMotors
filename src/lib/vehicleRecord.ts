@@ -16,6 +16,8 @@ export interface AccidentRecord {
 
 export interface VehicleRecord {
   regDate?: string;
+  /** Дата первой регистрации — Encar её отдаёт, но в карточке сайта она не используется */
+  firstDate?: string;
   carNo?: string;
   year?: string;
   maker?: string;
