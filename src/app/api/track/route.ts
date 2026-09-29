@@ -60,20 +60,32 @@ export async function POST(req: Request) {
 
     // Событие (car_view и др.) → таблица events
     if (event) {
-      await supabase.from("events").insert({
+      // ⚠️ supabase-js на ошибке БД НЕ БРОСАЕТ — он возвращает { data, error }.
+      // Поэтому `await insert(...)` без разбора результата проглатывает отказ
+      // целиком, и роут отвечает ok:true при непрошедшей записи. Ровно так
+      // аналитика и умерла незаметно: 1 строка в page_views за 40 дней при
+      // живом эндпоинте, отвечающем 200.
+      const { error } = await supabase.from("events").insert({
         event,
         session_id: sessionId || null,
         properties: properties || {},
       });
+      if (error) {
+        console.error("[track] events insert:", error.message);
+        return NextResponse.json({ ok: false, reason: "events_insert" }, { status: 500 });
+      }
 
       // car_view — дополнительно кэшируем имя машины для топа страниц
       if (event === "car_view" && properties?.car_id && properties?.car_name) {
-        await supabase.from("car_names").upsert({
+        const { error: nameError } = await supabase.from("car_names").upsert({
           car_id: String(properties.car_id),
           car_name: String(properties.car_name),
           path: `/ru/catalog/${properties.car_id}`,
           updated_at: new Date().toISOString(),
         }, { onConflict: "car_id" });
+        // Имя машины — украшение отчёта, а не само событие: провал логируем,
+        // но ответ не портим, событие уже записано.
+        if (nameError) console.error("[track] car_names upsert:", nameError.message);
       }
 
       return NextResponse.json({ ok: true });
@@ -86,15 +98,23 @@ export async function POST(req: Request) {
 
     const source = parseSource(referrer || "");
 
-    await supabase.from("page_views").insert({
+    const { error } = await supabase.from("page_views").insert({
       path: path.slice(0, 500),
       referrer: source,
       country: country || null,
       device: device || null,
     });
+    if (error) {
+      console.error("[track] page_views insert:", error.message);
+      return NextResponse.json({ ok: false, reason: "insert_failed" }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    // ⚠️ Пустой catch тут стоял раньше и гасил последнюю ниточку к причине.
+    // Счётчик не критичен для посетителя, но молчащий счётчик хуже
+    // отсутствующего: по нему принимают решения.
+    console.error("[track] упал:", e);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

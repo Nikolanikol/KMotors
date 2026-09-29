@@ -50,7 +50,11 @@ export default function AuctionCountdown({
   }, [deadlineMs, h, m, sec, over]);
 
   return (
-    <span className={className} style={style}>
+    // ⚠️ tabular-nums обязателен, а не украшение: у пропорционального шрифта
+    // «1» уже «8», и строка дёргала бы соседей раз в секунду. Ставится здесь,
+    // а не у вызывающих, чтобы новое место не забыло про это. Вызывающий
+    // может перебить — его style идёт вторым.
+    <span className={className} style={{ fontVariantNumeric: "tabular-nums", ...style }}>
       {text ?? fallback}
     </span>
   );

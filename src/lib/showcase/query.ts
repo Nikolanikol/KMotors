@@ -11,40 +11,60 @@
 import { unstable_cache } from "next/cache";
 
 import { createServerClient } from "@/lib/supabase";
-import type { LotRow } from "@/lib/kcar/query";
+import { activeFrom, type LotRow } from "@/lib/kcar/query";
 import { fetchDetail, type ShowcaseDetail } from "./scrape";
 
 /** Ровно то, что рисует плитка похожего лота. */
 const SIMILAR_COLUMNS =
   "source, external_id, maker, model, mileage_km, start_price_krw, thumb_url, year";
 
+/**
+ * ⚠️ Кешируются ДВА исхода из трёх. `ok` — понятно; `gone` тоже, и это не
+ * недосмотр: 404 у витрины означает, что лот ушёл с торгов и обратно не
+ * вернётся, так что ходить за ним снова каждую минуту незачем. А вот `failed`
+ * кешировать нельзя — витрина полежит минуту, а мы час будем показывать
+ * «деталей нет» при живом лоте. Отсюда бросок исключения: оно в кеш не
+ * попадает, наружу его гасит try/catch в getShowcaseDetail.
+ */
 const cached = unstable_cache(
-  async (externalId: string): Promise<ShowcaseDetail> => {
-    const detail = await fetchDetail(externalId);
-    // ⚠️ НЕУДАЧУ НЕ КЕШИРУЕМ. unstable_cache запоминает то, что функция
-    // вернула, — а значит запомнил бы и null от сбойного запроса или от
-    // парсера, который в тот момент был сломан. Ровно так и вышло 21.09.2026:
-    // карточка SK час показывала одну миниатюру вместо тридцати фото уже
-    // ПОСЛЕ починки разбора. Брошенное исключение в кеш не попадает; наружу
-    // его гасит try/catch в getShowcaseDetail.
-    if (!detail) throw new Error(`showcase: лот ${externalId} не разобрался`);
-    return detail;
+  async (externalId: string): Promise<ShowcaseResult> => {
+    const r = await fetchDetail(externalId);
+    if (r.status === "gone") return { status: "gone" };
+    if (r.status === "failed") {
+      throw new Error(`showcase: лот ${externalId} — витрина не ответила или не разобралась`);
+    }
+    return { status: "ok", detail: r.detail };
   },
   // ⚠️ В ключе стоит ВЕРСИЯ формы. Поменяли состав ShowcaseDetail — поднимите её,
   // иначе кеш будет отдавать объекты прежней формы до истечения часа, и новые
   // поля окажутся пустыми при полностью исправном парсере. На этом уже
   // потерялось время 12.09.2026.
-  ["showcase-lot-detail-v5"],
+  ["showcase-lot-detail-v6"],
   { revalidate: 3600, tags: ["showcase-lot-detail"] },
 );
 
-/** Никогда не бросает: витрина чужая, страница лота важнее её доступности. */
-export async function getShowcaseDetail(externalId: string): Promise<ShowcaseDetail | null> {
+/**
+ * Что показывать на странице лота.
+ *
+ * ⚠️ Три исхода, и схлопывать их нельзя. `gone` — лот ушёл с торгов, об этом
+ * честно пишем на странице. `unavailable` — витрина лежит, лот, возможно, жив,
+ * и объявлять его ушедшим значит врать клиенту. Ровно то же правило, что у
+ * fetchVehicleData с Encar, где схлопывание в catch(() => null) стоило
+ * постмортема.
+ *
+ * Никогда не бросает: витрина чужая, страница лота важнее её доступности.
+ */
+export type ShowcaseResult =
+  | { status: "ok"; detail: ShowcaseDetail }
+  | { status: "gone" }
+  | { status: "unavailable" };
+
+export async function getShowcaseDetail(externalId: string): Promise<ShowcaseResult> {
   try {
     return await cached(externalId);
   } catch (e) {
-    console.error("[lotte] getShowcaseDetail:", e);
-    return null;
+    console.error("[showcase] getShowcaseDetail:", e);
+    return { status: "unavailable" };
   }
 }
 
@@ -79,6 +99,13 @@ export async function getSimilarLots(opts: {
       .eq("source", source)
       .eq("maker", maker)
       .neq("external_id", externalId)
+      // ⚠️ Та же отсечка, что у каталога, и без неё блок был вреден: он
+      // предлагал лоты с ПРОШЕДШИХ торгов. Витрина-источник их удаляет, и
+      // клик приводил на страницу, где деталей нет вовсе — источник отдаёт
+      // 404. Живой случай 21.09.2026: с карточки предлагался CA20389500 с
+      // торгами 7, 11 и 15 сентября. Каталог такие лоты прячет, а похожие
+      // брались из той же таблицы запросом мимо этого правила.
+      .gte("auction_date", activeFrom())
       .gte("start_price_krw", Math.round(priceKrw * 0.5))
       .lte("start_price_krw", Math.round(priceKrw * 1.8))
       .order("start_price_krw")

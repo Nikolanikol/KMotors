@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextFetchEvent } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
@@ -86,8 +86,12 @@ function isExcluded(path: string): boolean {
   );
 }
 
-export async function middleware(request: NextRequest) {
-  const response = await handle(request);
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
+  // ⚠️ event пробрасывается в handle НАМЕРЕННО: вся логика живёт там, а
+  // аналитике нужен waitUntil, чтобы фоновый запрос успел уйти до того, как
+  // рантайм свернёт вызов. Без проброса TypeScript молча возьмёт глобальный
+  // DOM-Event, у которого waitUntil нет.
+  const response = await handle(request, event);
 
   // ⚠️ Служебный хост обязан быть закрыт от индексации, иначе в выдаче окажется
   // ПОЛНАЯ копия сайта на втором домене. Заголовок ставится здесь, поверх ЛЮБОГО
@@ -103,7 +107,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-async function handle(request: NextRequest) {
+async function handle(request: NextRequest, event: NextFetchEvent) {
   const ua = request.headers.get("user-agent") || "";
 
   // --- Блокируем Electron-ботов/скраперов (кроме localhost) ---
@@ -189,12 +193,35 @@ async function handle(request: NextRequest) {
   const pathLang = segments[0];
 
   if (isLang(pathLang)) {
-    // URL уже содержит валидный lang — ставим cookie и трекаем
-    response.cookies.set("kmotors-lang", pathLang, {
-      path: "/",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 365, // 1 год
-    });
+    /**
+     * ⚠️ Cookie СТАВЯТСЯ НЕ ВСЕГДА, и это про краулинг, а не про экономию байт.
+     *
+     * Любой `Set-Cookie` на ответе делает его приватным: CDN такой ответ не
+     * кеширует никогда. Замер 29.09.2026 — на каждой странице сайта
+     * `Cache-Control: private, no-store` и `cf-cache-status: DYNAMIC`, потому
+     * что эти две cookie ставились на КАЖДЫЙ ответ. Для Googlebot это особенно
+     * больно: cookie он не хранит, поэтому условие «её ещё нет» срабатывало
+     * каждый раз, и ни один его запрос закешировать было нельзя.
+     *
+     * Отсюда два правила ниже.
+     */
+
+    // 1. Боту языковая cookie не нужна вовсе: он не переключает язык и не
+    //    ходит по сайту с состоянием. Зато без Set-Cookie его ответ кешируем.
+    //    Даты последнего обхода на 29.09.2026 — 6 июня, 29 июня, 28 июля: для
+    //    каталога на 50 тысяч страниц это ничтожно, и дорогой обход тому причина.
+    const isCrawler = isbot(ua);
+
+    // 2. Живому посетителю ставим, только когда значение ДРУГОЕ. Повторная
+    //    запись того же значения ничего не меняет в браузере, но лишает
+    //    кеша каждый его переход по сайту.
+    const setIfChanged = (name: string, value: string, maxAge: number) => {
+      if (isCrawler) return;
+      if ((request.cookies.get(name)?.value ?? "") === value) return;
+      response.cookies.set(name, value, { path: "/", sameSite: "lax", maxAge });
+    };
+
+    setIfChanged("kmotors-lang", pathLang, 60 * 60 * 24 * 365); // 1 год
 
     // Страна пользователя — от Cloudflare (cf-ipcountry) или Vercel fallback.
     // ⚠️ На служебном хосте страну НЕ проставляем, и это и есть снятие слоя 2:
@@ -203,16 +230,16 @@ async function handle(request: NextRequest) {
     // каталог. Без обнуления служебный вход пускал бы на /catalog, но адрес
     // приходилось бы набирать руками. Cookie host-only (Domain не задан),
     // поэтому на www она не протекает.
+    //
+    // ⚠️ Правило «только при изменении» этого НЕ ломает: на служебном хосте
+    // желаемое значение пустое, а в браузере лежит «KR» — значения разные,
+    // значит cookie перезапишется. Совпали — переписывать и нечего.
     const country = isCanonicalHost(request)
       ? request.headers.get("cf-ipcountry") ||
         request.headers.get("x-country") ||
         ""
       : "";
-    response.cookies.set("x-user-country", country, {
-      path: "/",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24 часа
-    });
+    setIfChanged("x-user-country", country, 60 * 60 * 24); // 24 часа
 
     // Аналитика — только реальные пользователи, не боты и не RSC
     if (shouldTrack(request)) {
@@ -228,11 +255,27 @@ async function handle(request: NextRequest) {
         ? "tablet"
         : "desktop";
 
-      fetch(`${origin}/api/track`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, referrer, country, device }),
-      }).catch(() => {});
+      // ⚠️ event.waitUntil, а НЕ голый fetch. Без него middleware возвращает
+      // ответ, рантайм сворачивает вызов, и запрос к /api/track может не
+      // успеть уйти вовсе — в логах при этом пусто, потому что ошибки не
+      // было. Именно так счётчик и замолчал: эндпоинт исправен, а строк нет.
+      //
+      // ⚠️ И НЕ `.catch(() => {})`. Провал записи — это не мелочь, которую
+      // можно проглотить: по этим цифрам принимают решения, а молчащий
+      // счётчик хуже отсутствующего. Пусть ляжет в лог контейнера.
+      event.waitUntil(
+        fetch(`${origin}/api/track`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path, referrer, country, device }),
+        })
+          .then(async (r) => {
+            if (!r.ok) {
+              console.error(`[track] ${r.status} на ${path}:`, (await r.text().catch(() => "")).slice(0, 200));
+            }
+          })
+          .catch((e) => console.error(`[track] запрос не ушёл (${path}):`, e)),
+      );
     }
 
     return response;

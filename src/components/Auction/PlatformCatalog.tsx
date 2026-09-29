@@ -25,6 +25,7 @@ export default function PlatformCatalog({
   premiumIndex,
   numberLocale = "ru-RU",
   filtersApplied = false,
+  showContact = false,
 }: {
   lots: LotsPage;
   labels: LotCardLabels;
@@ -36,10 +37,12 @@ export default function PlatformCatalog({
   numberLocale?: string;
   /** Стоит ли фильтр: от этого зависит, что означает пустая выдача. */
   filtersApplied?: boolean;
+  /** Кнопка быстрого контакта на карточках. Только публичная витрина. */
+  showContact?: boolean;
 }) {
   return (
     <>
-      <LotFilters makers={lots.makers} labels={filterLabels} showUpcomingToggle={false} />
+      <LotFilters makers={lots.makers} models={lots.models} labels={filterLabels} showUpcomingToggle={false} />
 
       {lots.failed ? (
         <p className="mt-6 text-sm" style={{ color: "#C4563F" }}>
@@ -73,6 +76,7 @@ export default function PlatformCatalog({
                 labels={L}
                 hrefBase={hrefBase}
                 lang={lang}
+                showContact={showContact}
               />
             ))}
           </div>

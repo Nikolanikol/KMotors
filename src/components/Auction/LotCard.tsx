@@ -21,6 +21,7 @@
 import Link from "next/link";
 
 import AuctionCountdown from "@/components/Auction/AuctionCountdown";
+import { lotAskText, lotUrl, waHref } from "@/lib/contact";
 import { daysUntilAuction, pluralDays } from "@/components/Auction/carAge";
 import { readableKorean, specLabel } from "@/lib/kcar/dict";
 import type { Estimate } from "@/lib/kcar/estimate";
@@ -96,10 +97,17 @@ export default function LotCard({
   labels: T,
   hrefBase = "/admin/auction",
   lang = "ru",
+  showContact = false,
 }: {
   lot: LotRow;
   estimate: Estimate | null;
   labels: LotCardLabels;
+  /**
+   * Кнопка быстрого контакта. По умолчанию ВЫКЛЮЧЕНА: карточка живёт и под
+   * /admin, где писать в WhatsApp самому себе незачем, а кнопка занимала бы
+   * место в рабочем списке.
+   */
+  showContact?: boolean;
   /** «/admin/auction» у служебной витрины, «/ru/auction» у публичной. */
   hrefBase?: string;
   /**
@@ -212,22 +220,41 @@ export default function LotCard({
         </div>
 
         {countdown && (
-          // ⚠️ Бейдж внизу слева, а не в углу к остальным: сверху уже стоят
-          // класс с оценкой (слева) и полоса с номером лота (справа), и третий
-          // угловой ярлык превратил бы фото в доску объявлений.
+          // ⚠️ Таймер — ПЛАШКА во всю ширину низа снимка, а не угловой ярлык.
+          // Угловых ярлыков на фото уже два (класс кузова слева, номер лота
+          // справа), и третий превратил бы снимок в доску объявлений. Полоса
+          // же читается как отдельный слой: на аукционе время до конца торгов
+          // важнее всего, что написано на фотографии.
+          //
+          // ⚠️ Градиент, а не сплошная заливка: снизу у снимков площадки
+          // бывает и светлый пол павильона, и тёмная тень, и на сплошной
+          // плашке край резал бы кадр пополам.
+          //
           // ⚠️ Отсчёт тикает на клиенте, но ПЕРВЫЙ кадр — серверная подпись
           // («торги завтра»). Иначе 24 карточки разошлись бы с разметкой на
           // гидрации: сервер и браузер считают время в разные моменты.
-          <AuctionCountdown
-            date={lot.auction_date}
-            fallback={countdown.label}
-            labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? T.past }}
-            className="absolute bottom-2 left-2 rounded px-1.5 py-0.5 text-[11px] font-semibold leading-none"
+          <div
+            className="absolute inset-x-0 bottom-0 flex items-center gap-2 px-3 pb-2.5 pt-8"
             style={{
-              backgroundColor: "rgba(0,0,0,0.65)",
-              color: countdown.soon ? "var(--axis-bronze)" : "var(--axis-gray)",
+              backgroundImage:
+                "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.72) 55%, rgba(0,0,0,0) 100%)",
             }}
-          />
+          >
+            <span
+              aria-hidden
+              className="inline-block h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: countdown.soon ? "var(--axis-bronze)" : "var(--axis-gray)" }}
+            />
+            <AuctionCountdown
+              date={lot.auction_date}
+              fallback={countdown.label}
+              labels={{ h: T.tH ?? "h", m: T.tM ?? "m", s: T.tS ?? "s", over: T.over ?? T.past }}
+              className="text-lg font-bold leading-none tracking-tight"
+              style={{
+                color: countdown.soon ? "var(--axis-bronze)" : "var(--axis-cream, #F5F0EB)",
+              }}
+            />
+          </div>
         )}
 
         {(lot.lane || lot.lot_no != null) && (
@@ -321,6 +348,41 @@ export default function LotCard({
           {lot.auction_date ? ` · ${lot.auction_date}` : ""}
           {lot.site ? ` · ${lot.site}` : ""}
         </p>
+
+        {/*
+          ⚠️ Кнопка стоит ВНЕ ссылки на снимок, и это не вкусовщина: фото и
+          заголовок обёрнуты в <Link>, а <a> внутри <a> — невалидная разметка,
+          которую браузер чинит по-своему, разрывая внешнюю ссылку.
+
+          ⚠️ Ведёт в WhatsApp с готовым текстом, а не открывает форму. Форма —
+          клиентский компонент с i18next, и на двадцати четырёх карточках это
+          двадцать четыре модалки в дереве ради одного клика. Ссылка же
+          рендерится сервером и не стоит ни байта JS. Лот живёт дни: разговор
+          о нём нужен сейчас, а не после ответа на письмо.
+        */}
+        {showContact && (
+          <a
+            href={waHref(
+              lotAskText({
+                ask: T.ask ?? "",
+                lotWord: T.lot ?? "",
+                name: [lot.maker, lot.model, lot.year].filter(Boolean).join(" "),
+                id: lot.external_id,
+                url: lotUrl(lang, lot.source, lot.external_id),
+              }),
+            )}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
+            style={{
+              backgroundImage: "var(--axis-bronze-fill)",
+              backgroundColor: "var(--axis-bronze-deep)",
+              color: "#fff",
+            }}
+          >
+            {T.ask}
+          </a>
+        )}
       </div>
     </article>
   );
