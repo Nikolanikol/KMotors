@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { createServerClient } from "@/lib/supabase";
-import BlogPostClient from "@/app/blog/[slug]/BlogPostClient";
+import BlogPostClient from "@/app/(root)/blog/[slug]/BlogPostClient";
 import { BlogPost } from "@/types/blog";
 import { makeAlternates } from "@/lib/seo";
 

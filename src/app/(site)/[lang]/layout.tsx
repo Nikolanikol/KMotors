@@ -1,3 +1,5 @@
+import RootShell from "../../RootShell";
+export { metadata, viewport } from "../../rootMetadata";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
@@ -50,6 +52,7 @@ export default async function LangLayout({ children, params }: Props) {
   const { krwToUsd } = await getCurrencyRates();
 
   return (
+    <RootShell lang={lang}>
     <I18nProvider lang={lang} resources={resources}>
       <ProgressBar />
       <Header krwToUsd={krwToUsd} />
@@ -59,5 +62,6 @@ export default async function LangLayout({ children, params }: Props) {
       <CookieBanner />
       <FavoritePriceAlert />
     </I18nProvider>
+    </RootShell>
   );
 }

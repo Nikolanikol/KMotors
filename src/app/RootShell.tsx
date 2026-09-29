@@ -1,51 +1,29 @@
-import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import { cookies } from "next/headers";
+
+// Общая оболочка <html>/<body> для всех корневых layout.
+//
+// ⚠️ Раньше это был единственный корневой layout, и он читал cookies() ради
+// двух вещей: языка для <html lang> и флага админа для счётчиков. Вызов
+// cookies() в корне делает ДИНАМИЧЕСКИМ всё дерево приложения — 48 тысяч
+// страниц запчастей рендерились заново на каждый запрос, ISR не включался
+// нигде (в prerender-manifest было 0 dynamicRoutes). Теперь язык приходит
+// пропом из сегмента, а счётчики — флагом.
 
 const inter = Inter({ subsets: ["latin", "cyrillic"], display: "swap" });
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  themeColor: "#b67749",
-};
-
-export const metadata: Metadata = {
-  metadataBase: new URL("https://www.kmotors.shop"),
-  title: {
-    default: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
-    template: "%s | K-Axis",
-  },
-  description:
-    "K-Axis — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
-  openGraph: {
-    title: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
-    description: "K-Axis — покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis. Честные цены, без посредников.",
-    type: "website",
-    // ⚠️ images здесь НЕ задавать. Значение из корневого layout наследуется
-    // всеми страницами и перекрывает файловую конвенцию `opengraph-image.tsx`
-    // на каждой из них разом. Раньше тут стоял hero-bg.jpg — размытое стоковое
-    // фото склада без бренда.
-  },
-  keywords: [
-    "авто из Кореи", "купить авто из Кореи", "kmotors",
-    "Hyundai из Кореи", "Kia из Кореи", "Genesis из Кореи",
-    "Korean cars", "buy car from Korea", "Korean car dealer",
-    "한국 중고차", "კორეული მანქანები", "سيارات كورية",
-  ],
-  other: {
-    "yandex-verification": "f71551035d1c4fbb",
-  },
-};
-
-export default async function RootLayout({
+export default function RootShell({
+  lang,
+  withAnalytics = true,
   children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const cookieStore = await cookies();
-  const lang = cookieStore.get("kmotors-lang")?.value || "ru";
-  const isAdmin = cookieStore.get("admin_session")?.value === "1";
+}: {
+  /** Язык для <html lang>. Приходит из сегмента [lang], а не из cookie. */
+  lang: string;
+  /** Счётчики. В админке не нужны и раньше отключались чтением cookie. */
+  withAnalytics?: boolean;
+  children: React.ReactNode;
+}) {
 
   // RTL-переворот отключён намеренно: макет всегда LTR даже на арабском
   // (браузер сам корректно рендерит арабский текст внутри строк по bidi)
@@ -114,7 +92,7 @@ export default async function RootLayout({
         {children}
 
         {/* GA4 — afterInteractive (нужен быстро для конверсий) */}
-        {!isAdmin && (
+        {withAnalytics && (
           <>
             <Script
               src="https://www.googletagmanager.com/gtag/js?id=G-ZMRTQCD8SF"

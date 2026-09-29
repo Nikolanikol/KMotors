@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import BlogClientPage from "@/app/blog/BlogClientPage";
+import BlogClientPage from "@/app/(root)/blog/BlogClientPage";
 import { createServerClient } from "@/lib/supabase";
 import { BlogPost } from "@/types/blog";
 

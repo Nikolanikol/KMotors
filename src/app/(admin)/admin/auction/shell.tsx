@@ -19,7 +19,7 @@ import { getLots, getPremiumIndex, getSourceCounts } from "@/lib/kcar/query";
 // пришлось бы заводить дважды — то есть однажды забыть. Фильтры у витрин
 // одинаковые по замыслу: служебная отличается только гейтом, подписями и
 // отсутствием оговорок для клиента.
-import { hasFilters, readParams } from "@/app/[lang]/auction/shell";
+import { hasFilters, readParams } from "@/app/(site)/[lang]/auction/shell";
 
 /** Служебные подписи сетки: русские, словарь здесь не подключить. */
 const RU_GRID_LABELS = {
