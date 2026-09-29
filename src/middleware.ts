@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextFetchEvent } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
@@ -86,8 +86,12 @@ function isExcluded(path: string): boolean {
   );
 }
 
-export async function middleware(request: NextRequest) {
-  const response = await handle(request);
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
+  // ⚠️ event пробрасывается в handle НАМЕРЕННО: вся логика живёт там, а
+  // аналитике нужен waitUntil, чтобы фоновый запрос успел уйти до того, как
+  // рантайм свернёт вызов. Без проброса TypeScript молча возьмёт глобальный
+  // DOM-Event, у которого waitUntil нет.
+  const response = await handle(request, event);
 
   // ⚠️ Служебный хост обязан быть закрыт от индексации, иначе в выдаче окажется
   // ПОЛНАЯ копия сайта на втором домене. Заголовок ставится здесь, поверх ЛЮБОГО
@@ -103,7 +107,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-async function handle(request: NextRequest) {
+async function handle(request: NextRequest, event: NextFetchEvent) {
   const ua = request.headers.get("user-agent") || "";
 
   // --- Блокируем Electron-ботов/скраперов (кроме localhost) ---
@@ -228,11 +232,27 @@ async function handle(request: NextRequest) {
         ? "tablet"
         : "desktop";
 
-      fetch(`${origin}/api/track`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, referrer, country, device }),
-      }).catch(() => {});
+      // ⚠️ event.waitUntil, а НЕ голый fetch. Без него middleware возвращает
+      // ответ, рантайм сворачивает вызов, и запрос к /api/track может не
+      // успеть уйти вовсе — в логах при этом пусто, потому что ошибки не
+      // было. Именно так счётчик и замолчал: эндпоинт исправен, а строк нет.
+      //
+      // ⚠️ И НЕ `.catch(() => {})`. Провал записи — это не мелочь, которую
+      // можно проглотить: по этим цифрам принимают решения, а молчащий
+      // счётчик хуже отсутствующего. Пусть ляжет в лог контейнера.
+      event.waitUntil(
+        fetch(`${origin}/api/track`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path, referrer, country, device }),
+        })
+          .then(async (r) => {
+            if (!r.ok) {
+              console.error(`[track] ${r.status} на ${path}:`, (await r.text().catch(() => "")).slice(0, 200));
+            }
+          })
+          .catch((e) => console.error(`[track] запрос не ушёл (${path}):`, e)),
+      );
     }
 
     return response;
