@@ -30,6 +30,22 @@ import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 export const revalidate = 86400;
 export const dynamicParams = true;
 
+/**
+ * ⚠️ ПУСТОЙ список — и это не заглушка, а способ включить ISR.
+ *
+ * Без экспорта generateStaticParams Next считает маршрут полностью
+ * динамическим: он не попадает в dynamicRoutes манифеста, и `revalidate`
+ * выше становится декоративным — кешировать отрендеренную страницу некому.
+ * Именно так 48 тысяч карточек рендерились заново на каждый запрос.
+ *
+ * Пустой массив + dynamicParams: true даёт ровно то, что нужно: на сборке НЕ
+ * генерится ни одной страницы (иначе это 50k × 4 языка), а первый заход на
+ * адрес рендерит и КЛАДЁТ В КЕШ на revalidate.
+ */
+export async function generateStaticParams() {
+  return [];
+}
+
 const BRAND_ORDER: Record<string, number> = {
   hyundai: 0,
   kia: 1,

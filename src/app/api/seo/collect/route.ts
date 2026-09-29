@@ -18,7 +18,7 @@ export const maxDuration = 300; // сбор может быть долгим н�
 const LANGS = new Set(["ru", "en", "ka", "ar", "ko"]);
 const UPSERT_CHUNK = 1_000;
 const LOOKUP_CHUNK = 500;
-const RETENTION_DAYS = 45; // сколько дней снапшотов держим в seo_page_stats
+const RETENTION_DAYS = 14; // сколько дней снапшотов держим в seo_page_stats
 
 type StatRow = {
   url: string;

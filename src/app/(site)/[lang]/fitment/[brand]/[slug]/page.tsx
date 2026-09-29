@@ -17,6 +17,23 @@ import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 export const revalidate = 86400;
 export const dynamicParams = true;
 
+/**
+ * ⚠️ ISR здесь НЕВОЗМОЖЕН, и generateStaticParams добавлять бессмысленно.
+ *
+ * Страница читает `searchParams` ради пагинации `?page=N`, а чтение
+ * searchParams в серверном компоненте выводит маршрут из статического
+ * рендера ЦЕЛИКОМ — частично закешировать первую страницу Next не умеет.
+ * Замер 29.09.2026: с пустым generateStaticParams маршрут попадал в
+ * dynamicRoutes манифеста, но ответ всё равно шёл с
+ * `Cache-Control: private, no-store`. То есть экспорт создавал бы видимость
+ * кеша, которого нет, — это хуже, чем его отсутствие.
+ *
+ * Чтобы закешировать, пагинацию пришлось бы унести в путь
+ * (`/category/[slug]/page/[n]`), а это смена адресов и SEO-риск. Не сделано
+ * намеренно: страниц тут 142 категории и 627 fitment, а не 48 тысяч —
+ * выигрыш не окупает смену URL. `revalidate` выше остаётся декоративным.
+ */
+
 const BASE = "https://www.kmotors.shop";
 const PAGE_SIZE = 24;
 // thin-content threshold: generation pages with fewer parts → noindex
