@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Hero } from "@/app/parts/sections/Hero";
+import { UsedPartsPromo } from "@/app/parts/sections/UsedPartsPromo";
+import { unstable_cache } from "next/cache";
+import { createServerClient } from "@/lib/supabase";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
 import { PopularModels } from "@/app/parts/sections/PopularModels";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
@@ -19,6 +22,33 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
 // новые товары не попадали в него до следующего деплоя. TTL совпадает с
 // внутренним кешем parts-catalog-data (unstable_cache, 3600).
 export const revalidate = 3600;
+
+/**
+ * Сколько товаров в каталоге — для счётчика в хиро.
+ *
+ * ⚠️ Берётся из базы, а НЕ зашивается в текст. В хиро стояло «5000+» при
+ * 48 689 реальных позициях: самое сильное отличие магазина объявлялось
+ * вдесятеро меньше, чем есть. Любое зашитое число здесь протухнет молча.
+ *
+ * head + count: exact — строки не тянутся, уходит только число. TTL совпадает
+ * с revalidate страницы: держать его короче бессмысленно, сегмент всё равно не
+ * перерендерится чаще.
+ */
+const getPartsCount = unstable_cache(
+  async () => {
+    const { count, error } = await createServerClient()
+      .from("parts_products")
+      .select("*", { count: "exact", head: true });
+    if (error) {
+      // Витрина важнее счётчика: при сбое хиро покажет осторожное «48 000+».
+      console.error("[parts] счётчик товаров:", error.message);
+      return null;
+    }
+    return count ?? null;
+  },
+  ["parts-total-count"],
+  { revalidate: 3600, tags: ["parts-total-count"] },
+);
 
 // Pre-generate все 5 языковых вариантов при сборке
 export function generateStaticParams() {
@@ -93,6 +123,7 @@ const PARTS_LABEL: Record<string, string> = {
 
 export default async function PartsPage({ params }: Props) {
   const { lang } = await params;
+  const partsCount = await getPartsCount();
   const meta = PARTS_META[lang] || PARTS_META.ru;
 
   const breadcrumbSchema = {
@@ -137,9 +168,14 @@ export default async function PartsPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
       <div className="parts-page min-h-screen" style={{ position: "relative" }}>
         <PartsTopLinks lang={lang} />
-        <Hero />
+        <Hero partsCount={partsCount ?? undefined} />
         <PopularModels lang={lang} />
         <PartsCatalog />
+        {/* ⚠️ Баннер партнёра стоит ПОСЛЕ собственного каталога, а не в хиро.
+            Раньше он занимал второй экран — самое дорогое место страницы — и
+            уводил людей на чужой магазин раньше, чем они видели наш товар.
+            Обмен ссылками при этом сохранён, изменилось только место. */}
+        <UsedPartsPromo className="mx-auto max-w-[1280px] px-4 mt-14 mb-4" />
         <About />
         <ContactForm />
       </div>
