@@ -214,3 +214,102 @@ export async function getCarSnapshot(id: string): Promise<CarSnapshot | null> {
     return null;
   }
 }
+
+// ─── Сайтмап каталога ────────────────────────────────────────────────────────
+//
+// До 10.2026 sitemap-catalog собирался offset-пагинацией по ЖИВОЙ выдаче Encar,
+// отсортированной по ModifiedDate. Объявление переподнимают постоянно, поэтому
+// offset ничего не адресовал: страница N через час держала другие машины. Google
+// не мог построить очередь обхода и не строил её — замер 02.10.2026 на восьми
+// машинах из живого sitemap-catalog/1 дал «URL неизвестен Google, обход НИ РАЗУ»
+// у всех восьми, при том что карточки авто за шесть недель потеряли 90% показов.
+//
+// Теперь источник — эта таблица. Что это меняет:
+//   • страница сайтмапа адресует машины по НАШЕМУ ключу, а не по чужому offset;
+//   • у каждого URL есть честный <lastmod> = first_seen_at, дата, когда машину
+//     впервые увидели МЫ. Она у машины не меняется никогда (upsert её не
+//     перезаписывает), поэтому тег не просит переобход на ровном месте — именно
+//     этого боялись, когда убирали ModifiedDate, и именно поэтому его вернули;
+//   • проданные выпадают по sold_at, который ставит рендер карточки на 404 от
+//     Encar. Google обходит адрес → получает 404 → машина помечена → в следующей
+//     сборке её нет. Петля замыкается без единого лишнего запроса к Encar.
+
+/** URL в одном файле сайтмапа. */
+export const CATALOG_SITEMAP_PAGE_SIZE = 200;
+/**
+ * Потолок машин в сайтмапе. 5 000 = 25 файлов.
+ *
+ * Прежние 2 000 стояли ради краул-бюджета: файлы на живой выдаче Encar вечно
+ * выглядели изменёнными и вытесняли 48 тысяч URL запчастей. Этой причины больше
+ * нет — набор меняется только когда машина реально появилась или продалась.
+ * Потолок теперь решает другое: сколько времени URL ЖИВЁТ в сайтмапе до
+ * вытеснения новыми. При 2 000 и суточном притоке адрес успевал выпасть раньше,
+ * чем до него доходил обход, — ровно та болезнь, которую лечим. 5 000 против
+ * 48 700 запчастей это +6% к набору, то есть краул-бюджету безразлично.
+ *
+ * ⚠️ Подгонять по замеру, а не по вкусу: прогон крона `cars` пишет в ответе
+ * unique/written, а рост таблицы виден запросом count(*). Будет видно недельный
+ * приток — станет видно и нужный потолок.
+ */
+export const CATALOG_SITEMAP_MAX = 5_000;
+
+/** Строка сайтмапа: адрес и дата, когда машину впервые увидели. */
+export interface SitemapCar {
+  encar_id: string;
+  first_seen_at: string;
+}
+
+/**
+ * Сколько непроданных машин знает таблица, но не больше потолка. null —
+ * Supabase не ответил; сайтмап в этом случае обязан деградировать, а не упасть.
+ */
+export async function countSitemapCars(): Promise<number | null> {
+  try {
+    const { count, error } = await createServerClient()
+      .from("cars_seen")
+      .select("encar_id", { count: "exact", head: true })
+      .is("sold_at", null);
+    if (error) {
+      console.error("[carsSeen] счётчик сайтмапа не прошёл:", error.message);
+      return null;
+    }
+    return Math.min(count ?? 0, CATALOG_SITEMAP_MAX);
+  } catch (e) {
+    console.error("[carsSeen] счётчик сайтмапа упал:", (e as Error)?.message);
+    return null;
+  }
+}
+
+/**
+ * Страница сайтмапа. Пустой массив — либо страница за концом набора, либо
+ * Supabase не ответил; и то и другое отдаётся пустым файлом.
+ *
+ * ⚠️ Вторым ключом сортировки стоит encar_id, и это не украшение: батч-upsert
+ * проставляет ОДИН И ТОТ ЖЕ first_seen_at сотням строк разом, то есть ключ
+ * неуникален, и без второго машины пропадали бы между страницами (правило
+ * .range() из CLAUDE.md, за ним стоит постмортем).
+ */
+export async function getSitemapCars(
+  offset: number,
+  limit: number
+): Promise<SitemapCar[]> {
+  if (offset >= CATALOG_SITEMAP_MAX) return [];
+  const take = Math.min(limit, CATALOG_SITEMAP_MAX - offset);
+  try {
+    const { data, error } = await createServerClient()
+      .from("cars_seen")
+      .select("encar_id, first_seen_at")
+      .is("sold_at", null)
+      .order("first_seen_at", { ascending: false })
+      .order("encar_id", { ascending: false })
+      .range(offset, offset + take - 1);
+    if (error) {
+      console.error("[carsSeen] страница сайтмапа не прошла:", error.message);
+      return [];
+    }
+    return (data as SitemapCar[] | null) ?? [];
+  } catch (e) {
+    console.error("[carsSeen] страница сайтмапа упала:", (e as Error)?.message);
+    return [];
+  }
+}

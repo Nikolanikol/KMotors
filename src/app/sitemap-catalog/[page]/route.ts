@@ -1,54 +1,21 @@
 // app/sitemap-catalog/[page]/route.ts
+//
+// Источник — наша таблица cars_seen, а НЕ живая выдача Encar. Почему так и что
+// это починило — в шапке раздела «Сайтмап каталога» в src/lib/carsSeen.ts.
+// Коротко: offset по выдаче, отсортированной по ModifiedDate, ничего не
+// адресовал (объявления переподнимают постоянно), набор URL ротировался целиком
+// каждый час, и Google не обходил карточки авто вообще.
+
 import { NextResponse } from "next/server";
+import {
+  CATALOG_SITEMAP_PAGE_SIZE,
+  getSitemapCars,
+} from "@/lib/carsSeen";
 
 const BASE = "https://www.kmotors.shop";
 const LANGS = ["ru", "en", "ka", "ar"];
-// Прокси отдаёт максимум 20 записей за запрос, поэтому один sitemap-файл
-// собирается из нескольких параллельных запросов по 20 машин
-const CHUNK_SIZE = 20;
-const CHUNKS_PER_PAGE = 10;
-const PAGE_SIZE = CHUNK_SIZE * CHUNKS_PER_PAGE; // 200 URL на файл
-// Потолок Encar — ~10 000, глубже пустая выдача. Свой лимит держим
-// НАМЕРЕННО ниже: 2 000 машин = 10 файлов вместо 50. Причина — краул-бюджет.
-// Выдача Encar сортируется по ModifiedDate, то есть пересобирается при каждом
-// переподнятии объявления: страница N каждый час держит другие машины, все
-// файлы каталога вечно «изменены» и переобходятся, вытесняя 48 тысяч URL
-// запчастей. Машины при этом одноразовые (продалась → Encar 404 → noindex),
-// запчасти вечные. Не поднимать обратно до 10_000, не заменив offset-пагинацию
-// по живой выдаче на стабильный источник (см. sitemap.xml/route.ts).
-const MAX_OFFSET = 2_000;
-const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
-const QUERY = "(And.Hidden.N._.CarType.Y.)";
 
-interface CatalogCar {
-  Id: string;
-  Manufacturer?: string;
-  Price?: string;
-  Photo?: string;
-}
-
-async function fetchChunk(offset: number): Promise<CatalogCar[]> {
-  try {
-    const url = `${PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C${offset}%7C${CHUNK_SIZE}`;
-    const res = await fetch(url, { next: { revalidate: 3600 } });
-    if (!res.ok) throw new Error(`proxy status ${res.status}`);
-    const json = await res.json();
-    return (json.SearchResults as CatalogCar[]) ?? [];
-  } catch {
-    // Упавший чанк не должен ронять весь sitemap-файл
-    return [];
-  }
-}
-
-async function fetchCars(baseOffset: number): Promise<CatalogCar[]> {
-  const offsets = Array.from(
-    { length: CHUNKS_PER_PAGE },
-    (_, i) => baseOffset + i * CHUNK_SIZE
-  ).filter((o) => o < MAX_OFFSET);
-
-  const chunks = await Promise.all(offsets.map(fetchChunk));
-  return chunks.flat();
-}
+export const revalidate = 3600;
 
 function alternates(id: string) {
   return [
@@ -63,56 +30,50 @@ function alternates(id: string) {
 const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
 
+const empty = () =>
+  new NextResponse(EMPTY_XML, {
+    headers: { "Content-Type": "application/xml" },
+  });
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ page: string }> }
 ) {
   const { page: pageParam } = await params;
   const page = Math.max(1, Number(pageParam) || 1);
-  const offset = (page - 1) * PAGE_SIZE;
+  const offset = (page - 1) * CATALOG_SITEMAP_PAGE_SIZE;
 
-  try {
-    const cars = await fetchCars(offset);
+  const cars = await getSitemapCars(offset, CATALOG_SITEMAP_PAGE_SIZE);
+  if (cars.length === 0) return empty();
 
-    if (!cars || cars.length === 0) {
-      return new NextResponse(EMPTY_XML, {
-        headers: { "Content-Type": "application/xml" },
-      });
-    }
-
-    const urlBlocks: string[] = [];
-
-    for (const car of cars) {
-      if (!car.Price || !car.Manufacturer) continue;
-      const id = String(car.Id);
-
-      // Намеренно без <lastmod> и <changefreq>. ModifiedDate у Encar — дата
-      // переподнятия объявления, а не изменения страницы; отдавать её значило
-      // каждый час просить переобход всех URL каталога. Тег необязательный, без
-      // него Google планирует обход сам. priority ниже запчастей (0.7):
-      // машина живёт недели, карточка детали — годы.
-      urlBlocks.push(`  <url>
-    <loc>${BASE}/ru/catalog/${id}</loc>
+  const urlBlocks = cars.map((car) => {
+    // <lastmod> — дата, когда машину впервые увидели МЫ, и она у машины больше
+    // не меняется: upsert не перезаписывает first_seen_at. Поэтому тег не просит
+    // переобход на ровном месте. Раньше здесь не было ни lastmod, ни changefreq —
+    // именно потому, что единственной доступной датой был ModifiedDate Encar,
+    // дата переподнятия объявления, и отдавать её значило каждый час объявлять
+    // изменённым весь каталог. С собственной датой этой проблемы нет.
+    const lastmod = String(car.first_seen_at).slice(0, 10);
+    // priority ниже запчастей (0.7) осознанно: машина живёт недели, карточка
+    // детали — годы. changefreq по-прежнему нет, он Google'ом игнорируется.
+    return `  <url>
+    <loc>${BASE}/ru/catalog/${car.encar_id}</loc>
+    <lastmod>${lastmod}</lastmod>
     <priority>0.5</priority>
-${alternates(id)}
-  </url>`);
-    }
+${alternates(car.encar_id)}
+  </url>`;
+  });
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urlBlocks.join("\n")}
 </urlset>`;
 
-    return new NextResponse(xml, {
-      headers: {
-        "Content-Type": "application/xml",
-        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-      },
-    });
-  } catch {
-    return new NextResponse(EMPTY_XML, {
-      headers: { "Content-Type": "application/xml" },
-    });
-  }
+  return new NextResponse(xml, {
+    headers: {
+      "Content-Type": "application/xml",
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+    },
+  });
 }

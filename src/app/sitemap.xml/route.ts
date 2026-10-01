@@ -1,31 +1,20 @@
 // app/sitemap.xml/route.ts
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import {
+  CATALOG_SITEMAP_PAGE_SIZE,
+  CATALOG_SITEMAP_MAX,
+  countSitemapCars,
+} from "@/lib/carsSeen";
 
 const BASE = "https://www.kmotors.shop";
-// Должно совпадать с sitemap-catalog/[page]: 200 URL на файл и тот же потолок.
-// 2 000 — не предел Encar (он ~10 000), а сознательный лимит ради краул-бюджета;
-// обоснование в комментарии к MAX_OFFSET в sitemap-catalog/[page]/route.ts.
-// Меняешь здесь — меняй и там, иначе индекс сошлётся на пустые файлы.
-const CATALOG_PAGE_SIZE = 200;
-const CATALOG_MAX_CARS = 2_000;
+// Размер файла и потолок каталога живут В ОДНОМ месте — src/lib/carsSeen.ts, —
+// и оттуда же их берёт sitemap-catalog/[page]. Раньше это были две копии чисел
+// в двух файлах с предупреждением «меняешь здесь — меняй и там»; теперь
+// рассинхронить их нечем.
 const PARTS_PAGE_SIZE = 1_000;
-const PROXY = "https://encar-proxy-main.onrender.com/api/catalog";
-const QUERY = "(And.Hidden.N._.CarType.Y.)";
 
 export const revalidate = 3600;
-
-async function fetchCatalogCount(): Promise<number> {
-  try {
-    const url = `${PROXY}?count=true&q=${QUERY}&sr=%7CModifiedDate%7C0%7C1`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error();
-    const json = await res.json();
-    return Number(json.Count) || 0;
-  } catch {
-    return 0;
-  }
-}
 
 async function fetchPartsCount(): Promise<number> {
   try {
@@ -41,13 +30,19 @@ async function fetchPartsCount(): Promise<number> {
 
 export async function GET() {
   const [catalogCount, partsCount] = await Promise.all([
-    fetchCatalogCount(),
+    countSitemapCars(),
     fetchPartsCount(),
   ]);
 
-  const catalogPages = catalogCount > 0
-    ? Math.ceil(Math.min(catalogCount, CATALOG_MAX_CARS) / CATALOG_PAGE_SIZE)
-    : CATALOG_MAX_CARS / CATALOG_PAGE_SIZE;
+  // Число файлов каталога считается по РЕАЛЬНОМУ содержимому cars_seen, а не по
+  // потолку: сослаться на двадцать пять файлов, когда машин в таблице на три, —
+  // это двадцать два пустых ответа, которые Google будет исправно скачивать.
+  // Supabase не ответил (null) — тогда уж лучше потолок, чем ноль файлов: индекс
+  // без каталога значит «этих URL у нас больше нет».
+  const catalogPages =
+    catalogCount === null
+      ? CATALOG_SITEMAP_MAX / CATALOG_SITEMAP_PAGE_SIZE
+      : Math.ceil(catalogCount / CATALOG_SITEMAP_PAGE_SIZE);
 
   const partsPages = Math.ceil(partsCount / PARTS_PAGE_SIZE) || 49;
 

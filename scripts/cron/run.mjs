@@ -50,6 +50,14 @@ import http from "node:http";
 // Coolify, и без копии в репозитории сверить «что реально крутится» можно
 // только глазами в чужой панели. Расходятся — правда за Coolify.
 const JOBS = {
+  cars: {
+    path: "/api/cars/sync",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "0 6 * * *",
+    about: "снимки машин Encar в cars_seen — источник сайтмапа каталога",
+  },
   showcase: {
     path: "/api/showcase/sync",
     method: "GET",
