@@ -22,7 +22,7 @@ import { clarityEvent } from "@/utils/clarity";
  */
 
 const HREF =
-  "https://caranalizer.com/ru/zapchasti?utm_source=kaxis&utm_medium=parts_hero&utm_campaign=cross";
+  "https://caranalizer.com/ru/zapchasti?utm_source=kaxis&utm_medium=parts_below_catalog&utm_campaign=cross";
 
 /** Системная настройка «меньше движения» — наклон и блик тогда не включаем. */
 const prefersReducedMotion = () =>
@@ -73,7 +73,7 @@ export function UsedPartsPromo({ className = "" }: { className?: string }) {
   if (i18n.language !== "ru" && i18n.language !== "en") return null;
 
   const onClick = () => {
-    trackEvent("cross_sell_click", { store: "caranalizer", placement: "parts_hero" });
+    trackEvent("cross_sell_click", { store: "caranalizer", placement: "parts_below_catalog" });
     clarityEvent("cross_sell_caranalizer");
   };
 

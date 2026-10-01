@@ -2,9 +2,15 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { UsedPartsPromo } from "./UsedPartsPromo";
-export function Hero() {
-  const { t } = useTranslation();
+
+/**
+ * ⚠️ Число запчастей приходит ПРОПОМ с сервера, а не зашито здесь.
+ * Константа «5000+» стояла в хиро при 48 689 товарах в каталоге — то есть
+ * главное отличие магазина объявлялось вдесятеро меньше, чем есть. Зашитое
+ * число протухает молча: каталог растёт, а витрина продолжает обещать старое.
+ */
+export function Hero({ partsCount }: { partsCount?: number }) {
+  const { t, i18n } = useTranslation();
   const [visible] = useState(true);
   const [query, setQuery] = useState("");
 
@@ -75,7 +81,12 @@ export function Hero() {
         >
           {[
             { value: "10+", label: t("parts.hero.statYears") },
-            { value: "5000+", label: t("parts.hero.statParts") },
+            {
+              value: partsCount
+                ? partsCount.toLocaleString(i18n.language === "ru" ? "ru-RU" : "en-US")
+                : "48 000+",
+              label: t("parts.hero.statParts"),
+            },
             { value: "100%", label: t("parts.hero.statOriginal") },
           ].map((stat) => (
             <div key={stat.value}>
@@ -87,9 +98,11 @@ export function Hero() {
           ))}
         </div>
 
-        {/* Второй магазин — полосой по ширине контейнера, чтобы не спорить с
-            центрированной композицией выше */}
-        <UsedPartsPromo className="mt-12 sm:mt-14" />
+        {/* ⚠️ Баннер партнёра ПЕРЕЕХАЛ отсюда ниже по странице, под собственный
+            каталог (см. [lang]/parts/page.tsx). Стоя вторым экраном, он уводил
+            людей на чужой магазин с самого дорогого места страницы — раньше
+            нашего собственного содержания. Полосой во всю ширину он остался,
+            это решение про композицию и оно в силе. */}
       </div>
     </section>
   );
