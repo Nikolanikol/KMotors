@@ -122,6 +122,46 @@ const JOBS = {
     schedule: "0 11 * * *",
     about: "рассылка подписок «пришлём похожие»",
   },
+  // ─── carnect.biz → carnect_lots ───
+  // Четыре ленты вместо одной: всё вместе — ~30 минут, ровно предел
+  // CRON_TIMEOUT_MS. Расписание РАЗНЕСЕНО по минутам, чтобы два обхода не шли
+  // одновременно: очередь client.ts общая на процесс, и параллельные задания
+  // просто стояли бы друг за другом, упираясь в таймаут.
+  // Дважды в сутки (UTC): ночью по Корее (~05:00 KST) и после дедлайна торгов
+  // 13:00 KST, когда площадки меняют партию (~16:00 KST). Источник — в
+  // src/lib/carnect/sync.ts; нагрузка на carnect ~1 200 запросов в сутки.
+  "carnect-auctions": {
+    path: "/api/carnect/sync?feed=auctions",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "10 7,20 * * *",
+    about: "лоты Autobell, K Car, Lotte, SK, Autohub с carnect.biz, ~9 минут",
+  },
+  "carnect-hey-instant": {
+    path: "/api/carnect/sync?feed=hey-instant",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "25 7,20 * * *",
+    about: "HeyDealer Instant (фиксированная цена), ~4 минуты — ⚠️ НЕ включать до замера полноты (docs/carnect.md)",
+  },
+  "carnect-hey-self": {
+    path: "/api/carnect/sync?feed=hey-self",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "35 7,20 * * *",
+    about: "HeyDealer Self (фото от продавца, ставки), ~8 минут — ⚠️ НЕ включать до замера полноты (docs/carnect.md)",
+  },
+  "carnect-hey-zero": {
+    path: "/api/carnect/sync?feed=hey-zero",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "50 7,20 * * *",
+    about: "HeyDealer Zero (осмотр инспектором, ставки), ~10 минут — ⚠️ НЕ включать до замера полноты (docs/carnect.md)",
+  },
 };
 
 const stamp = () => new Date().toISOString();
