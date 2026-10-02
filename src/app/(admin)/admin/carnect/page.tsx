@@ -16,11 +16,12 @@
 import Link from "next/link";
 
 import { requireAdmin } from "../auction/shell";
-import { getListPage } from "@/lib/carnect/cached";
-import { isHouse, type CarnectHouse } from "@/lib/carnect/houses";
+import { getHeyPage, getListPage, getVenueFacets, type CachedPage } from "@/lib/carnect/cached";
+import { HEY_TYPES, isHeyType, type HeyAuctionType, type HeyListCar } from "@/lib/carnect/heydealer";
+import { HOUSES, isHouse, type CarnectHouse } from "@/lib/carnect/houses";
 import type { CarnectListLot } from "@/lib/carnect/types";
 
-import { C, HouseTabs, Page, Panel, Stat, ago, km, krw } from "./ui";
+import { C, HouseTabs, Page, Panel, Stat, SubTabs, ago, km, krw, type Source } from "./ui";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ const ERROR_TEXT: Record<string, string> = {
 };
 
 /** Доля лотов страницы с заполненным полем — первое, что нужно для схемы. */
-function coverage(lots: CarnectListLot[]): [string, number][] {
+function coverage(lots: Record<string, unknown>[]): [string, number][] {
   const keys = new Set<string>();
   for (const l of lots) for (const k of Object.keys(l)) keys.add(k);
   return [...keys].sort().map((k) => [
@@ -101,6 +102,71 @@ function LotTile({ house, lot }: { house: CarnectHouse; lot: CarnectListLot }) {
   );
 }
 
+/**
+ * Плитка машины HeyDealer. Отличается от лота аукциона по существу: нет
+ * номера лота и дня торгов, зато у каждой машины своё окончание торгов и
+ * число ставок, а цена есть только у Instant.
+ */
+function HeyTile({ car }: { car: HeyListCar }) {
+  const cond = car.heyCondition;
+  return (
+    <Link
+      href={`/admin/carnect/heydealer/${encodeURIComponent(car.id)}`}
+      className="block overflow-hidden rounded-xl transition-opacity hover:opacity-90"
+      style={{ backgroundColor: C.card, border: `1px solid ${C.line}` }}
+    >
+      <div className="relative aspect-[4/3] w-full" style={{ backgroundColor: "#1E1E1E" }}>
+        {car.photo && (
+          // Фото на S3 самого HeyDealer, не у carnect.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={car.photo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        )}
+        <span
+          className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[11px] font-semibold"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+        >
+          ставок: {car.bidCount ?? 0}
+        </span>
+        {cond?.grade && (
+          <span
+            className="absolute right-2 top-2 rounded px-1.5 py-0.5 text-[11px] font-semibold"
+            style={{ backgroundColor: "rgba(0,0,0,0.7)", color: cond.grade.includes("no_accident") ? C.good : C.accent }}
+          >
+            {cond.grade}
+          </span>
+        )}
+      </div>
+      <div className="p-3">
+        <div className="text-sm font-semibold leading-tight">
+          {car.year ?? "—"} {car.make} {car.model}
+        </div>
+        <div className="mt-2 flex items-baseline justify-between">
+          <span className="text-base font-semibold" style={{ color: C.accent }}>
+            {car.priceOnRequest ? "ставки" : krw(car.krw)}
+          </span>
+          <span className="text-xs" style={{ color: C.muted }}>
+            {km(car.km)}
+          </span>
+        </div>
+        <div className="mt-1 text-[11px]" style={{ color: C.muted }}>
+          {[car.fuel, car.trans, car.endAt ? `до ${car.endAt.slice(0, 16).replace("T", " ")}` : null, car.status]
+            .filter(Boolean)
+            .join(" · ")}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/** Адрес просмотрщика с непустыми параметрами — чтобы листание не теряло фильтр. */
+function viewerHref(params: Record<string, string | number | undefined>): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "" && v !== 1) q.set(k, String(v));
+  return `/admin/carnect?${q.toString()}`;
+}
+
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
 export default async function CarnectPreview({
   searchParams,
 }: {
@@ -108,17 +174,28 @@ export default async function CarnectPreview({
 }) {
   await requireAdmin();
   const sp = await searchParams;
-  const house: CarnectHouse = isHouse(String(sp.house ?? "")) ? (sp.house as CarnectHouse) : "glovis";
-  const pageRaw = Number(sp.page ?? 1);
+  const rawHouse = first(sp.house);
+  const source: Source = rawHouse === "heydealer" ? "heydealer" : isHouse(rawHouse) ? rawHouse : "glovis";
+  const pageRaw = Number(first(sp.page) || 1);
   const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+
+  // Второй ряд вкладок и параметр фильтра для запроса к carnect.
+  // venue — код аукционного дома (только из кодов, что отдал их фасет, —
+  // произвольная строка из адреса до carnect не дойдёт); type — тип HeyDealer.
+  const heyType: HeyAuctionType = isHeyType(first(sp.type)) ? (first(sp.type) as HeyAuctionType) : HEY_TYPES[0].type;
+  const venues = source !== "heydealer" && HOUSES[source].venues ? await getVenueFacets(source) : null;
+  const venue = venues?.some((v) => v.code === first(sp.venue)) ? first(sp.venue) : "";
 
   // Время ответа меряем здесь: из кеша это миллисекунды, свежий поход —
   // секунды (пауза очереди + сеть). Так на экране видно, что откуда пришло.
   const t0 = Date.now();
-  const res = await getListPage(house, page);
+  const res: CachedPage<CarnectListLot> | CachedPage<HeyListCar> =
+    source === "heydealer" ? await getHeyPage(heyType, page) : await getListPage(source, page, venue);
   const ms = Date.now() - t0;
 
   const pages = res.ok ? Math.max(1, Math.ceil(res.page.total / (res.page.pageSize || 24))) : 1;
+  const filter = source === "heydealer" ? { house: source, type: heyType } : { house: source, venue };
+  const items = res.ok ? (res.page.items as Record<string, unknown>[]) : [];
 
   return (
     <Page>
@@ -130,7 +207,44 @@ export default async function CarnectPreview({
         </p>
       </header>
 
-      <HouseTabs active={house} />
+      <HouseTabs active={source} />
+
+      {source === "heydealer" && (
+        <SubTabs
+          items={HEY_TYPES.map((t) => ({
+            href: viewerHref({ house: "heydealer", type: t.type }),
+            label: t.label,
+            hint: t.hint,
+            on: t.type === heyType,
+          }))}
+        />
+      )}
+      {venues && venues.length > 0 && (
+        <SubTabs
+          items={[
+            {
+              href: viewerHref({ house: source }),
+              label: "все дома",
+              count: venues.reduce((n, v) => n + v.count, 0),
+              on: !venue,
+            },
+            ...venues.map((v) => {
+              const known = source !== "heydealer" ? HOUSES[source].venues?.find((k) => k.code === v.code) : undefined;
+              return {
+                href: viewerHref({ house: source, venue: v.code }),
+                label: known ? `${v.name} · ${known.day}` : v.name,
+                count: v.count,
+                on: v.code === venue,
+              };
+            }),
+          ]}
+        />
+      )}
+      {source === "heydealer" && (
+        <p className="-mt-2 mb-4 text-xs" style={{ color: C.muted }}>
+          {HEY_TYPES.find((t) => t.type === heyType)?.hint}
+        </p>
+      )}
 
       {!res.ok ? (
         <Panel title="Ошибка">
@@ -141,8 +255,8 @@ export default async function CarnectPreview({
       ) : (
         <>
           <section className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-            <Stat label="лотов у площадки" value={res.page.total.toLocaleString("ru-RU")} />
-            <Stat label="страница" value={`${page} / ${pages}`} hint={`по ${res.page.pageSize} лотов`} />
+            <Stat label={source === "heydealer" ? "машин этого типа" : "лотов в выдаче"} value={res.page.total.toLocaleString("ru-RU")} />
+            <Stat label="страница" value={`${page} / ${pages}`} hint={`по ${res.page.pageSize}`} />
             <Stat label="ответ" value={`${ms} мс`} hint={ms < 200 ? "из кеша" : "свежий поход"} />
             <Stat label="загружено с carnect" value={ago(res.fetchedAt)} />
             <Stat
@@ -161,24 +275,26 @@ export default async function CarnectPreview({
             />
           </section>
 
-          {res.page.items.length === 0 ? (
+          {items.length === 0 ? (
             <Panel title="Пусто">
               <p className="text-sm" style={{ color: C.muted }}>
-                У площадки сейчас нет лотов (total = {res.page.total}). Это норма между торгами, а не поломка
+                Сейчас здесь ничего нет (total = {res.page.total}). Это норма между торгами, а не поломка
                 парсера — поломка показалась бы ошибкой выше.
               </p>
             </Panel>
           ) : (
             <section className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {res.page.items.map((lot) => (
-                <LotTile key={lot.lotId} house={house} lot={lot} />
-              ))}
+              {source === "heydealer"
+                ? (res.page.items as HeyListCar[]).map((car) => <HeyTile key={car.id} car={car} />)
+                : (res.page.items as CarnectListLot[]).map((lot) => (
+                    <LotTile key={lot.lotId} house={source} lot={lot} />
+                  ))}
             </section>
           )}
 
           <nav className="mb-6 flex items-center justify-center gap-3 text-sm">
             {page > 1 && (
-              <Link href={`/admin/carnect?house=${house}&page=${page - 1}`} style={{ color: C.accent }}>
+              <Link href={viewerHref({ ...filter, page: page - 1 })} style={{ color: C.accent }}>
                 ← назад
               </Link>
             )}
@@ -186,23 +302,23 @@ export default async function CarnectPreview({
               {page} из {pages}
             </span>
             {page < pages && (
-              <Link href={`/admin/carnect?house=${house}&page=${page + 1}`} style={{ color: C.accent }}>
+              <Link href={viewerHref({ ...filter, page: page + 1 })} style={{ color: C.accent }}>
                 дальше →
               </Link>
             )}
           </nav>
 
-          {res.page.items.length > 0 && (
+          {items.length > 0 && (
             <Panel
               title="Заполненность полей на этой странице"
-              hint="Сколько лотов из страницы имеют поле непустым (0 и пустая строка считаются пустыми)."
+              hint="Сколько записей из страницы имеют поле непустым (0 и пустая строка считаются пустыми)."
             >
               <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs sm:grid-cols-3 lg:grid-cols-4">
-                {coverage(res.page.items).map(([k, n]) => (
+                {coverage(items).map(([k, n]) => (
                   <div key={k} className="flex justify-between font-mono">
                     <span style={{ color: C.muted }}>{k}</span>
-                    <span style={{ color: n === 0 ? C.bad : n < res.page.items.length ? C.accent : C.good }}>
-                      {n}/{res.page.items.length}
+                    <span style={{ color: n === 0 ? C.bad : n < items.length ? C.accent : C.good }}>
+                      {n}/{items.length}
                     </span>
                   </div>
                 ))}
