@@ -33,6 +33,7 @@ import {
   normalizeTrans,
   positive,
 } from "./normalize";
+import { notifyWorkChat } from "./notify";
 import type { CarnectListLot } from "./types";
 
 export type FeedId = "auctions" | "hey-self" | "hey-zero" | "hey-instant";
@@ -225,6 +226,10 @@ async function crawlFeed(feed: FeedId, now: string, signal?: AbortSignal): Promi
     let error: ListError | undefined;
     const perSort: Record<string, number> = {};
     for (const [i, sort] of HEY_SORTS.entries()) {
+      if (signal?.aborted) {
+        complete = false;
+        break; // лимит времени вышел — второй проход не начинаем
+      }
       const r = await crawlPages<HeyListCar>((p) => fetchHeyPage(heyType, p, signal, sort), (c) => c.id, { signal });
       requests += r.requests;
       total = Math.max(total, r.total);
@@ -249,6 +254,9 @@ async function crawlFeed(feed: FeedId, now: string, signal?: AbortSignal): Promi
   }
   const out: Crawl[] = [];
   for (const house of ALL_HOUSES) {
+    // Лимит времени вышел — следующую площадку не начинаем. Её строки в
+    // отчёте не появятся, и это видно: площадки нет в scopes.
+    if (signal?.aborted) break;
     const r = await crawlPages<CarnectListLot>((p) => fetchListPage(house, p, { signal }), (l) => l.lotId, { signal });
     out.push({
       scope: { house },
@@ -296,23 +304,113 @@ async function markMissing(scope: Crawl["scope"], runStartedAt: string): Promise
   return gone.data?.length ?? 0;
 }
 
-/** Журнал прогона — в общую auction_sync_runs, source = carnect:<лента>. */
-async function logRun(r: FeedSyncResult, startedAt: string) {
+// ─── Надзор за прогоном ──────────────────────────────────────────────────
+//
+// Задача: прогон не может ни висеть бесконечно, ни упасть молча. Четыре
+// механизма, каждый закрывает свой способ «тихо не сработать»:
+//
+//   1. ЛИМИТ ВРЕМЕНИ (RUN_BUDGET_MS). Обход сам останавливается, сохраняет
+//      собранное и пишет «прервано по времени». Отдельный запрос к carnect и
+//      так ограничен 20 с (client.ts), но страниц сотни, и медленный сайт
+//      растянул бы обход на час. Лимит МЕНЬШЕ таймаута задачи в Coolify (20
+//      мин): обрыв происходит по нашим правилам, с записью в журнал, а не
+//      снаружи на полуслове.
+//   2. ЗАПИСЬ В ЖУРНАЛ В НАЧАЛЕ, а не только в конце. Строка с пустым
+//      finished_at = прогон идёт или умер на полпути (процесс убит деплоем).
+//   3. ЗАВИСШИЕ ПРОГОНЫ. Каждый новый прогон ищет прежние строки без
+//      finished_at старше лимита с запасом — они уже точно не закончатся —
+//      закрывает их как сбой и сообщает в чат. Иначе прогон, убитый деплоем,
+//      не оставил бы никакого следа, кроме устаревшего каталога.
+//   4. ОДИН ПРОГОН ЛЕНТЫ ЗА РАЗ. Второй запуск, пока идёт первый, не
+//      стартует и возвращает ok:false с причиной: два параллельных обхода
+//      стояли бы в одной очереди client.ts, вдвое нагружая carnect, и оба
+//      упёрлись бы в лимит.
+//
+// Обо всём, что пошло не так, — сообщение в рабочий Telegram (notify.ts).
+// Об успехе — молчим.
+
+/**
+ * Лимит одного прогона. Обход аукционов идёт ~7 минут, лимит — вдвое с
+ * запасом. ⚠️ Держать МЕНЬШЕ таймаута задачи в Coolify (20 минут на
+ * 02.10.2026), иначе Coolify оборвёт задачу раньше, чем сработает наш лимит.
+ */
+const RUN_BUDGET_MS = 15 * 60 * 1000;
+
+/** Строка без finished_at старше этого — прогон точно мёртв, а не идёт. */
+const STALE_AFTER_MS = RUN_BUDGET_MS + 5 * 60 * 1000;
+
+/** Полнота ниже этой доли total — повод для уведомления (и не повод помечать ушедших). */
+const MIN_COVERAGE = 0.9;
+
+/**
+ * Ленты, которые сейчас идут в этом процессе. Прод — один контейнер (как и
+ * очередь в client.ts), поэтому памяти процесса достаточно.
+ */
+const running = new Set<FeedId>();
+
+const sourceOf = (feed: FeedId) => `carnect:${feed}`;
+
+/** Открывает строку журнала в начале прогона. Не вышло — синк всё равно идёт. */
+async function openRun(feed: FeedId, startedAt: string): Promise<number | null> {
   try {
-    await createServerClient().from("auction_sync_runs").insert({
-      source: `carnect:${r.feed}`,
-      kind: "lots",
-      started_at: startedAt,
-      finished_at: new Date().toISOString(),
-      ok: r.ok,
-      fetched: r.fetched,
-      upserted: r.upserted,
-      enriched: 0,
-      error: r.error ?? null,
-      notes: { ...r.notes, gone: r.gone, requests: r.requests, seconds: r.seconds },
-    });
+    const { data, error } = await createServerClient()
+      .from("auction_sync_runs")
+      .insert({ source: sourceOf(feed), kind: "lots", started_at: startedAt })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return (data as { id: number }).id;
   } catch (e) {
-    console.error("[carnect] не удалось записать auction_sync_runs:", e);
+    console.error("[carnect] не удалось открыть строку журнала:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+/** Закрывает строку журнала итогом. Строки нет (не открылась) — вставляет целиком. */
+async function closeRun(runId: number | null, r: FeedSyncResult, startedAt: string) {
+  const row = {
+    finished_at: new Date().toISOString(),
+    ok: r.ok,
+    fetched: r.fetched,
+    upserted: r.upserted,
+    enriched: 0,
+    error: r.error ?? null,
+    notes: { ...r.notes, gone: r.gone, requests: r.requests, seconds: r.seconds },
+  };
+  try {
+    const db = createServerClient();
+    const { error } = runId
+      ? await db.from("auction_sync_runs").update(row).eq("id", runId)
+      : await db.from("auction_sync_runs").insert({ source: sourceOf(r.feed), kind: "lots", started_at: startedAt, ...row });
+    if (error) throw new Error(error.message);
+  } catch (e) {
+    console.error("[carnect] не удалось закрыть строку журнала:", e instanceof Error ? e.message : e);
+  }
+}
+
+/**
+ * Прежние прогоны ленты, которые начались и не закончились: процесс убили
+ * (деплой, перезапуск, нехватка памяти) посреди обхода. Закрывает их как
+ * сбой и возвращает время старта каждого — для уведомления.
+ */
+async function closeStaleRuns(feed: FeedId): Promise<string[]> {
+  try {
+    const { data, error } = await createServerClient()
+      .from("auction_sync_runs")
+      .update({
+        finished_at: new Date().toISOString(),
+        ok: false,
+        error: "прогон не завершился: процесс остановлен посреди обхода (деплой или перезапуск?)",
+      })
+      .eq("source", sourceOf(feed))
+      .is("finished_at", null)
+      .lt("started_at", new Date(Date.now() - STALE_AFTER_MS).toISOString())
+      .select("started_at");
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as { started_at: string }[]).map((d) => d.started_at);
+  } catch (e) {
+    console.error("[carnect] проверка зависших прогонов упала:", e instanceof Error ? e.message : e);
+    return [];
   }
 }
 
@@ -323,20 +421,60 @@ function share(rows: LotRow[], pick: (r: LotRow) => unknown): string {
   return `${n}/${rows.length} (${Math.round((100 * n) / rows.length)}%)`;
 }
 
+/** Время по Корее для сообщения — владелец читает чат оттуда. */
+const kst = (iso: string) =>
+  new Date(iso).toLocaleString("ru-RU", { timeZone: "Asia/Seoul" });
+
 /**
- * Синхронизирует одну ленту. Не бросает: всё в результате и в журнале.
+ * Что в прогоне пошло не так — строками для сообщения. Пусто — всё хорошо,
+ * сообщения не будет.
+ */
+function problems(r: FeedSyncResult, crawls: Crawl[], timedOut: boolean): string[] {
+  const out: string[] = [];
+  if (timedOut) out.push(`⏱ Прервано по лимиту времени (${RUN_BUDGET_MS / 60000} мин). Собранное сохранено.`);
+  if (r.error && !timedOut) out.push(`❌ Ошибка: ${r.error}`);
+  for (const c of crawls) {
+    const name = c.scope.heyType ? `${c.scope.house}:${c.scope.heyType}` : c.scope.house;
+    if (c.total && c.rows.length < c.total * MIN_COVERAGE) {
+      out.push(`⚠️ ${name}: собрано ${c.rows.length} из ${c.total} (${Math.round((100 * c.rows.length) / c.total)}%)`);
+    }
+  }
+  return out;
+}
+
+/**
+ * Синхронизирует одну ленту. Не бросает: всё в результате, в журнале и, при
+ * сбое, в рабочем Telegram.
  *
  * @param dry обойти и нормализовать, но НЕ писать в базу — проверить парсер и
  *   долю распознанных моделей, не трогая прод. Пробный прогон в журнал не
- *   пишется: в истории он выглядел бы как настоящий и сбивал отсчёт свежести.
+ *   пишется и уведомлений не шлёт: в истории он выглядел бы как настоящий.
+ * @param signal внешняя отмена. ⚠️ Маршрут её НЕ передаёт намеренно: если
+ *   Coolify перестанет ждать ответа, обход всё равно должен дойти до конца и
+ *   записать итог, а не оборваться вместе с соединением. Время прогона
+ *   ограничивает RUN_BUDGET_MS, а не клиент.
  */
 export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: AbortSignal } = {}): Promise<FeedSyncResult> {
   const startedAt = new Date().toISOString();
   const t0 = Date.now();
   const result: FeedSyncResult = { ok: false, feed, fetched: 0, upserted: 0, gone: 0, requests: 0, seconds: 0, notes: {} };
 
+  if (running.has(feed)) {
+    // Не уведомляем: прошлый прогон идёт и сам сообщит, если что. Ответ с
+    // ok:false покрасит задачу в истории Coolify (код 2) — этого достаточно.
+    result.error = "прогон этой ленты уже идёт — второй не запускаем";
+    return result;
+  }
+  running.add(feed);
+
+  const budget = AbortSignal.timeout(RUN_BUDGET_MS);
+  const signal = opts.signal ? AbortSignal.any([opts.signal, budget]) : budget;
+  const stale = opts.dry ? [] : await closeStaleRuns(feed);
+  const runId = opts.dry ? null : await openRun(feed, startedAt);
+  let crawls: Crawl[] = [];
+
   try {
-    const crawls = await crawlFeed(feed, startedAt, opts.signal);
+    crawls = await crawlFeed(feed, startedAt, signal);
     const rows = crawls.flatMap((c) => c.rows);
     result.fetched = rows.length;
     result.requests = crawls.reduce((n, c) => n + c.requests, 0);
@@ -344,7 +482,10 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
     result.notes = {
       // По площадке: сколько обещано, собрано, полный ли обход, ошибка.
       scopes: crawls.map((c) => ({
-        ...c.scope, total: c.total, collected: c.rows.length, complete: c.complete, error: c.error ?? null,
+        ...c.scope, total: c.total, collected: c.rows.length, complete: c.complete,
+        // Отказ страницы после обрыва по лимиту — это наш отменённый запрос, а
+        // не «сайт не ответил». Назвать его unavailable значит спутать причину.
+        error: budget.aborted && c.error === "unavailable" ? "timeout" : c.error ?? null,
         coverage: c.total ? `${Math.round((100 * c.rows.length) / c.total)}%` : "—",
         ...(c.perSort ? { perSort: c.perSort } : {}),
       })),
@@ -357,6 +498,7 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
       },
       // Что не распознаётся — образцы, по ним дописывают normalize.ts.
       unrecognizedModels: rows.filter((r) => !r.model_group).slice(0, 30).map((r) => `${r.make ?? "?"} | ${r.title ?? "?"}`),
+      ...(budget.aborted ? { timedOut: true } : {}),
     };
 
     if (!rows.length) {
@@ -366,12 +508,17 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
       return await finish();
     }
 
+    const timeoutError = `лимит времени ${RUN_BUDGET_MS / 60000} мин`;
+
     if (opts.dry) {
-      result.ok = !crawls.some((c) => c.error);
+      result.ok = !crawls.some((c) => c.error) && !budget.aborted;
+      if (budget.aborted) result.error = timeoutError;
       result.notes = { ...result.notes, dry: true, sample: rows.slice(0, 2).map((r) => ({ ...r, raw: undefined })) };
       return await finish();
     }
 
+    // ⚠️ Собранное пишем и после обрыва по лимиту: это живые лоты, увиденные
+    // только что. Ушедших при этом НЕ помечаем — обход неполный (ниже).
     const db = createServerClient();
     for (let i = 0; i < rows.length; i += CHUNK) {
       const { error } = await db.from("carnect_lots").upsert(rows.slice(i, i + CHUNK), { onConflict: "house,external_id" });
@@ -381,12 +528,18 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
 
     // Отметка пропавших — только по полным обходам, собравшим >= 90% total.
     for (const c of crawls) {
-      if (!c.complete || c.error || c.rows.length < c.total * 0.9) continue;
+      if (!c.complete || c.error || c.rows.length < c.total * MIN_COVERAGE) continue;
       result.gone += await markMissing(c.scope, startedAt);
     }
 
-    result.ok = !crawls.some((c) => c.error);
-    if (!result.ok) result.error = crawls.map((c) => c.error).filter(Boolean).join(", ");
+    result.ok = !crawls.some((c) => c.error) && !budget.aborted;
+    if (budget.aborted) {
+      // Ошибки страниц после обрыва — следствие обрыва (запрос отменён), а не
+      // отказ сайта; называть их «unavailable» значит путать причину.
+      result.error = timeoutError;
+    } else if (!result.ok) {
+      result.error = crawls.map((c) => c.error).filter(Boolean).join(", ");
+    }
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);
     console.error(`[carnect] syncFeed ${feed} упал:`, result.error);
@@ -395,7 +548,21 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
 
   async function finish(): Promise<FeedSyncResult> {
     result.seconds = Math.round((Date.now() - t0) / 1000);
-    if (!opts.dry) await logRun(result, startedAt);
+    running.delete(feed);
+    if (opts.dry) return result;
+
+    await closeRun(runId, result, startedAt);
+
+    const lines = problems(result, crawls, budget.aborted);
+    for (const at of stale) lines.push(`🧟 Прогон, начатый ${kst(at)}, не завершился — процесс был остановлен.`);
+    if (lines.length) {
+      await notifyWorkChat([
+        `carnect · ${feed} · ${result.ok ? "с замечаниями" : "СБОЙ"}`,
+        ...lines,
+        `Собрано ${result.fetched}, записано ${result.upserted}, ушло ${result.gone}, запросов ${result.requests}, ${result.seconds} с.`,
+        "Подробности: auction_sync_runs, source = " + sourceOf(feed),
+      ]);
+    }
     return result;
   }
 }
