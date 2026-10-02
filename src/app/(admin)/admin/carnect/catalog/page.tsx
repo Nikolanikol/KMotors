@@ -29,6 +29,8 @@ import { FUELS, PAGE_SIZE, readFilter, searchCatalog, type CatalogRow, type Sour
 
 import { C, Page, Panel, km, krw } from "../ui";
 
+import AutoSubmitSelect from "./AutoSubmitSelect";
+
 export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -210,7 +212,9 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
         {filter.src?.length ? <input type="hidden" name="src" value={filter.src.join(",")} /> : null}
         <label className="flex flex-col text-[11px]" style={{ color: C.muted }}>
           марка
-          <select name="make" defaultValue={filter.make ?? ""} className={inputCls} style={inputStyle}>
+          {/* Выбор марки сразу отправляет форму: список моделей строится на
+              сервере по марке, без отправки он остался бы выключенным. */}
+          <AutoSubmitSelect name="make" defaultValue={filter.make ?? ""} className={inputCls} style={inputStyle}>
             <option value="">любая</option>
             {res.ok &&
               res.makes.map((m) => (
@@ -218,12 +222,12 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
                   {m.v} ({m.n})
                 </option>
               ))}
-          </select>
+          </AutoSubmitSelect>
         </label>
         <label className="flex flex-col text-[11px]" style={{ color: C.muted }}>
           модель
           {/* Видна всегда, отключена без марки — приём фильтра Encar: вёрстка не прыгает. */}
-          <select
+          <AutoSubmitSelect
             name="model"
             defaultValue={filter.model_group ?? ""}
             disabled={!filter.make}
@@ -237,7 +241,7 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
                   {m.v} ({m.n})
                 </option>
               ))}
-          </select>
+          </AutoSubmitSelect>
         </label>
         <label className="flex flex-col text-[11px]" style={{ color: C.muted }}>
           год от
