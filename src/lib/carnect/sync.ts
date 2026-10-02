@@ -1,13 +1,27 @@
 // Синхронизация carnect → таблица carnect_lots (sql/042_carnect_lots.sql).
 //
-// Одна «лента» = один полный обход одного списка carnect:
-//   auctions      — пять аукционов подряд (~170 страниц, ~9 минут);
+// Одна «лента» = один обход одного списка carnect:
+//   lotte, sk, glovis, kcar, autohub — по площадке (1–3 минуты каждая);
+//   auctions      — все пять подряд (~7 минут) — ЛЕГАСИ, см. ниже;
 //   hey-self      — HeyDealer Self      (~165 страниц по 20, ~8 минут);
 //   hey-zero      — HeyDealer Zero      (~195 страниц, ~10 минут);
 //   hey-instant   — HeyDealer Instant   (~65 страниц, ~4 минуты).
-// Ленты — отдельные задания крона (scripts/cron/run.mjs), а не одно общее:
-// всё вместе — ~30 минут, ровно предел раннера, после которого задание
-// считается упавшим. Плюс так меньше пиковая нагрузка на carnect.
+// Ленты — отдельные задания крона (scripts/cron/run.mjs), а не одно общее.
+//
+// ⚠️ ПЛОЩАДКИ — ОТДЕЛЬНЫЕ ЛЕНТЫ (решение владельца 02.10.2026): у каждой
+// площадки свой день торгов, и партия выкладывается за ~2 дня до него (у
+// Autohub — сильно заранее). Обходить все пять разом каждый раз значит
+// гонять ~140 страниц ради одной площадки, у которой что-то поменялось.
+// Лента `auctions` осталась, чтобы прежнее задание крона не упало до того,
+// как его заменят пятью новыми; запускать её параллельно с ними нельзя —
+// те же площадки обойдутся дважды.
+//
+// ⚠️ «НИЧЕГО НЕ ИЗМЕНИЛОСЬ» — ОДИН ЗАПРОС ВМЕСТО ОБХОДА. Лента площадки
+// сначала берёт первую страницу и сравнивает её отпечаток с прошлым полным
+// прогоном (fingerprintOf, previousRun). Совпал — обход не нужен, прогон пишется в
+// журнал как skipped. Поэтому расписание задаётся «с запасом» (дважды в
+// сутки), а не угадывается по календарю: когда площадка реально выложит
+// партию, первый же прогон после этого это увидит и обойдёт её целиком.
 //
 // ⚠️ ОТМЕТКА «УШЁЛ» — только по ПОЛНОМУ обходу и только после двух подряд.
 // Пока мы листаем, у carnect появляются и исчезают машины, страницы
@@ -20,10 +34,12 @@
 // ⚠️ Пишем ТОЛЬКО колонки, которые знаем из списка. first_seen_at в payload
 // нет — upsert его не перезаписывает, дата первого появления не сдвигается.
 
+import { createHash } from "node:crypto";
+
 import { createServerClient } from "@/lib/supabase";
 
 import { fetchHeyPage, type HeyAuctionType, type HeyListCar, type HeySort } from "./heydealer";
-import { ALL_HOUSES, type CarnectHouse } from "./houses";
+import { ALL_HOUSES, isHouse, type CarnectHouse } from "./houses";
 import { crawlPages, fetchListPage, type ListError } from "./list";
 import {
   canonicalMake,
@@ -36,13 +52,24 @@ import {
 import { notifyWorkChat } from "./notify";
 import type { CarnectListLot } from "./types";
 
-export type FeedId = "auctions" | "hey-self" | "hey-zero" | "hey-instant";
+export type FeedId = CarnectHouse | "auctions" | "hey-self" | "hey-zero" | "hey-instant";
 
-export const FEEDS: Record<FeedId, { about: string }> = {
-  auctions: { about: "Autobell, K Car, Lotte, SK, Autohub" },
-  "hey-self": { about: "HeyDealer Self" },
-  "hey-zero": { about: "HeyDealer Zero" },
-  "hey-instant": { about: "HeyDealer Instant" },
+/**
+ * Ленты и их лимит времени. ⚠️ Лимит держать МЕНЬШЕ таймаута задачи в
+ * Coolify (площадки — 10 минут, HeyDealer — 20 минут): обрыв должен
+ * происходить по нашим правилам, с записью в журнал, а не снаружи.
+ * Лимит площадки — вдвое с запасом от самой крупной (Lotte, ~3 минуты).
+ */
+export const FEEDS: Record<FeedId, { about: string; budgetMs: number }> = {
+  lotte: { about: "Lotte", budgetMs: 8 * 60_000 },
+  sk: { about: "SK", budgetMs: 8 * 60_000 },
+  glovis: { about: "Autobell (Glovis)", budgetMs: 8 * 60_000 },
+  kcar: { about: "K Car", budgetMs: 8 * 60_000 },
+  autohub: { about: "Autohub", budgetMs: 8 * 60_000 },
+  auctions: { about: "все пять площадок (легаси)", budgetMs: 15 * 60_000 },
+  "hey-self": { about: "HeyDealer Self", budgetMs: 15 * 60_000 },
+  "hey-zero": { about: "HeyDealer Zero", budgetMs: 15 * 60_000 },
+  "hey-instant": { about: "HeyDealer Instant", budgetMs: 15 * 60_000 },
 };
 
 const HEY_FEED: Partial<Record<FeedId, HeyAuctionType>> = {
@@ -205,13 +232,102 @@ interface Crawl {
   error?: ListError;
   /** HeyDealer: сколько машин дал каждый проход — видно, что добавил второй. */
   perSort?: Record<string, number>;
+  /** Отпечаток первой страницы площадки — для проверки «ничего не изменилось». */
+  fingerprint?: string;
+  /** Обход не делался: отпечаток совпал с прошлым полным прогоном. */
+  skipped?: boolean;
+}
+
+/** Последний известный отпечаток ленты и время её последнего ПОЛНОГО прогона. */
+interface PrevRun {
+  fingerprint: string | null;
+  fullAt: number | null;
+}
+
+/**
+ * Не пропускаем обход дольше этого, даже если отпечаток тот же. Страховка от
+ * случая, который отпечаток не видит: лоты сняли из середины списка, а первая
+ * страница и total те же. Раз в сутки полный обход — и такие лоты уйдут.
+ */
+const FORCE_FULL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Отпечаток площадки по первой странице: total плюс набор лотов на ней. Новая
+ * партия меняет оба, снятие проданных после торгов — total. Хеш — чтобы в
+ * журнале лежала короткая строка, а не 24 id.
+ *
+ * ⚠️ lastIngestAt (время синхронизации carnect с площадкой) сюда НЕ входит,
+ * хотя выглядит идеальным признаком: он меняется при каждой их синхронизации,
+ * даже если лоты те же, и с ним отпечаток Autobell и Autohub менялся бы
+ * каждый прогон — обход шёл бы всегда и экономии не было бы.
+ */
+function fingerprintOf(page: { total: number; items: CarnectListLot[] }): string {
+  const basis = `${page.total}:${page.items.map((l) => l.lotId).sort().join(",")}`;
+  return createHash("sha1").update(basis).digest("hex").slice(0, 16);
+}
+
+/**
+ * Прошлые прогоны ленты из журнала: отпечаток последнего удачного (полного или
+ * пропущенного — у пропущенного он тот же) и время последнего ПОЛНОГО. Не
+ * получилось прочитать — null, и обход просто пойдёт целиком: лишний обход
+ * безопаснее пропущенной новой партии.
+ */
+async function previousRun(feed: FeedId): Promise<PrevRun> {
+  try {
+    const { data, error } = await createServerClient()
+      .from("auction_sync_runs")
+      .select("started_at, notes")
+      .eq("source", sourceOf(feed))
+      .eq("ok", true)
+      .order("started_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as { started_at: string; notes: { fingerprint?: string; skipped?: boolean } | null }[];
+    const fingerprint = rows.find((r) => r.notes?.fingerprint)?.notes?.fingerprint ?? null;
+    const full = rows.find((r) => !r.notes?.skipped);
+    return { fingerprint, fullAt: full ? Date.parse(full.started_at) : null };
+  } catch (e) {
+    console.error("[carnect] не удалось прочитать прошлый прогон:", e instanceof Error ? e.message : e);
+    return { fingerprint: null, fullAt: null };
+  }
+}
+
+/**
+ * Обход одной площадки. С `prev` — сначала проверка «ничего не изменилось»:
+ * первая страница берётся один раз и, если обход нужен, переиспользуется в
+ * нём (crawlPages получает её готовой, второго запроса за ней нет).
+ */
+async function crawlHouse(house: CarnectHouse, now: string, signal: AbortSignal | undefined, prev: PrevRun | null): Promise<Crawl> {
+  const scope = { house };
+  const first = await fetchListPage(house, 1, { signal });
+  if ("error" in first) {
+    return { scope, rows: [], total: 0, requests: 1, complete: false, error: first.error };
+  }
+  const fingerprint = fingerprintOf(first.page);
+  const fresh = prev?.fullAt != null && Date.now() - prev.fullAt < FORCE_FULL_MS;
+  if (prev && fresh && prev.fingerprint === fingerprint) {
+    return { scope, rows: [], total: first.page.total, requests: 1, complete: false, fingerprint, skipped: true };
+  }
+  const r = await crawlPages<CarnectListLot>(
+    (p) => (p === 1 ? Promise.resolve(first) : fetchListPage(house, p, { signal })),
+    (l) => l.lotId,
+    { signal },
+  );
+  return {
+    scope,
+    rows: r.items.map((l) => auctionRow(house, l, now)),
+    // requests у crawlPages считает и первую страницу, которую мы уже взяли
+    // сами, — её второй раз не запрашивали, поэтому не прибавляем.
+    total: r.total, requests: r.requests, complete: r.complete, error: r.error, fingerprint,
+  };
 }
 
 /**
  * Обходит ленту. Для auctions — пять обходов, по одному на площадку: у
  * каждой свой total и своя полнота, и отметка ушедших ведётся по площадке.
  */
-async function crawlFeed(feed: FeedId, now: string, signal?: AbortSignal): Promise<Crawl[]> {
+async function crawlFeed(feed: FeedId, now: string, signal?: AbortSignal, prev: PrevRun | null = null): Promise<Crawl[]> {
+  if (isHouse(feed)) return [await crawlHouse(feed, now, signal, prev)];
   const heyType = HEY_FEED[feed];
   if (heyType) {
     // ⚠️ Проходы по HEY_SORTS и объединение по id: у carnect соседние
@@ -309,12 +425,12 @@ async function markMissing(scope: Crawl["scope"], runStartedAt: string): Promise
 // Задача: прогон не может ни висеть бесконечно, ни упасть молча. Четыре
 // механизма, каждый закрывает свой способ «тихо не сработать»:
 //
-//   1. ЛИМИТ ВРЕМЕНИ (RUN_BUDGET_MS). Обход сам останавливается, сохраняет
+//   1. ЛИМИТ ВРЕМЕНИ (FEEDS[лента].budgetMs). Обход сам останавливается, сохраняет
 //      собранное и пишет «прервано по времени». Отдельный запрос к carnect и
 //      так ограничен 20 с (client.ts), но страниц сотни, и медленный сайт
-//      растянул бы обход на час. Лимит МЕНЬШЕ таймаута задачи в Coolify (20
-//      мин): обрыв происходит по нашим правилам, с записью в журнал, а не
-//      снаружи на полуслове.
+//      растянул бы обход на час. Лимит МЕНЬШЕ таймаута задачи в Coolify
+//      (значения — у FEEDS): обрыв происходит по нашим правилам, с записью в
+//      журнал, а не снаружи на полуслове.
 //   2. ЗАПИСЬ В ЖУРНАЛ В НАЧАЛЕ, а не только в конце. Строка с пустым
 //      finished_at = прогон идёт или умер на полпути (процесс убит деплоем).
 //   3. ЗАВИСШИЕ ПРОГОНЫ. Каждый новый прогон ищет прежние строки без
@@ -330,14 +446,11 @@ async function markMissing(scope: Crawl["scope"], runStartedAt: string): Promise
 // Об успехе — молчим.
 
 /**
- * Лимит одного прогона. Обход аукционов идёт ~7 минут, лимит — вдвое с
- * запасом. ⚠️ Держать МЕНЬШЕ таймаута задачи в Coolify (20 минут на
- * 02.10.2026), иначе Coolify оборвёт задачу раньше, чем сработает наш лимит.
+ * Самый длинный лимит из всех лент (FEEDS[...].budgetMs). Строка журнала без
+ * finished_at старше него с запасом — прогон точно мёртв, а не идёт.
  */
-const RUN_BUDGET_MS = 15 * 60 * 1000;
-
-/** Строка без finished_at старше этого — прогон точно мёртв, а не идёт. */
-const STALE_AFTER_MS = RUN_BUDGET_MS + 5 * 60 * 1000;
+const MAX_BUDGET_MS = Math.max(...Object.values(FEEDS).map((f) => f.budgetMs));
+const STALE_AFTER_MS = MAX_BUDGET_MS + 5 * 60 * 1000;
 
 /** Полнота ниже этой доли total — повод для уведомления (и не повод помечать ушедших). */
 const MIN_COVERAGE = 0.9;
@@ -429,11 +542,12 @@ const kst = (iso: string) =>
  * Что в прогоне пошло не так — строками для сообщения. Пусто — всё хорошо,
  * сообщения не будет.
  */
-function problems(r: FeedSyncResult, crawls: Crawl[], timedOut: boolean): string[] {
+function problems(r: FeedSyncResult, crawls: Crawl[], timedOut: boolean, budgetMs: number): string[] {
   const out: string[] = [];
-  if (timedOut) out.push(`⏱ Прервано по лимиту времени (${RUN_BUDGET_MS / 60000} мин). Собранное сохранено.`);
+  if (timedOut) out.push(`⏱ Прервано по лимиту времени (${budgetMs / 60000} мин). Собранное сохранено.`);
   if (r.error && !timedOut) out.push(`❌ Ошибка: ${r.error}`);
   for (const c of crawls) {
+    if (c.skipped) continue; // не обходили — полноту не с чего считать
     const name = c.scope.heyType ? `${c.scope.house}:${c.scope.heyType}` : c.scope.house;
     if (c.total && c.rows.length < c.total * MIN_COVERAGE) {
       out.push(`⚠️ ${name}: собрано ${c.rows.length} из ${c.total} (${Math.round((100 * c.rows.length) / c.total)}%)`);
@@ -452,7 +566,7 @@ function problems(r: FeedSyncResult, crawls: Crawl[], timedOut: boolean): string
  * @param signal внешняя отмена. ⚠️ Маршрут её НЕ передаёт намеренно: если
  *   Coolify перестанет ждать ответа, обход всё равно должен дойти до конца и
  *   записать итог, а не оборваться вместе с соединением. Время прогона
- *   ограничивает RUN_BUDGET_MS, а не клиент.
+ *   ограничивает лимит ленты (FEEDS[лента].budgetMs), а не клиент.
  */
 export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: AbortSignal } = {}): Promise<FeedSyncResult> {
   const startedAt = new Date().toISOString();
@@ -467,14 +581,28 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
   }
   running.add(feed);
 
-  const budget = AbortSignal.timeout(RUN_BUDGET_MS);
+  const budgetMs = FEEDS[feed].budgetMs;
+  const budget = AbortSignal.timeout(budgetMs);
   const signal = opts.signal ? AbortSignal.any([opts.signal, budget]) : budget;
   const stale = opts.dry ? [] : await closeStaleRuns(feed);
+  // Пробный прогон всегда обходит целиком: его смысл — проверить парсер.
+  const prev = !opts.dry && isHouse(feed) ? await previousRun(feed) : null;
   const runId = opts.dry ? null : await openRun(feed, startedAt);
   let crawls: Crawl[] = [];
 
   try {
-    crawls = await crawlFeed(feed, startedAt, signal);
+    crawls = await crawlFeed(feed, startedAt, signal, prev);
+
+    // Площадка не изменилась с прошлого полного прогона — один запрос, и всё.
+    // ok:true с skipped в журнале: задача в истории Coolify зелёная, а по
+    // notes видно, что обхода не было и почему.
+    if (crawls.length > 0 && crawls.every((c) => c.skipped)) {
+      result.ok = true;
+      result.requests = crawls.reduce((n, c) => n + c.requests, 0);
+      result.notes = { skipped: true, reason: "отпечаток площадки не изменился", fingerprint: crawls[0].fingerprint, total: crawls[0].total };
+      return await finish();
+    }
+
     const rows = crawls.flatMap((c) => c.rows);
     result.fetched = rows.length;
     result.requests = crawls.reduce((n, c) => n + c.requests, 0);
@@ -499,6 +627,9 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
       // Что не распознаётся — образцы, по ним дописывают normalize.ts.
       unrecognizedModels: rows.filter((r) => !r.model_group).slice(0, 30).map((r) => `${r.make ?? "?"} | ${r.title ?? "?"}`),
       ...(budget.aborted ? { timedOut: true } : {}),
+      // Отпечаток пишется только для ленты одной площадки: по нему следующий
+      // прогон решает, нужен ли обход (previousRun).
+      ...(crawls.length === 1 && crawls[0].fingerprint ? { fingerprint: crawls[0].fingerprint } : {}),
     };
 
     if (!rows.length) {
@@ -508,7 +639,7 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
       return await finish();
     }
 
-    const timeoutError = `лимит времени ${RUN_BUDGET_MS / 60000} мин`;
+    const timeoutError = `лимит времени ${budgetMs / 60000} мин`;
 
     if (opts.dry) {
       result.ok = !crawls.some((c) => c.error) && !budget.aborted;
@@ -553,7 +684,7 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
 
     await closeRun(runId, result, startedAt);
 
-    const lines = problems(result, crawls, budget.aborted);
+    const lines = problems(result, crawls, budget.aborted, budgetMs);
     for (const at of stale) lines.push(`🧟 Прогон, начатый ${kst(at)}, не завершился — процесс был остановлен.`);
     if (lines.length) {
       await notifyWorkChat([
