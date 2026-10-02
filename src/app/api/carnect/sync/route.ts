@@ -1,7 +1,8 @@
 // Синхронизация одной ленты carnect в carnect_lots. Дёргается кроном Coolify
 // через scripts/cron/run.mjs (задания carnect-*).
 //
-//   GET /api/carnect/sync?feed=auctions          пять аукционов
+//   GET /api/carnect/sync?feed=lotte             одна площадка (и sk, glovis, kcar, autohub)
+//   GET /api/carnect/sync?feed=auctions          все пять подряд (легаси)
 //   GET /api/carnect/sync?feed=hey-zero          HeyDealer Zero (и hey-self, hey-instant)
 //   GET /api/carnect/sync?feed=hey-zero&dry=1    то же БЕЗ записи — проверить парсер
 //
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
     // ⚠️ req.signal в синк НЕ передаём. Если Coolify перестанет ждать (его
     // таймаут) или соединение порвётся, обход должен дойти до конца и
     // записать итог в журнал, а не оборваться на полуслове с частью лотов.
-    // Время прогона ограничивает свой лимит внутри syncFeed (RUN_BUDGET_MS).
+    // Время прогона ограничивает свой лимит ленты (FEEDS[лента].budgetMs).
     const result = await syncFeed(feed, { dry: req.nextUrl.searchParams.get("dry") === "1" });
     return NextResponse.json(result);
   } catch (err) {
