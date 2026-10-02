@@ -30,6 +30,14 @@ const QUERY = "(And.Hidden.N._.CarType.Y.)";
 // 10 запросов напрямую против 100 через прокси на том же объёме.
 const PAGE = 200;
 const PROXY_PAGE = 20;
+// ⚠️ Шаг offset'а равен числу РЕАЛЬНО полученных строк, а не PAGE. Замер на проде
+// 02.10.2026: `api.encar.com` напрямую с нашего сервера не отвечает (локально
+// отвечает), обход молча уходит на прокси Render, а тот режет выдачу до 20
+// независимо от запрошенного. С фиксированным шагом 200 мы брали по 20 строк из
+// каждой двухсотой позиции: при limit=500 это 60 машин вместо 500, причём
+// `failedPages` оставался нулевым и в истории крона всё выглядело исправным.
+// Шаг по факту сам подстраивается и под 200 напрямую, и под 20 через прокси.
+const MAX_REQUESTS = 40;
 // PostgREST на bulk-upsert'е требует одинакового набора ключей внутри запроса.
 // Строки здесь все из листинга, то есть набор уже однородный; чанк нужен лишь
 // чтобы не отправлять двухтысячный массив одним телом.
@@ -117,7 +125,8 @@ export async function syncCarsFromListing({
   let pages = 0;
   let failedPages = 0;
 
-  for (let offset = 0; offset < limit; offset += PAGE) {
+  let offset = 0;
+  while (offset < limit && pages < MAX_REQUESTS) {
     const { rows, failed } = await fetchPage(offset, Math.min(PAGE, limit - offset));
     pages += 1;
     if (failed) failedPages += 1;
@@ -127,9 +136,15 @@ export async function syncCarsFromListing({
       if (snap) byId.set(snap.encar_id, snap);
     }
     // Пустая страница при живом апстриме — конец выдачи, дальше идти незачем.
-    // Упавшую страницу за конец НЕ принимаем: это сбой, а не край пула.
-    if (rows.length === 0 && !failed) break;
-    if (offset + PAGE < limit) await sleep(delayMs);
+    // Упавшую страницу за конец НЕ принимаем: это сбой, а не край пула, но и
+    // продвинуться по ней нельзя — шагаем на PAGE, чтобы не топтаться на месте.
+    if (rows.length === 0) {
+      if (!failed) break;
+      offset += PAGE;
+    } else {
+      offset += rows.length;
+    }
+    if (offset < limit) await sleep(delayMs);
   }
 
   const snapshots = [...byId.values()];
