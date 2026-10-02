@@ -34,6 +34,19 @@ export interface HouseInfo {
    * площадки одна площадка и venue в лотах не заполнено (Lotte, SK).
    */
   sessions: { day: Weekday; venue: string }[];
+  /**
+   * Отдельные аукционные дома внутри площадки, которые carnect умеет
+   * отфильтровать на своём сервере (?venue=<code>). Есть только у Autobell.
+   *
+   * ⚠️ Фильтр принимает КОД площадки, а не название: ?venue=Bundang отдаёт
+   * total 0, ?venue=1100 — 565 лотов (проверено 02.10.2026). Код и название
+   * сняты с фасета venue в /api/auctions/glovis/filters.
+   *
+   * Это известные коды, а не исчерпывающий список: четверговая площадка
+   * Autobell в день замера была пуста. Поэтому просмотрщик строит вкладки по
+   * живому фасету (getVenueFacets), а этот список — подписи и дни торгов.
+   */
+  venues?: { code: string; name: string; day: Weekday }[];
 }
 
 export const HOUSES: Record<CarnectHouse, HouseInfo> = {
@@ -51,6 +64,10 @@ export const HOUSES: Record<CarnectHouse, HouseInfo> = {
       { day: "Tue", venue: "Bundang" },
       { day: "Thu", venue: "" },
       { day: "Fri", venue: "Sihwa" },
+    ],
+    venues: [
+      { code: "1100", name: "Bundang", day: "Tue" },
+      { code: "2100", name: "Sihwa", day: "Fri" },
     ],
   },
   // Совпадает с нашим замером по своему API K Car (CLAUDE.md, «Торги идут

@@ -63,13 +63,28 @@ export interface HouseListResult {
   error?: ListError;
 }
 
-/** Проверка формы data — защищает от чужого объекта с тем же ключом. */
-function isListPage(v: unknown): v is CarnectListPage {
-  if (!isObject(v) || !Array.isArray(v.items) || typeof v.total !== "number") return false;
-  // Пустой список валиден (у площадки нет торгов). Непустой — элементы
-  // обязаны быть лотами, иначе это какой-то другой "data" на странице.
-  return v.items.every((x) => isObject(x) && typeof x.lotId === "string");
+/** Страница списка в общем виде: аукционы и HeyDealer отличаются только формой элемента. */
+export interface DataPage<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
+
+/**
+ * Проверка формы data — защищает от чужого объекта с тем же ключом. Пустой
+ * список валиден (у площадки нет торгов). Непустой — элементы обязаны пройти
+ * проверку вызывающего, иначе это какой-то другой "data" на странице.
+ */
+function isDataPage<T>(itemGuard: (x: Record<string, unknown>) => boolean) {
+  return (v: unknown): v is DataPage<T> =>
+    isObject(v) &&
+    Array.isArray(v.items) &&
+    typeof v.total === "number" &&
+    v.items.every((x) => isObject(x) && itemGuard(x));
+}
+
+const isAuctionLot = (x: Record<string, unknown>) => typeof x.lotId === "string";
 
 /**
  * Состояние их синхронизации. Лежит скалярами в пропсах отдельного
@@ -91,19 +106,19 @@ export function readIngest(flight: string): CarnectIngest {
 }
 
 /**
- * Одна страница списка: разобранная, либо причина, почему нет.
- * Экспортирована для просмотрщика (/admin/carnect), которому нужна ровно одна
- * страница, а не обход всей площадки.
+ * Любая страница списка carnect по пути: разобранный data, либо причина,
+ * почему нет. Общая для аукционов и HeyDealer (heydealer.ts) — устройство
+ * ответа у них одно, различаются адрес и форма элемента.
  */
-export async function fetchListPage(
-  house: CarnectHouse,
-  page: number,
+export async function fetchDataPage<T>(
+  path: string,
+  itemGuard: (x: Record<string, unknown>) => boolean,
   signal?: AbortSignal,
-): Promise<{ page: CarnectListPage; flight: string } | { error: ListError }> {
-  const path = page === 1 ? `/auctions/${house}` : `/auctions/${house}?page=${page}`;
+): Promise<{ page: DataPage<T>; flight: string } | { error: ListError }> {
   const res = await getPage(path, "bulk", signal);
-  // На СПИСКЕ soft-404 означает, что carnect не знает такой площадки —
-  // переименовали адрес. Это не «торгов нет», а повод сверить HOUSES.
+  // На СПИСКЕ soft-404 означает, что carnect не знает такого адреса —
+  // переименовали площадку или раздел. Это не «торгов нет», а повод сверить
+  // HOUSES / адреса HeyDealer.
   if (res.kind === "gone") return { error: "unknown-house" };
   if (res.kind === "failed") {
     if (res.status === 403) return { error: "blocked" };
@@ -111,12 +126,71 @@ export async function fetchListPage(
   }
 
   const flight = decodeFlight(res.html);
-  const data = pick(flight, "data", isListPage);
+  const data = pick(flight, "data", isDataPage<T>(itemGuard));
   if (!data) {
-    console.error(`[carnect] ${house} стр. ${page}: объект data не найден — сменилась разметка?`);
+    console.error(`[carnect] ${path}: объект data не найден — сменилась разметка?`);
     return { error: "parser" };
   }
   return { page: data, flight };
+}
+
+export interface VenueFacet {
+  /** Код аукционного дома — его и ждёт фильтр ?venue=. */
+  code: string;
+  /** Название, как его пишет carnect: "Bundang", "Sihwa". */
+  name: string;
+  /** Лотов на этой площадке сейчас. */
+  count: number;
+}
+
+/**
+ * Аукционные дома площадки с числом лотов — из фасета venue их фильтрового
+ * API (/api/auctions/<house>/filters, открытый JSON).
+ *
+ * Зачем живой фасет, а не только HOUSES[house].venues: у Autobell три дня
+ * торгов, а коды мы видели лишь у двух. Появится лот четверговой площадки —
+ * её вкладка возникнет сама, без правки кода. null — фасета нет (у площадки
+ * один дом) или API не ответил; вызывающий тогда показывает площадку целиком.
+ */
+export async function fetchVenueFacets(house: CarnectHouse, signal?: AbortSignal): Promise<VenueFacet[] | null> {
+  const res = await getPage(`/api/auctions/${house}/filters`, "bulk", signal);
+  if (res.kind !== "html") return null;
+  try {
+    const body = JSON.parse(res.html) as { groups?: { key?: string; facets?: { value?: unknown; label?: unknown; count?: unknown }[] }[] };
+    const venue = body.groups?.find((g) => g.key === "venue");
+    if (!venue?.facets?.length) return null;
+    return venue.facets
+      .filter((f) => typeof f.value === "string" && typeof f.count === "number")
+      .map((f) => ({ code: f.value as string, name: String(f.label ?? f.value), count: f.count as number }));
+  } catch {
+    console.error(`[carnect] фасет venue ${house} не разобрался`);
+    return null;
+  }
+}
+
+/** Адрес страницы списка площадки. Параметры только непустые — ?page=1 не пишем. */
+function auctionPath(house: CarnectHouse, page: number, venue?: string): string {
+  const q = new URLSearchParams();
+  if (venue) q.set("venue", venue);
+  if (page > 1) q.set("page", String(page));
+  const qs = q.toString();
+  return `/auctions/${house}${qs ? `?${qs}` : ""}`;
+}
+
+/**
+ * Одна страница списка площадки. Экспортирована для просмотрщика
+ * (/admin/carnect), которому нужна ровно одна страница, а не обход всей
+ * площадки.
+ *
+ * @param venue код аукционного дома (HOUSES[house].venues) — фильтрует
+ *   carnect на своём сервере. Без него — вся площадка целиком.
+ */
+export async function fetchListPage(
+  house: CarnectHouse,
+  page: number,
+  opts: { venue?: string; signal?: AbortSignal } = {},
+): Promise<{ page: CarnectListPage; flight: string } | { error: ListError }> {
+  return fetchDataPage<CarnectListLot>(auctionPath(house, page, opts.venue), isAuctionLot, opts.signal);
 }
 
 /**
@@ -129,12 +203,13 @@ export async function fetchListPage(
  */
 export async function fetchHouseLots(
   house: CarnectHouse,
-  opts: { sinceIngestAt?: string | null; maxPages?: number; signal?: AbortSignal } = {},
+  opts: { sinceIngestAt?: string | null; maxPages?: number; venue?: string; signal?: AbortSignal } = {},
 ): Promise<HouseListResult> {
   const empty: CarnectIngest = { lastIngestAt: null, lastStatus: null, lastIngestCount: null, lastIngestExpected: null };
   const result: HouseListResult = { house, lots: [], total: 0, requests: 0, ingest: empty, unchanged: false };
+  const pageOpts = { venue: opts.venue, signal: opts.signal };
 
-  const first = await fetchListPage(house, 1, opts.signal);
+  const first = await fetchListPage(house, 1, pageOpts);
   result.requests++;
   if ("error" in first) return { ...result, error: first.error };
 
@@ -163,7 +238,7 @@ export async function fetchHouseLots(
 
   for (let page = 2; page <= lastPage; page++) {
     if (opts.signal?.aborted) break;
-    const next = await fetchListPage(house, page, opts.signal);
+    const next = await fetchListPage(house, page, pageOpts);
     result.requests++;
     // ⚠️ Любая ошибка страницы ОСТАНАВЛИВАЕТ обход, а не пропускает
     // страницу. getPage уже сделал свои повторы; раз не вышло, сайту плохо

@@ -79,34 +79,76 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   );
 }
 
+/** Источник на вкладке: аукционная площадка или HeyDealer (у него своя механика). */
+export type Source = CarnectHouse | "heydealer";
+
+function Tab({ href, on, title, sub }: { href: string; on: boolean; title: string; sub?: string }) {
+  return (
+    <Link
+      href={href}
+      aria-current={on ? "page" : undefined}
+      className="rounded-lg px-3 py-2 text-sm"
+      style={{
+        backgroundColor: on ? "var(--axis-bronze-deep, #9D5E34)" : C.card,
+        border: `1px solid ${on ? "transparent" : C.line}`,
+        color: on ? "#fff" : C.text,
+      }}
+    >
+      <div className="font-semibold">{title}</div>
+      {sub && (
+        <div className="text-[11px]" style={{ color: on ? "rgba(255,255,255,0.8)" : C.muted }}>
+          {sub}
+        </div>
+      )}
+    </Link>
+  );
+}
+
 /**
- * Вкладки площадок + календарь торгов под каждой. Ссылки, а не состояние:
- * у каждой площадки свой адрес — тот же приём, что у вкладок аукциона.
+ * Вкладки источников + календарь торгов под каждой площадкой. Ссылки, а не
+ * состояние: у каждого источника свой адрес — тот же приём, что у вкладок
+ * аукциона. HeyDealer последним: у него не дни торгов, а непрерывный поток.
  */
-export function HouseTabs({ active }: { active: CarnectHouse }) {
+export function HouseTabs({ active }: { active: Source }) {
+  return (
+    <nav className="mb-3 flex flex-wrap gap-2">
+      {Object.values(HOUSES).map((h) => (
+        <Tab
+          key={h.house}
+          href={`/admin/carnect?house=${h.house}`}
+          on={h.house === active}
+          title={h.name}
+          sub={h.sessions.map((s) => (s.venue ? `${s.day} · ${s.venue}` : s.day)).join(" / ")}
+        />
+      ))}
+      <Tab href="/admin/carnect?house=heydealer" on={active === "heydealer"} title="HeyDealer" sub="Self / Zero / Instant" />
+    </nav>
+  );
+}
+
+/**
+ * Второй ряд вкладок: аукционные дома Autobell или типы аукциона HeyDealer.
+ * Поменьше и потише первого ряда, чтобы иерархия читалась без подписей.
+ */
+export function SubTabs({ items }: { items: { href: string; label: string; count?: number; hint?: string; on: boolean }[] }) {
   return (
     <nav className="mb-4 flex flex-wrap gap-2">
-      {Object.values(HOUSES).map((h) => {
-        const on = h.house === active;
-        return (
-          <Link
-            key={h.house}
-            href={`/admin/carnect?house=${h.house}`}
-            aria-current={on ? "page" : undefined}
-            className="rounded-lg px-3 py-2 text-sm"
-            style={{
-              backgroundColor: on ? "var(--axis-bronze-deep, #9D5E34)" : C.card,
-              border: `1px solid ${on ? "transparent" : C.line}`,
-              color: on ? "#fff" : C.text,
-            }}
-          >
-            <div className="font-semibold">{h.name}</div>
-            <div className="text-[11px]" style={{ color: on ? "rgba(255,255,255,0.8)" : C.muted }}>
-              {h.sessions.map((s) => (s.venue ? `${s.day} · ${s.venue}` : s.day)).join(" / ")}
-            </div>
-          </Link>
-        );
-      })}
+      {items.map((it) => (
+        <Link
+          key={it.href}
+          href={it.href}
+          aria-current={it.on ? "page" : undefined}
+          title={it.hint}
+          className="rounded-full px-3 py-1 text-xs"
+          style={{
+            border: `1px solid ${it.on ? C.accent : C.line}`,
+            color: it.on ? C.accent : C.text,
+          }}
+        >
+          {it.label}
+          {it.count !== undefined && <span style={{ color: C.muted }}> · {it.count.toLocaleString("ru-RU")}</span>}
+        </Link>
+      ))}
     </nav>
   );
 }

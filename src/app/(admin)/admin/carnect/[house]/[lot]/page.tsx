@@ -16,11 +16,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireAdmin } from "../../../auction/shell";
-import { getLotDetail } from "@/lib/carnect/cached";
+import { getHeyCar, getLotDetail } from "@/lib/carnect/cached";
 import { HOUSES, isHouse } from "@/lib/carnect/houses";
 import type { CarnectLotDetail } from "@/lib/carnect/types";
 
 import { C, FieldTable, Page, Panel, Stat, ago, km, krw } from "../../ui";
+import { HeyCarBody } from "./hey";
 
 export const dynamic = "force-dynamic";
 
@@ -206,12 +207,62 @@ function Body({ lot }: { lot: CarnectLotDetail }) {
   );
 }
 
+/**
+ * Машина HeyDealer — тот же маршрут /admin/carnect/<источник>/<id>, но свои
+ * данные и своя разметка (hey.tsx). Отдельной папки под heydealer не
+ * заводим: сегмент [house] и так принимает имя источника.
+ */
+async function HeyCarPreview({ id }: { id: string }) {
+  const t0 = Date.now();
+  const res = await getHeyCar(id);
+  const ms = Date.now() - t0;
+  const type = res.status === "ok" ? res.car.heydealer?.auctionType ?? res.car.auctionType : undefined;
+
+  return (
+    <Page>
+      <Link
+        href={`/admin/carnect?house=heydealer${typeof type === "string" ? `&type=${type}` : ""}`}
+        className="text-sm"
+        style={{ color: C.accent }}
+      >
+        ← HeyDealer
+      </Link>
+      <header className="mb-4 mt-2">
+        <h1 className="text-xl font-semibold">
+          {res.status === "ok" ? `${res.car.year ?? ""} ${res.car.make ?? ""} ${res.car.model ?? ""}`.trim() : id}
+        </h1>
+        <p className="mt-1 text-xs" style={{ color: C.muted }}>
+          {res.status === "ok" && res.car.gradeEn ? `${res.car.gradeEn} · ` : ""}
+          id <code>{id}</code> · ответ {ms} мс ({ms < 200 ? "из кеша" : "свежий поход"}) · загружено {ago(res.fetchedAt)}
+        </p>
+      </header>
+
+      {res.status === "ok" && <HeyCarBody car={res.car} />}
+      {res.status === "gone" && (
+        <Panel title="Машина ушла">
+          <p className="text-sm">carnect отдал страницу «не найдено»: машину продали или сняли с HeyDealer.</p>
+        </Panel>
+      )}
+      {res.status === "failed" && (
+        <Panel title={res.parser ? "Не разобралось" : "Источник не ответил"}>
+          <p className="text-sm" style={{ color: C.bad }}>
+            {res.parser
+              ? "Страница пришла, но объекта car в ней нет — carnect сменил разметку. Чинить heydealer.ts."
+              : "carnect не отдал страницу. Это не значит, что машина ушла; обновите позже."}
+          </p>
+        </Panel>
+      )}
+    </Page>
+  );
+}
+
 export default async function CarnectLotPreview({ params }: { params: Promise<{ house: string; lot: string }> }) {
   await requireAdmin();
   const { house, lot: rawLot } = await params;
-  if (!isHouse(house)) notFound();
   // Сегмент приходит закодированным: в lotId бывают "~" и base64.
   const lotId = decodeURIComponent(rawLot);
+  if (house === "heydealer") return <HeyCarPreview id={lotId} />;
+  if (!isHouse(house)) notFound();
 
   const t0 = Date.now();
   const res = await getLotDetail(house, lotId);
