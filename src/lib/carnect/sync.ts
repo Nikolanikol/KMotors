@@ -3,9 +3,9 @@
 // Одна «лента» = один обход одного списка carnect:
 //   lotte, sk, glovis, kcar, autohub — по площадке (1–3 минуты каждая);
 //   auctions      — все пять подряд (~7 минут) — ЛЕГАСИ, см. ниже;
-//   hey-self      — HeyDealer Self      (~165 страниц по 20, ~8 минут);
-//   hey-zero      — HeyDealer Zero      (~195 страниц, ~10 минут);
-//   hey-instant   — HeyDealer Instant   (~65 страниц, ~4 минуты).
+//   hey-self      — HeyDealer Self      (~3 300 машин, срезами, ~20 минут);
+//   hey-zero      — HeyDealer Zero      (~3 900 машин, срезами, ~23 минуты);
+//   hey-instant   — HeyDealer Instant   (~1 300 машин, срезами, ~7.5 минуты).
 // Ленты — отдельные задания крона (scripts/cron/run.mjs), а не одно общее.
 //
 // ⚠️ ПЛОЩАДКИ — ОТДЕЛЬНЫЕ ЛЕНТЫ (решение владельца 02.10.2026): у каждой
@@ -23,7 +23,9 @@
 // сутки), а не угадывается по календарю: когда площадка реально выложит
 // партию, первый же прогон после этого это увидит и обойдёт её целиком.
 //
-// ⚠️ ОТМЕТКА «УШЁЛ» — только по ПОЛНОМУ обходу и только после двух подряд.
+// ⚠️ ОТМЕТКА «УШЁЛ» У ПЛОЩАДОК — только по ПОЛНОМУ обходу и после двух подряд.
+// У HeyDealer — по окончанию торгов (expireHey): его обход неполный по
+// природе (сломанные страницы carnect), и по отсутствию судить нельзя.
 // Пока мы листаем, у carnect появляются и исчезают машины, страницы
 // сдвигаются, и живой лот можно пропустить. Поэтому:
 //   • прерванный обход (ошибка, потолок страниц) счётчики пропусков не трогает;
@@ -38,7 +40,7 @@ import { createHash } from "node:crypto";
 
 import { createServerClient } from "@/lib/supabase";
 
-import { fetchHeyPage, type HeyAuctionType, type HeyListCar, type HeySort } from "./heydealer";
+import { fetchHeyPage, type HeyAuctionType, type HeyListCar, type HeySlice } from "./heydealer";
 import { ALL_HOUSES, isHouse, type CarnectHouse } from "./houses";
 import { crawlPages, fetchListPage, type ListError } from "./list";
 import {
@@ -56,9 +58,11 @@ export type FeedId = CarnectHouse | "auctions" | "hey-self" | "hey-zero" | "hey-
 
 /**
  * Ленты и их лимит времени. ⚠️ Лимит держать МЕНЬШЕ таймаута задачи в
- * Coolify (площадки — 10 минут, HeyDealer — 20 минут): обрыв должен
+ * Coolify (площадки — 10 минут, HeyDealer — 30 минут): обрыв должен
  * происходить по нашим правилам, с записью в журнал, а не снаружи.
  * Лимит площадки — вдвое с запасом от самой крупной (Lotte, ~3 минуты).
+ * HeyDealer — 25 минут: запрос со срезом отвечает медленнее (~5.5 с вместе
+ * с паузой против ~3 с, замер 02.10.2026), Zero это ~250 запросов, ~23 минуты.
  */
 export const FEEDS: Record<FeedId, { about: string; budgetMs: number }> = {
   lotte: { about: "Lotte", budgetMs: 8 * 60_000 },
@@ -67,9 +71,9 @@ export const FEEDS: Record<FeedId, { about: string; budgetMs: number }> = {
   kcar: { about: "K Car", budgetMs: 8 * 60_000 },
   autohub: { about: "Autohub", budgetMs: 8 * 60_000 },
   auctions: { about: "все пять площадок (легаси)", budgetMs: 15 * 60_000 },
-  "hey-self": { about: "HeyDealer Self", budgetMs: 15 * 60_000 },
-  "hey-zero": { about: "HeyDealer Zero", budgetMs: 15 * 60_000 },
-  "hey-instant": { about: "HeyDealer Instant", budgetMs: 15 * 60_000 },
+  "hey-self": { about: "HeyDealer Self", budgetMs: 25 * 60_000 },
+  "hey-zero": { about: "HeyDealer Zero", budgetMs: 25 * 60_000 },
+  "hey-instant": { about: "HeyDealer Instant", budgetMs: 25 * 60_000 },
 };
 
 const HEY_FEED: Partial<Record<FeedId, HeyAuctionType>> = {
@@ -79,15 +83,39 @@ const HEY_FEED: Partial<Record<FeedId, HeyAuctionType>> = {
 };
 
 /**
- * Проходы HeyDealer. ⚠️ Явные сортировки (mileageAsc, priceAsc) воспроизводимы,
- * но у carnect ОБРЕЗАНЫ: отдают ~13 страниц (~260 машин) из 65 — пробный обход
- * 02.10.2026 собрал ими 20% Instant. Порядок по умолчанию (newest) не обрезан,
- * но нестабилен от запроса к запросу, поэтому два его прохода объединяются:
- * что «перескочило» мимо в первом, ловится вторым.
- * ⚠️ Полнота этой схемы ещё НЕ ЗАМЕРЕНА — задания carnect-hey-* в кроне не
- * включать, пока пробный обход (?dry=1) не покажет coverage ≥ 95%.
+ * HeyDealer обходится СРЕЗАМИ по году выпуска, а не одним списком (разведка
+ * 02.10.2026, подробно — HeySlice в heydealer.ts): у carnect ломаются
+ * отдельные страницы, и на маленьком срезе их почти нет. Схема простая и
+ * фиксированная, без рекурсии (решение владельца 02.10.2026: «пусть качает
+ * часть машин, но всегда и стабильно»):
+ *   • всё до 2009 года — один срез (там машин мало), дальше — по году;
+ *   • год, где машин больше HEY_SLICE_MAX, делится на четыре постоянных
+ *     диапазона пробега;
+ *   • сломанные страницы перешагиваются, машины с них в этот раз теряются.
+ * Ожидаемая полнота 85–95%. Это не авария: машина HeyDealer пропадает из
+ * каталога по окончанию своих торгов (expireHey), а не по отсутствию в обходе,
+ * поэтому неполный обход ничего живого не прячет.
  */
-const HEY_SORTS: HeySort[] = ["newest", "newest"];
+const HEY_SLICE_MAX = 240;
+const HEY_KM_BUCKETS: HeySlice[] = [
+  { kmMax: 50_000 },
+  { kmMin: 50_001, kmMax: 100_000 },
+  { kmMin: 100_001, kmMax: 150_000 },
+  { kmMin: 150_001 },
+];
+
+/** Срезы по году: до 2009 одним куском, дальше по году до следующего (модельный год). */
+function heyYearSlices(): HeySlice[] {
+  const last = new Date().getUTCFullYear() + 1;
+  const out: HeySlice[] = [{ yearMax: 2009 }];
+  for (let y = 2010; y <= last; y++) out.push({ yearMin: y, yearMax: y });
+  return out;
+}
+
+const sliceLabel = (s: HeySlice) =>
+  [s.yearMin === s.yearMax && s.yearMin ? `${s.yearMin}` : `${s.yearMin ?? "…"}–${s.yearMax ?? "…"}`,
+    s.kmMin != null || s.kmMax != null ? `км ${s.kmMin ?? 0}–${s.kmMax ?? "∞"}` : ""]
+    .filter(Boolean).join(" ");
 
 export function isFeed(v: string | null | undefined): v is FeedId {
   return !!v && v in FEEDS;
@@ -230,8 +258,8 @@ interface Crawl {
   requests: number;
   complete: boolean;
   error?: ListError;
-  /** HeyDealer: сколько машин дал каждый проход — видно, что добавил второй. */
-  perSort?: Record<string, number>;
+  /** HeyDealer: сколько срезов обойдено и где были сломанные страницы. */
+  detail?: Record<string, unknown>;
   /** Отпечаток первой страницы площадки — для проверки «ничего не изменилось». */
   fingerprint?: string;
   /** Обход не делался: отпечаток совпал с прошлым полным прогоном. */
@@ -323,51 +351,89 @@ async function crawlHouse(house: CarnectHouse, now: string, signal: AbortSignal 
 }
 
 /**
+ * Обход одного типа HeyDealer срезами (HEY_SLICE_MAX, heyYearSlices). Не
+ * делит рекурсивно и не повторяет: план обхода известен заранее, а значит,
+ * известны и число запросов, и время. Отказ сайта (403, 429, недоступен)
+ * останавливает обход целиком — собранное до него сохраняется.
+ */
+async function crawlHey(type: HeyAuctionType, now: string, signal: AbortSignal | undefined): Promise<Crawl> {
+  const scope = { house: "heydealer", heyType: type };
+  const byId = new Map<string, HeyListCar>();
+  const broken: string[] = [];
+  let requests = 0;
+  let slices = 0;
+  let error: ListError | undefined;
+
+  // Общий total типа — только для отчёта о полноте: сколько обещано всего.
+  const head = await fetchHeyPage(type, 1, signal);
+  requests++;
+  if ("error" in head) return { scope, rows: [], total: 0, requests, complete: false, error: head.error };
+  const total = head.page.total;
+
+  /** Обходит один срез; первую страницу можно передать готовой, чтобы не брать её дважды. */
+  const crawlSlice = async (slice: HeySlice, firstPage?: Awaited<ReturnType<typeof fetchHeyPage>>) => {
+    slices++;
+    const r = await crawlPages<HeyListCar>(
+      (p) => (p === 1 && firstPage ? Promise.resolve(firstPage) : fetchHeyPage(type, p, signal, slice)),
+      (c) => c.id,
+      { signal },
+    );
+    // Первую страницу, взятую заранее, crawlPages посчитал как свой запрос.
+    requests += r.requests - (firstPage ? 1 : 0);
+    for (const c of r.items) byId.set(c.id, c);
+    if (r.brokenPages.length) broken.push(`${sliceLabel(slice)}: стр. ${r.brokenPages.join(",")}`);
+    return r;
+  };
+
+  for (const year of heyYearSlices()) {
+    if (signal?.aborted || error) break;
+    const first = await fetchHeyPage(type, 1, signal, year);
+    requests++;
+    if ("error" in first) {
+      error = first.error;
+      break;
+    }
+    // Пустая первая страница с total 0 — это или правда пустой год, или
+    // сломанная страница. Различить нельзя, поэтому такой год, как и
+    // крупный, обходится по диапазонам пробега: пустой год стоит четыре
+    // лишних запроса, а сломанный не теряется целиком.
+    const split = first.page.total > HEY_SLICE_MAX || (first.page.total === 0 && !first.page.items.length);
+    if (!split) {
+      const r = await crawlSlice(year, first);
+      if (r.error) error = r.error;
+      continue;
+    }
+    for (const km of HEY_KM_BUCKETS) {
+      if (signal?.aborted) break;
+      const r = await crawlSlice({ ...year, ...km });
+      if (r.error) {
+        error = r.error;
+        break;
+      }
+    }
+  }
+
+  return {
+    scope,
+    rows: [...byId.values()].map((c) => heyRow(c, type, now)),
+    total,
+    requests,
+    // Полнота HeyDealer на отметку ушедших не влияет (expireHey), поэтому
+    // «полным» обход не объявляется никогда — markMissing его не тронет.
+    complete: false,
+    error,
+    detail: { slices, brokenPages: broken },
+  };
+}
+
+/**
  * Обходит ленту. Для auctions — пять обходов, по одному на площадку: у
  * каждой свой total и своя полнота, и отметка ушедших ведётся по площадке.
  */
 async function crawlFeed(feed: FeedId, now: string, signal?: AbortSignal, prev: PrevRun | null = null): Promise<Crawl[]> {
   if (isHouse(feed)) return [await crawlHouse(feed, now, signal, prev)];
   const heyType = HEY_FEED[feed];
-  if (heyType) {
-    // ⚠️ Проходы по HEY_SORTS и объединение по id: у carnect соседние
-    // страницы нахлёстываются, и машины на стыках в одном проходе не
-    // показываются вовсе (подробно — HeySort в heydealer.ts). Цена — вдвое
-    // больше запросов; зато полнота, без которой нельзя честно помечать
-    // машины ушедшими.
-    const byId = new Map<string, HeyListCar>();
-    let requests = 0;
-    let total = 0;
-    let complete = true;
-    let error: ListError | undefined;
-    const perSort: Record<string, number> = {};
-    for (const [i, sort] of HEY_SORTS.entries()) {
-      if (signal?.aborted) {
-        complete = false;
-        break; // лимит времени вышел — второй проход не начинаем
-      }
-      const r = await crawlPages<HeyListCar>((p) => fetchHeyPage(heyType, p, signal, sort), (c) => c.id, { signal });
-      requests += r.requests;
-      total = Math.max(total, r.total);
-      complete &&= r.complete;
-      // Ключ с номером прохода: сортировки повторяются (два newest), и по
-      // одному имени второй проход затёр бы первый. Рядом — сколько машин
-      // накоплено после прохода: прирост и есть вклад второго прохода.
-      for (const c of r.items) byId.set(c.id, c);
-      perSort[`${i + 1}:${sort}`] = r.items.length;
-      perSort[`${i + 1}:union`] = byId.size;
-      if (r.error) {
-        error = r.error;
-        complete = false;
-        break; // второй проход по тому же сайту после отказа не делаем
-      }
-    }
-    return [{
-      scope: { house: "heydealer", heyType },
-      rows: [...byId.values()].map((c) => heyRow(c, heyType, now)),
-      total, requests, complete, error, perSort,
-    }];
-  }
+  if (heyType) return [await crawlHey(heyType, now, signal)];
   const out: Crawl[] = [];
   for (const house of ALL_HOUSES) {
     // Лимит времени вышел — следующую площадку не начинаем. Её строки в
@@ -420,6 +486,31 @@ async function markMissing(scope: Crawl["scope"], runStartedAt: string): Promise
   return gone.data?.length ?? 0;
 }
 
+/**
+ * Машины HeyDealer, которые ушли: торги закончились (end_at в прошлом с
+ * запасом), а у машин без end_at — не видели HEY_STALE_MS. Не зависит от
+ * полноты обхода: машина со сломанной страницы, которую мы в этот раз не
+ * увидели, остаётся в каталоге до своего окончания торгов. Появится снова в
+ * обходе (перевыставили) — upsert вернёт её: gone_at в строке синка null.
+ */
+const HEY_END_GRACE_MS = 6 * 60 * 60 * 1000;
+const HEY_STALE_MS = 3 * 24 * 60 * 60 * 1000;
+
+async function expireHey(type: string): Promise<number> {
+  const ended = new Date(Date.now() - HEY_END_GRACE_MS).toISOString();
+  const unseen = new Date(Date.now() - HEY_STALE_MS).toISOString();
+  const { data, error } = await createServerClient()
+    .from("carnect_lots")
+    .update({ gone_at: new Date().toISOString() })
+    .eq("house", "heydealer")
+    .eq("hey_type", type)
+    .is("gone_at", null)
+    .or(`end_at.lt.${ended},and(end_at.is.null,last_seen_at.lt.${unseen})`)
+    .select("external_id");
+  if (error) throw new Error(error.message);
+  return data?.length ?? 0;
+}
+
 // ─── Надзор за прогоном ──────────────────────────────────────────────────
 //
 // Задача: прогон не может ни висеть бесконечно, ни упасть молча. Четыре
@@ -454,6 +545,8 @@ const STALE_AFTER_MS = MAX_BUDGET_MS + 5 * 60 * 1000;
 
 /** Полнота ниже этой доли total — повод для уведомления (и не повод помечать ушедших). */
 const MIN_COVERAGE = 0.9;
+/** То же для HeyDealer: 85–95% там норма (сломанные страницы), тревога — ниже 70%. */
+const HEY_MIN_COVERAGE = 0.7;
 
 /**
  * Ленты, которые сейчас идут в этом процессе. Прод — один контейнер (как и
@@ -549,7 +642,10 @@ function problems(r: FeedSyncResult, crawls: Crawl[], timedOut: boolean, budgetM
   for (const c of crawls) {
     if (c.skipped) continue; // не обходили — полноту не с чего считать
     const name = c.scope.heyType ? `${c.scope.house}:${c.scope.heyType}` : c.scope.house;
-    if (c.total && c.rows.length < c.total * MIN_COVERAGE) {
+    // У HeyDealer неполнота заложена в схему (сломанные страницы), тревога —
+    // только если собрано совсем мало: значит, сломалось что-то посерьёзнее.
+    const min = c.scope.heyType ? HEY_MIN_COVERAGE : MIN_COVERAGE;
+    if (c.total && c.rows.length < c.total * min) {
       out.push(`⚠️ ${name}: собрано ${c.rows.length} из ${c.total} (${Math.round((100 * c.rows.length) / c.total)}%)`);
     }
   }
@@ -615,7 +711,7 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
         // не «сайт не ответил». Назвать его unavailable значит спутать причину.
         error: budget.aborted && c.error === "unavailable" ? "timeout" : c.error ?? null,
         coverage: c.total ? `${Math.round((100 * c.rows.length) / c.total)}%` : "—",
-        ...(c.perSort ? { perSort: c.perSort } : {}),
+        ...(c.detail ?? {}),
       })),
       recognized: {
         make: share(rows, (r) => r.make),
@@ -657,8 +753,14 @@ export async function syncFeed(feed: FeedId, opts: { dry?: boolean; signal?: Abo
       result.upserted += Math.min(CHUNK, rows.length - i);
     }
 
-    // Отметка пропавших — только по полным обходам, собравшим >= 90% total.
+    // Отметка ушедших. HeyDealer — по окончанию торгов (expireHey), от
+    // полноты обхода не зависит. Площадки — только по полным обходам,
+    // собравшим >= 90% total, и на втором пропуске подряд (markMissing).
     for (const c of crawls) {
+      if (c.scope.heyType) {
+        result.gone += await expireHey(c.scope.heyType);
+        continue;
+      }
       if (!c.complete || c.error || c.rows.length < c.total * MIN_COVERAGE) continue;
       result.gone += await markMissing(c.scope, startedAt);
     }

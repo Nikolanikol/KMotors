@@ -185,29 +185,35 @@ const JOBS = {
     schedule: "—",
     about: "ЛЕГАСИ, не запускать: все пять площадок разом (заменено carnect-lotte … carnect-autohub)",
   },
+  // HeyDealer — три задания по типу аукциона. Обход срезами по году и пробегу
+  // (src/lib/carnect/sync.ts, crawlHey): у carnect ломаются отдельные
+  // страницы, полнота 75–90% — это норма схемы, а не сбой. Машина уходит из
+  // каталога по окончанию своих торгов, а не по отсутствию в обходе.
+  // Лимит синка 25 минут; таймаут задачи в Coolify ставить 30. Минуты
+  // разнесены так, чтобы задания не накладывались: Zero идёт до ~23 минут.
   "carnect-hey-instant": {
     path: "/api/carnect/sync?feed=hey-instant",
     method: "GET",
     secretEnv: "POSTER_CRON_SECRET",
     header: "x-poster-secret",
-    schedule: "25 7,20 * * *",
-    about: "HeyDealer Instant (фиксированная цена), ~4 минуты — ⚠️ НЕ включать до замера полноты (docs/carnect.md)",
+    schedule: "35 5,20 * * *",
+    about: "HeyDealer Instant (фиксированная цена), ~7.5 минуты",
   },
   "carnect-hey-self": {
     path: "/api/carnect/sync?feed=hey-self",
     method: "GET",
     secretEnv: "POSTER_CRON_SECRET",
     header: "x-poster-secret",
-    schedule: "35 7,20 * * *",
-    about: "HeyDealer Self (фото от продавца, ставки), ~8 минут — ⚠️ НЕ включать до замера полноты (docs/carnect.md)",
+    schedule: "45 5,20 * * *",
+    about: "HeyDealer Self (фото от продавца, ставки), ~20 минут",
   },
   "carnect-hey-zero": {
     path: "/api/carnect/sync?feed=hey-zero",
     method: "GET",
     secretEnv: "POSTER_CRON_SECRET",
     header: "x-poster-secret",
-    schedule: "50 7,20 * * *",
-    about: "HeyDealer Zero (осмотр инспектором, ставки), ~10 минут — ⚠️ НЕ включать до замера полноты (docs/carnect.md)",
+    schedule: "10 6,21 * * *",
+    about: "HeyDealer Zero (осмотр инспектором, ставки), ~23 минуты",
   },
 };
 
