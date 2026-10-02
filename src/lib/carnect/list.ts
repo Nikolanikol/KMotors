@@ -36,7 +36,13 @@ import type { CarnectIngest, CarnectListLot, CarnectListPage } from "./types";
  */
 const MAX_PAGES = 120;
 
-export type ListError = "parser" | "unavailable" | "rate-limited" | "unknown-house";
+/**
+ * Почему список не получен. "blocked" отдельно от "rate-limited": 403 от их
+ * Cloudflare — это правило доступа (например, закрыты корейские адреса,
+ * проверено 02.10.2026 с машины владельца), и ожидание его не снимет, а 429/503 —
+ * просьба притормозить, которая проходит сама.
+ */
+export type ListError = "parser" | "unavailable" | "rate-limited" | "blocked" | "unknown-house";
 
 export interface HouseListResult {
   house: CarnectHouse;
@@ -99,7 +105,10 @@ export async function fetchListPage(
   // На СПИСКЕ soft-404 означает, что carnect не знает такой площадки —
   // переименовали адрес. Это не «торгов нет», а повод сверить HOUSES.
   if (res.kind === "gone") return { error: "unknown-house" };
-  if (res.kind === "failed") return { error: res.rateLimited ? "rate-limited" : "unavailable" };
+  if (res.kind === "failed") {
+    if (res.status === 403) return { error: "blocked" };
+    return { error: res.rateLimited ? "rate-limited" : "unavailable" };
+  }
 
   const flight = decodeFlight(res.html);
   const data = pick(flight, "data", isListPage);
