@@ -34,7 +34,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await syncFeed(feed, { dry: req.nextUrl.searchParams.get("dry") === "1", signal: req.signal });
+    // ⚠️ req.signal в синк НЕ передаём. Если Coolify перестанет ждать (его
+    // таймаут) или соединение порвётся, обход должен дойти до конца и
+    // записать итог в журнал, а не оборваться на полуслове с частью лотов.
+    // Время прогона ограничивает свой лимит внутри syncFeed (RUN_BUDGET_MS).
+    const result = await syncFeed(feed, { dry: req.nextUrl.searchParams.get("dry") === "1" });
     return NextResponse.json(result);
   } catch (err) {
     // syncFeed не бросает; сюда попадём только при ошибке вне его try.
