@@ -146,34 +146,47 @@ export interface HeyCarDetail extends HeyListCar {
 const isHeyCar = (x: Record<string, unknown>) => typeof x.id === "string" && x.source === "HeyDealer";
 
 /**
- * Сортировки списка у carnect (сняты из их JS 02.10.2026). По умолчанию —
- * newest, и в адрес она не пишется.
+ * Срез списка HeyDealer: фильтры carnect по году выпуска и пробегу. Границы
+ * включительные с обеих сторон (проверено 02.10.2026: Zero 2020 = 30 машин
+ * до 50 000 км + 238 от 50 001 км = 268, ровно весь год).
  *
- * ⚠️ newest НЕСТАБИЛЬНА: два одинаковых прохода по страницам 1–4 дали разный
- * порядок на страницах 2 и 3 (72 и 67 уникальных машин из 80). mileageAsc и
- * priceAsc воспроизводимы от прохода к проходу, но ОБРЕЗАНЫ: carnect отдаёт
- * по ним только ~13 страниц (~260 машин), дальше пусто — обход ими собрал 20%
- * Instant. Поэтому синк обходит дважды в порядке по умолчанию и объединяет
- * (HEY_SORTS в sync.ts); полнота этой схемы ещё не замерена.
+ * ⚠️ ЗАЧЕМ РЕЗАТЬ, а не листать весь список. Разведка 02.10.2026:
+ *   • у carnect ЛОМАЮТСЯ ОТДЕЛЬНЫЕ СТРАНИЦЫ: приходят пустыми и с total 0,
+ *     хотя соседние целые (2018 год Zero: страницы 5, 12, 15, 16 из 17).
+ *     Сломанная страница стабильна — три повтора с паузой дают то же самое,
+ *     то есть повторять бесполезно. Скорее всего, на ней лежит машина, на
+ *     которой падает их сервер;
+ *   • на маленьком срезе сломанных страниц мало или нет вовсе (2015 год,
+ *     247 машин — 100% дважды подряд), на большом их много (2016–2017,
+ *     629 машин — три подряд, 90%);
+ *   • явные сортировки (mileageAsc, priceAsc) НЕ помогают: на тех же
+ *     срезах ломаются ещё раньше, поэтому синк их не использует.
+ * Марку для нарезки не берём: у ~10% машин HeyDealer она пустая, и такие
+ * машины не попали бы ни в один срез. Год и пробег есть у всех.
  */
-export type HeySort = "newest" | "mileageAsc" | "priceAsc" | "priceDesc";
+export interface HeySlice {
+  yearMin?: number;
+  yearMax?: number;
+  kmMin?: number;
+  kmMax?: number;
+}
 
-/** Адрес страницы списка одного типа. ?page=1 и sort=newest не пишем. */
-function heyPath(type: HeyAuctionType, page: number, sort: HeySort = "newest"): string {
+/** Адрес страницы списка одного типа. ?page=1 не пишем; срез — только заданные границы. */
+function heyPath(type: HeyAuctionType, page: number, slice: HeySlice = {}): string {
   const q = new URLSearchParams({ auctionType: type });
-  if (sort !== "newest") q.set("sort", sort);
+  for (const [k, v] of Object.entries(slice)) if (v != null) q.set(k, String(v));
   if (page > 1) q.set("page", String(page));
   return `/catalog?${q.toString()}`;
 }
 
-/** Одна страница списка HeyDealer одного типа. Не бросает. */
+/** Одна страница списка HeyDealer одного типа (весь тип или срез). Не бросает. */
 export async function fetchHeyPage(
   type: HeyAuctionType,
   page: number,
   signal?: AbortSignal,
-  sort?: HeySort,
+  slice?: HeySlice,
 ): Promise<{ page: DataPage<HeyListCar>; flight: string } | { error: ListError }> {
-  return fetchDataPage<HeyListCar>(heyPath(type, page, sort), isHeyCar, signal);
+  return fetchDataPage<HeyListCar>(heyPath(type, page, slice), isHeyCar, signal);
 }
 
 export type HeyCarResult =

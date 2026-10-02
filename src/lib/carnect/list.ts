@@ -204,6 +204,11 @@ export interface CrawlResult<T> {
    * обход «не видел» лоты просто потому, что не дошёл до них (sync.ts).
    */
   complete: boolean;
+  /**
+   * Номера сломанных страниц: пришли пустыми и с total 0 посреди живого
+   * списка. Обход их перешагнул; машины с них в этот раз не собраны.
+   */
+  brokenPages: number[];
   error?: ListError;
 }
 
@@ -219,6 +224,16 @@ export interface CrawlResult<T> {
  * HeyDealer Instant из 1 301, посчитав себя полным: у carnect соседние
  * страницы НАХЛЁСТЫВАЮТСЯ (замер: 4–13 повторов на 60–80 машин), и подряд
  * может прийти страница одних повторов. Идём до последней страницы по total.
+ *
+ * ⚠️ Пустая страница бывает ДВУХ видов, и путать их нельзя (разведка 02.10.2026):
+ *   • total > 0 — настоящий конец списка (страниц стало меньше посреди
+ *     обхода). Останавливаемся.
+ *   • total = 0 при живом списке — СЛОМАННАЯ страница: у carnect падает
+ *     отрисовка (видимо, на какой-то машине), соседние страницы целы. Её
+ *     перешагиваем и идём дальше; раньше обход принимал её за конец и бросал
+ *     всё после неё. Повтор не поможет — сломанная страница стабильна.
+ * Обход со сломанными страницами полным НЕ считается: машины с них не
+ * видны, и помечать их ушедшими нельзя.
  */
 export async function crawlPages<T>(
   fetchPage: (page: number) => Promise<{ page: DataPage<T>; flight: string } | { error: ListError }>,
@@ -226,7 +241,7 @@ export async function crawlPages<T>(
   opts: { maxPages?: number; signal?: AbortSignal } = {},
 ): Promise<CrawlResult<T>> {
   const empty: CarnectIngest = { lastIngestAt: null, lastStatus: null, lastIngestCount: null, lastIngestExpected: null };
-  const result: CrawlResult<T> = { items: [], total: 0, requests: 0, ingest: empty, complete: false };
+  const result: CrawlResult<T> = { items: [], total: 0, requests: 0, ingest: empty, complete: false, brokenPages: [] };
   const seen = new Set<string>();
   const add = (items: T[]) => {
     let fresh = 0;
@@ -258,6 +273,10 @@ export async function crawlPages<T>(
     result.requests++;
     if ("error" in next) return { ...result, error: next.error };
     if (!next.page.items.length) {
+      if (next.page.total === 0) {
+        result.brokenPages.push(page);
+        continue;
+      }
       stoppedAt = page - 1;
       break;
     }
@@ -269,7 +288,8 @@ export async function crawlPages<T>(
   // с явной сортировкой carnect отдаёт HeyDealer только ~13 страниц из 65
   // (замер 02.10.2026), и такой обход полным не считается. Насколько полно
   // собрано по существу, вызывающий дополнительно сверяет с total (sync.ts).
-  result.complete = pages <= cap && stoppedAt >= lastPage - 1 && !opts.signal?.aborted;
+  result.complete =
+    pages <= cap && stoppedAt >= lastPage - 1 && !result.brokenPages.length && !opts.signal?.aborted;
   return result;
 }
 
