@@ -1,254 +1,54 @@
-// Просмотрщик carnect.biz: один лот со всеми полями, что отдаёт источник.
+// Страница машины carnect в админке: лот аукциона или машина HeyDealer.
 //
 //   /admin/carnect/glovis/<lotId>
+//   /admin/carnect/heydealer/<id>
 //
-// Блоки идут от «что увидит клиент» к «что лежит внутри»: шапка с ценой и
-// датой торгов → галерея → лист осмотра и юридическая чистота → сканы →
-// все поля таблицей → сырой JSON. Последние два нужны, чтобы проектировать
-// схему по живым данным, а не по догадкам.
+// Данные источника сводятся к единой карточке (src/lib/carnect/card.ts), и
+// рисует её один компонент (CarCardView) — у аукционов и HeyDealer разная
+// механика, но страница одна. Блок «Только для нас» внизу — служебное: сканы,
+// ставки, все поля и сырой JSON, по которым мы сверяем источник.
 //
-// Набор деталей у площадок РАЗНЫЙ (у Autobell сканы техпаспорта и акта, у
-// K Car акт осмотра и окрашенные панели, у Lotte лист узлов по группам),
-// поэтому каждый блок рисуется только при наличии данных и разбирает форму
-// терпимо: неизвестная форма уходит в таблицу полей, а не роняет страницу.
+// Детали тянутся с carnect по требованию и держатся в кеше час (cached.ts):
+// сколько бы раз машину ни открыли, к источнику уходит один запрос в час.
+// Пока он идёт, показывается loading.tsx.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireAdmin } from "../../../auction/shell";
+import { fromHey, fromLot } from "@/lib/carnect/card";
 import { getHeyCar, getLotDetail } from "@/lib/carnect/cached";
-import { HOUSES, isHouse } from "@/lib/carnect/houses";
-import type { CarnectLotDetail } from "@/lib/carnect/types";
+import { isHouse } from "@/lib/carnect/houses";
 
-import { C, FieldTable, Page, Panel, Stat, ago, km, krw } from "../../ui";
-import { HeyCarBody } from "./hey";
+import { C, Page, Panel } from "../../ui";
+import CarCardView from "./CarCardView";
 
 export const dynamic = "force-dynamic";
 
-/** Пункт листа осмотра. ok=false — узел требует ремонта. */
-type InspItem = { name?: string; status?: string; ok?: boolean };
+const BACK = "/admin/carnect/catalog";
 
 /**
- * Лист осмотра приходит двумя формами: группами ({groupEn, items:[…]}) у
- * Lotte и Autobell или плоским списком пунктов. Сводим к группам.
+ * ⚠️ «Ушла» и «источник не ответил» — РАЗНЫЕ исходы, и разводить их обязательно:
+ * то же правило, что у Encar и витрины аукционов. Сказать «продана» про живую
+ * машину, пока carnect лежит, — соврать.
  */
-function inspectionGroups(raw: unknown[] | undefined): { title: string; items: InspItem[] }[] {
-  if (!raw?.length) return [];
-  const groups: { title: string; items: InspItem[] }[] = [];
-  const loose: InspItem[] = [];
-  for (const g of raw) {
-    if (g && typeof g === "object" && Array.isArray((g as { items?: unknown }).items)) {
-      const o = g as { groupEn?: string; groupKo?: string; title?: string; items: InspItem[] };
-      groups.push({ title: o.groupEn ?? o.title ?? o.groupKo ?? "Осмотр", items: o.items });
-    } else if (g && typeof g === "object") {
-      loose.push(g as InspItem);
-    }
-  }
-  if (loose.length) groups.push({ title: "Осмотр", items: loose });
-  return groups;
-}
-
-/** Опции: у Autobell строки, у других площадок бывают объекты — показываем как есть. */
-function optionLabels(raw: unknown[] | undefined): string[] {
-  return (raw ?? []).map((o) => (typeof o === "string" ? o : JSON.stringify(o)));
-}
-
-function Images({ urls }: { urls: string[] }) {
-  return (
-    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-      {urls.map((u, i) => (
-        <a key={u + i} href={u} target="_blank" rel="noreferrer" className="block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={u}
-            alt=""
-            loading="lazy"
-            className="aspect-[4/3] w-full rounded-lg object-cover"
-            style={{ backgroundColor: "#1E1E1E" }}
-          />
-        </a>
-      ))}
-    </div>
-  );
-}
-
-function Body({ lot }: { lot: CarnectLotDetail }) {
-  const photos = lot.photos?.length ? lot.photos : lot.photo ? [lot.photo] : [];
-  const insp = inspectionGroups(lot.inspection);
-  const legal = lot.legalStatus ?? lot.legal;
-  const scans = [lot.registrationImage, lot.inspectionSheetImage].filter((x): x is string => !!x);
-  const options = optionLabels(lot.options);
-  const damages = (lot.damages ?? []) as unknown[];
-
-  return (
-    <>
-      <section className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <Stat label="старт" value={krw(lot.startKrw)} hint={lot.afterBidKrw ? `после торгов ${krw(lot.afterBidKrw)}` : undefined} />
-        <Stat label="пробег" value={km(lot.km)} />
-        <Stat label="торги" value={lot.auctionDate ?? "—"} hint={lot.startAt ?? undefined} />
-        <Stat label="площадка" value={lot.venue || lot.location || "—"} hint={`лот №${lot.lotNo ?? "?"} · ряд ${lot.lane ?? "?"}`} />
-        <Stat label="оценка" value={lot.inspGrade ?? "—"} />
-        <Stat label="статус" value={lot.status ?? "—"} />
-      </section>
-
-      <Panel title={`Фото — ${photos.length}`}>
-        {photos.length ? <Images urls={photos} /> : <p className="text-sm" style={{ color: C.muted }}>Нет фото.</p>}
-      </Panel>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Машина">
-          <FieldTable
-            data={{
-              VIN: lot.vin,
-              "номер": lot.vehicleNo,
-              "первая регистрация": lot.firstRegistrationDate,
-              "объём, см³": lot.cc,
-              "топливо": lot.fuel,
-              "коробка": lot.trans,
-              "цвет": lot.color,
-              "использование": lot.usage,
-              "комплектация": lot.grade,
-              "по-корейски": lot.titleKo,
-            }}
-          />
-        </Panel>
-
-        <Panel title="Юридическая чистота">
-          {legal ? (
-            <div className="flex gap-6 text-sm">
-              <span style={{ color: legal.seizures ? C.bad : C.good }}>арестов: {legal.seizures ?? "?"}</span>
-              <span style={{ color: legal.mortgages ? C.bad : C.good }}>залогов: {legal.mortgages ?? "?"}</span>
-            </div>
-          ) : (
-            <p className="text-sm" style={{ color: C.muted }}>Площадка не отдаёт.</p>
-          )}
-          {typeof lot.accidentHistory === "string" && (
-            <p className="mt-2 text-sm">ДТП по данным площадки: {lot.accidentHistory}</p>
-          )}
-          {lot.inspectionRecord && (
-            <div className="mt-3">
-              <FieldTable data={lot.inspectionRecord} />
-            </div>
-          )}
-        </Panel>
-      </div>
-
-      {insp.length > 0 && (
-        <Panel title="Лист осмотра узлов">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {insp.map((g, gi) => (
-              <div key={g.title + gi}>
-                <div className="mb-1 text-xs font-semibold" style={{ color: C.muted }}>
-                  {g.title}
-                </div>
-                <ul className="text-sm">
-                  {g.items.map((it, i) => (
-                    <li key={i} className="flex justify-between gap-2 py-0.5" style={{ borderTop: `1px solid ${C.line}` }}>
-                      <span>{it.name ?? "—"}</span>
-                      <span style={{ color: it.ok === false ? C.bad : C.muted }}>{it.status ?? ""}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      )}
-
-      {damages.length > 0 && (
-        <Panel title={`Повреждения — ${damages.length}`}>
-          <ul className="text-sm">
-            {damages.map((d, i) => (
-              <li key={i} className="font-mono text-xs">
-                {JSON.stringify(d)}
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      )}
-
-      {scans.length > 0 && (
-        <Panel title="Сканы документов" hint="Техпаспорт и акт осмотра площадки. Лежат на CDN аукциона.">
-          <Images urls={scans} />
-        </Panel>
-      )}
-
-      {options.length > 0 && (
-        <Panel title={`Опции — ${options.length}`}>
-          <div className="flex flex-wrap gap-1.5">
-            {options.map((o) => (
-              <span key={o} className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${C.line}` }}>
-                {o}
-              </span>
-            ))}
-          </div>
-        </Panel>
-      )}
-
-      {(lot.notes || lot.notesKo) && (
-        <Panel title="Примечания площадки">
-          <p className="whitespace-pre-line text-sm">{lot.notes ?? lot.notesKo}</p>
-        </Panel>
-      )}
-
-      <Panel title="Все поля" hint="Скаляры как есть; объекты и массивы — JSON-строкой.">
-        <FieldTable data={lot} skip={["photos"]} />
-      </Panel>
-
-      <Panel title="Сырой JSON">
-        <details>
-          <summary className="cursor-pointer text-xs" style={{ color: C.muted }}>
-            развернуть
-          </summary>
-          <pre className="mt-2 max-h-[600px] overflow-auto text-[11px]">{JSON.stringify(lot, null, 2)}</pre>
-        </details>
-      </Panel>
-    </>
-  );
-}
-
-/**
- * Машина HeyDealer — тот же маршрут /admin/carnect/<источник>/<id>, но свои
- * данные и своя разметка (hey.tsx). Отдельной папки под heydealer не
- * заводим: сегмент [house] и так принимает имя источника.
- */
-async function HeyCarPreview({ id }: { id: string }) {
-  const t0 = Date.now();
-  const res = await getHeyCar(id);
-  const ms = Date.now() - t0;
-  const type = res.status === "ok" ? res.car.heydealer?.auctionType ?? res.car.auctionType : undefined;
-
+function NotOk({ id, gone, parser }: { id: string; gone: boolean; parser: boolean }) {
   return (
     <Page>
-      <Link
-        href={`/admin/carnect?house=heydealer${typeof type === "string" ? `&type=${type}` : ""}`}
-        className="text-sm"
-        style={{ color: C.accent }}
-      >
-        ← HeyDealer
+      <Link href={BACK} className="text-sm" style={{ color: C.accent }}>
+        ← каталог
       </Link>
-      <header className="mb-4 mt-2">
-        <h1 className="text-xl font-semibold">
-          {res.status === "ok" ? `${res.car.year ?? ""} ${res.car.make ?? ""} ${res.car.model ?? ""}`.trim() : id}
-        </h1>
-        <p className="mt-1 text-xs" style={{ color: C.muted }}>
-          {res.status === "ok" && res.car.gradeEn ? `${res.car.gradeEn} · ` : ""}
-          id <code>{id}</code> · ответ {ms} мс ({ms < 200 ? "из кеша" : "свежий поход"}) · загружено {ago(res.fetchedAt)}
-        </p>
-      </header>
-
-      {res.status === "ok" && <HeyCarBody car={res.car} />}
-      {res.status === "gone" && (
-        <Panel title="Машина ушла">
-          <p className="text-sm">carnect отдал страницу «не найдено»: машину продали или сняли с HeyDealer.</p>
+      <h1 className="mb-4 mt-2 text-xl font-semibold">{id}</h1>
+      {gone ? (
+        <Panel title="Машина ушла с торгов">
+          <p className="text-sm">Источник отдал «не найдено»: продана или снята — что именно, он не говорит.</p>
         </Panel>
-      )}
-      {res.status === "failed" && (
-        <Panel title={res.parser ? "Не разобралось" : "Источник не ответил"}>
+      ) : (
+        <Panel title={parser ? "Не разобралось" : "Источник не ответил"}>
           <p className="text-sm" style={{ color: C.bad }}>
-            {res.parser
-              ? "Страница пришла, но объекта car в ней нет — carnect сменил разметку. Чинить heydealer.ts."
-              : "carnect не отдал страницу. Это не значит, что машина ушла; обновите позже."}
+            {parser
+              ? "Страница пришла, но объекта машины в ней нет — сменилась разметка. Чинить detail.ts / heydealer.ts."
+              : "Это не значит, что машина ушла; обновите позже."}
           </p>
         </Panel>
       )}
@@ -256,54 +56,23 @@ async function HeyCarPreview({ id }: { id: string }) {
   );
 }
 
-export default async function CarnectLotPreview({ params }: { params: Promise<{ house: string; lot: string }> }) {
+export default async function CarnectCarPage({ params }: { params: Promise<{ house: string; lot: string }> }) {
   await requireAdmin();
   const { house, lot: rawLot } = await params;
   // Сегмент приходит закодированным: в lotId бывают "~" и base64.
-  const lotId = decodeURIComponent(rawLot);
-  if (house === "heydealer") return <HeyCarPreview id={lotId} />;
-  if (!isHouse(house)) notFound();
+  const id = decodeURIComponent(rawLot);
 
   const t0 = Date.now();
-  const res = await getLotDetail(house, lotId);
+  if (house === "heydealer") {
+    const res = await getHeyCar(id);
+    const ms = Date.now() - t0;
+    if (res.status !== "ok") return <NotOk id={id} gone={res.status === "gone"} parser={res.status === "failed" && res.parser} />;
+    return <CarCardView card={fromHey(res.car)} backHref={BACK} meta={{ id, ms, fetchedAt: res.fetchedAt }} />;
+  }
+
+  if (!isHouse(house)) notFound();
+  const res = await getLotDetail(house, id);
   const ms = Date.now() - t0;
-
-  const title =
-    res.status === "ok"
-      ? `${res.lot.year ?? ""} ${res.lot.make ?? ""} ${res.lot.model ?? ""}`.trim()
-      : lotId;
-
-  return (
-    <Page>
-      <Link href={`/admin/carnect?house=${house}`} className="text-sm" style={{ color: C.accent }}>
-        ← {HOUSES[house].name}
-      </Link>
-      <header className="mb-4 mt-2">
-        <h1 className="text-xl font-semibold">{title}</h1>
-        <p className="mt-1 text-xs" style={{ color: C.muted }}>
-          {res.status === "ok" && res.lot.grade ? `${res.lot.grade} · ` : ""}
-          lotId <code>{lotId}</code> · ответ {ms} мс ({ms < 200 ? "из кеша" : "свежий поход"}) · загружено{" "}
-          {ago(res.fetchedAt)}
-        </p>
-      </header>
-
-      {res.status === "ok" && <Body lot={res.lot} />}
-      {res.status === "gone" && (
-        <Panel title="Лот ушёл с торгов">
-          <p className="text-sm">
-            carnect отдал страницу «не найдено». Лот продан или снят — что именно, источник не говорит.
-          </p>
-        </Panel>
-      )}
-      {res.status === "failed" && (
-        <Panel title={res.parser ? "Не разобралось" : "Источник не ответил"}>
-          <p className="text-sm" style={{ color: C.bad }}>
-            {res.parser
-              ? "Страница пришла, но объекта lot в ней нет — carnect сменил разметку. Чинить detail.ts."
-              : "carnect не отдал страницу. Это не значит, что лот ушёл; обновите позже."}
-          </p>
-        </Panel>
-      )}
-    </Page>
-  );
+  if (res.status !== "ok") return <NotOk id={id} gone={res.status === "gone"} parser={res.status === "failed" && res.parser} />;
+  return <CarCardView card={fromLot(house, res.lot)} backHref={BACK} meta={{ id, ms, fetchedAt: res.fetchedAt }} />;
 }

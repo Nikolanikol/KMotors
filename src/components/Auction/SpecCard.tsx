@@ -12,7 +12,16 @@
 
 import type { ReactNode } from "react";
 
-export function SpecCard({ title, children }: { title: string; children: ReactNode }) {
+export function SpecCard({
+  title,
+  children,
+  aside,
+}: {
+  title: string;
+  children: ReactNode;
+  /** Что-то справа от заголовка — например, отметка «видит клиент» в админке. */
+  aside?: ReactNode;
+}) {
   return (
     <div
       className="rounded-2xl p-5"
@@ -27,6 +36,7 @@ export function SpecCard({ title, children }: { title: string; children: ReactNo
           style={{ background: "linear-gradient(to bottom, var(--axis-orange), var(--axis-amber))" }}
         />
         {title}
+        {aside && <span className="ml-auto">{aside}</span>}
       </h2>
       {children}
     </div>

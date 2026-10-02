@@ -77,13 +77,14 @@ function SourceBar({ sp, counts, selected }: { sp: SP; counts: SourceCount[]; se
     const next = selected.includes(key) ? selected.filter((s) => s !== key) : [...selected, key];
     return withParams(sp, { src: next.join(",") || undefined });
   };
-  const chip = (key: string, label: string, n: number, big: boolean) => {
+  const chip = (key: string, label: string, n: number, big: boolean, hint?: string) => {
     const on = selected.includes(key);
     return (
       <Link
         key={key}
         href={toggle(key)}
         aria-pressed={on}
+        title={hint}
         className={big ? "rounded-lg px-3 py-1.5 text-sm font-semibold" : "rounded-full px-2.5 py-0.5 text-xs"}
         style={{
           border: `1px solid ${on ? C.accent : C.line}`,
@@ -104,6 +105,28 @@ function SourceBar({ sp, counts, selected }: { sp: SP; counts: SourceCount[]; se
         // Внутренние плашки — только где деление реально есть: дома Autobell
         // (venue_code) и типы HeyDealer. У Lotte, SK и т.п. одна часть без кода.
         const subs = parts.filter((p) => p.venue_code || p.hey_type);
+        // ⚠️ Типы HeyDealer показываем ВСЕГДА, все три, даже с нулём: механика
+        // у них разная (ставки без осмотра / ставки с осмотром / фикс-цена), и
+        // по плашке должно быть видно, какой тип ещё не загружен, — иначе при
+        // одном загруженном типе деления не видно вовсе (порог «больше одной»).
+        if (house === "heydealer") {
+          return (
+            <div key={house} className="flex flex-col gap-1">
+              {chip(house, sourceLabel(house), total, true)}
+              <div className="flex flex-wrap gap-1">
+                {HEY_TYPES.map((t) =>
+                  chip(
+                    `${house}:${t.type}`,
+                    t.label,
+                    parts.find((p) => p.hey_type === t.type)?.n ?? 0,
+                    false,
+                    t.hint,
+                  ),
+                )}
+              </div>
+            </div>
+          );
+        }
         return (
           <div key={house} className="flex flex-col gap-1">
             {chip(house, sourceLabel(house), total, true)}
@@ -120,6 +143,16 @@ function SourceBar({ sp, counts, selected }: { sp: SP; counts: SourceCount[]; se
     </section>
   );
 }
+
+/**
+ * Цвет рамки бейджа по типу HeyDealer. Self — без осмотра (серый, «на свой
+ * риск»), Zero — с осмотром (синий), Instant — фикс-цена (зелёный).
+ */
+const HEY_COLORS: Record<string, string> = {
+  self: "#9CA3AF",
+  customer_zero: "#60A5FA",
+  fixed_price_zero: "#4ADE80",
+};
 
 function priceText(r: CatalogRow): string {
   if (r.price_kind === "fixed") return `${krw(r.price_krw)} фикс`;
@@ -143,7 +176,12 @@ function Tile({ r }: { r: CatalogRow }) {
         )}
         <span
           className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[11px] font-semibold"
-          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          style={{
+            backgroundColor: "rgba(0,0,0,0.7)",
+            // Тип HeyDealer различим цветом рамки: торги у них устроены по-разному.
+            border: r.hey_type ? `1px solid ${HEY_COLORS[r.hey_type] ?? C.line}` : undefined,
+          }}
+          title={r.hey_type ? HEY_TYPES.find((t) => t.type === r.hey_type)?.hint : undefined}
         >
           {sourceLabel(r.house)}
           {r.venue || r.hey_type ? ` · ${sourceLabel(r.house, r)}` : ""}
