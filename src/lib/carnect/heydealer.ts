@@ -145,9 +145,25 @@ export interface HeyCarDetail extends HeyListCar {
 
 const isHeyCar = (x: Record<string, unknown>) => typeof x.id === "string" && x.source === "HeyDealer";
 
-/** Адрес страницы списка одного типа. ?page=1 не пишем. */
-function heyPath(type: HeyAuctionType, page: number): string {
-  return page > 1 ? `/catalog?auctionType=${type}&page=${page}` : `/catalog?auctionType=${type}`;
+/**
+ * Сортировки списка у carnect (сняты из их JS 02.10.2026). По умолчанию —
+ * newest, и в адрес она не пишется.
+ *
+ * ⚠️ newest НЕСТАБИЛЬНА: два одинаковых прохода по страницам 1–4 дали разный
+ * порядок на страницах 2 и 3 (72 и 67 уникальных машин из 80). mileageAsc и
+ * priceAsc воспроизводимы от прохода к проходу, но ОБРЕЗАНЫ: carnect отдаёт
+ * по ним только ~13 страниц (~260 машин), дальше пусто — обход ими собрал 20%
+ * Instant. Поэтому синк обходит дважды в порядке по умолчанию и объединяет
+ * (HEY_SORTS в sync.ts); полнота этой схемы ещё не замерена.
+ */
+export type HeySort = "newest" | "mileageAsc" | "priceAsc" | "priceDesc";
+
+/** Адрес страницы списка одного типа. ?page=1 и sort=newest не пишем. */
+function heyPath(type: HeyAuctionType, page: number, sort: HeySort = "newest"): string {
+  const q = new URLSearchParams({ auctionType: type });
+  if (sort !== "newest") q.set("sort", sort);
+  if (page > 1) q.set("page", String(page));
+  return `/catalog?${q.toString()}`;
 }
 
 /** Одна страница списка HeyDealer одного типа. Не бросает. */
@@ -155,8 +171,9 @@ export async function fetchHeyPage(
   type: HeyAuctionType,
   page: number,
   signal?: AbortSignal,
+  sort?: HeySort,
 ): Promise<{ page: DataPage<HeyListCar>; flight: string } | { error: ListError }> {
-  return fetchDataPage<HeyListCar>(heyPath(type, page), isHeyCar, signal);
+  return fetchDataPage<HeyListCar>(heyPath(type, page, sort), isHeyCar, signal);
 }
 
 export type HeyCarResult =

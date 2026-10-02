@@ -200,7 +200,12 @@ export default async function CarnectPreview({
   return (
     <Page>
       <header className="mb-4">
-        <h1 className="text-xl font-semibold">carnect.biz — просмотр источника</h1>
+        <h1 className="text-xl font-semibold">
+          carnect.biz — просмотр источника{" "}
+          <Link href="/admin/carnect/catalog" className="ml-2 text-sm font-normal" style={{ color: C.accent }}>
+            каталог с фильтром →
+          </Link>
+        </h1>
         <p className="mt-1 text-xs" style={{ color: C.muted }}>
           Служебная страница. Данные читаются с carnect напрямую (кеш 15 мин на страницу), в базу ничего не
           пишется. Нули и прочерки показаны как есть.

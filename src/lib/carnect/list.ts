@@ -10,8 +10,8 @@
 //
 // ⚠️ За последней страницей carnect отдаёт ПУСТОЙ items при живом total, а не
 // 404 и не повтор последней (у dokanmazad было наоборот). Останавливаемся по
-// числу страниц из total, а пустая страница — страховка на случай, если total
-// уменьшился посреди обхода (их синхронизация может пройти прямо во время
+// числу страниц из total, а пустая страница — страховка на случай, если
+// total уменьшился посреди обхода (их синхронизация может пройти прямо во время
 // нашей).
 //
 // ⚠️ Три исхода «лотов нет» обязаны различаться в ответе — снаружи они все
@@ -192,6 +192,93 @@ export async function fetchListPage(
 ): Promise<{ page: CarnectListPage; flight: string } | { error: ListError }> {
   return fetchDataPage<CarnectListLot>(auctionPath(house, page, opts.venue), isAuctionLot, opts.signal);
 }
+
+export interface CrawlResult<T> {
+  items: T[];
+  total: number;
+  requests: number;
+  ingest: CarnectIngest;
+  /**
+   * Обход дошёл до конца списка без ошибок и без потолка страниц. ТОЛЬКО по
+   * полному обходу можно судить, что лот пропал: прерванный или урезанный
+   * обход «не видел» лоты просто потому, что не дошёл до них (sync.ts).
+   */
+  complete: boolean;
+  error?: ListError;
+}
+
+/**
+ * Постраничный обход любого списка carnect — общий для аукционов и
+ * HeyDealer. Страницы идут по одной через очередь client.ts.
+ *
+ * Останов: страниц больше, чем обещал total; пустая страница; ошибка — сразу,
+ * без пропуска страницы (идти дальше после отказа значит долбить сайт).
+ *
+ * ⚠️ Страница целиком из уже виденных лотов — НЕ конец списка. Так думал
+ * первый вариант обхода, и пробный прогон 02.10.2026 остановился на 45 машинах
+ * HeyDealer Instant из 1 301, посчитав себя полным: у carnect соседние
+ * страницы НАХЛЁСТЫВАЮТСЯ (замер: 4–13 повторов на 60–80 машин), и подряд
+ * может прийти страница одних повторов. Идём до последней страницы по total.
+ */
+export async function crawlPages<T>(
+  fetchPage: (page: number) => Promise<{ page: DataPage<T>; flight: string } | { error: ListError }>,
+  idOf: (item: T) => string,
+  opts: { maxPages?: number; signal?: AbortSignal } = {},
+): Promise<CrawlResult<T>> {
+  const empty: CarnectIngest = { lastIngestAt: null, lastStatus: null, lastIngestCount: null, lastIngestExpected: null };
+  const result: CrawlResult<T> = { items: [], total: 0, requests: 0, ingest: empty, complete: false };
+  const seen = new Set<string>();
+  const add = (items: T[]) => {
+    let fresh = 0;
+    for (const it of items) {
+      const id = idOf(it);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      result.items.push(it);
+      fresh++;
+    }
+    return fresh;
+  };
+
+  const first = await fetchPage(1);
+  result.requests++;
+  if ("error" in first) return { ...result, error: first.error };
+  result.total = first.page.total;
+  result.ingest = readIngest(first.flight);
+  add(first.page.items);
+
+  const pages = Math.ceil(first.page.total / (first.page.pageSize || 24));
+  const cap = Math.min(opts.maxPages ?? MAX_PAGES_HARD, MAX_PAGES_HARD);
+  const lastPage = Math.min(pages, cap);
+
+  let stoppedAt = lastPage;
+  for (let page = 2; page <= lastPage; page++) {
+    if (opts.signal?.aborted) return result;
+    const next = await fetchPage(page);
+    result.requests++;
+    if ("error" in next) return { ...result, error: next.error };
+    if (!next.page.items.length) {
+      stoppedAt = page - 1;
+      break;
+    }
+    add(next.page.items);
+  }
+  // Полный — если не упёрлись в потолок и дошли до конца списка. Пустая
+  // страница в самом хвосте — норма (total чуть уменьшился посреди обхода).
+  // ⚠️ Пустая страница ЗАДОЛГО до конца — обрезка у источника, а не конец:
+  // с явной сортировкой carnect отдаёт HeyDealer только ~13 страниц из 65
+  // (замер 02.10.2026), и такой обход полным не считается. Насколько полно
+  // собрано по существу, вызывающий дополнительно сверяет с total (sync.ts).
+  result.complete = pages <= cap && stoppedAt >= lastPage - 1 && !opts.signal?.aborted;
+  return result;
+}
+
+/**
+ * Потолок для любого обхода. HeyDealer Zero ~195 страниц по 20 — самый
+ * длинный список; 300 — запас. Упрёмся — total врёт или обход зациклился.
+ * Отдельно от MAX_PAGES аукционов, у которых страниц втрое меньше.
+ */
+const MAX_PAGES_HARD = 300;
 
 /**
  * Все лоты площадки. Не бросает: при сбое вернёт собранное и причину.
