@@ -123,20 +123,67 @@ const JOBS = {
     about: "рассылка подписок «пришлём похожие»",
   },
   // ─── carnect.biz → carnect_lots ───
-  // Четыре ленты вместо одной: всё вместе — ~30 минут, ровно предел
-  // CRON_TIMEOUT_MS. Расписание РАЗНЕСЕНО по минутам, чтобы два обхода не шли
-  // одновременно: очередь client.ts общая на процесс, и параллельные задания
-  // просто стояли бы друг за другом, упираясь в таймаут.
-  // Дважды в сутки (UTC): ночью по Корее (~05:00 KST) и после дедлайна торгов
-  // 13:00 KST, когда площадки меняют партию (~16:00 KST). Источник — в
-  // src/lib/carnect/sync.ts; нагрузка на carnect ~1 200 запросов в сутки.
+  // Каждая площадка — своё задание (решение владельца 02.10.2026): партии
+  // выкладываются в разные дни, за ~2 дня до торгов, у Autohub — сильно
+  // заранее. Расписание НЕ угадывает эти дни: задание идёт дважды в сутки, а
+  // если у площадки ничего не изменилось, синк останавливается на первой
+  // странице — один запрос вместо обхода (src/lib/carnect/sync.ts,
+  // «ничего не изменилось»). Раз в сутки обход полный в любом случае.
+  //
+  // Время (UTC): 05:xx — сразу после дедлайна торгов 13:00 KST (= 04:00 UTC),
+  // когда площадки снимают проданное; 20:xx — ночью по Корее (~05:00 KST),
+  // чтобы утром каталог был свежим. Минуты разнесены: очередь client.ts одна
+  // на процесс, одновременные задания просто стояли бы друг за другом.
+  // Лимит синка у площадки — 8 минут; таймаут задачи в Coolify ставить 10.
+  "carnect-lotte": {
+    path: "/api/carnect/sync?feed=lotte",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "5 5,20 * * *",
+    about: "Lotte с carnect.biz, ~3 минуты (или один запрос, если ничего не изменилось)",
+  },
+  "carnect-sk": {
+    path: "/api/carnect/sync?feed=sk",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "12 5,20 * * *",
+    about: "SK с carnect.biz, ~1.5 минуты (или один запрос)",
+  },
+  "carnect-glovis": {
+    path: "/api/carnect/sync?feed=glovis",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "17 5,20 * * *",
+    about: "Autobell (Hyundai Glovis) с carnect.biz, ~2 минуты (или один запрос)",
+  },
+  "carnect-kcar": {
+    path: "/api/carnect/sync?feed=kcar",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "22 5,20 * * *",
+    about: "K Car с carnect.biz, ~1 минута (или один запрос)",
+  },
+  "carnect-autohub": {
+    path: "/api/carnect/sync?feed=autohub",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "26 5,20 * * *",
+    about: "Autohub с carnect.biz, секунды",
+  },
+  // ⚠️ ЛЕГАСИ: все пять площадок одним обходом. Заменено пятью заданиями выше;
+  // из Coolify удалить. Вместе с ними НЕ запускать — площадки обойдутся дважды.
   "carnect-auctions": {
     path: "/api/carnect/sync?feed=auctions",
     method: "GET",
     secretEnv: "POSTER_CRON_SECRET",
     header: "x-poster-secret",
-    schedule: "10 7,20 * * *",
-    about: "лоты Autobell, K Car, Lotte, SK, Autohub с carnect.biz, ~9 минут",
+    schedule: "—",
+    about: "ЛЕГАСИ, не запускать: все пять площадок разом (заменено carnect-lotte … carnect-autohub)",
   },
   "carnect-hey-instant": {
     path: "/api/carnect/sync?feed=hey-instant",
