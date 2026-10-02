@@ -3,6 +3,7 @@
 //   GET /api/carnect/probe?house=glovis              первые 2 страницы списка
 //   GET /api/carnect/probe?house=glovis&pages=0      весь список площадки
 //   GET /api/carnect/probe?house=glovis&lot=<lotId>  плюс страница одного лота
+//   GET /api/carnect/probe?house=glovis&venue=1100   один аукционный дом (Бундан)
 //
 // Зачем он, пока записи нет вовсе. Источник — чужая RSC-разметка, и прежде
 // чем проектировать колонки, нужно видеть на живых данных, какие поля у
@@ -58,7 +59,9 @@ export async function GET(req: NextRequest) {
   const maxPages = Number.isInteger(pagesRaw) && pagesRaw >= 0 ? pagesRaw || undefined : 2;
 
   const started = Date.now();
-  const list = await fetchHouseLots(house, { maxPages, signal: req.signal });
+  // venue — код аукционного дома (HOUSES[house].venues), фильтр carnect.
+  const venue = sp.get("venue") || undefined;
+  const list = await fetchHouseLots(house, { maxPages, venue, signal: req.signal });
 
   const lotId = sp.get("lot");
   const detail = lotId ? await fetchLotDetail(house, lotId, req.signal) : null;
