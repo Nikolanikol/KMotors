@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
+import FunnelTracker from "@/components/analytics/FunnelTracker";
 
 interface CarViewTrackerProps {
   carId: string;
@@ -17,7 +18,9 @@ export default function CarViewTracker({ carId, carName, price }: CarViewTracker
     trackEvent("view_item", {
       item_id:       carId,
       item_name:     carName,
-      item_category: "car",
+      // Раздел воронки (section) проставляет trackEvent; item_category — для
+      // отчётов GA4 по товарам, тем же словом.
+      item_category: "encar",
       value:         price,
     });
     // Один просмотр на машину за сессию — обновление страницы не считается
@@ -42,5 +45,6 @@ export default function CarViewTracker({ carId, carName, price }: CarViewTracker
     }).catch(() => {});
   }, [carId, carName]);
 
-  return null;
+  // Шаги страницы машины: какие блоки увидел, что нажимал (FunnelTracker).
+  return <FunnelTracker itemId={carId} itemName={carName} />;
 }

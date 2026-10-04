@@ -51,7 +51,7 @@ export function usePartsFavorites() {
     const exists = prev.some((f) => f.id === part.id);
     const next = exists ? prev.filter((f) => f.id !== part.id) : [...prev, part];
     writeStorage(next);
-    trackEvent(exists ? "remove_from_parts_favorites" : "add_to_parts_favorites", {
+    trackEvent(exists ? "remove_from_wishlist" : "add_to_wishlist", {
       part_id: part.id,
       part_number: part.part_number,
       part_name: part.name_ru || part.name_en,

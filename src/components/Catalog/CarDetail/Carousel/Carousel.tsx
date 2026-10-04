@@ -6,6 +6,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import { encarLoader, encarThumbLoader } from "@/utils/encarLoader";
+import { trackOnce } from "@/utils/gtag";
 
 // Лайтбокс (вместе с плагинами и их CSS) грузим только когда пользователь
 // кликнул на фото. Монтируем по клику ещё и потому, что ssr:false-компонент,
@@ -215,12 +216,24 @@ const CarouselLight = ({
     }
   };
 
+  // Шаги воронки: открыл галерею во весь экран, долистал до 5/10/20 фото.
+  // Раз за страницу (trackOnce) — нужны люди, а не число листаний.
+  const openGallery = () => {
+    trackOnce("gallery_open", "gallery_open", { photos: total });
+    setOpen(true);
+  };
+  useEffect(() => {
+    for (const n of [5, 10, 20]) {
+      if (index + 1 >= n) trackOnce(`gallery_depth:${n}`, "gallery_depth", { photo: n, photos: total });
+    }
+  }, [index, total]);
+
   const handleClick = () => {
     if (swiped.current) {
       swiped.current = false;
       return;
     }
-    setOpen(true);
+    openGallery();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -232,7 +245,7 @@ const CarouselLight = ({
       goTo(index + 1);
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      setOpen(true);
+      openGallery();
     }
   };
 

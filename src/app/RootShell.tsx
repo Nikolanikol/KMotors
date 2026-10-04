@@ -103,6 +103,13 @@ export default function RootShell({
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
+                // Служебный хост (вход владельца и менеджеров) и localhost —
+                // внутренний трафик: в GA4 его отсекает фильтр данных по
+                // traffic_type = internal (Admin → Data filters). Определение
+                // служебного хоста то же, что в middleware.ts и serviceHost.ts.
+                var internal = location.hostname !== new URL(${JSON.stringify(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop")}).hostname;
+                // set — на ВСЕ события страницы, а не только на page_view из config.
+                if (internal) gtag('set', { traffic_type: 'internal' });
                 gtag('config', 'G-ZMRTQCD8SF', { send_page_view: true });
                 gtag('config', 'AW-18196150435');
                 window.gtag = gtag;

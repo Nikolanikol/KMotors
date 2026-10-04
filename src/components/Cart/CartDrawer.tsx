@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, X, ArrowRight } from "lucide-react";
 import { usePartsCart } from "@/hooks/useCartCount";
+import { trackEvent } from "@/utils/gtag";
 import { CartLineItem } from "./CartLineItem";
 import { cartText, cartSubtotal, usdFmt } from "./cartText";
 
@@ -57,6 +58,9 @@ export function CartDrawer({
       return;
     }
     setMounted(true);
+    // Шаг воронки запчастей «открыл корзину» (панель). Каждое открытие —
+    // событие: панель открывают и закрывают, это и есть поведение.
+    trackEvent("view_cart", { via: "drawer" });
     const id = requestAnimationFrame(() => setShown(true));
     return () => cancelAnimationFrame(id);
   }, [open]);

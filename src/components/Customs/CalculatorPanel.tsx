@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
+import FunnelTracker from "@/components/analytics/FunnelTracker";
+import { trackOnce } from "@/utils/gtag";
 import { useTranslation } from "react-i18next";
 import FieldRenderer, { type FormValues } from "./FieldRenderer";
 import Receipt from "./Receipt";
@@ -146,7 +149,14 @@ export default function CalculatorPanel({
     })(),
   );
 
+  // Воронка калькулятора: открыл → изменил поле → подогнал расчёт под себя
+  // (3+ изменения) → увидел итог. Расчёт живой, кнопки «посчитать» нет, поэтому
+  // «подогнал под себя» — лучший признак, что человек считает СВОЮ машину.
+  const edits = useRef(0);
   function handleChange(id: string, value: FormValues[string]) {
+    edits.current += 1;
+    trackOnce(`calc_input:${countryId}`, "calc_input", { country: countryId, field: id });
+    if (edits.current >= 3) trackOnce(`calc_engaged:${countryId}`, "calc_engaged", { country: countryId });
     setValues((prev) => ({ ...prev, [id]: value }));
     if (isSharedField(id)) remember({ [id]: value });
   }
@@ -222,7 +232,10 @@ export default function CalculatorPanel({
             ))}
         </section>
 
-        <Receipt result={result} stampTop={country.stampTop} />
+        <div data-track-block="calc_result">
+          <Receipt result={result} stampTop={country.stampTop} />
+        </div>
+        <FunnelTracker view={{ event: "calc_view", params: { country: countryId } }} />
       </div>
 
       {country.verification && (

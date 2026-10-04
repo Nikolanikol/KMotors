@@ -84,6 +84,8 @@ export default function LotStickyBar({
         </div>
         <a
           href={waHref}
+          data-track-click="contact"
+          data-track-label="whatsapp_sticky"
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all active:scale-95"
@@ -94,6 +96,7 @@ export default function LotStickyBar({
         </a>
         <button
           type="button"
+          data-track-click="sticky_cta"
           onClick={() => document.getElementById(REQUEST_ANCHOR)?.scrollIntoView({ behavior: "smooth", block: "start" })}
           className="h-12 flex-shrink-0 rounded-xl px-5 text-sm font-bold text-white transition-all active:scale-95"
           // Заливка — тёмная бронза: на светлой белый текст не проходит AA (CLAUDE.md, «Бренд»).
