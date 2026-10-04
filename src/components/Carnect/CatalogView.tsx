@@ -27,6 +27,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { heyGradeLabel } from "@/lib/carnect/card";
+import { gradeInfo } from "@/lib/carnect/grades";
 import { HEY_TYPES } from "@/lib/carnect/heydealer";
 import { HOUSES, type CarnectHouse } from "@/lib/carnect/houses";
 import type { CardLang } from "@/lib/carnect/lang";
@@ -240,6 +241,8 @@ function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
       : null;
   const fuel = FUELS.find((f) => f.v === r.fuel);
   const heyType = r.hey_type ? HEY_TYPES.find((x) => x.type === r.hey_type) : undefined;
+  const grade = r.house === "heydealer" ? null : gradeInfo(r.house as CarnectHouse, r.insp_grade, lang, sourceLabel(r.house));
+  const gradeHint = grade?.parts.map((p) => `${p.letter} — ${p.label}: ${p.text}`).join("\n");
   return (
     <TiltCard>
       <Link
@@ -310,10 +313,14 @@ function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
               {usd(lang, r.price_krw, ctx.krwToUsd)}
             </div>
           )}
-          <div className="mt-1 text-[11px]" style={{ color: C.muted }}>
+          {/* Расшифровка оценки — подсказкой; целиком она на странице машины. */}
+          <div className="mt-1 text-[11px]" style={{ color: C.muted }} title={gradeHint}>
             {[
               fuel && (lang === "en" ? fuel.en : fuel.label),
-              r.insp_grade && (r.house === "heydealer" ? heyGradeLabel(r.insp_grade, lang) : r.insp_grade),
+              r.insp_grade &&
+                (r.house === "heydealer"
+                  ? heyGradeLabel(r.insp_grade, lang)
+                  : `${tx(lang, "grade")} ${r.insp_grade}`),
             ]
               .filter(Boolean)
               .join(" · ")}

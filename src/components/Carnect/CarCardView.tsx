@@ -24,6 +24,7 @@ import { SpecCard, SpecRows } from "@/components/Auction/SpecCard";
 import { yearWithAge } from "@/components/Auction/carAge";
 import Carousel from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import type { CarCard } from "@/lib/carnect/card";
+import { gradeInfo } from "@/lib/carnect/grades";
 import type { CardLang } from "@/lib/carnect/lang";
 
 import { waHref } from "@/lib/contact";
@@ -52,6 +53,39 @@ const PRICE_LABEL: Record<CarCard["price"]["kind"], TextKey> = {
   fixed: "priceFixed",
   none: "price",
 };
+
+/**
+ * Оценка площадки с расшифровкой (grades.ts). У площадок без подтверждённой
+ * шкалы (SK, K Car) — только буква: выдуманная легенда хуже никакой.
+ */
+function GradeBlock({ card, lang }: { card: CarCard; lang: CardLang }) {
+  const info = gradeInfo(card.house, card.inspGrade, lang, card.sourceLabel);
+  return (
+    <div className="mt-4 text-sm" style={{ color: "var(--axis-gray)" }}>
+      <p>
+        {tx(lang, "grade")}:{" "}
+        <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+          {card.inspGrade}
+        </span>
+      </p>
+      {info && (
+        <>
+          <ul className="mt-1.5 space-y-1">
+            {info.parts.map((p) => (
+              <li key={p.label}>
+                <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+                  {p.letter}
+                </span>{" "}
+                — {p.label.toLowerCase()}: {p.text}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-[11px]">{info.note}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Главная цена строкой — и для блока цены, и для мобильной плашки. */
 function mainPrice(card: CarCard, lang: CardLang): string {
@@ -130,14 +164,7 @@ function PriceCard({ card, lang, krwToUsd }: { card: CarCard; lang: CardLang; kr
         </div>
       )}
 
-      {card.inspGrade && (
-        <p className="mt-4 text-sm" style={{ color: "var(--axis-gray)" }}>
-          {t("grade")}:{" "}
-          <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-            {card.inspGrade}
-          </span>
-        </p>
-      )}
+      {card.inspGrade && <GradeBlock card={card} lang={lang} />}
     </section>
   );
 }
