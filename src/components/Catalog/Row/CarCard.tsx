@@ -113,13 +113,16 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             photo: photo ?? "",
             model,
             manufacture,
-            year,
-            mileage,
+            // ⚠️ Тип говорит string, но Encar отдаёт год, пробег и цену ЧИСЛАМИ — пропсы
+            // приходят из JSON как есть. String() обязателен: year.slice на числе
+            // бросал TypeError, и ♥ на карточке молча не работал (05.10.2026).
+            year: String(year),
+            mileage: String(mileage),
             transmission,
             fuel,
-            price,
+            price: String(price),
             // year у листинга Encar — «YYYYMM» (202008), в названии нужен год.
-            title: [year.slice(0, 4), translateGenerationRow(manufacture, t), translateGenerationRow(model, t)]
+            title: [String(year).slice(0, 4), translateGenerationRow(manufacture, t), translateGenerationRow(model, t)]
               .filter(Boolean)
               .join(" "),
           })

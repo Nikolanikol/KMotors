@@ -256,7 +256,7 @@ export function FavoritesDrawer({
                   key={`encar:${c.id}`}
                   href={`/${lang}/catalog/${c.id}`}
                   photo={c.photo ? encarThumbLoader({ src: `https://ci.encar.com${c.photo}`, width: 192 }) : null}
-                  title={c.title ?? [c.year.slice(0, 4), c.manufacture, c.model].filter(Boolean).join(" ")}
+                  title={c.title ?? [String(c.year ?? "").slice(0, 4), c.manufacture, c.model].filter(Boolean).join(" ")}
                   source="Encar"
                   // Цена уже со стояночным сбором (carPricing.ts) — та же, что на карточке.
                   price={c.price ? `₩${formatCarKrw(c.price)}` : null}
