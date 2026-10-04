@@ -8,18 +8,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { C } from "@/components/Carnect/ui";
 import { HOUSES, type CarnectHouse } from "@/lib/carnect/houses";
 
-export const C = {
-  bg: "var(--background, #0A0A0A)",
-  card: "var(--axis-charcoal, #141414)",
-  line: "rgba(74,74,74,0.35)",
-  text: "var(--axis-cream, #F5F0EB)",
-  muted: "var(--axis-gray, #8A8A8A)",
-  accent: "var(--axis-bronze, #B67749)",
-  bad: "#E5484D",
-  good: "#3FB950",
-};
+export { C, Page, Panel, ago } from "@/components/Carnect/ui";
 
 /** Воны: 0 и отсутствие — это «нет цены», а не ₩0 (у Lotte startKrw всегда 0). */
 export function krw(v: unknown): string {
@@ -28,39 +20,6 @@ export function krw(v: unknown): string {
 
 export function km(v: unknown): string {
   return typeof v === "number" && v > 0 ? `${v.toLocaleString("ru-RU")} км` : "—";
-}
-
-/** «12 мин назад» — по нему видно, пришли данные свежими или из кеша. */
-export function ago(iso: string | undefined): string {
-  if (!iso) return "—";
-  const s = Math.round((Date.now() - Date.parse(iso)) / 1000);
-  if (s < 60) return `${s} с назад`;
-  if (s < 3600) return `${Math.round(s / 60)} мин назад`;
-  return `${Math.round(s / 3600)} ч назад`;
-}
-
-export function Page({ children }: { children: ReactNode }) {
-  return (
-    <main className="min-h-screen px-4 py-6" style={{ backgroundColor: C.bg, color: C.text }}>
-      <div className="mx-auto max-w-7xl">{children}</div>
-    </main>
-  );
-}
-
-export function Panel({ title, children, hint }: { title: string; children: ReactNode; hint?: string }) {
-  return (
-    <section className="mb-4 rounded-xl p-4" style={{ backgroundColor: C.card, border: `1px solid ${C.line}` }}>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: C.accent }}>
-        {title}
-      </h2>
-      {hint && (
-        <p className="-mt-2 mb-3 text-xs" style={{ color: C.muted }}>
-          {hint}
-        </p>
-      )}
-      {children}
-    </section>
-  );
 }
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {

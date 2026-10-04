@@ -1,11 +1,11 @@
-// Публичная карточка лота lotte.
+// Адрес прежней витрины аукционов (dokanmazad, выключена 04.10.2026).
+// Её лоты в новый каталог не переносятся — id у carnect другие, — поэтому
+// ведём в каталог целиком. Ссылки на старые адреса остались в переписке
+// с клиентами в мессенджерах; пустая 404 там хуже каталога.
 
-import { LotPage, lotMetadata } from "../../lotPage";
+import { permanentRedirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata = lotMetadata;
-
-export default async function Page({ params }: { params: Promise<{ lang: string; id: string }> }) {
-  const { lang, id } = await params;
-  return <LotPage lang={lang} id={id} source="lotte" />;
+export default async function OldAuctionUrl({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  permanentRedirect(`/${lang}/auction`);
 }

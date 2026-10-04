@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import type { CarCard } from "@/lib/carnect/card";
 import { SpecCard, SpecRows } from "@/components/Auction/SpecCard";
 
-import { ago } from "../../ui";
+import { ago } from "./ui";
 import CopyJson from "./CopyJson";
 
 const muted = "var(--axis-gray)";

@@ -11,17 +11,19 @@
 // Не бросает: Supabase не ответил или функции ещё нет (миграция не
 // выполнена) — вернётся { ok: false } с причиной, страница покажет её.
 
+import { unstable_cache } from "next/cache";
+
 import { createServerClient } from "@/lib/supabase";
 
 import type { Fuel } from "./normalize";
 
-export const FUELS: { v: Fuel; label: string }[] = [
-  { v: "gasoline", label: "Бензин" },
-  { v: "diesel", label: "Дизель" },
-  { v: "hybrid", label: "Гибрид" },
-  { v: "electric", label: "Электро" },
-  { v: "lpg", label: "Газ (LPG)" },
-  { v: "hydrogen", label: "Водород" },
+export const FUELS: { v: Fuel; label: string; en: string }[] = [
+  { v: "gasoline", label: "Бензин", en: "Gasoline" },
+  { v: "diesel", label: "Дизель", en: "Diesel" },
+  { v: "hybrid", label: "Гибрид", en: "Hybrid" },
+  { v: "electric", label: "Электро", en: "Electric" },
+  { v: "lpg", label: "Газ (LPG)", en: "LPG" },
+  { v: "hydrogen", label: "Водород", en: "Hydrogen" },
 ];
 
 export type SortKey = "new" | "price" | "year" | "km";
@@ -154,5 +156,40 @@ export async function searchCatalog(filter: CatalogFilter, page: number): Promis
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[carnect] searchCatalog:", msg);
     return { ok: false, error: msg };
+  }
+}
+
+// ─── Кеш для витрины ─────────────────────────────────────────────────────
+//
+// Публичный каталог читает searchParams, поэтому страница целиком динамическая
+// и ISR ей недоступен (тот же случай, что у категорий запчастей, CLAUDE.md).
+// Кешируется выборка: база меняется кроном дважды в сутки, а один и тот же
+// фильтр открывают многие — 10 минут на ключ «фильтр + страница» снимают почти
+// все походы в Supabase и не дают заметно устаревших данных.
+//
+// ⚠️ Сбой НЕ кешируется: бросок внутри unstable_cache в кеш не попадает, иначе
+// минутный сбой базы десять минут показывал бы «каталог недоступен».
+// Служебный каталог в /admin зовёт searchCatalog напрямую — ему нужна свежесть
+// сразу после прогона синка.
+
+const CATALOG_TTL_S = 10 * 60;
+
+const cachedSearch = unstable_cache(
+  // Фильтр строкой: аргументы входят в ключ кеша, а readFilter собирает
+  // объект всегда в одном порядке полей — один фильтр, один ключ.
+  async (filterKey: string, page: number) => {
+    const res = await searchCatalog(JSON.parse(filterKey) as CatalogFilter, page);
+    if (!res.ok) throw new Error(res.error);
+    return res;
+  },
+  ["carnect-catalog-v1"],
+  { revalidate: CATALOG_TTL_S },
+);
+
+export async function searchCatalogCached(filter: CatalogFilter, page: number): Promise<CatalogResult> {
+  try {
+    return await cachedSearch(JSON.stringify(filter), page);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
