@@ -25,12 +25,15 @@ import { yearWithAge } from "@/components/Auction/carAge";
 import Carousel from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import type { CarCard } from "@/lib/carnect/card";
 import { gradeInfo } from "@/lib/carnect/grades";
+import { kstIso } from "@/lib/carnect/time";
 import type { CardLang } from "@/lib/carnect/lang";
 
 import { waHref } from "@/lib/contact";
 
 import BodyDiagram from "./BodyDiagram";
 import LotRequestCard from "./LotRequestCard";
+import AuctionHeart from "./AuctionHeart";
+import LotShare from "./LotShare";
 import LotStickyBar, { REQUEST_ANCHOR } from "./LotStickyBar";
 import LotTimer from "./LotTimer";
 import { fmt, koreanTime, tx, usd, won, yearAgeEn, type TextKey } from "./text";
@@ -263,9 +266,34 @@ export default function CarCardView({
           {/* ─── Главная колонка ─── */}
           <div className="min-w-0 space-y-4">
             <div>
-              <h1 className="text-2xl font-bold leading-tight lg:text-3xl" style={{ color: "var(--axis-white)" }}>
-                {card.title}
-              </h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="text-2xl font-bold leading-tight lg:text-3xl" style={{ color: "var(--axis-white)" }}>
+                  {card.title}
+                </h1>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <LotShare title={card.title} lang={lang} />
+                  <AuctionHeart
+                    size="md"
+                    lang={lang}
+                    lot={{
+                      key: `${card.house}/${id}`,
+                      house: card.house,
+                      externalId: id,
+                      title: card.title,
+                      source: [card.sourceLabel, card.typeLabel, card.venue].filter(Boolean).join(" · "),
+                      photo: card.photos[0] ?? null,
+                      priceKrw: card.price.krw,
+                      priceKind: card.price.kind,
+                      auctionDate: card.auctionDate ?? null,
+                      // У аукционов точное время — startAt (бывает без зоны, LotTimer/kstIso
+                      // разбирают его как корейское), у HeyDealer — endAt.
+                      endAt: kstIso(card.endAt ?? card.startAt),
+                      make: card.make,
+                      modelGroup: card.modelGroup,
+                    }}
+                  />
+                </div>
+              </div>
               {card.grade && (
                 <p className="mt-1 text-base" style={{ color: "var(--axis-gray)" }}>
                   {card.grade}

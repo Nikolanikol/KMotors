@@ -43,6 +43,7 @@ import {
 
 import { getCarRates } from "@/lib/kbFx";
 
+import AuctionHeart from "./AuctionHeart";
 import AutoSubmitSelect from "./AutoSubmitSelect";
 import LotTimer from "./LotTimer";
 import { fmt, koreanTimeUtc, tx, usd, won, type TextKey } from "./text";
@@ -243,8 +244,28 @@ export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
   const heyType = r.hey_type ? HEY_TYPES.find((x) => x.type === r.hey_type) : undefined;
   const grade = r.house === "heydealer" ? null : gradeInfo(r.house as CarnectHouse, r.insp_grade, lang, sourceLabel(r.house));
   const gradeHint = grade?.parts.map((p) => `${p.letter} — ${p.label}: ${p.text}`).join("\n");
+  const source = [sourceLabel(r.house), r.venue || r.hey_type ? sourceLabel(r.house, r) : null].filter(Boolean).join(" · ");
   return (
     <TiltCard>
+      {/* ♥ — вне ссылки, поверх фото справа (слева уже бейдж площадки). */}
+      <AuctionHeart
+        className="absolute right-2 top-2 z-30"
+        lang={lang}
+        lot={{
+          key: `${r.house}/${r.external_id}`,
+          house: r.house,
+          externalId: r.external_id,
+          title: [r.year, r.make, r.model_group].filter(Boolean).join(" ") || r.title || r.external_id,
+          source,
+          photo: r.photo_url,
+          priceKrw: r.price_krw,
+          priceKind: r.price_kind,
+          auctionDate: r.auction_date,
+          endAt: r.end_at,
+          make: r.make,
+          modelGroup: r.model_group,
+        }}
+      />
       <Link
         href={`${ctx.lotBase}/${r.house}/${encodeURIComponent(r.external_id)}`}
         className="block overflow-hidden"

@@ -7,6 +7,7 @@ import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import RecommendedCars from "@/components/Catalog/CarDetail/Recommended/RecommendedCars";
 import ShareCar from "@/components/Catalog/CarDetail/ShareCar";
+import EncarHeart from "@/components/Favorites/EncarHeart";
 import { FC, Suspense } from "react";
 import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSection";
 import { formatDate, formatYear } from "@/utils/formatDate";
@@ -681,6 +682,23 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                   {carData}
                 </span>
                 <ShareCar title={fullCarName} />
+                {/* Запись та же, что у ♥ на карточке каталога: price — в 만원, как в
+                    листинге (encarToKrw читает строку и число одинаково). */}
+                <EncarHeart
+                  lang={lang}
+                  car={{
+                    id,
+                    photo: data?.photos?.[0]?.path ?? "",
+                    model: data.category.modelGroupEnglishName ?? "",
+                    manufacture: normalizeBrand(data.category.manufacturerEnglishName),
+                    year: String(carYear ?? ""),
+                    mileage: String(data?.spec?.mileage ?? ""),
+                    transmission: data?.spec?.transmissionName ?? "",
+                    fuel: data?.spec?.fuelName ?? "",
+                    price: String(data?.advertisement?.price ?? ""),
+                    title: [carYear, carName].filter(Boolean).join(" "),
+                  }}
+                />
               </div>
             </div>
             <CarouselLight

@@ -17,6 +17,13 @@ export interface FavoriteCar {
   fuel: string;
   price: string;
   sold?: boolean;
+  /**
+   * Готовое название на языке посетителя — сохраняется в момент нажатия ♥.
+   * model / manufacture приходят из листинга Encar по-корейски, а словарь
+   * машин (cars) есть не на всех страницах — панель избранного в шапке видна
+   * везде и перевести их сама не может. У старых записей поля нет.
+   */
+  title?: string;
   priceCheckedAt?: number;
 }
 

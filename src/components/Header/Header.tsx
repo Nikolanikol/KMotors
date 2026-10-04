@@ -12,6 +12,9 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCartCount } from "@/hooks/useCartCount";
 import { CartDrawer, CART_OPEN_EVENT } from "@/components/Cart/CartDrawer";
+import { FavoritesDrawer } from "@/components/Favorites/FavoritesDrawer";
+import { FAVORITES_OPEN_EVENT, favText } from "@/components/Favorites/favText";
+import { useAuctionFavorites } from "@/hooks/useAuctionFavorites";
 import { useCountry } from "@/hooks/useCountry";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
@@ -92,6 +95,55 @@ const BrandName = ({ className = "" }: { className?: string }) => (
  * сервер (`getCurrencyRates`), клиентские компоненты своих запросов не делают.
  * Нужен он выдвижной корзине — она показывает цены позиций и сумму.
  */
+/**
+ * Кнопка избранного в шапке — близнец кнопки корзины рядом: тот же круг,
+ * та же бронза при непустом списке, тот же счётчик. Открывает FavoritesDrawer.
+ */
+function FavButton({
+  count,
+  open,
+  onClick,
+  label,
+  small = false,
+}: {
+  count: number;
+  open: boolean;
+  onClick: () => void;
+  label: string;
+  small?: boolean;
+}) {
+  const on = count > 0;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      aria-controls="favorites-drawer"
+      aria-label={label}
+      className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${
+        small ? "w-9 h-9" : "w-10 h-10 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)]"
+      }`}
+      style={{
+        backgroundColor: on ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
+        color: on ? "var(--axis-orange)" : "var(--axis-silver)",
+        border: on ? "1.5px solid rgba(182,119,73,0.4)" : "1.5px solid rgba(255,255,255,0.12)",
+      }}
+    >
+      <Heart className={small ? "w-[18px] h-[18px]" : "w-5 h-5"} strokeWidth={2.2} fill={on ? "currentColor" : "none"} />
+      {on && (
+        <span
+          className={`absolute flex items-center justify-center px-1 font-bold rounded-full ${
+            small ? "-top-1 -right-1 min-w-[18px] h-[18px] text-[10px]" : "-top-1.5 -right-1.5 min-w-[20px] h-[20px] text-[11px] shadow-lg"
+          }`}
+          style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white", boxShadow: "0 2px 8px rgba(182,119,73,0.5)" }}
+        >
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function Header({ krwToUsd }: { krwToUsd: number }) {
   const pathname = usePathname();
   const { t } = useTranslation();
@@ -99,7 +151,10 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { favorites: favCars } = useFavorites();
   const { favorites: favParts } = usePartsFavorites();
-  const favTotal = favCars.length + favParts.length;
+  const { favorites: favLots } = useAuctionFavorites();
+  const favTotal = favCars.length + favParts.length + favLots.length;
+  const [isFavOpen, setIsFavOpen] = useState(false);
+  const closeFav = useCallback(() => setIsFavOpen(false), []);
   const { isCatalogBlocked } = useCountry();
   const cartCount = useCartCount();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -109,8 +164,13 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
   // событием, чтобы не тянуть к себе состояние шапки.
   useEffect(() => {
     const open = () => setIsCartOpen(true);
+    const openFav = () => setIsFavOpen(true);
     window.addEventListener(CART_OPEN_EVENT, open);
-    return () => window.removeEventListener(CART_OPEN_EVENT, open);
+    window.addEventListener(FAVORITES_OPEN_EVENT, openFav);
+    return () => {
+      window.removeEventListener(CART_OPEN_EVENT, open);
+      window.removeEventListener(FAVORITES_OPEN_EVENT, openFav);
+    };
   }, []);
 
   const segments = pathname.split("/");
@@ -256,8 +316,9 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
             </a>
             <ContactForm isVisible={false} />
 
-            {/* Cart + User — grouped together */}
+            {/* Favorites + Cart — grouped together */}
             <div className="flex items-center gap-2">
+                <FavButton count={favTotal} open={isFavOpen} onClick={() => setIsFavOpen((v) => !v)} label={favText(lang).title} />
                 <button
                   type="button"
                   onClick={() => setIsCartOpen((v) => !v)}
@@ -290,6 +351,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
             <LanguageSwitcher />
             <InstagramLink position="mobile" />
             <div className="flex items-center gap-1.5">
+                <FavButton count={favTotal} open={isFavOpen} onClick={() => setIsFavOpen((v) => !v)} label={favText(lang).title} small />
                 <button
                   type="button"
                   onClick={() => setIsCartOpen((v) => !v)}
@@ -390,6 +452,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
         </div>
       </div>
 
+      <FavoritesDrawer open={isFavOpen} onClose={closeFav} lang={lang} krwToUsd={krwToUsd} />
       <CartDrawer
         open={isCartOpen}
         onClose={closeCart}
