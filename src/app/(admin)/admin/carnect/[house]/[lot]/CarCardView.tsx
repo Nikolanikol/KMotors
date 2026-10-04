@@ -243,6 +243,24 @@ export default function CarCardView({
               )}
             </Block>
 
+            {card.engineSound && (
+              <Block title="Звук двигателя">
+                {/* Ролик с телефона инспектора/продавца, обычно вертикальный:
+                    высоту ограничиваем, иначе он займёт два экрана. preload
+                    metadata — без клика грузится только первый кадр, не весь файл. */}
+                <video
+                  src={card.engineSound}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="mx-auto max-h-[70vh] w-full rounded-xl bg-black object-contain"
+                />
+                <p className="mt-2 text-xs" style={{ color: "var(--axis-gray)" }}>
+                  Запись работающего двигателя. Включите звук.
+                </p>
+              </Block>
+            )}
+
             {/* Цена на узком экране — сразу под фото, как у карточки Encar. */}
             <div className="lg:hidden">
               <Side card={card} id={meta.id} />

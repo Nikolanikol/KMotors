@@ -135,6 +135,13 @@ export interface CarCard {
    * нём. Скан техпаспорта при этом остаётся у нас (`internal.scans`).
    */
   inspectionSheet?: string;
+  /**
+   * Видео со звуком работающего двигателя (HeyDealer, `engineSound.url`).
+   * Клиенту ПОКАЗЫВАЕМ плеером (решение владельца 04.10.2026); до этого
+   * ссылка лежала голой строкой в служебных фактах. У аукционов такого поля
+   * в разборе нет.
+   */
+  engineSound?: string;
   checks: CheckGroup[];
   options: string[];
 
@@ -649,6 +656,7 @@ export function fromHey(car: HeyCarDetail): CarCard {
     bodyMarks: [...repairs, ...paint],
     // У Self осмотра нет: кузов только со слов продавца.
     hasBodyData: !!h.accidentDiagram || !!h.paint,
+    engineSound: str((h.engineSound as { url?: unknown } | undefined)?.url),
     checks: h.conditionRows?.length
       ? [{ title: "Осмотр HeyDealer", items: h.conditionRows.map((r) => heyRow(r as Record<string, unknown>)) }]
       : [],
@@ -667,7 +675,6 @@ export function fromHey(car: HeyCarDetail): CarCard {
         "оплата": h.payment,
         "выставлена": car.listedAt,
         "одобрена": h.approvedAt,
-        "звук двигателя": (h.engineSound as { url?: string } | undefined)?.url,
         "код двигателя": vi.motorCode,
         "регистрация": vi.registrationType,
       },
