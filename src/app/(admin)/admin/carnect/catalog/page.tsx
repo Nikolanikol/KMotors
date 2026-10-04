@@ -39,6 +39,10 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 
 /** Адрес каталога с изменёнными параметрами; пустые выкидываются, page сбрасывается. */
 function withParams(sp: SP, patch: Record<string, string | undefined>): string {
+  return `/admin/carnect/catalog?${paramsOf(sp, patch).toString()}`;
+}
+
+function paramsOf(sp: SP, patch: Record<string, string | undefined>): URLSearchParams {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) {
     if (k === "page" || k === "prev_make") continue;
@@ -51,7 +55,7 @@ function withParams(sp: SP, patch: Record<string, string | undefined>): string {
     if (v) q.set(k, v);
     else q.delete(k);
   }
-  return `/admin/carnect/catalog?${q.toString()}`;
+  return q;
 }
 
 /** Подпись источника для плашки. */
@@ -65,37 +69,74 @@ function sourceLabel(house: string, sub?: { venue?: string | null; hey_type?: st
 
 /**
  * Ряд плашек «где сколько». Площадка — крупная плашка с суммой; дома
- * Autobell и типы HeyDealer — мелкие внутри. Клик переключает источник в
- * фильтре; выбранные подсвечены. Числа — под ВСЕ условия, кроме самих
- * источников, поэтому выбор Lotte не обнуляет остальных.
+ * Autobell и типы HeyDealer — мелкие под ней. Числа — под ВСЕ условия, кроме
+ * самих источников, поэтому выбор Lotte не обнуляет остальных.
+ *
+ * Мелкие плашки кликабельны, ТОЛЬКО когда выбрана их площадка (решение
+ * владельца 04.10.2026). Раньше они переключались независимо, а carnect_search
+ * объединяет ключи через ИЛИ: «glovis» + «glovis:1100» давали весь Autobell, и
+ * клик по дому не менял выдачу — было непонятно, включён он или нет. Теперь:
+ *   • площадка не выбрана — мелкие плашки серым текстом, только справка;
+ *   • клик по дому ЗАМЕНЯЕТ площадку целиком на этот дом (можно добавить ещё);
+ *   • снят последний дом — снова вся площадка;
+ *   • клик по выбранной площадке снимает её вместе со всеми домами.
  */
 function SourceBar({ sp, counts, selected }: { sp: SP; counts: SourceCount[]; selected: string[] }) {
   const order = [...Object.keys(HOUSES), "heydealer"];
   const byHouse = new Map<string, SourceCount[]>();
   for (const c of counts) byHouse.set(c.house, [...(byHouse.get(c.house) ?? []), c]);
-  const toggle = (key: string) => {
-    const next = selected.includes(key) ? selected.filter((s) => s !== key) : [...selected, key];
-    return withParams(sp, { src: next.join(",") || undefined });
+  const href = (next: string[]) => withParams(sp, { src: next.join(",") || undefined });
+  const ofHouse = (house: string) => selected.filter((s) => s === house || s.startsWith(`${house}:`));
+  const toggleHouse = (house: string) =>
+    ofHouse(house).length ? href(selected.filter((s) => !ofHouse(house).includes(s))) : href([...selected, house]);
+  const toggleSub = (house: string, key: string) => {
+    if (selected.includes(key)) {
+      const next = selected.filter((s) => s !== key);
+      return href(next.some((s) => s.startsWith(`${house}:`)) ? next : [...next, house]);
+    }
+    return href([...selected.filter((s) => s !== house), key]);
   };
-  const chip = (key: string, label: string, n: number, big: boolean, hint?: string) => {
+
+  const chip = (key: string, label: string, n: number, on: boolean, link: string) => (
+    <Link
+      key={key}
+      href={link}
+      aria-pressed={on}
+      className="rounded-lg px-3 py-1.5 text-sm font-semibold"
+      style={{
+        border: `1px solid ${on ? C.accent : C.line}`,
+        color: on ? C.accent : n ? C.text : C.muted,
+        backgroundColor: C.card,
+      }}
+    >
+      {label} <span style={{ color: C.muted }}>{n.toLocaleString("ru-RU")}</span>
+    </Link>
+  );
+  const sub = (house: string, key: string, label: string, n: number, hint?: string) => {
+    const enabled = ofHouse(house).length > 0;
+    if (!enabled) {
+      return (
+        <span key={key} title={hint} className="px-1 py-0.5 text-xs" style={{ color: C.muted }}>
+          {label} {n.toLocaleString("ru-RU")}
+        </span>
+      );
+    }
     const on = selected.includes(key);
     return (
       <Link
         key={key}
-        href={toggle(key)}
+        href={toggleSub(house, key)}
         aria-pressed={on}
         title={hint}
-        className={big ? "rounded-lg px-3 py-1.5 text-sm font-semibold" : "rounded-full px-2.5 py-0.5 text-xs"}
-        style={{
-          border: `1px solid ${on ? C.accent : C.line}`,
-          color: on ? C.accent : n ? C.text : C.muted,
-          backgroundColor: big ? C.card : "transparent",
-        }}
+        className="rounded-full px-2.5 py-0.5 text-xs"
+        style={{ border: `1px solid ${on ? C.accent : C.line}`, color: on ? C.accent : n ? C.text : C.muted }}
       >
         {label} <span style={{ color: C.muted }}>{n.toLocaleString("ru-RU")}</span>
       </Link>
     );
   };
+  const houseChip = (house: string, n: number) =>
+    chip(house, sourceLabel(house), n, ofHouse(house).length > 0, toggleHouse(house));
 
   return (
     <section className="mb-4 flex flex-wrap items-start gap-3">
@@ -112,16 +153,10 @@ function SourceBar({ sp, counts, selected }: { sp: SP; counts: SourceCount[]; se
         if (house === "heydealer") {
           return (
             <div key={house} className="flex flex-col gap-1">
-              {chip(house, sourceLabel(house), total, true)}
+              {houseChip(house, total)}
               <div className="flex flex-wrap gap-1">
                 {HEY_TYPES.map((t) =>
-                  chip(
-                    `${house}:${t.type}`,
-                    t.label,
-                    parts.find((p) => p.hey_type === t.type)?.n ?? 0,
-                    false,
-                    t.hint,
-                  ),
+                  sub(house, `${house}:${t.type}`, t.label, parts.find((p) => p.hey_type === t.type)?.n ?? 0, t.hint),
                 )}
               </div>
             </div>
@@ -129,11 +164,11 @@ function SourceBar({ sp, counts, selected }: { sp: SP; counts: SourceCount[]; se
         }
         return (
           <div key={house} className="flex flex-col gap-1">
-            {chip(house, sourceLabel(house), total, true)}
+            {houseChip(house, total)}
             {subs.length > 1 && (
               <div className="flex flex-wrap gap-1">
                 {subs.map((p) =>
-                  chip(`${house}:${p.hey_type ?? p.venue_code}`, sourceLabel(house, p), p.n, false),
+                  sub(house, `${house}:${p.hey_type ?? p.venue_code}`, sourceLabel(house, p), p.n),
                 )}
               </div>
             )}
@@ -207,6 +242,73 @@ function Tile({ r }: { r: CatalogRow }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Номера страниц: первая, последняя и окно ±2 вокруг текущей, разрывы — «…».
+ * При ~100 страницах «назад / дальше» по одной не годились (запрос владельца
+ * 04.10.2026). Плюс поле «на страницу» — GET-форма с текущим фильтром в
+ * скрытых полях, без клиентского JS, как и весь каталог.
+ */
+function Pager({ sp, page, pages }: { sp: SP; page: number; pages: number }) {
+  const nums = new Set([1, pages]);
+  for (let p = page - 2; p <= page + 2; p++) if (p >= 1 && p <= pages) nums.add(p);
+  const list = [...nums].sort((a, b) => a - b);
+  const cell = "min-w-9 rounded-lg px-2.5 py-1.5 text-center text-sm";
+  const go = (p: number, label: string, key: string) => (
+    <Link
+      key={key}
+      href={withParams(sp, { page: p > 1 ? String(p) : undefined })}
+      aria-current={p === page && label === String(p) ? "page" : undefined}
+      className={cell}
+      style={
+        p === page && label === String(p)
+          ? { backgroundColor: "var(--axis-bronze-deep, #9D5E34)", color: "#fff" }
+          : { border: `1px solid ${C.line}`, color: C.text }
+      }
+    >
+      {label}
+    </Link>
+  );
+  const hidden = [...paramsOf(sp, { page: undefined }).entries()];
+
+  return (
+    <nav className="mb-6 flex flex-wrap items-center justify-center gap-1.5">
+      {page > 1 ? go(page - 1, "←", "prev") : null}
+      {list.map((p, i) => (
+        <span key={p} className="flex items-center gap-1.5">
+          {i > 0 && p - list[i - 1] > 1 && (
+            <span className="px-1 text-sm" style={{ color: C.muted }}>
+              …
+            </span>
+          )}
+          {go(p, String(p), `p${p}`)}
+        </span>
+      ))}
+      {page < pages ? go(page + 1, "→", "next") : null}
+      <form method="get" action="/admin/carnect/catalog" className="ml-3 flex items-center gap-1.5 text-sm">
+        {hidden.map(([k, v]) => (
+          <input key={k} type="hidden" name={k} value={v} />
+        ))}
+        <label htmlFor="pager-page" style={{ color: C.muted }}>
+          на страницу
+        </label>
+        <input
+          id="pager-page"
+          name="page"
+          type="number"
+          min={1}
+          max={pages}
+          defaultValue={page}
+          className="w-20 rounded-lg px-2 py-1.5 text-sm"
+          style={inputStyle}
+        />
+        <button type="submit" className={cell} style={{ border: `1px solid ${C.line}`, color: C.text }}>
+          ок
+        </button>
+      </form>
+    </nav>
   );
 }
 
@@ -385,23 +487,7 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
             </section>
           )}
 
-          {pages > 1 && (
-            <nav className="mb-6 flex items-center justify-center gap-3 text-sm">
-              {page > 1 && (
-                <Link href={withParams(sp2, { page: String(page - 1) })} style={{ color: C.accent }}>
-                  ← назад
-                </Link>
-              )}
-              <span style={{ color: C.muted }}>
-                {page} из {pages}
-              </span>
-              {page < pages && (
-                <Link href={withParams(sp2, { page: String(page + 1) })} style={{ color: C.accent }}>
-                  дальше →
-                </Link>
-              )}
-            </nav>
-          )}
+          {pages > 1 && <Pager sp={sp2} page={page} pages={pages} />}
         </>
       )}
     </Page>
