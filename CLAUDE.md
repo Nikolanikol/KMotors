@@ -267,13 +267,6 @@ tsx, не curl к PostgREST с подстановкой ключей из `.env`
   только в `[lang]/` давал `/ru/about`, `/ru/contact`, `/ar/buy` вообще БЕЗ `og:image` при
   живых `og:title` и `og:url`. Добавляя странице `openGraph`, класть рядом
   `opengraph-image.tsx`; проверять не сборкой, а `curl | grep og:image`.
-
-- ⚠️ **Файл нужен в КАЖДОМ сегменте, чья страница объявляет свой `openGraph`.** Картинка
-  подмешивается в метаданные ТОГО сегмента, где лежит файл, а собственный `openGraph`
-  вложенной страницы заменяет унаследованный объект целиком — вместе с картинкой. Файл
-  только в `[lang]/` давал `/ru/about`, `/ru/contact`, `/ar/buy` вообще БЕЗ `og:image` при
-  живых `og:title` и `og:url`. Добавляя странице `openGraph`, класть рядом
-  `opengraph-image.tsx`; проверять не сборкой, а `curl | grep og:image`.
 - ⚠️ **В корневом `layout.tsx` `openGraph.images` НЕ задавать.** Значение оттуда
   наследуется всеми страницами и перекрывает файловую конвенцию на каждой разом.
 - ⚠️ **`isExcluded` в `src/middleware.ts` обязан пропускать `opengraph-image`.** Расширения
@@ -986,6 +979,40 @@ K Car там не осталось — полный обход 1401 карточ
 Расписание — задача `showcase` в планировщике Coolify, `0 */4 * * *`, см. раздел
 «Расписания».
 
+### carnect.biz — новый источник аукционов и HeyDealer (10.2026)
+
+Замена витрины-посредника dokanmazad: carnect отдаёт пять аукционов (K Car, Lotte, SK,
+Autobell, Autohub) и HeyDealer (Self, Zero, Instant) вместе с VIN, листами осмотра,
+страховой историей. Код — `src/lib/carnect/`, база — `carnect_lots` (`sql/042`), каталог и
+страница машины пока под `/admin/carnect/`. Подробности, решения и **чек-лист перед
+выкладкой на витрину** — [docs/carnect.md](docs/carnect.md); поля источника и что из них
+видит клиент — [docs/carnect-fields.md](docs/carnect-fields.md) и
+[docs/carnect-raw-fields-review.md](docs/carnect-raw-fields-review.md).
+
+- ⚠️ **Синк `showcase` (dokanmazad) мёртв с 02.10.2026**: 9 прогонов из 9 упали, затем
+  задание перестало запускаться. Публичная `/[lang]/auction` всё ещё читает его таблицу
+  `auction_lots` и показывает данные не новее 02.10 — до переезда витрины на carnect.
+- ⚠️ **Каждая площадка — своё задание крона**, дважды в сутки; если первая страница не
+  изменилась, обход пропускается одним запросом. Полный обход — не реже раза в
+  `FORCE_FULL_MS` = 20 часов, а НЕ 24: интервал обязан быть меньше периода крона, иначе
+  полный обход держится на паре секунд (та же ловушка, что `SEND_COOLDOWN_MS`).
+- ⚠️ **Timeout задачи площадки в Coolify — 600 с** при лимите обхода 8 минут
+  (`FEEDS[…].budgetMs` в `sync.ts`); у HeyDealer 1800 с при 25 минутах. Меньше — Coolify
+  убьёт обход посередине.
+- ⚠️ **Служебная панель страницы машины (`InternalPanel.tsx`) — только на служебном
+  хосте**, `isServiceHost()` в `src/lib/serviceHost.ts`. На www её нет в разметке. Такие
+  страницы НЕ кешировать общим кешем Next (кеш один на оба хоста). Host подделывается
+  запросом прямо на IP сервера — пока сервер пускает на 80/443 не только Cloudflare, это
+  защита от случайного взгляда, а не от взлома. Скан техпаспорта — персональные данные
+  прежнего владельца, на www не показывать никогда.
+- ⚠️ **Замечания площадки клиент видит переведёнными** (`src/lib/carnect/defects.ts`,
+  «узел: состояние»). Юридический текст K Car («претензии не принимаются») отсекается;
+  незнакомая фраза остаётся по-английски, с хангылем — выбрасывается. Незнакомые фразы
+  видны в служебной панели — по ним пополнять словарь.
+- Бережность к carnect: запросы по одному с паузой 2.5–3.5 с, детали машины только по
+  требованию с кешем на час. Публичные страницы лотов закрывать от обхода ботами —
+  иначе каждый обход станет запросом к carnect.
+
 ### Каталог запчастей
 
 Вход: `/[lang]/parts` и `/[lang]/parts/[slug]`. Блоки интерфейса в `src/app/parts/sections/`
@@ -1330,7 +1357,9 @@ localStorage (`kaxis:ems-history`) и подставляется чипсами 
 | Задание | Аргумент раннера | Эндпоинт | Метод | Расписание | Где стоит |
 |---|---|---|---|---|---|
 | Снимки машин для сайтмапа | `cars` | `/api/cars/sync` | GET | `0 6 * * *` | Coolify |
-| Лоты автоаукционов | `showcase` | `/api/showcase/sync` | GET | `0 */4 * * *` | Coolify |
+| Лоты автоаукционов (dokanmazad, мёртв с 02.10) | `showcase` | `/api/showcase/sync` | GET | `0 */4 * * *` | Coolify, выключить |
+| Лоты carnect по площадкам | `carnect-lotte` / `-sk` / `-glovis` / `-kcar` / `-autohub` | `/api/carnect/sync?feed=…` | GET | `5,12,17,22,26 5,20 * * *` | Coolify, timeout 600 |
+| HeyDealer через carnect | `carnect-hey-instant` / `-self` / `-zero` | `/api/carnect/sync?feed=hey-…` | GET | `35/45 5,20`, `10 6,21` | Coolify, timeout 1800 |
 | Автопостинг авто | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | crontab |
 | Автопостинг запчастей | `poster-parts` | `/api/poster/parts/run` | POST | `30 */2 * * *` | crontab |
 | Черновик статьи блога | `blog` | `/api/blog-generate` | POST | `0 10 */3 * *` | crontab |
@@ -1378,7 +1407,7 @@ localStorage (`kaxis:ems-history`) и подставляется чипсами 
 
 Секретов два, не больше. `POSTER_CRON_SECRET` (заголовок `x-poster-secret`) закрывает
 `/api/poster/run`, `/api/poster/parts/run`, `/api/rss-sync`, `/api/blog-generate`,
-`/api/subscriptions/run`, `/api/showcase/sync` и `/api/cars/sync`. `SEO_CRON_SECRET` (заголовок
+`/api/subscriptions/run`, `/api/showcase/sync`, `/api/carnect/sync` и `/api/cars/sync`. `SEO_CRON_SECRET` (заголовок
 `x-seo-secret`) закрывает SEO-пайплайн. `CRON_SECRET` больше не используется нигде — он
 был задан только в README и ни разу в окружении.
 
