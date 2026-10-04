@@ -52,7 +52,7 @@ import { C, Page, Panel } from "./ui";
 export type SP = Record<string, string | string[] | undefined>;
 
 /** Что отличает витрину от админки. Передаётся вниз одним объектом. */
-interface Ctx {
+export interface Ctx {
   lang: CardLang;
   /** Адрес самого каталога: «/en/auction» или «/admin/carnect/catalog». */
   base: string;
@@ -231,7 +231,7 @@ function priceText(r: CatalogRow, lang: CardLang): string {
   return t(r.house === "heydealer" ? "byBidding" : "priceAtAuction");
 }
 
-function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
+export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
   const { lang } = ctx;
   // Подпись до старта таймера (сервер, первый кадр): точное время по Корее или день торгов.
   const when = r.end_at

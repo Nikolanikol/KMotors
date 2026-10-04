@@ -225,6 +225,7 @@ export default function CarCardView({
   internal,
   withHeader = false,
   krwToUsd,
+  similar,
 }: {
   card: CarCard;
   backHref: string;
@@ -239,6 +240,8 @@ export default function CarCardView({
   withHeader?: boolean;
   /** Курс для справки в $ (getCarRates). Нет — справка не показывается. */
   krwToUsd?: number;
+  /** Блок «Похожие машины» (SimilarCars) — внизу, перед звуком двигателя. */
+  similar?: ReactNode;
 }) {
   const t = (k: TextKey) => tx(lang, k);
   const n = (v: number | null | undefined) => (v == null ? null : fmt(lang, v));
@@ -534,6 +537,7 @@ export default function CarCardView({
                 </div>
               </Block>
             )}
+            {similar}
             {card.engineSound && (
               <Block title={t("engineSound")}>
                 {/* Внизу страницы и preload="none": ролик весит мегабайты, а

@@ -15,7 +15,9 @@ import { notFound } from "next/navigation";
 import CarCardView from "@/components/Carnect/CarCardView";
 import InternalPanel from "@/components/Carnect/InternalPanel";
 import LotState from "@/components/Carnect/LotState";
+import SimilarCars from "@/components/Carnect/SimilarCars";
 import { loadCard } from "@/lib/carnect/loadCard";
+import { getSimilar } from "@/lib/carnect/similar";
 import { getCarRates } from "@/lib/kbFx";
 import { isServiceHost } from "@/lib/serviceHost";
 
@@ -48,6 +50,13 @@ export default async function CarnectCarPage({ params }: { params: Promise<{ hou
       />
     );
   }
+  const similar = await getSimilar({
+    house,
+    externalId: id,
+    make: res.card.make,
+    modelGroup: res.card.modelGroup,
+    year: res.card.year,
+  });
   return (
     <CarCardView
       card={res.card}
@@ -55,6 +64,17 @@ export default async function CarnectCarPage({ params }: { params: Promise<{ hou
       id={id}
       lang="ru"
       krwToUsd={rates.krwToUsd}
+      similar={
+        <SimilarCars
+          rows={similar}
+          lang="ru"
+          catalogBase={BACK}
+          lotBase="/admin/carnect"
+          krwToUsd={rates.krwToUsd}
+          make={res.card.make}
+          modelGroup={res.card.modelGroup}
+        />
+      }
       internal={showInternal && <InternalPanel card={res.card} meta={{ id, ms, fetchedAt: res.fetchedAt }} />}
     />
   );

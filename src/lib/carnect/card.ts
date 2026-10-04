@@ -87,6 +87,11 @@ export interface CarCard {
   /** Комплектация. */
   grade?: string;
   make: string | null;
+  /**
+   * Модельная группа в нашей нормализации (normalize.ts) — та же, что в колонке
+   * carnect_lots.model_group. По ней подбираются похожие машины (similar.ts).
+   */
+  modelGroup: string | null;
   model?: string;
   year: number | null;
   km: number | null;
@@ -648,6 +653,7 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail, lang: CardLa
     title: makeTitle(make, group ?? lot.model, year, lang),
     grade: str(lot.grade) ?? str(lot.titleEn),
     make,
+    modelGroup: group,
     model: str(lot.model),
     year,
     km: positive(lot.km),
@@ -822,6 +828,7 @@ export function fromHey(car: HeyCarDetail, lang: CardLang = "ru"): CarCard {
     title: makeTitle(make, heyModelGroup(make, car.model) ?? car.model, year, lang),
     grade: str(car.gradeEn),
     make,
+    modelGroup: heyModelGroup(make, car.model),
     model: str(car.model),
     year,
     km: positive(car.km),

@@ -175,6 +175,10 @@ export const T = {
   d: ["д", "d"],
   sortSoon: ["скоро торги", "auction soonest"],
 
+  // ─── Похожие машины ───
+  similar: ["Похожие машины", "Similar cars"],
+  similarAll: ["Все такие в каталоге →", "See all in the catalog →"],
+
   // ─── Мобильная плашка ───
   wantCar: ["Хочу эту машину", "I want this car"],
 

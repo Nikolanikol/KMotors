@@ -26,7 +26,9 @@ import { notFound } from "next/navigation";
 import CarCardView from "@/components/Carnect/CarCardView";
 import InternalPanelLoader from "@/components/Carnect/InternalPanelLoader";
 import LotState from "@/components/Carnect/LotState";
+import SimilarCars from "@/components/Carnect/SimilarCars";
 import { loadCard } from "@/lib/carnect/loadCard";
+import { getSimilar } from "@/lib/carnect/similar";
 import { getCarRates } from "@/lib/kbFx";
 
 /**
@@ -65,6 +67,14 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
   if (res.status === "gone") {
     return <LotState id={id} gone parser={false} lang={LANG} backHref={back} withHeader />;
   }
+  // Похожие — из нашей базы, обновляются вместе со страницей (раз в час).
+  const similar = await getSimilar({
+    house,
+    externalId: id,
+    make: res.card.make,
+    modelGroup: res.card.modelGroup,
+    year: res.card.year,
+  });
   return (
     <CarCardView
       card={res.card}
@@ -75,6 +85,17 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
       withHeader
       krwToUsd={rates.krwToUsd}
       internal={<InternalPanelLoader house={house} id={id} />}
+      similar={
+        <SimilarCars
+          rows={similar}
+          lang={LANG}
+          catalogBase={back}
+          lotBase={`/${lang}/auction/lot`}
+          krwToUsd={rates.krwToUsd}
+          make={res.card.make}
+          modelGroup={res.card.modelGroup}
+        />
+      }
     />
   );
 }
