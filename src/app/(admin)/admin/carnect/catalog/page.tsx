@@ -23,6 +23,7 @@
 import Link from "next/link";
 
 import { requireAdmin } from "../../auction/shell";
+import { isServiceHost } from "@/lib/serviceHost";
 import { HEY_TYPES } from "@/lib/carnect/heydealer";
 import { HOUSES, type CarnectHouse } from "@/lib/carnect/houses";
 import { FUELS, PAGE_SIZE, readFilter, searchCatalog, type CatalogRow, type SourceCount } from "@/lib/carnect/query";
@@ -30,6 +31,7 @@ import { FUELS, PAGE_SIZE, readFilter, searchCatalog, type CatalogRow, type Sour
 import { C, Page, Panel, km, krw } from "../ui";
 
 import AutoSubmitSelect from "./AutoSubmitSelect";
+import TiltCard from "./TiltCard";
 
 export const dynamic = "force-dynamic";
 
@@ -198,50 +200,59 @@ function priceText(r: CatalogRow): string {
 function Tile({ r }: { r: CatalogRow }) {
   const when = r.auction_date ?? (r.end_at ? `до ${r.end_at.slice(0, 16).replace("T", " ")}` : null);
   return (
-    <Link
-      href={`/admin/carnect/${r.house}/${encodeURIComponent(r.external_id)}`}
-      className="block overflow-hidden rounded-xl transition-opacity hover:opacity-90"
-      style={{ backgroundColor: C.card, border: `1px solid ${C.line}` }}
-    >
-      <div className="relative aspect-[4/3] w-full" style={{ backgroundColor: "#1E1E1E" }}>
-        {r.photo_url && (
-          // Фото на CDN площадки / S3 HeyDealer, не у нас и не у carnect.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={r.photo_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-        )}
-        <span
-          className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[11px] font-semibold"
-          style={{
-            backgroundColor: "rgba(0,0,0,0.7)",
-            // Тип HeyDealer различим цветом рамки: торги у них устроены по-разному.
-            border: r.hey_type ? `1px solid ${HEY_COLORS[r.hey_type] ?? C.line}` : undefined,
-          }}
-          title={r.hey_type ? HEY_TYPES.find((t) => t.type === r.hey_type)?.hint : undefined}
-        >
-          {sourceLabel(r.house)}
-          {r.venue || r.hey_type ? ` · ${sourceLabel(r.house, r)}` : ""}
-        </span>
-      </div>
-      <div className="p-3">
-        <div className="text-sm font-semibold leading-tight">
-          {r.year ?? "—"} {r.make ?? ""} {r.model_group ?? ""}
-        </div>
-        <div className="mt-0.5 truncate text-xs" style={{ color: C.muted }}>
-          {r.title ?? ""}
-        </div>
-        <div className="mt-2 flex items-baseline justify-between">
-          <span className="text-sm font-semibold" style={{ color: C.accent }}>
-            {priceText(r)}
-          </span>
-          <span className="text-xs" style={{ color: C.muted }}>
-            {km(r.km)}
+    <TiltCard>
+      <Link
+        href={`/admin/carnect/${r.house}/${encodeURIComponent(r.external_id)}`}
+        className="block overflow-hidden"
+        style={{ backgroundColor: C.card }}
+      >
+        <div className="relative aspect-[4/3] w-full overflow-hidden" style={{ backgroundColor: "#1E1E1E" }}>
+          {r.photo_url && (
+            // Фото на CDN площадки / S3 HeyDealer, не у нас и не у carnect.
+            // Приближение при наведении — как у карточек Encar.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={r.photo_url}
+              alt=""
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              style={{ transitionTimingFunction: "cubic-bezier(0.16,1,0.3,1)" }}
+            />
+          )}
+          <span
+            className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[11px] font-semibold"
+            style={{
+              backgroundColor: "rgba(0,0,0,0.7)",
+              // Тип HeyDealer различим цветом рамки: торги у них устроены по-разному.
+              border: r.hey_type ? `1px solid ${HEY_COLORS[r.hey_type] ?? C.line}` : undefined,
+            }}
+            title={r.hey_type ? HEY_TYPES.find((t) => t.type === r.hey_type)?.hint : undefined}
+          >
+            {sourceLabel(r.house)}
+            {r.venue || r.hey_type ? ` · ${sourceLabel(r.house, r)}` : ""}
           </span>
         </div>
-        <div className="mt-1 text-[11px]" style={{ color: C.muted }}>
-          {[FUELS.find((f) => f.v === r.fuel)?.label, when, r.insp_grade].filter(Boolean).join(" · ")}
+        <div className="p-3">
+          <div className="text-sm font-semibold leading-tight">
+            {r.year ?? "—"} {r.make ?? ""} {r.model_group ?? ""}
+          </div>
+          <div className="mt-0.5 truncate text-xs" style={{ color: C.muted }}>
+            {r.title ?? ""}
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-sm font-semibold" style={{ color: C.accent }}>
+              {priceText(r)}
+            </span>
+            <span className="text-xs" style={{ color: C.muted }}>
+              {km(r.km)}
+            </span>
+          </div>
+          <div className="mt-1 text-[11px]" style={{ color: C.muted }}>
+            {[FUELS.find((f) => f.v === r.fuel)?.label, when, r.insp_grade].filter(Boolean).join(" · ")}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </TiltCard>
   );
 }
 
@@ -327,23 +338,14 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
   const filter = readFilter(sp2);
   const pageRaw = Number(first(sp.page) || 1);
   const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
-  const res = await searchCatalog(filter, page);
+  const [res, service] = await Promise.all([searchCatalog(filter, page), isServiceHost()]);
   const pages = res.ok ? Math.max(1, Math.ceil(res.total / PAGE_SIZE)) : 1;
   const years = Array.from({ length: 2027 - 2005 }, (_, i) => 2026 - i);
 
   return (
     <Page>
-      <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold">Каталог аукционов</h1>
-          <p className="mt-1 text-xs" style={{ color: C.muted }}>
-            Все аукционы и HeyDealer одним фильтром. Данные из нашей базы (крон дважды в сутки), а не с carnect
-            напрямую.
-          </p>
-        </div>
-        <Link href="/admin/carnect" className="text-sm" style={{ color: C.accent }}>
-          источник напрямую →
-        </Link>
+      <header className="mb-4">
+        <h1 className="text-xl font-semibold">Каталог аукционов</h1>
       </header>
 
       {/* GET-форма: состояние фильтра живёт в адресе. */}
@@ -455,14 +457,17 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
       </form>
 
       {!res.ok ? (
-        <Panel title="База не ответила">
-          <p className="text-sm" style={{ color: C.bad }}>
-            {res.error}
+        <Panel title="Каталог временно недоступен">
+          <p className="text-sm" style={{ color: C.muted }}>
+            Попробуйте обновить страницу через минуту.
           </p>
-          <p className="mt-2 text-xs" style={{ color: C.muted }}>
-            Если сказано, что функции carnect_search или таблицы carnect_lots нет, — не выполнена миграция
-            sql/042_carnect_lots.sql. Если таблица пустая — крон ещё ни разу не отработал.
-          </p>
+          {/* Причина — только нам, на служебном хосте. */}
+          {service && (
+            <p className="mt-2 text-xs" style={{ color: C.bad }}>
+              {res.error} · Если нет carnect_search / carnect_lots — не выполнена миграция
+              sql/042_carnect_lots.sql; если таблица пустая — крон ещё не отработал.
+            </p>
+          )}
         </Panel>
       ) : (
         <>

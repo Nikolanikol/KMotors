@@ -5,10 +5,11 @@
 // с ценой. Компоненты те же, что у страниц лотов аукциона: Carousel (галерея с
 // лайтбоксом), SpecCard / SpecRows, OverviewStrip, AuctionCountdown.
 //
-// ⚠️ У КАЖДОГО блока отметка «видит клиент» / «только мы» — это требование
-// владельца (02.10.2026): страница служит макетом, по которому решается, что
-// уйдёт на витрину. Всё служебное собрано в одном свёрнутом блоке внизу и берётся
-// из `card.internal` — разделение живёт в модели (card.ts), а не здесь.
+// Всё, что на странице, видит клиент. Служебное — отдельной панелью внизу
+// (InternalPanel), и только на служебном хосте: разделение живёт в модели
+// (card.ts, `internal`), а решение «показывать ли» — в странице (serviceHost.ts).
+// Отметки «видит клиент» / «только мы» у блоков были макетом для владельца
+// (02.10.2026) и сняты перед выкладкой (04.10.2026).
 
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -36,29 +37,8 @@ function koreanTime(iso: string | undefined): string | null {
   return m ? `${m[3]}.${m[2]} в ${m[4]}:${m[5]} (Корея)` : null;
 }
 
-/** Отметка видимости блока. Зелёная — уйдёт на витрину, серая с замком — только нам. */
-function Vis({ us }: { us?: boolean }) {
-  return (
-    <span
-      className="whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-      style={
-        us
-          ? { border: "1px solid rgba(138,138,138,0.5)", color: "var(--axis-gray)" }
-          : { border: "1px solid rgba(63,185,80,0.5)", color: "#3FB950" }
-      }
-      title={us ? "Клиенту не показывается" : "Будет на публичной карточке"}
-    >
-      {us ? "🔒 только мы" : "👁 видит клиент"}
-    </span>
-  );
-}
-
-function Block({ title, us, children }: { title: string; us?: boolean; children: ReactNode }) {
-  return (
-    <SpecCard title={title} aside={<Vis us={us} />}>
-      {children}
-    </SpecCard>
-  );
+function Block({ title, children }: { title: string; children: ReactNode }) {
+  return <SpecCard title={title}>{children}</SpecCard>;
 }
 
 function Muted({ children }: { children: ReactNode }) {
@@ -82,11 +62,8 @@ function PriceCard({ card }: { card: CarCard }) {
       className="rounded-2xl p-5"
       style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(182,119,73,0.4)" }}
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
-          {PRICE_LABEL[card.price.kind]}
-        </span>
-        <Vis />
+      <div className="mb-2 text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
+        {PRICE_LABEL[card.price.kind]}
       </div>
       <div className="text-3xl font-bold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
         {krw(card.price.krw) ?? (hey ? "ставками" : "на торгах")}
@@ -139,7 +116,6 @@ function PriceCard({ card }: { card: CarCard }) {
           <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
             {card.inspGrade}
           </span>
-          <span className="block text-[11px]">расшифровка шкалы — следующим шагом</span>
         </p>
       )}
     </section>
@@ -227,7 +203,6 @@ export default function CarCardView({
                     {card.accident}
                   </span>
                 )}
-                <Vis />
               </div>
             </div>
 
@@ -296,7 +271,7 @@ export default function CarCardView({
                 />
                 {hey && card.vin && (
                   <p className="mt-2 text-[11px]" style={{ color: "var(--axis-gray)" }}>
-                    VIN у HeyDealer приходит обрезанным — так отдаёт источник.
+                    Последние символы VIN площадка скрывает.
                   </p>
                 )}
               </Block>
