@@ -165,6 +165,9 @@ export const T = {
     "No cars match the filter. Loosen the conditions or clear the selected platforms.",
   ],
 
+  // ─── Мобильная плашка ───
+  wantCar: ["Хочу эту машину", "I want this car"],
+
   // ─── Состояния ───
   loading: ["Загружаем машину…", "Loading the car…"],
   goneTitle: ["Машина ушла с торгов", "This car has left the auction"],
@@ -189,6 +192,19 @@ export const fmt = (lang: CardLang, v: number) => v.toLocaleString(numLocale(lan
 
 /** Воны: 0 и отсутствие — это «нет цены», а не ₩0 (у Lotte startKrw всегда 0). */
 export const won = (lang: CardLang, v: number | null | undefined) => (v ? `₩${fmt(lang, v)}` : null);
+
+/**
+ * Справка в долларах под вонами: «≈ $12,345». Курс — Кукмин-банк (getCarRates,
+ * kbFx.ts), как у карточек Encar. Решение владельца 04.10.2026: у аукциона
+ * справка в $ на ВСЕХ языках, включая ru (у Encar на ru — рубли).
+ *
+ * «≈», потому что и цена стартовая, и курс справочный. Нет цены или курса —
+ * null: молчаливой константы-курса нет и быть не может (CLAUDE.md).
+ */
+export function usd(lang: CardLang, krw: number | null | undefined, krwToUsd: number | undefined): string | null {
+  if (!krw || !krwToUsd) return null;
+  return `≈ $${fmt(lang, Math.round(krw * krwToUsd))}`;
+}
 
 /** «2023 (3 years)» — год с возрастом. Русская форма со склонением — carAge.ts. */
 export function yearAgeEn(year: number | null | undefined, now = new Date()): string | null {

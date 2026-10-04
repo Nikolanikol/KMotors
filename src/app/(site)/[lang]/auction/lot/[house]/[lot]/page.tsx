@@ -27,8 +27,12 @@ import CarCardView from "@/components/Carnect/CarCardView";
 import InternalPanelLoader from "@/components/Carnect/InternalPanelLoader";
 import LotState from "@/components/Carnect/LotState";
 import { loadCard } from "@/lib/carnect/loadCard";
+import { getCarRates } from "@/lib/kbFx";
 
-/** Как у деталей в cached.ts: чаще страница всё равно не обновится. */
+/**
+ * Как у деталей в cached.ts: чаще страница всё равно не обновится. Цена в $
+ * запекается в HTML с курсом — правило «revalidate не выше 86400» соблюдено.
+ */
 export const revalidate = 3600;
 export const dynamicParams = true;
 
@@ -55,7 +59,7 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
   const id = decodeURIComponent(rawLot);
   const back = `/${lang}/auction`;
 
-  const res = await loadCard(house, id, LANG);
+  const [res, rates] = await Promise.all([loadCard(house, id, LANG), getCarRates()]);
   if (!res) notFound();
   if (res.status === "failed") throw new Error(`carnect ${house}/${id}: ${res.parser ? "parser" : "unavailable"}`);
   if (res.status === "gone") {
@@ -69,6 +73,7 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
       lang={LANG}
       pageUrl={`${SITE}/${lang}/auction/lot/${house}/${encodeURIComponent(id)}`}
       withHeader
+      krwToUsd={rates.krwToUsd}
       internal={<InternalPanelLoader house={house} id={id} />}
     />
   );

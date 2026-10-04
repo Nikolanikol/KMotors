@@ -16,6 +16,7 @@ import CarCardView from "@/components/Carnect/CarCardView";
 import InternalPanel from "@/components/Carnect/InternalPanel";
 import LotState from "@/components/Carnect/LotState";
 import { loadCard } from "@/lib/carnect/loadCard";
+import { getCarRates } from "@/lib/kbFx";
 import { isServiceHost } from "@/lib/serviceHost";
 
 import { requireAdmin } from "../../../auction/shell";
@@ -32,7 +33,7 @@ export default async function CarnectCarPage({ params }: { params: Promise<{ hou
 
   const showInternal = await isServiceHost();
   const t0 = Date.now();
-  const res = await loadCard(house, id, "ru");
+  const [res, rates] = await Promise.all([loadCard(house, id, "ru"), getCarRates()]);
   const ms = Date.now() - t0;
   if (!res) notFound();
   if (res.status !== "ok") {
@@ -53,6 +54,7 @@ export default async function CarnectCarPage({ params }: { params: Promise<{ hou
       backHref={BACK}
       id={id}
       lang="ru"
+      krwToUsd={rates.krwToUsd}
       internal={showInternal && <InternalPanel card={res.card} meta={{ id, ms, fetchedAt: res.fetchedAt }} />}
     />
   );

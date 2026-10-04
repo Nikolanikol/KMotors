@@ -711,3 +711,12 @@ select.PhoneInputCountrySelect {
   color: var(--axis-bronze);
   font-weight: 600;
 }
+
+/* Мобильная плашка страницы машины аукциона (Carnect/LotStickyBar): пока она
+   видна, круглая кнопка мессенджеров поднимается над ней, а не ложится на
+   кнопку заявки. Атрибут ставит сама плашка. До lg — дальше плашки нет. */
+@media (max-width: 1023px) {
+  body[data-sticky-cta] .messenger-fab {
+    bottom: 5.5rem;
+  }
+}

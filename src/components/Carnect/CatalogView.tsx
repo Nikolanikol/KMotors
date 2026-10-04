@@ -40,8 +40,10 @@ import {
   type SourceCount,
 } from "@/lib/carnect/query";
 
+import { getCarRates } from "@/lib/kbFx";
+
 import AutoSubmitSelect from "./AutoSubmitSelect";
-import { fmt, tx, won, type TextKey } from "./text";
+import { fmt, tx, usd, won, type TextKey } from "./text";
 import TiltCard from "./TiltCard";
 import { C, Page, Panel } from "./ui";
 
@@ -54,6 +56,8 @@ interface Ctx {
   base: string;
   /** Префикс страницы машины: «/en/auction/lot» или «/admin/carnect». */
   lotBase: string;
+  /** Курс для справки в $ под ценой (getCarRates, Кукмин-банк). */
+  krwToUsd?: number;
 }
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -278,6 +282,11 @@ function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
               {r.km ? `${fmt(lang, r.km)} ${tx(lang, "km")}` : "—"}
             </span>
           </div>
+          {r.price_kind !== "none" && usd(lang, r.price_krw, ctx.krwToUsd) && (
+            <div className="text-xs" style={{ color: C.muted }}>
+              {usd(lang, r.price_krw, ctx.krwToUsd)}
+            </div>
+          )}
           <div className="mt-1 text-[11px]" style={{ color: C.muted }}>
             {[
               fuel && (lang === "en" ? fuel.en : fuel.label),
@@ -391,7 +400,6 @@ export default async function CatalogView({
   /** Шапка над фильтром: заголовок и оговорки, у витрины и админки свои. */
   intro: ReactNode;
 }) {
-  const ctx: Ctx = { lang, base, lotBase };
   const t = (k: TextKey) => tx(lang, k);
 
   // Смена марки сбрасывает модель: prev_make — марка, с которой форма
@@ -402,7 +410,9 @@ export default async function CatalogView({
   const filter = readFilter(sp2);
   const pageRaw = Number(first(sp.page) || 1);
   const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
-  const res = await (cached ? searchCatalogCached : searchCatalog)(filter, page);
+  // Курс читается из кеша данных (fetch с revalidate в kbFx.ts), а не из сети на запрос.
+  const [res, rates] = await Promise.all([(cached ? searchCatalogCached : searchCatalog)(filter, page), getCarRates()]);
+  const ctx: Ctx = { lang, base, lotBase, krwToUsd: rates.krwToUsd };
   const pages = res.ok ? Math.max(1, Math.ceil(res.total / PAGE_SIZE)) : 1;
   const thisYear = new Date().getFullYear();
   const years = Array.from({ length: thisYear + 2 - 2005 }, (_, i) => thisYear + 1 - i);
