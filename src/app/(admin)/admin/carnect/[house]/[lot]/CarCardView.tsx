@@ -243,24 +243,6 @@ export default function CarCardView({
               )}
             </Block>
 
-            {card.engineSound && (
-              <Block title="Звук двигателя">
-                {/* Ролик с телефона инспектора/продавца, обычно вертикальный:
-                    высоту ограничиваем, иначе он займёт два экрана. preload
-                    metadata — без клика грузится только первый кадр, не весь файл. */}
-                <video
-                  src={card.engineSound}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="mx-auto max-h-[70vh] w-full rounded-xl bg-black object-contain"
-                />
-                <p className="mt-2 text-xs" style={{ color: "var(--axis-gray)" }}>
-                  Запись работающего двигателя. Включите звук.
-                </p>
-              </Block>
-            )}
-
             {/* Цена на узком экране — сразу под фото, как у карточки Encar. */}
             <div className="lg:hidden">
               <Side card={card} id={meta.id} />
@@ -466,6 +448,26 @@ export default function CarCardView({
                     </span>
                   ))}
                 </div>
+              </Block>
+            )}
+            {card.engineSound && (
+              <Block title="Звук двигателя">
+                {/* Внизу страницы и preload="none": ролик весит мегабайты, а
+                    смотрят его немногие (решение владельца 04.10.2026). До
+                    нажатия «play» браузер не скачивает ничего — ни файла, ни
+                    первого кадра. Высота задана заранее, иначе плеер без
+                    метаданных схлопнулся бы в полоску. Ролик с телефона, обычно
+                    вертикальный; горизонтальный встанет с полями. */}
+                <video
+                  src={card.engineSound}
+                  controls
+                  playsInline
+                  preload="none"
+                  className="mx-auto block aspect-[9/16] h-[70vh] max-h-[640px] w-auto max-w-full rounded-xl bg-black object-contain"
+                />
+                <p className="mt-2 text-xs" style={{ color: "var(--axis-gray)" }}>
+                  Запись работающего двигателя. Включите звук.
+                </p>
               </Block>
             )}
           </div>
