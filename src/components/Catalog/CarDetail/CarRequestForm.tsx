@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MessengerSelector } from "@/components/ui/MessengerSelector";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
-import { trackEvent } from "@/utils/gtag";
+import { trackEvent, trackOnce } from "@/utils/gtag";
 import { clarityEvent } from "@/utils/clarity";
 
 interface CarRequestFormProps {
@@ -55,7 +55,16 @@ export default function CarRequestForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !phone) return;
+    // ⚠️ Пустая отправка молча ничего не делает — это точка потери заявки, и её
+    // надо видеть в воронке: какое поле не заполнили.
+    if (!name.trim() || !phone) {
+      trackEvent("form_invalid", {
+        source,
+        car_id: carId,
+        missing: [!name.trim() && "name", !phone && "phone"].filter(Boolean).join(","),
+      });
+      return;
+    }
 
     setLoading(true);
     setError(false);
@@ -86,9 +95,11 @@ export default function CarRequestForm({
         clarityEvent("form_submit");
       } else {
         setError(true);
+        trackEvent("form_error", { source, car_id: carId, status: res.status });
       }
     } catch {
       setError(true);
+      trackEvent("form_error", { source, car_id: carId, status: "network" });
     } finally {
       setLoading(false);
     }
@@ -109,7 +120,12 @@ export default function CarRequestForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form
+      onSubmit={handleSubmit}
+      // Шаг воронки «начал заполнять» — первый фокус в любом поле, раз за страницу.
+      onFocus={() => trackOnce(`form_start:${source}`, "form_start", { source, car_id: carId })}
+      className="space-y-3"
+    >
       <Input
         value={name}
         onChange={(e) => setName(e.target.value)}

@@ -624,6 +624,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
           {data?.advertisement?.price && (
             <div
               id="customs-calculator"
+              // Шаги воронки (FunnelTracker): блок увиден / калькулятор трогали.
+              data-track-block="customs_calc"
+              data-track-click="calc_interact"
               className="scroll-mt-24 lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 car-detail-dark order-2 lg:order-1"
               style={{ scrollbarWidth: "none" }}
             >
@@ -701,15 +704,18 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 />
               </div>
             </div>
-            <CarouselLight
-              photos={sortedPhotos}
-              carName={fullCarName}
-              photoLabel={photoLabel}
-            />
+            <div data-track-block="gallery">
+              <CarouselLight
+                photos={sortedPhotos}
+                carName={fullCarName}
+                photoLabel={photoLabel}
+              />
+            </div>
 
             {/* Цена — только мобиль, сразу под фото */}
             {data?.advertisement?.price && (
               <div
+                data-track-block="price"
                 className="lg:hidden rounded-2xl px-4 py-3 flex items-center justify-between"
                 style={{
                   background:
@@ -746,14 +752,19 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
             />
             {/* История авто грузится на сервере, но за Suspense: HTML карточки
                 уходит сразу, а блок дописывается в тот же ответ — бот его видит. */}
-            <Suspense fallback={<DetailInfoSkeleton />}>
-              <DetailInfoSection id={data?.vehicleId} vehicleNo={data?.vehicleNo} />
-            </Suspense>
-            <OptionsRow data={data.options} />
+            <div data-track-block="history">
+              <Suspense fallback={<DetailInfoSkeleton />}>
+                <DetailInfoSection id={data?.vehicleId} vehicleNo={data?.vehicleNo} />
+              </Suspense>
+            </div>
+            <div data-track-block="options" data-track-click="options_open">
+              <OptionsRow data={data.options} />
+            </div>
           </div>
 
           {/* Col 3 — Цена, форма, продавец (sticky) */}
           <div
+            data-track-block="sidebar"
             className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto lg:overflow-x-hidden h-fit min-w-0 order-3"
             style={{ scrollbarWidth: "none" }}
           >
@@ -778,7 +789,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       </div>
 
       {/* Рекомендуемые авто */}
-      <RecommendedCars id={data?.vehicleId} lang={lang} />
+      <div data-track-block="recommended">
+        <RecommendedCars id={data?.vehicleId} lang={lang} />
+      </div>
       {/* Блок описания модели — виден пользователям и индексируется Google */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
         <CarDescription

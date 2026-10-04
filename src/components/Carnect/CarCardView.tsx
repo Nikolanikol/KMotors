@@ -28,6 +28,7 @@ import { gradeInfo } from "@/lib/carnect/grades";
 import { kstIso } from "@/lib/carnect/time";
 import type { CardLang } from "@/lib/carnect/lang";
 
+import FunnelTracker from "@/components/analytics/FunnelTracker";
 import { waHref } from "@/lib/contact";
 
 import BodyDiagram from "./BodyDiagram";
@@ -39,8 +40,13 @@ import LotTimer from "./LotTimer";
 import { fmt, koreanTime, tx, usd, won, yearAgeEn, type TextKey } from "./text";
 import { pad } from "./ui";
 
-function Block({ title, children }: { title: string; children: ReactNode }) {
-  return <SpecCard title={title}>{children}</SpecCard>;
+/** `track` — имя блока для воронки (FunnelTracker: «блок попал в экран»). */
+function Block({ title, children, track }: { title: string; children: ReactNode; track?: string }) {
+  return (
+    <div data-track-block={track}>
+      <SpecCard title={title}>{children}</SpecCard>
+    </div>
+  );
 }
 
 function Muted({ children }: { children: ReactNode }) {
@@ -203,7 +209,9 @@ function Side({
 }) {
   return (
     <div className="space-y-4">
-      <PriceCard card={card} lang={lang} krwToUsd={krwToUsd} />
+      <div data-track-block="price">
+        <PriceCard card={card} lang={lang} krwToUsd={krwToUsd} />
+      </div>
       <LotRequestCard
         carId={`${card.house}/${id}`}
         carName={card.title}
@@ -329,7 +337,7 @@ export default function CarCardView({
               </div>
             </div>
 
-            <Block title={`${t("photos")} — ${card.photos.length}`}>
+            <Block title={`${t("photos")} — ${card.photos.length}`} track="gallery">
               {card.photos.length ? (
                 // ⚠️ imageSource="raw": фото на CDN площадки / HeyDealer, параметры
                 // Encar с водяным знаком им дописывать нельзя. labels обязательны —
@@ -365,7 +373,7 @@ export default function CarCardView({
             />
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <Block title={t("specs")}>
+              <Block title={t("specs")} track="specs">
                 <SpecRows
                   rows={[
                     { label: t("make"), value: card.make },
@@ -381,7 +389,7 @@ export default function CarCardView({
                   ]}
                 />
               </Block>
-              <Block title={t("docs")}>
+              <Block title={t("docs")} track="docs">
                 <SpecRows
                   rows={[
                     { label: "VIN", value: card.vin, mono: true },
@@ -401,7 +409,7 @@ export default function CarCardView({
               </Block>
             </div>
 
-            <Block title={t("bodyTitle")}>
+            <Block title={t("bodyTitle")} track="body">
               {card.bodyMarks.length ? (
                 <BodyDiagram marks={card.bodyMarks} lang={lang} />
               ) : card.hasBodyData ? (
@@ -416,7 +424,7 @@ export default function CarCardView({
             </Block>
 
             {card.inspectionSheet && (
-              <Block title={t("sheet")}>
+              <Block title={t("sheet")} track="inspection_sheet">
                 {/* Скан площадки: на белом фоне, как напечатан, — иначе тёмная
                     тема съедает тонкие линии схемы. Клик открывает оригинал. */}
                 <a href={card.inspectionSheet} target="_blank" rel="noreferrer" className="block">
@@ -435,7 +443,7 @@ export default function CarCardView({
             )}
 
             {card.defects.length > 0 && (
-              <Block title={t("defects")}>
+              <Block title={t("defects")} track="defects">
                 {/* Что нашла площадка при осмотре — дословно, только переведено.
                     Юридический текст площадки отсечён в defects.ts. */}
                 <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
@@ -455,7 +463,7 @@ export default function CarCardView({
             )}
 
             {card.sellerSays.length > 0 && (
-              <Block title={t("sellerSays")}>
+              <Block title={t("sellerSays")} track="seller_says">
                 <ul className="space-y-1.5 text-sm" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
                   {card.sellerSays.map((l) => (
                     <li key={l}>{l}</li>
@@ -468,7 +476,7 @@ export default function CarCardView({
             )}
 
             {card.checks.length > 0 && (
-              <Block title={t("checks")}>
+              <Block title={t("checks")} track="checks">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {card.checks.map((g, gi) => (
                     <div key={g.title + gi}>
@@ -500,7 +508,7 @@ export default function CarCardView({
             {(h || card.legal) && (
               <div className="grid gap-4 lg:grid-cols-2">
                 {h && (
-                  <Block title={t("history")}>
+                  <Block title={t("history")} track="history">
                     <SpecRows
                       rows={[
                         { label: t("owners"), value: n(h.owners) },
@@ -530,7 +538,7 @@ export default function CarCardView({
                   </Block>
                 )}
                 {card.legal && (
-                  <Block title={t("legal")}>
+                  <Block title={t("legal")} track="legal">
                     <SpecRows
                       rows={[
                         {
@@ -551,7 +559,7 @@ export default function CarCardView({
             )}
 
             {card.options.length > 0 && (
-              <Block title={`${t("options")} — ${card.options.length}`}>
+              <Block title={`${t("options")} — ${card.options.length}`} track="options">
                 <div className="flex flex-wrap gap-1.5">
                   {card.options.map((o) => (
                     <span
@@ -565,9 +573,9 @@ export default function CarCardView({
                 </div>
               </Block>
             )}
-            {similar}
+            {similar && <div data-track-block="similar">{similar}</div>}
             {card.engineSound && (
-              <Block title={t("engineSound")}>
+              <Block title={t("engineSound")} track="engine_sound">
                 {/* Внизу страницы и preload="none": ролик весит мегабайты, а
                     смотрят его немногие (решение владельца 04.10.2026). До
                     нажатия «play» браузер не скачивает ничего — ни файла, ни
@@ -596,6 +604,16 @@ export default function CarCardView({
 
         {/* ─── Только для нас: слот, наполняет маршрут (только служебный хост) ─── */}
         {internal}
+
+        {/* Шаги воронки: просмотр машины, какие блоки увидел, что нажимал. */}
+        <FunnelTracker
+          view={{
+            event: "view_item",
+            params: { item_category: "auction", house: card.house, value: card.price.krw ?? undefined, price_kind: card.price.kind },
+          }}
+          itemId={`${card.house}/${id}`}
+          itemName={card.title}
+        />
 
         {/* Место под мобильную плашку: иначе она закрывает низ страницы. */}
         <div className="h-20 lg:hidden" aria-hidden />

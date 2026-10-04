@@ -61,7 +61,7 @@ export function useFavorites() {
     const exists = prev.some((f) => f.id === car.id);
     const next = exists ? prev.filter((f) => f.id !== car.id) : [...prev, car];
     writeStorage(next);
-    trackEvent(exists ? "remove_from_favorites" : "add_to_favorites", {
+    trackEvent(exists ? "remove_from_wishlist" : "add_to_wishlist", {
       car_id: car.id,
       car_name: `${car.manufacture} ${car.model} ${car.year}`,
       car_price: car.price,

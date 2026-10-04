@@ -43,6 +43,8 @@ import {
 
 import { getCarRates } from "@/lib/kbFx";
 
+import FunnelTracker from "@/components/analytics/FunnelTracker";
+
 import AuctionHeart from "./AuctionHeart";
 import AutoSubmitSelect from "./AutoSubmitSelect";
 import LotTimer from "./LotTimer";
@@ -268,6 +270,9 @@ export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
       />
       <Link
         href={`${ctx.lotBase}/${r.house}/${encodeURIComponent(r.external_id)}`}
+        // Шаг воронки «выбрал машину» (FunnelTracker на странице каталога).
+        data-track-click="select_item"
+        data-track-label={`${r.house}/${r.external_id}`}
         className="block overflow-hidden"
         style={{ backgroundColor: C.card }}
       >
@@ -469,6 +474,19 @@ export default async function CatalogView({
 
   return (
     <Page withHeader={withHeader}>
+      {/* Шаг воронки «увидел выдачу» — результат, число, фильтр, страница. */}
+      <FunnelTracker
+        view={{
+          event: "view_item_list",
+          params: {
+            item_list_name: "auction_catalog",
+            result: !res.ok ? "unavailable" : res.total ? "ok" : "empty",
+            count: res.ok ? res.total : undefined,
+            page,
+            filtered: Object.keys(sp).some((k) => k !== "page" && k !== "sort"),
+          },
+        }}
+      />
       {intro}
 
       {/* GET-форма: состояние фильтра живёт в адресе. */}

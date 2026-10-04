@@ -101,6 +101,7 @@ export default function LotRequestCard({
 
   return (
     <div
+      data-track-block="request_form"
       className="overflow-hidden rounded-2xl"
       style={{
         backgroundColor: "var(--axis-charcoal)",
@@ -157,6 +158,8 @@ export default function LotRequestCard({
 
         <a
           href={waHref(waText)}
+          data-track-click="contact"
+          data-track-label="whatsapp_lot"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-3 flex w-full items-center justify-center rounded-xl py-2.5 text-sm font-medium"

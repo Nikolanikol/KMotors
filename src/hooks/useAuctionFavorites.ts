@@ -81,7 +81,7 @@ export function useAuctionFavorites() {
     // Новые сверху: в панели последним сохранённое ищут первым.
     const next = exists ? prev.filter((f) => f.key !== lot.key) : [{ ...lot, savedAt: Date.now() }, ...prev];
     write(next);
-    trackEvent(exists ? "remove_from_favorites" : "add_to_favorites", {
+    trackEvent(exists ? "remove_from_wishlist" : "add_to_wishlist", {
       car_id: lot.key,
       car_name: lot.title,
       source: "auction",

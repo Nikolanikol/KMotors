@@ -59,6 +59,8 @@ export default function LotShare({ title, lang }: { title: string; lang: CardLan
     <button
       key={key}
       type="button"
+      data-track-click="share"
+      data-track-label={key}
       onClick={() => share(url, key)}
       className="flex h-10 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-all hover:scale-105 active:scale-95"
       style={{

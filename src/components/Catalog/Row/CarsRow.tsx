@@ -2,6 +2,8 @@ import { Pagination } from "./Pagination";
 import { getString } from "./utils";
 import { getCars } from "./utils/service";
 import { CarSearchParams } from "./utils/Types";
+import FunnelTracker from "@/components/analytics/FunnelTracker";
+
 import CarCard from "./CarCard";
 import { Suspense } from "react";
 import { headers } from "next/headers";
@@ -58,6 +60,8 @@ const CarsRow = async ({ searchParams, lang = "ru" }: { searchParams: CarSearchP
   if (failed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center px-4">
+        {/* Сбой Encar глазами воронки: человек пришёл, а машин нет. */}
+        <FunnelTracker view={{ event: "view_item_list", params: { item_list_name: "encar_catalog", result: "unavailable" } }} />
         <WifiOff className="w-12 h-12 opacity-20" style={{ color: "var(--axis-gray)" }} />
         <p className="text-base font-medium" style={{ color: "var(--axis-gray)" }}>{m.failed}</p>
         <p className="text-sm" style={{ color: "rgba(120,120,120,0.8)" }}>{m.failedHint}</p>
@@ -69,6 +73,9 @@ const CarsRow = async ({ searchParams, lang = "ru" }: { searchParams: CarSearchP
     const isCarNoSearch = !!params.carNo;
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <FunnelTracker
+          view={{ event: "view_item_list", params: { item_list_name: "encar_catalog", result: "empty", count: 0 } }}
+        />
         <Search className="w-12 h-12 opacity-20" style={{ color: "var(--axis-gray)" }} />
         <p className="text-base font-medium" style={{ color: "var(--axis-gray)" }}>
           {isCarNoSearch ? m.byNo.replace("{no}", params.carNo || "") : m.empty}
@@ -84,6 +91,13 @@ const CarsRow = async ({ searchParams, lang = "ru" }: { searchParams: CarSearchP
 
   return (
     <div>
+      {/* Шаг воронки «увидел выдачу»: страница, число машин, применён ли фильтр. */}
+      <FunnelTracker
+        view={{
+          event: "view_item_list",
+          params: { item_list_name: "encar_catalog", result: "ok", count, page: Number(params.page ?? 1), filtered: !!params.action },
+        }}
+      />
       <div id="cars-grid" className="grid grid-cols-1 sm:grid-cols-2 items-start gap-5 min-h-[80vh]">
         {data
           .filter((item: { Id?: string }) => !!item?.Id)

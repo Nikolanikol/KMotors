@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, ArrowRight, ArrowLeft } from "lucide-react";
 import { usePartsCart } from "@/hooks/useCartCount";
+import { trackEvent, trackOnce } from "@/utils/gtag";
 import { OrderModal } from "@/app/parts/sections/OrderModal";
 import { CartLineItem } from "@/components/Cart/CartLineItem";
 import { cartText, cartSubtotal, cartMessageLines, usdFmt } from "@/components/Cart/cartText";
@@ -27,6 +28,12 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
   useEffect(() => {
     setBackSearch(sessionStorage.getItem("parts:filters") ?? "");
   }, []);
+
+  // Шаг воронки запчастей «открыл корзину» (страница). Ждём, пока стор прочитает
+  // localStorage: первый рендер всегда пустой, и count = 0 был бы враньём.
+  useEffect(() => {
+    if (count > 0) trackOnce("view_cart", "view_cart", { items: count, value: cartSubtotal(items, krwToUsd), currency: "USD", via: "page" });
+  }, [count, items, krwToUsd]);
 
   const subtotal = cartSubtotal(items, krwToUsd);
   const messageLines = cartMessageLines(items, lang, krwToUsd);
@@ -91,7 +98,11 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
               </div>
 
               <button
-                onClick={() => setOrderOpen(true)}
+                onClick={() => {
+                  // Шаг «начал оформление»: дальше форма и generate_lead (parts_cart).
+                  trackEvent("begin_checkout", { items: count, value: subtotal, currency: "USD" });
+                  setOrderOpen(true);
+                }}
                 className="w-full mt-5 h-12 rounded-xl bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-semibold flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer"
               >
                 {l.checkout}
