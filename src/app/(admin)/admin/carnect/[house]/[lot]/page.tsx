@@ -19,6 +19,7 @@ import { requireAdmin } from "../../../auction/shell";
 import { fromHey, fromLot } from "@/lib/carnect/card";
 import { getHeyCar, getLotDetail } from "@/lib/carnect/cached";
 import { isHouse } from "@/lib/carnect/houses";
+import { isServiceHost } from "@/lib/serviceHost";
 
 import { C, Page, Panel } from "../../ui";
 import CarCardView from "./CarCardView";
@@ -62,17 +63,18 @@ export default async function CarnectCarPage({ params }: { params: Promise<{ hou
   // Сегмент приходит закодированным: в lotId бывают "~" и base64.
   const id = decodeURIComponent(rawLot);
 
+  const showInternal = await isServiceHost();
   const t0 = Date.now();
   if (house === "heydealer") {
     const res = await getHeyCar(id);
     const ms = Date.now() - t0;
     if (res.status !== "ok") return <NotOk id={id} gone={res.status === "gone"} parser={res.status === "failed" && res.parser} />;
-    return <CarCardView card={fromHey(res.car)} backHref={BACK} meta={{ id, ms, fetchedAt: res.fetchedAt }} />;
+    return <CarCardView card={fromHey(res.car)} backHref={BACK} meta={{ id, ms, fetchedAt: res.fetchedAt }} showInternal={showInternal} />;
   }
 
   if (!isHouse(house)) notFound();
   const res = await getLotDetail(house, id);
   const ms = Date.now() - t0;
   if (res.status !== "ok") return <NotOk id={id} gone={res.status === "gone"} parser={res.status === "failed" && res.parser} />;
-  return <CarCardView card={fromLot(house, res.lot)} backHref={BACK} meta={{ id, ms, fetchedAt: res.fetchedAt }} />;
+  return <CarCardView card={fromLot(house, res.lot)} backHref={BACK} meta={{ id, ms, fetchedAt: res.fetchedAt }} showInternal={showInternal} />;
 }

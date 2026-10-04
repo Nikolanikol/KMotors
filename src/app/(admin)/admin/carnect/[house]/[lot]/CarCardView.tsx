@@ -22,8 +22,8 @@ import { yearWithAge } from "@/components/Auction/carAge";
 import Carousel from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import type { CarCard } from "@/lib/carnect/card";
 
-import { FieldTable, ago } from "../../ui";
 import BodyDiagram from "./BodyDiagram";
+import InternalPanel from "./InternalPanel";
 import LotRequestCard from "./LotRequestCard";
 
 const krw = (v: number | null | undefined) => (v ? `₩${v.toLocaleString("ru-RU")}` : null);
@@ -166,10 +166,16 @@ export default function CarCardView({
   card,
   backHref,
   meta,
+  showInternal,
 }: {
   card: CarCard;
   backHref: string;
   meta: { id: string; ms: number; fetchedAt?: string };
+  /**
+   * Служебная панель. true только на служебном хосте — решает страница через
+   * isServiceHost(); на www панели нет в разметке вовсе.
+   */
+  showInternal: boolean;
 }) {
   const h = card.history;
   const hey = card.house === "heydealer";
@@ -478,68 +484,8 @@ export default function CarCardView({
           </div>
         </div>
 
-        {/* ─── Только для нас ─── */}
-        <details className="mt-6 rounded-2xl p-5" style={{ backgroundColor: "#111", border: "1px dashed rgba(138,138,138,0.45)" }}>
-          <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 text-base font-semibold" style={{ color: "var(--axis-white)" }}>
-            Только для нас
-            <Vis us />
-            <span className="w-full text-xs font-normal sm:w-auto" style={{ color: "var(--axis-gray)" }}>
-              техпаспорт, ставки, замечания, все поля, сырой JSON · id {meta.id} · ответ {meta.ms} мс · загружено {ago(meta.fetchedAt)}
-            </span>
-          </summary>
-
-          <div className="mt-4 space-y-4">
-            {card.internal.scans.length > 0 && (
-              <Block title="Сканы документов" us>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {card.internal.scans.map((s) => (
-                    <a key={s.url} href={s.url} target="_blank" rel="noreferrer" className="block text-xs" style={{ color: "var(--axis-gray)" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={s.url} alt={s.label} loading="lazy" className="mb-1 w-full rounded-lg bg-white" />
-                      {s.label}
-                    </a>
-                  ))}
-                </div>
-              </Block>
-            )}
-
-            <Block title="Торги и служебное" us>
-              <SpecRows
-                rows={[
-                  { label: "Ставок", value: card.internal.bids },
-                  { label: "Прошлые торги", value: card.internal.previousBids },
-                  { label: "Цена после торгов", value: krw(card.internal.afterBidKrw) },
-                  ...Object.entries(card.internal.facts).map(([label, v]) => ({
-                    label,
-                    value: v == null || v === "" ? null : typeof v === "object" ? JSON.stringify(v) : String(v),
-                  })),
-                ]}
-              />
-            </Block>
-
-            {card.internal.notes.length > 0 && (
-              <Block title="Замечания площадки, инспектора, продавца" us>
-                <ul className="list-disc space-y-1 pl-5 text-sm" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-                  {card.internal.notes.map((t, i) => (
-                    <li key={i} className="whitespace-pre-line">
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </Block>
-            )}
-
-            <Block title="Все поля" us>
-              <FieldTable data={card.raw} skip={["photos", "photoThumbs"]} />
-            </Block>
-
-            <Block title="Сырой JSON" us>
-              <pre className="max-h-[600px] overflow-auto text-[11px]" style={{ color: "var(--axis-gray)" }}>
-                {JSON.stringify(card.raw, null, 2)}
-              </pre>
-            </Block>
-          </div>
-        </details>
+        {/* ─── Только для нас: только на служебном хосте (serviceHost.ts) ─── */}
+        {showInternal && <InternalPanel card={card} meta={meta} />}
       </div>
     </main>
   );

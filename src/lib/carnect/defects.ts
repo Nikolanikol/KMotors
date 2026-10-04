@@ -110,8 +110,11 @@ function unglue(s: string): string {
   return s.replace(/^(PS|A\/C)(?=[a-z])/i, "$1 ").replace(/\s+/g, " ").trim();
 }
 
-/** Одна фраза → «Узел: состояние», либо исходная, если узел незнаком. */
-export function translateDefect(phrase: string): string | null {
+/**
+ * Одна фраза → «Узел: состояние». Незнакомая — исходной строкой с known: false
+ * (по таким пополняют словарь, их видно в служебной панели). С хангылем — null.
+ */
+export function translateDefect(phrase: string): { text: string; known: boolean } | null {
   const p = unglue(phrase);
   if (!p) return null;
 
@@ -124,10 +127,10 @@ export function translateDefect(phrase: string): string | null {
     const m = re.exec(body);
     if (!m) continue;
     const subject = SUBJECTS[body.slice(0, m.index).trim().toLowerCase()];
-    if (subject) return `${subject}: ${cond}${count}`;
+    if (subject) return { text: `${subject}: ${cond}${count}`, known: true };
     break;
   }
-  return HANGUL.test(p) ? null : p;
+  return HANGUL.test(p) ? null : { text: p, known: false };
 }
 
 export interface PlatformNotes {
@@ -135,11 +138,13 @@ export interface PlatformNotes {
   defects: string[];
   /** «Keys 1EA» у K Car — число ключей. */
   keys: number | null;
+  /** Фразы, которых нет в словаре (и с хангылем) — для служебной панели. */
+  unknown: string[];
 }
 
 /** Разбирает `notes` лота. Пустые и чисто служебные заметки дают пустой список. */
 export function parseNotes(notes: string | undefined | null): PlatformNotes {
-  const out: PlatformNotes = { defects: [], keys: null };
+  const out: PlatformNotes = { defects: [], keys: null, unknown: [] };
   if (!notes) return out;
   for (const chunk of notes.split(/\s+·\s+|★/)) {
     if (!chunk.trim() || BOILERPLATE.test(chunk)) continue;
@@ -153,7 +158,8 @@ export function parseNotes(notes: string | undefined | null): PlatformNotes {
       }
       if (NEUTRAL.test(phrase)) continue;
       const t = translateDefect(phrase);
-      if (t && !out.defects.includes(t)) out.defects.push(t);
+      if (!t || !t.known) out.unknown.push(phrase);
+      if (t && !out.defects.includes(t.text)) out.defects.push(t.text);
     }
   }
   return out;

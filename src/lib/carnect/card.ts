@@ -20,6 +20,7 @@
 // просто не станет рисовать `internal` — решить, что показывать клиенту, второй
 // раз будет негде (решения владельца 02.10.2026, docs/carnect-fields.md).
 
+import { CARNECT_ORIGIN } from "./client";
 import { parseNotes } from "./defects";
 import type { HeyCarDetail } from "./heydealer";
 import { HEY_TYPES } from "./heydealer";
@@ -165,15 +166,67 @@ export interface CarCard {
 
   /** ⚠️ Только для нас — клиенту не показывается (решение владельца 02.10.2026). */
   internal: {
+    /** Страница машины у carnect — первоисточник в один клик. */
+    sourceUrl: string;
     scans: { label: string; url: string }[];
-    bids?: string;
-    previousBids?: string;
-    afterBidKrw: number | null;
-    notes: string[];
-    facts: Record<string, unknown>;
+    /** Торги и сделка: статус, ставки, цена после торгов, место на площадке. */
+    deal: InternalRow[];
+    /** Документы для экспорта: что приложено и чего нет. */
+    documents: { have: string[]; missing: string[] };
+    /** Прочее полезное: что лежит в машине, срок техосмотра, отсутствующие опции. */
+    facts: InternalRow[];
+    /** Что проверить до ставки: противоречия и тревожные признаки. */
+    flags: { text: string; warn: boolean }[];
+    /** Замечания в оригинале, по источнику — сверять с нашим переводом. */
+    notes: { label: string; lines: string[] }[];
+    /** Фразы замечаний, которых нет в словаре defects.ts, — по ним его пополняют. */
+    unknownPhrases: string[];
   };
+  /**
+   * Ключи сырых данных, которые уже стоят на карточке клиента (через точку для
+   * вложенных: «heydealer.history»). В таблице «Все поля» по ним видно, что из
+   * данных ещё не выведено.
+   */
+  shownKeys: string[];
   raw: Record<string, unknown>;
 }
+
+export interface InternalRow {
+  label: string;
+  value: string | null | undefined;
+}
+
+/** Строка/число → текст для служебной строки; пустое — null (строка не рисуется). */
+function txt(v: unknown): string | null {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return v.toLocaleString("ru-RU");
+  if (typeof v === "string") return v.trim() || null;
+  return JSON.stringify(v);
+}
+
+/** «a, b, c» → [a, b, c]; строка без запятых — один пункт (у Autobell список склеен пробелами). */
+function listOf(v: unknown): string[] {
+  const s = txt(v);
+  if (!s) return [];
+  return s.includes(",") ? s.split(/,\s*/).filter(Boolean) : [s];
+}
+
+const LOT_SHOWN = [
+  "make", "modelGroup", "model", "grade", "titleEn", "year", "km", "cc", "fuel", "trans", "color",
+  "body", "vehicleType", "segment", "seats", "usage", "firstRegistrationDate", "vin", "vehicleNo",
+  "startKrw", "auctionDate", "startAt", "venue", "location", "lotNo", "photos", "photo", "inspGrade",
+  "accidentTag", "accidentHistory", "legalStatus", "legal", "insuranceHistory", "insuranceDamage",
+  "insurance", "panelDiagram", "inspectionSheetImage", "inspection", "options", "notes", "motorCode",
+  "inspectionRecord", "properties.Seating", "properties.Stored items", "properties.engine_model",
+];
+
+const HEY_SHOWN = [
+  "make", "model", "year", "km", "cc", "fuel", "trans", "color", "krw", "endAt", "photos", "photo",
+  "gradeEn", "options", "originPriceKrw", "heydealer.auctionType", "heydealer.accidentGrade",
+  "heydealer.accidentDiagram", "heydealer.history", "heydealer.conditionRows", "heydealer.conditionItems",
+  "heydealer.paint", "heydealer.interior", "heydealer.carNumber", "heydealer.vehicleInfo",
+  "heydealer.engineSound", "heydealer.imageGroups", "heydealer.msrpKrw",
+];
 
 // ─── Словари ─────────────────────────────────────────────────────────────
 
@@ -466,6 +519,42 @@ function makeTitle(make: string | null, model: string | undefined, year: number 
   return [year, make, model].filter(Boolean).join(" ") || "Машина";
 }
 
+const krwText = (v: unknown) => (positive(v) ? `₩${positive(v)!.toLocaleString("ru-RU")}` : null);
+
+/** Что проверить до ставки. warn — красным, остальное — справка. */
+function lotFlags(
+  lot: CarnectLotDetail,
+  raw: Record<string, unknown>,
+  props: Record<string, unknown>,
+  history: CarCard["history"],
+  legal: { seizures?: number; mortgages?: number } | undefined,
+): { text: string; warn: boolean }[] {
+  const out: { text: string; warn: boolean }[] = [];
+  // Пробег по реестру (Autohub): обычно это запись прошлого техосмотра и она
+  // МЕНЬШЕ пробега лота — норма. Больше — повод заподозрить скрутку.
+  const ledger = Number(String(props["Ledger mileage"] ?? "").replace(/\D/g, "")) || null;
+  const km = positive(lot.km);
+  if (ledger && km) {
+    out.push(
+      ledger > km
+        ? { text: `Пробег по реестру ${ledger.toLocaleString("ru-RU")} км БОЛЬШЕ пробега лота ${km.toLocaleString("ru-RU")} км — проверить на скрутку`, warn: true }
+        : { text: `Пробег по реестру ${ledger.toLocaleString("ru-RU")} км (лот ${km.toLocaleString("ru-RU")} км) — старая запись, норма`, warn: false },
+    );
+  }
+  // Autobell: метка площадки и страховая история говорят о разном.
+  if (raw.accidentTag === "ACCIDENT" && str(raw.accidentHistory) === "No") {
+    out.push({ text: "Метка площадки «ДТП», а страховых случаев нет — вероятно, ремонт кузова без страховой", warn: true });
+  }
+  if (history?.uninsured) out.push({ text: `Периоды без страховки: ${history.uninsured}`, warn: true });
+  if (history?.totalLoss) out.push({ text: `Тотал по страховой: ${history.totalLoss}`, warn: true });
+  if (history?.flood) out.push({ text: `Утопленник по страховой: ${history.flood}`, warn: true });
+  if (legal?.seizures) out.push({ text: `Аресты: ${legal.seizures}`, warn: true });
+  if (legal?.mortgages) out.push({ text: `Залоги: ${legal.mortgages}`, warn: true });
+  if (/rental|taxi|lease/i.test(String(lot.usage ?? ""))) out.push({ text: `Использование: ${lot.usage}`, warn: false });
+  if (listOf(props.documents_missing).length) out.push({ text: "Не хватает документов — см. «Документы»", warn: true });
+  return out;
+}
+
 // ─── Переходник: лот аукциона ────────────────────────────────────────────
 
 export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
@@ -569,19 +658,35 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
     checks: checkGroups(lot.inspection),
     options: optionList(lot.options),
     internal: {
+      sourceUrl: `${CARNECT_ORIGIN}/lot/${house}/${encodeURIComponent(lot.lotId)}`,
       scans,
-      afterBidKrw: positive(lot.afterBidKrw),
-      notes: [str(lot.notes), str(lot.notesKo)].filter((x): x is string => !!x),
-      facts: {
-        "статус торгов": lot.status,
-        "ряд": lot.lane,
-        "стоянка": raw.parkingSlot ?? raw.pkltNo,
-        "id у площадки": lot.carId,
-        "осмотр действует до": raw.inspectionValidUntil ?? props["Inspection valid until"],
-        "в машине": props["Stored items"],
-        "нет опций": raw.disabledOptions,
+      deal: [
+        { label: "Статус торгов", value: txt(lot.status) ?? txt(raw.bidStatus) },
+        { label: "Цена после торгов", value: krwText(lot.afterBidKrw) },
+        { label: "Ряд", value: txt(lot.lane) },
+        { label: "Стоянка", value: txt(raw.parkingSlot) ?? txt(raw.pkltNo) ?? txt(props.lot_position) },
+        { label: "Раунд", value: txt(lot.roundId) },
+        { label: "Id у площадки", value: txt(lot.carId) },
+      ],
+      documents: {
+        have: listOf(props.Documents ?? props.documents_complete),
+        missing: listOf(props.documents_missing),
       },
+      facts: [
+        { label: "В машине", value: txt(props["Stored items"]) ?? txt(props.storage_items) },
+        { label: "Техосмотр действует до", value: txt(raw.inspectionValidUntil) ?? txt(props["Inspection valid until"]) },
+        { label: "Пробег по реестру", value: txt(props["Ledger mileage"]) },
+        { label: "Тип товара", value: txt(props.product_type) },
+        { label: "Нет опций", value: Array.isArray(raw.disabledOptions) ? (raw.disabledOptions as string[]).join(", ") : null },
+      ],
+      flags: lotFlags(lot, raw, props, history, legalRaw),
+      notes: [
+        { label: "Площадка (английский)", lines: str(lot.notes) ? [str(lot.notes)!] : [] },
+        { label: "Площадка (корейский)", lines: str(lot.notesKo) ? [str(lot.notesKo)!] : [] },
+      ].filter((n) => n.lines.length),
+      unknownPhrases: notes.unknown,
     },
+    shownKeys: LOT_SHOWN,
     raw,
   };
 }
@@ -729,22 +834,46 @@ export function fromHey(car: HeyCarDetail): CarCard {
       : [],
     options: optionList(car.options),
     internal: {
+      sourceUrl: `${CARNECT_ORIGIN}/car/heydealer/${encodeURIComponent(car.id)}`,
       scans: [],
-      bids: car.bidCount != null || h.maxBids ? `${car.bidCount ?? 0}${h.maxBids ? ` из ${h.maxBids}` : ""}` : undefined,
-      previousBids: prev?.count ? `${prev.count} ставок, максимум $${(prev.maxUsd ?? 0).toLocaleString("ru-RU")}` : undefined,
-      afterBidKrw: null,
-      notes: [...(h.conditionItems ?? []), ...(h.conditionNotes ?? []), ...(h.inspectorNotes ?? []), ...(h.sellerNotes ?? [])].filter(
-        (s) => s && s.trim() && s.trim() !== ".",
-      ),
-      facts: {
-        "статус": h.status ?? car.status,
-        "регион": car.region,
-        "оплата": h.payment,
-        "выставлена": car.listedAt,
-        "одобрена": h.approvedAt,
-        "регистрация": vi.registrationType,
-      },
+      deal: [
+        { label: "Статус", value: txt(h.status ?? car.status) },
+        {
+          label: "Ставок",
+          value: car.bidCount != null || h.maxBids ? `${car.bidCount ?? 0}${h.maxBids ? ` из ${h.maxBids}` : ""}` : null,
+        },
+        {
+          label: "Прошлые торги",
+          value: prev?.count ? `${prev.count} ставок, максимум $${(prev.maxUsd ?? 0).toLocaleString("ru-RU")}` : null,
+        },
+        { label: "Выставлена", value: txt(car.listedAt)?.replace("T", " ").slice(0, 16) },
+        { label: "Одобрена", value: txt(h.approvedAt)?.replace("T", " ").slice(0, 16) },
+        { label: "Регион продавца", value: txt(car.region) },
+        { label: "Оплата", value: txt(h.payment) },
+      ],
+      documents: { have: [], missing: [] },
+      facts: [
+        { label: "Тип регистрации", value: txt(vi.registrationType) },
+        { label: "Техосмотр действует до", value: txt(vi.inspectionValidUntil)?.slice(0, 10) },
+      ],
+      flags: [
+        ...((h.auctionType ?? car.auctionType) === "self"
+          ? [{ text: "Self: осмотра HeyDealer нет, всё со слов продавца", warn: true }]
+          : []),
+        ...(hist.totalLoss ? [{ text: `Тотал по страховой: ${hist.totalLoss}`, warn: true }] : []),
+        ...(hist.floodLoss ? [{ text: `Утопленник по страховой: ${hist.floodLoss}`, warn: true }] : []),
+      ],
+      notes: [
+        { label: "Состояние (HeyDealer)", lines: h.conditionItems ?? [] },
+        { label: "Заметки к осмотру", lines: h.conditionNotes ?? [] },
+        { label: "Инспектор", lines: h.inspectorNotes ?? [] },
+        { label: "Продавец", lines: h.sellerNotes ?? [] },
+      ]
+        .map((n) => ({ ...n, lines: n.lines.filter((l) => l && l.trim() && l.trim() !== ".") }))
+        .filter((n) => n.lines.length),
+      unknownPhrases: [],
     },
+    shownKeys: HEY_SHOWN,
     raw,
   };
 }
