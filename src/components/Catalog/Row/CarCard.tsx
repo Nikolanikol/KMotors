@@ -118,7 +118,10 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
             transmission,
             fuel,
             price,
-            title: [year, translateGenerationRow(manufacture, t), translateGenerationRow(model, t)].filter(Boolean).join(" "),
+            // year у листинга Encar — «YYYYMM» (202008), в названии нужен год.
+            title: [year.slice(0, 4), translateGenerationRow(manufacture, t), translateGenerationRow(model, t)]
+              .filter(Boolean)
+              .join(" "),
           })
         }
       />
