@@ -288,7 +288,9 @@ export default function CarCardView({
                     { label: "Салон", value: card.interior },
                     { label: "Мест", value: card.seats },
                     { label: "Использование", value: card.usage },
+                    { label: "Дата производства", value: card.manufactured },
                     { label: "Первая регистрация", value: card.firstRegistration },
+                    { label: "Код двигателя", value: card.engineCode, mono: true },
                   ]}
                 />
               </Block>
@@ -298,6 +300,8 @@ export default function CarCardView({
                     { label: "VIN", value: card.vin, mono: true },
                     { label: "Госномер", value: card.plate, mono: true },
                     { label: "Номер лота", value: card.lotNo },
+                    { label: "Акт осмотра", value: card.inspectionAct },
+                    { label: "Ключи", value: card.keys },
                     { label: "Аукционный дом", value: card.venue ?? (hey ? null : card.sourceLabel) },
                     { label: "Площадка", value: card.sourceLabel + (card.typeLabel ? ` · ${card.typeLabel}` : "") },
                   ]}
@@ -339,6 +343,39 @@ export default function CarCardView({
                 </a>
                 <p className="mt-2 text-center text-xs" style={{ color: "var(--axis-gray)" }}>
                   Оригинал листа осмотра аукциона. Нажмите, чтобы открыть в полном размере.
+                </p>
+              </Block>
+            )}
+
+            {card.defects.length > 0 && (
+              <Block title="Замечания площадки">
+                {/* Что нашла площадка при осмотре — дословно, только переведено.
+                    Юридический текст площадки отсечён в defects.ts. */}
+                <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+                  {card.defects.map((d) => (
+                    <li key={d} className="flex gap-2" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+                      <span aria-hidden style={{ color: "#E5484D" }}>
+                        •
+                      </span>
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs" style={{ color: "var(--axis-gray)" }}>
+                  Список составлен площадкой при осмотре перед торгами.
+                </p>
+              </Block>
+            )}
+
+            {card.sellerSays.length > 0 && (
+              <Block title="Со слов продавца">
+                <ul className="space-y-1.5 text-sm" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+                  {card.sellerSays.map((l) => (
+                    <li key={l}>{l}</li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs" style={{ color: "var(--axis-gray)" }}>
+                  Осмотра нет: тип Self, состояние описывает сам продавец.
                 </p>
               </Block>
             )}
@@ -394,6 +431,11 @@ export default function CarCardView({
                         { label: "Тотал", value: h.totalLoss ? `да (${h.totalLoss})` : h.totalLoss === 0 ? "нет" : null, accent: !!h.totalLoss },
                         { label: "Утопленник", value: h.flood ? `да (${h.flood})` : h.flood === 0 ? "нет" : null, accent: !!h.flood },
                         { label: "Угон", value: h.theft ? `да (${h.theft})` : h.theft === 0 ? "нет" : null, accent: !!h.theft },
+                        {
+                          label: "Периоды без страховки",
+                          value: h.uninsured ? `${h.uninsured} — ДТП за это время в истории нет` : h.uninsured === 0 ? "нет" : null,
+                          accent: !!h.uninsured,
+                        },
                       ]}
                     />
                   </Block>

@@ -20,6 +20,7 @@
 // просто не станет рисовать `internal` — решить, что показывать клиенту, второй
 // раз будет негде (решения владельца 02.10.2026, docs/carnect-fields.md).
 
+import { parseNotes } from "./defects";
 import type { HeyCarDetail } from "./heydealer";
 import { HEY_TYPES } from "./heydealer";
 import { HOUSES, type CarnectHouse } from "./houses";
@@ -125,6 +126,8 @@ export interface CarCard {
     totalLoss?: number | null;
     flood?: number | null;
     theft?: number | null;
+    /** Периоды без страховки (Autohub): ДТП за это время в истории не видно. */
+    uninsured?: number | null;
   } | null;
   bodyMarks: BodyMark[];
   /** Источник отдаёт структуру кузова (иначе есть только скан листа). */
@@ -142,6 +145,21 @@ export interface CarCard {
    * в разборе нет.
    */
   engineSound?: string;
+  /**
+   * Дефекты, найденные площадкой (`notes`), по-русски — defects.ts. Клиент
+   * ВИДИТ (решение владельца 04.10.2026). Юридический текст площадки отсечён.
+   */
+  defects: string[];
+  /** Состояние со слов продавца — HeyDealer Self, где осмотра нет. */
+  sellerSays: string[];
+  /** Ключи: «2», «1», «есть запасной». */
+  keys?: string;
+  /** Код двигателя (CRT, D4HB) — по нему ищут запчасти. */
+  engineCode?: string;
+  /** Дата производства (HeyDealer), отличается от даты регистрации. */
+  manufactured?: string;
+  /** Официальный акт осмотра площадки: «№ 2651068214 от 2026-09-18, K Car Sejong Auction». */
+  inspectionAct?: string;
   checks: CheckGroup[];
   options: string[];
 
@@ -483,6 +501,7 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
           totalLoss: num(ins.totalLoss),
           flood: num(ins.floodLoss),
           theft: num(ins.stolen),
+          uninsured: num(ins.uninsuredSpells),
         }
       : null;
 
@@ -493,6 +512,16 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
       return { ...p, action: markAction(String(m.code ?? ""), String(m.labelEn ?? ""), when), when };
     },
   );
+
+  const notes = parseNotes(str(lot.notes));
+  const rec = (lot.inspectionRecord ?? {}) as Record<string, unknown>;
+  const act = [
+    rec.recordNo != null ? `№ ${rec.recordNo}` : null,
+    str(rec.inspectedOn) ? `от ${str(rec.inspectedOn)}` : null,
+  ].filter(Boolean).join(" ");
+  // Ключи: «Keys 1EA» в заметках K Car или «Smart key2(inside)» у Lotte.
+  const stored = str(props["Stored items"]);
+  const storedKeys = stored && /key\s*(\d+)/i.exec(stored)?.[1];
 
   const startKrw = positive(lot.startKrw);
   const scans = lot.registrationImage ? [{ label: "Техпаспорт", url: lot.registrationImage }] : [];
@@ -532,6 +561,11 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
     bodyMarks: marks,
     hasBodyData: !!lot.panelDiagram,
     inspectionSheet: str(lot.inspectionSheetImage),
+    defects: notes.defects,
+    sellerSays: [],
+    keys: notes.keys != null ? String(notes.keys) : storedKeys || undefined,
+    engineCode: str(raw.motorCode) ?? str(props.engine_model),
+    inspectionAct: act ? [act, str(rec.recordIssuer)].filter(Boolean).join(", ") : undefined,
     checks: checkGroups(lot.inspection),
     options: optionList(lot.options),
     internal: {
@@ -543,10 +577,8 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
         "ряд": lot.lane,
         "стоянка": raw.parkingSlot ?? raw.pkltNo,
         "id у площадки": lot.carId,
-        "акт осмотра": lot.inspectionRecord,
         "осмотр действует до": raw.inspectionValidUntil ?? props["Inspection valid until"],
         "в машине": props["Stored items"],
-        "код двигателя": raw.motorCode,
         "нет опций": raw.disabledOptions,
       },
     },
@@ -574,6 +606,31 @@ function heyRow(r: Record<string, unknown>): CheckItem {
   else if (r.kind === "bool") status = r.ok === false ? "есть" : "нет";
   else status = typeof r.ok === "boolean" ? (r.ok ? "в порядке" : "есть замечания") : "—";
   return { name, status, ok: typeof r.ok === "boolean" ? r.ok : null };
+}
+
+/** Строки «Body Panel : None» у HeyDealer Self — подписи и частые значения. */
+const SELLER_LABEL: Record<string, string> = {
+  "body panel": "Кузовные панели",
+  tire: "Шины",
+  tires: "Шины",
+  "wheel scratch": "Царапины на дисках",
+  "spare key": "Запасной ключ",
+};
+const SELLER_VALUE: Record<string, string> = {
+  none: "нет",
+  "all good": "в порядке",
+  present: "есть",
+  absent: "нет",
+};
+
+/** «Wheel Scratch : 1 wheel» → «Царапины на дисках: 1 wheel». Незнакомое — как есть, с хангылем — выкидываем. */
+function sellerLine(line: string): string | null {
+  const m = /^\s*([^:]+?)\s*:\s*(.+)$/.exec(line);
+  if (!m) return /[\u3131-\uD79D]/.test(line) ? null : line.trim() || null;
+  const label = SELLER_LABEL[m[1].toLowerCase()] ?? m[1];
+  const value = SELLER_VALUE[m[2].trim().toLowerCase()] ?? m[2].trim().replace(/^(\d+) wheels?$/i, "$1");
+  const out = `${label}: ${value}`;
+  return /[\u3131-\uD79D]/.test(out) ? null : out;
 }
 
 export function fromHey(car: HeyCarDetail): CarCard {
@@ -657,6 +714,16 @@ export function fromHey(car: HeyCarDetail): CarCard {
     // У Self осмотра нет: кузов только со слов продавца.
     hasBodyData: !!h.accidentDiagram || !!h.paint,
     engineSound: str((h.engineSound as { url?: unknown } | undefined)?.url),
+    defects: [],
+    // Со слов продавца — только у Self: у Zero и Instant есть настоящий осмотр
+    // инспектора (checks), и строки продавца рядом с ним только путают.
+    sellerSays:
+      (h.auctionType ?? car.auctionType) === "self"
+        ? (h.conditionItems ?? []).map(sellerLine).filter((x): x is string => !!x)
+        : [],
+    keys: (h.conditionItems ?? []).some((l) => /spare key\s*:\s*present/i.test(l)) ? "есть запасной" : undefined,
+    engineCode: str(vi.motorCode),
+    manufactured: str(vi.manufacturedDate)?.slice(0, 10),
     checks: h.conditionRows?.length
       ? [{ title: "Осмотр HeyDealer", items: h.conditionRows.map((r) => heyRow(r as Record<string, unknown>)) }]
       : [],
@@ -675,7 +742,6 @@ export function fromHey(car: HeyCarDetail): CarCard {
         "оплата": h.payment,
         "выставлена": car.listedAt,
         "одобрена": h.approvedAt,
-        "код двигателя": vi.motorCode,
         "регистрация": vi.registrationType,
       },
     },
