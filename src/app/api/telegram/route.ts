@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       parts_fitment: "Проверка совместимости",
       parts_cart: "Заказ из корзины",
       car_detail: "Карточка машины",
+      auction_lot: "Лот аукциона",
       car_calculator: "Калькулятор таможни",
       blog: "Блог",
     };

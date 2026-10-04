@@ -17,7 +17,23 @@ interface CarRequestFormProps {
   message?: string;
   source?: string;
   onSuccess?: () => void;
+  /**
+   * Готовые подписи вместо словаря. Нужны там, где инстанса i18next нет вовсе —
+   * под /admin (страница машины carnect): без них форма показала бы сырые ключи.
+   */
+  labels?: Partial<Record<FormLabel, string>>;
 }
+
+type FormLabel =
+  | "successModal"
+  | "subtitle"
+  | "yourName"
+  | "phone"
+  | "messengerLabel"
+  | "tgUsernamePlaceholder"
+  | "submitting"
+  | "submit"
+  | "errorSend";
 
 export default function CarRequestForm({
   carId,
@@ -25,8 +41,10 @@ export default function CarRequestForm({
   message,
   source = "car_detail",
   onSuccess,
+  labels,
 }: CarRequestFormProps) {
-  const { t } = useTranslation();
+  const { t: tr } = useTranslation();
+  const t = (key: `contact.${FormLabel}`) => labels?.[key.slice(8) as FormLabel] ?? tr(key);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState<Value | undefined>();
   const [messenger, setMessenger] = useState("whatsapp");
@@ -117,7 +135,10 @@ export default function CarRequestForm({
       <button
         type="submit"
         disabled={loading || !name.trim() || !phone}
-        className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+        className="w-full flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition"
+        // Бронзовая заливка (см. «Бренд» в CLAUDE.md): здесь до 04.10.2026
+        // оставался tailwind-оранжевый bg-orange-500 со времён старой палитры.
+        style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}
       >
         {loading ? (
           <>

@@ -24,6 +24,7 @@ import type { CarCard } from "@/lib/carnect/card";
 
 import { FieldTable, ago } from "../../ui";
 import BodyDiagram from "./BodyDiagram";
+import LotRequestCard from "./LotRequestCard";
 
 const krw = (v: number | null | undefined) => (v ? `₩${v.toLocaleString("ru-RU")}` : null);
 const kmText = (v: number | null | undefined) => (v ? `${v.toLocaleString("ru-RU")} км` : null);
@@ -145,6 +146,22 @@ function PriceCard({ card }: { card: CarCard }) {
   );
 }
 
+/**
+ * Правая колонка: цена и под ней плашка заявки. Одна и та же на узком экране
+ * (под фото) и на широком (липкая справа) — разойтись им не с чего.
+ */
+function Side({ card, id }: { card: CarCard; id: string }) {
+  const where = [card.sourceLabel, card.typeLabel, card.venue].filter(Boolean).join(" · ");
+  const when = card.auctionDate ? `торги ${card.auctionDate}` : card.endAt ? `торги до ${koreanTime(card.endAt)}` : null;
+  const lotRef = [where, `лот ${card.lotNo ?? id}`, when].filter(Boolean).join(", ");
+  return (
+    <div className="space-y-4">
+      <PriceCard card={card} />
+      <LotRequestCard carId={`${card.house}/${id}`} carName={card.title} lotRef={lotRef} fixedPrice={card.price.kind === "fixed"} />
+    </div>
+  );
+}
+
 export default function CarCardView({
   card,
   backHref,
@@ -228,7 +245,7 @@ export default function CarCardView({
 
             {/* Цена на узком экране — сразу под фото, как у карточки Encar. */}
             <div className="lg:hidden">
-              <PriceCard card={card} />
+              <Side card={card} id={meta.id} />
             </div>
 
             <OverviewStrip
@@ -393,9 +410,9 @@ export default function CarCardView({
             )}
           </div>
 
-          {/* ─── Правая колонка: цена (липкая) ─── */}
+          {/* ─── Правая колонка: цена и заявка (липкая) ─── */}
           <div className="hidden h-fit min-w-0 lg:sticky lg:top-6 lg:block">
-            <PriceCard card={card} />
+            <Side card={card} id={meta.id} />
           </div>
         </div>
 
