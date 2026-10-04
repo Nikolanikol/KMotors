@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useAuctionFavorites, type FavoriteLot } from "@/hooks/useAuctionFavorites";
+import { useCountry } from "@/hooks/useCountry";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { formatCarKrw } from "@/lib/carPricing";
@@ -132,6 +133,8 @@ export function FavoritesDrawer({
   krwToUsd: number;
 }) {
   const l = favText(lang);
+  // Из Кореи машины закрыты (middleware, KR_BLOCKED_*): ссылки туда не предлагаем.
+  const { isCatalogBlocked } = useCountry();
   const cars = useFavorites();
   const lots = useAuctionFavorites();
   const parts = usePartsFavorites();
@@ -232,8 +235,12 @@ export function FavoritesDrawer({
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
               {[
-                [`/${lang}/catalog`, l.toCars],
-                [`/${lang}/auction`, l.toAuction],
+                ...(isCatalogBlocked
+                  ? []
+                  : [
+                      [`/${lang}/catalog`, l.toCars],
+                      [`/${lang}/auction`, l.toAuction],
+                    ]),
                 [`/${lang}/parts`, l.toParts],
               ].map(([href, label]) => (
                 <Link

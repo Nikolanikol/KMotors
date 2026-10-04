@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { shareLink } from "@/lib/shareLink";
+
 // Канонический хост публичного сайта. Всё остальное, что доезжает до браузера
 // (служебный поддомен за Cloudflare Access), — рабочий вход менеджера, см.
 // CLAUDE.md, раздел «Владельческий вход».
@@ -38,18 +40,12 @@ const ShareCar = ({ title }: Props) => {
   const onServiceHost =
     host !== null && host !== CANONICAL_HOST && !LOCAL_HOSTS.includes(host);
 
+  // Сенсорный экран — меню «поделиться», компьютер — копия ссылки (shareLink.ts).
   const share = async (url: string, key: string) => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        return;
-      }
-    } catch { /* пользователь закрыл системную шторку */ }
-    try {
-      await navigator.clipboard.writeText(url);
+    if ((await shareLink(url, title)) === "copied") {
       setCopied(key);
       setTimeout(() => setCopied(null), 2000);
-    } catch { /* ignore */ }
+    }
   };
 
   const clientUrl = `https://${CANONICAL_HOST}${pathname}`;

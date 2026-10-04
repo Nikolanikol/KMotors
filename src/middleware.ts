@@ -65,6 +65,48 @@ function shouldTrack(request: NextRequest): boolean {
   return true;
 }
 
+// ─── Корея: всё про машины закрыто на www (решение владельца 05.10.2026) ─────
+//
+// Каталог Encar, аукционы, избранное/сравнение и ВСЕ API, которые отдают данные
+// машин, — «и вниз по дереву»: страница, её RSC-запросы, og-картинка и ручки,
+// из которых страница добирает данные. До этого закрывал только WAF Cloudflare,
+// и только часть путей: владелец 05.10.2026 открыл из Кореи страницу машины
+// аукциона, при том что список аукциона был закрыт. Это слой 3 — настоящий
+// запрет на origin, а не скрытие ссылок (слой 2, useCountry).
+//
+// ⚠️ Только канонический хост. Служебный (вход владельца через Cloudflare
+// Access) — рабочее место, его не трогаем. Кроны ходят на 127.0.0.1 без
+// cf-ipcountry — им запрет не мешает.
+// ⚠️ Страна — только cf-ipcountry: Cloudflare ставит его сам, клиент его не
+// подделает (запрос мимо Cloudflare — отдельная дыра, закрывается файрволом VPS).
+const KR_BLOCKED_PAGE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?(?:catalog|auction|favorites|compare)(?:\/|$)/;
+const KR_BLOCKED_API = /^\/api\/(?:recommended|vehicle|carnect|cars|kcar|showcase)(?:\/|$)/;
+
+function isKoreaBlocked(request: NextRequest, path: string): boolean {
+  if (!isCanonicalHost(request)) return false;
+  if ((request.headers.get("cf-ipcountry") || "").toUpperCase() !== "KR") return false;
+  return KR_BLOCKED_PAGE.test(path) || KR_BLOCKED_API.test(path);
+}
+
+function koreaBlockedResponse(path: string): NextResponse {
+  const headers = {
+    // Ответ зависит от страны — его нельзя класть ни в какой общий кеш, иначе
+    // 403 уехал бы посетителям из других стран (или наоборот).
+    "Cache-Control": "private, no-store",
+    "X-Robots-Tag": "noindex, nofollow",
+  };
+  if (path.startsWith("/api/")) {
+    return NextResponse.json({ error: "not available in your region" }, { status: 403, headers });
+  }
+  return new NextResponse(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>K-Axis</title></head>` +
+      `<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0A0A0A;color:#F5F0EB;font-family:system-ui,sans-serif;text-align:center;padding:16px">` +
+      `<div><h1 style="font-size:20px;font-weight:600">This section is not available in your region.</h1>` +
+      `<p style="color:#8A8A8A"><a href="/" style="color:#B67749">Go to the home page</a></p></div></body></html>`,
+    { status: 403, headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } },
+  );
+}
+
 // Пути которые не нуждаются в lang-префиксе
 function isExcluded(path: string): boolean {
   return (
@@ -117,6 +159,9 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
   }
 
   const path = request.nextUrl.pathname;
+
+  // --- Корея: машины и всё, что под ними (см. KR_BLOCKED_*) ---
+  if (isKoreaBlocked(request, path)) return koreaBlockedResponse(path);
 
   // --- 410 для мусорных путей (проиндексированных Google по ошибке) ---
   if (/^\/carpicture\d/.test(path) || path.startsWith("/cdn-cgi/")) {

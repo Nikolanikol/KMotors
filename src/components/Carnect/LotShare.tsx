@@ -1,6 +1,7 @@
 "use client";
 
-// «Поделиться» на странице машины аукциона — механика кнопки Encar (ShareCar):
+// «Поделиться» на странице машины аукциона — механика кнопки Encar (ShareCar),
+// общая логика в src/lib/shareLink.ts:
 // на телефоне системное меню «поделиться», на компьютере — копия ссылки.
 //
 // Своя кнопка, а не ShareCar: та берёт подписи из словаря i18next по языку
@@ -17,6 +18,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { pick, type CardLang, type Pair } from "@/lib/carnect/lang";
+import { shareLink } from "@/lib/shareLink";
 
 const CANONICAL_HOST = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop").hostname;
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
@@ -36,22 +38,11 @@ export default function LotShare({ title, lang }: { title: string; lang: CardLan
   useEffect(() => setHost(window.location.hostname), []);
   const service = host !== null && host !== CANONICAL_HOST && !LOCAL_HOSTS.includes(host);
 
+  // Сенсорный экран — меню «поделиться», компьютер — копия ссылки (shareLink.ts).
   const share = async (url: string, key: string) => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        return;
-      }
-    } catch (e) {
-      // Закрыл системное меню — это не ошибка. Прочие отказы — копируем ссылку.
-      if ((e as Error).name === "AbortError") return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
+    if ((await shareLink(url, title)) === "copied") {
       setCopied(key);
       window.setTimeout(() => setCopied(null), 2000);
-    } catch {
-      // Буфер обмена недоступен (не https, запрет браузера) — молча, как у ShareCar.
     }
   };
 
