@@ -36,14 +36,34 @@ export interface HeyTypeInfo {
   label: string;
   /** Что это значит для покупателя — одной строкой. */
   hint: string;
+  /** То же по-английски — для витрины (lang.ts). */
+  hintEn: string;
   /** Есть ли у машин этого типа цена (иначе только ставки). */
   hasPrice: boolean;
 }
 
 export const HEY_TYPES: HeyTypeInfo[] = [
-  { type: "self", label: "Self", hint: "Фото и описание от продавца, без осмотра. Цена — ставками.", hasPrice: false },
-  { type: "customer_zero", label: "Zero", hint: "Осмотр инспектором HeyDealer. Цена — ставками.", hasPrice: false },
-  { type: "fixed_price_zero", label: "Instant", hint: "Выкуп по фиксированной цене, с осмотром.", hasPrice: true },
+  {
+    type: "self",
+    label: "Self",
+    hint: "Фото и описание от продавца, без осмотра. Цена — ставками.",
+    hintEn: "Photos and description by the seller, no inspection. Price by bidding.",
+    hasPrice: false,
+  },
+  {
+    type: "customer_zero",
+    label: "Zero",
+    hint: "Осмотр инспектором HeyDealer. Цена — ставками.",
+    hintEn: "Inspected by a HeyDealer inspector. Price by bidding.",
+    hasPrice: false,
+  },
+  {
+    type: "fixed_price_zero",
+    label: "Instant",
+    hint: "Выкуп по фиксированной цене, с осмотром.",
+    hintEn: "Fixed buy-now price, inspected.",
+    hasPrice: true,
+  },
 ];
 
 export function isHeyType(v: string | null | undefined): v is HeyAuctionType {

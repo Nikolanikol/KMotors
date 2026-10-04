@@ -19,6 +19,10 @@
 // всё служебное лежит в `internal`. Публичная витрина возьмёт ту же карточку и
 // просто не станет рисовать `internal` — решить, что показывать клиенту, второй
 // раз будет негде (решения владельца 02.10.2026, docs/carnect-fields.md).
+//
+// Язык клиентской части — аргумент переходника (lang.ts): витрина на
+// английском, служебный каталог на русском (решение владельца 04.10.2026).
+// Словари клиентских полей поэтому — пары [ru, en]. `internal` только русский.
 
 import { CARNECT_ORIGIN } from "./client";
 import { parseNotes } from "./defects";
@@ -26,6 +30,7 @@ import type { HeyCarDetail } from "./heydealer";
 import { HEY_TYPES } from "./heydealer";
 import { HOUSES, type CarnectHouse } from "./houses";
 import { canonicalMake, canonicalModelGroup, heyModelGroup, normalizeFuel, normalizeTrans, positive } from "./normalize";
+import { look, pick, type CardLang, type Pair } from "./lang";
 import { FUELS } from "./query";
 import type { CarnectLotDetail } from "./types";
 
@@ -44,7 +49,7 @@ export type BodyAction =
 export interface BodyMark {
   /** Наш ключ панели (`fender_front_left`) или null — не распознали. */
   panel: string | null;
-  /** Подпись по-русски; не распознали — как у источника. */
+  /** Подпись на языке карточки; не распознали — как у источника. */
   label: string;
   action: BodyAction;
   /**
@@ -82,6 +87,11 @@ export interface CarCard {
   /** Комплектация. */
   grade?: string;
   make: string | null;
+  /**
+   * Модельная группа в нашей нормализации (normalize.ts) — та же, что в колонке
+   * carnect_lots.model_group. По ней подбираются похожие машины (similar.ts).
+   */
+  modelGroup: string | null;
   model?: string;
   year: number | null;
   km: number | null;
@@ -230,115 +240,115 @@ const HEY_SHOWN = [
 
 // ─── Словари ─────────────────────────────────────────────────────────────
 
-const FUEL_LABEL = Object.fromEntries(FUELS.map((f) => [f.v, f.label])) as Record<string, string>;
+const FUEL_LABEL = Object.fromEntries(FUELS.map((f) => [f.v, [f.label, f.en] as Pair])) as Record<string, Pair>;
 
-function fuelLabel(raw: string | undefined): string | undefined {
+function fuelLabel(raw: string | undefined, lang: CardLang): string | undefined {
   const f = normalizeFuel(raw);
   if (!f) return undefined;
-  return FUEL_LABEL[f] ?? raw;
+  return look(FUEL_LABEL, f, lang) ?? raw;
 }
 
-function transLabel(raw: string | undefined): string | undefined {
+function transLabel(raw: string | undefined, lang: CardLang): string | undefined {
   const t = normalizeTrans(raw);
-  return t === "manual" ? "Механика" : t === "auto" ? "Автомат" : undefined;
+  return t === "manual" ? pick(lang, ["Механика", "Manual"]) : t === "auto" ? pick(lang, ["Автомат", "Automatic"]) : undefined;
 }
 
-const USAGE: Record<string, string> = {
-  rental: "Прокат",
-  "private use": "Личная",
-  personal: "Личная",
-  "personal/corporate": "Личная / юрлицо",
-  corporate: "Юрлицо",
-  "dealer stock": "Сток дилера",
-  taxi: "Такси",
-  commercial: "Коммерческая",
+const USAGE: Record<string, Pair> = {
+  rental: ["Прокат", "Rental"],
+  "private use": ["Личная", "Private"],
+  personal: ["Личная", "Private"],
+  "personal/corporate": ["Личная / юрлицо", "Private / company"],
+  corporate: ["Юрлицо", "Company"],
+  "dealer stock": ["Сток дилера", "Dealer stock"],
+  taxi: ["Такси", "Taxi"],
+  commercial: ["Коммерческая", "Commercial"],
 };
 
-function usageLabel(raw: string | undefined): string | undefined {
+function usageLabel(raw: string | undefined, lang: CardLang): string | undefined {
   const s = (raw ?? "").trim();
   if (!s || s.toLowerCase() === "none") return undefined;
-  return USAGE[s.toLowerCase()] ?? s;
+  return look(USAGE, s.toLowerCase(), lang) ?? s;
 }
 
 /** Узлы листа осмотра. Ключ — английское имя у источника, в нижнем регистре. */
-const CHECK_NAMES: Record<string, string> = {
-  engine: "Двигатель",
-  transmission: "Коробка передач",
-  powertrain: "Трансмиссия",
-  "power train": "Трансмиссия",
-  "power transmission": "Трансмиссия",
-  "drive shaft": "Приводной вал",
-  steering: "Рулевое",
-  braking: "Тормоза",
-  brakes: "Тормоза",
-  electrical: "Электрика",
-  "battery / electrical": "Аккумулятор и электрика",
-  "charging system": "Зарядка",
-  "starting system": "Запуск",
-  "air conditioning": "Кондиционер",
-  hvac: "Кондиционер",
-  "a/c unit": "Кондиционер",
-  interior: "Салон",
-  "interior odour": "Запах в салоне",
-  "interior trim/interior panel": "Обшивка салона",
-  seat: "Сиденья",
-  lighting: "Свет",
-  dlr: "Ходовые огни",
-  drl: "Ходовые огни",
-  "headlamp/rear lamp": "Фары и фонари",
-  "running gear": "Ходовая",
-  "electric vehicle (ev)": "Электросистема EV",
-  "cooling system": "Охлаждение",
-  "operating condition": "Работа",
-  "warning light": "Индикаторы на приборке",
-  "body corrosion": "Коррозия кузова",
-  "structural change": "Изменение конструкции",
-  "illegal modification": "Незаконные переделки",
+const CHECK_NAMES: Record<string, Pair> = {
+  engine: ["Двигатель", "Engine"],
+  transmission: ["Коробка передач", "Transmission"],
+  powertrain: ["Трансмиссия", "Powertrain"],
+  "power train": ["Трансмиссия", "Powertrain"],
+  "power transmission": ["Трансмиссия", "Powertrain"],
+  "drive shaft": ["Приводной вал", "Drive shaft"],
+  steering: ["Рулевое", "Steering"],
+  braking: ["Тормоза", "Brakes"],
+  brakes: ["Тормоза", "Brakes"],
+  electrical: ["Электрика", "Electrical"],
+  "battery / electrical": ["Аккумулятор и электрика", "Battery and electrical"],
+  "charging system": ["Зарядка", "Charging"],
+  "starting system": ["Запуск", "Starting"],
+  "air conditioning": ["Кондиционер", "Air conditioning"],
+  hvac: ["Кондиционер", "Air conditioning"],
+  "a/c unit": ["Кондиционер", "Air conditioning"],
+  interior: ["Салон", "Interior"],
+  "interior odour": ["Запах в салоне", "Interior odour"],
+  "interior trim/interior panel": ["Обшивка салона", "Interior trim"],
+  seat: ["Сиденья", "Seats"],
+  lighting: ["Свет", "Lighting"],
+  dlr: ["Ходовые огни", "Daytime running lights"],
+  drl: ["Ходовые огни", "Daytime running lights"],
+  "headlamp/rear lamp": ["Фары и фонари", "Head and rear lamps"],
+  "running gear": ["Ходовая", "Running gear"],
+  "electric vehicle (ev)": ["Электросистема EV", "EV system"],
+  "cooling system": ["Охлаждение", "Cooling"],
+  "operating condition": ["Работа", "Operation"],
+  "warning light": ["Индикаторы на приборке", "Dashboard warning lights"],
+  "body corrosion": ["Коррозия кузова", "Body corrosion"],
+  "structural change": ["Изменение конструкции", "Structural modification"],
+  "illegal modification": ["Незаконные переделки", "Illegal modification"],
 };
 
-const CHECK_GROUPS: Record<string, string> = {
-  "condition check": "Состояние узлов",
-  "condition report": "Состояние узлов",
-  "performance check": "Состояние узлов",
-  "inspection record": "Акт техосмотра",
-  "warning lights": "Индикаторы",
-  "air conditioning": "Кондиционер",
+const CHECK_GROUPS: Record<string, Pair> = {
+  "condition check": ["Состояние узлов", "Component condition"],
+  "condition report": ["Состояние узлов", "Component condition"],
+  "performance check": ["Состояние узлов", "Component condition"],
+  "inspection record": ["Акт техосмотра", "Roadworthiness record"],
+  "warning lights": ["Индикаторы", "Warning lights"],
+  "air conditioning": ["Кондиционер", "Air conditioning"],
 };
 
-const CHECK_STATUS: Record<string, string> = {
-  good: "Хорошо",
-  normal: "Норма",
-  average: "Средне",
-  fair: "Удовлетворительно",
-  none: "Нет",
-  "needs repair": "Требует ремонта",
-  "needs service": "Требует обслуживания",
-  "maintenance required": "Требует обслуживания",
-  defect: "Неисправно",
-  defective: "Неисправно",
+const CHECK_STATUS: Record<string, Pair> = {
+  good: ["Хорошо", "Good"],
+  normal: ["Норма", "Normal"],
+  average: ["Средне", "Average"],
+  fair: ["Удовлетворительно", "Fair"],
+  none: ["Нет", "None"],
+  "needs repair": ["Требует ремонта", "Needs repair"],
+  "needs service": ["Требует обслуживания", "Needs service"],
+  "maintenance required": ["Требует обслуживания", "Needs service"],
+  defect: ["Неисправно", "Defective"],
+  defective: ["Неисправно", "Defective"],
 };
 
 /** Расшифровка в скобках: «Needs repair (Noise, Oil leak)». */
-const CHECK_DETAIL: Record<string, string> = {
-  "oil leak": "течь масла",
-  noise: "шум",
-  play: "люфт",
-  impact: "удары",
-  "seat defect": "дефект сидений",
-  "interior panel defect": "дефект обшивки",
+const CHECK_DETAIL: Record<string, Pair> = {
+  "oil leak": ["течь масла", "oil leak"],
+  noise: ["шум", "noise"],
+  play: ["люфт", "play"],
+  impact: ["удары", "knocking"],
+  "seat defect": ["дефект сидений", "seat defect"],
+  "interior panel defect": ["дефект обшивки", "trim defect"],
   // Autohub иногда оставляет корейские слова внутри английского статуса.
-  지연: "задержка переключения",
-  터보defect: "дефект турбины",
+  지연: ["задержка переключения", "delayed shifting"],
+  터보defect: ["дефект турбины", "turbo defect"],
 };
 
-function checkStatus(raw: string): string {
+function checkStatus(raw: string, lang: CardLang): string {
   const m = /^([^(]+?)\s*(?:\((.*)\))?$/.exec(raw.trim());
   if (!m) return raw;
-  const head = CHECK_STATUS[m[1].toLowerCase()] ?? m[1];
+  const head = look(CHECK_STATUS, m[1].toLowerCase(), lang) ?? m[1];
   if (!m[2]) return head;
   const tail = m[2]
     .split(",")
-    .map((t) => CHECK_DETAIL[t.trim().toLowerCase()] ?? t.trim())
+    .map((t) => look(CHECK_DETAIL, t.trim().toLowerCase(), lang) ?? t.trim())
     .join(", ");
   return `${head} (${tail})`;
 }
@@ -363,27 +373,27 @@ function checkOk(it: { ok?: unknown; status?: unknown }): boolean | null {
 
 type Gender = "m" | "f" | "n";
 
-const PART_NAMES: { re: RegExp; key: string; ru: string; g: Gender; structural?: boolean }[] = [
-  { re: /bonnet|hood/, key: "hood", ru: "Капот", g: "m" },
-  { re: /trunk|tailgate|back door/, key: "trunk", ru: "Крышка багажника", g: "f" },
-  { re: /roof/, key: "roof", ru: "Крыша", g: "f" },
-  { re: /quarter/, key: "quarter", ru: "Заднее крыло", g: "n" },
-  { re: /fender/, key: "fender", ru: "Крыло", g: "n" },
-  { re: /door/, key: "door", ru: "Дверь", g: "f" },
-  { re: /bumper/, key: "bumper", ru: "Бампер", g: "m" },
-  { re: /mirror/, key: "mirror", ru: "Зеркало", g: "n" },
-  { re: /windshield|front glass|windscreen/, key: "windshield", ru: "Лобовое стекло", g: "n" },
-  { re: /rear glass|rear window/, key: "rear_glass", ru: "Заднее стекло", g: "n" },
+const PART_NAMES: { re: RegExp; key: string; ru: string; en: string; g: Gender; structural?: boolean }[] = [
+  { re: /bonnet|hood/, key: "hood", ru: "Капот", en: "Hood", g: "m" },
+  { re: /trunk|tailgate|back door/, key: "trunk", ru: "Крышка багажника", en: "Trunk lid", g: "f" },
+  { re: /roof/, key: "roof", ru: "Крыша", en: "Roof", g: "f" },
+  { re: /quarter/, key: "quarter", ru: "Заднее крыло", en: "Quarter panel", g: "n" },
+  { re: /fender/, key: "fender", ru: "Крыло", en: "Fender", g: "n" },
+  { re: /door/, key: "door", ru: "Дверь", en: "Door", g: "f" },
+  { re: /bumper/, key: "bumper", ru: "Бампер", en: "Bumper", g: "m" },
+  { re: /mirror/, key: "mirror", ru: "Зеркало", en: "Mirror", g: "n" },
+  { re: /windshield|front glass|windscreen/, key: "windshield", ru: "Лобовое стекло", en: "Windshield", g: "n" },
+  { re: /rear glass|rear window/, key: "rear_glass", ru: "Заднее стекло", en: "Rear glass", g: "n" },
   // Порог в корейском листе осмотра — внешняя панель второго ранга, не силовой каркас.
-  { re: /\bsil|step|rocker/, key: "sill", ru: "Порог", g: "m" },
-  { re: /pillar/, key: "pillar", ru: "Стойка", g: "f", structural: true },
-  { re: /member/, key: "member", ru: "Лонжерон", g: "m", structural: true },
-  { re: /wheel ?house/, key: "wheelhouse", ru: "Колёсная арка", g: "f", structural: true },
-  { re: /floor/, key: "floor", ru: "Пол", g: "m", structural: true },
-  { re: /dash/, key: "dash", ru: "Моторный щит", g: "m", structural: true },
-  { re: /radiator/, key: "radiator", ru: "Рамка радиатора", g: "f" },
-  { re: /cross/, key: "cross", ru: "Поперечина", g: "f", structural: true },
-  { re: /rear panel|back panel/, key: "rear_panel", ru: "Задняя панель", g: "f", structural: true },
+  { re: /\bsil|step|rocker/, key: "sill", ru: "Порог", en: "Side sill", g: "m" },
+  { re: /pillar/, key: "pillar", ru: "Стойка", en: "Pillar", g: "f", structural: true },
+  { re: /member/, key: "member", ru: "Лонжерон", en: "Side member", g: "m", structural: true },
+  { re: /wheel ?house/, key: "wheelhouse", ru: "Колёсная арка", en: "Wheelhouse", g: "f", structural: true },
+  { re: /floor/, key: "floor", ru: "Пол", en: "Floor panel", g: "m", structural: true },
+  { re: /dash/, key: "dash", ru: "Моторный щит", en: "Dash panel", g: "m", structural: true },
+  { re: /radiator/, key: "radiator", ru: "Рамка радиатора", en: "Radiator support", g: "f" },
+  { re: /cross/, key: "cross", ru: "Поперечина", en: "Cross member", g: "f", structural: true },
+  { re: /rear panel|back panel/, key: "rear_panel", ru: "Задняя панель", en: "Rear panel", g: "f", structural: true },
 ];
 
 /** Окончания прилагательных по роду: передн-ий / -яя / -ее, лев-ый / -ая / -ое. */
@@ -398,7 +408,7 @@ const ADJ: Record<string, Record<Gender, string>> = {
 const HAS_END = new Set(["fender", "door", "bumper", "pillar", "member", "wheelhouse"]);
 
 /** «Front Fender (Right)», «fender_front_driver», «Quarter panel (R)» → наш ключ и подпись. */
-function panelOf(name: string): { panel: string | null; label: string; structural: boolean } {
+function panelOf(name: string, lang: CardLang): { panel: string | null; label: string; structural: boolean } {
   const s = name.toLowerCase().replace(/_/g, " ");
   const part = PART_NAMES.find((p) => p.re.test(s));
   if (!part) return { panel: null, label: name || "—", structural: false };
@@ -412,11 +422,18 @@ function panelOf(name: string): { panel: string | null; label: string; structura
   const key = isQuarter ? "quarter" : part.key;
   const base = isQuarter ? "Заднее крыло" : part.ru;
   const g: Gender = isQuarter ? "n" : part.g;
+  const withEnd = !isQuarter && end && HAS_END.has(key) ? end : "";
+  const panel = [key, withEnd, side].filter(Boolean).join("_");
 
+  // По-английски прилагательные идут перед словом и рода не знают:
+  // «Left front door», «Right quarter panel».
+  if (lang === "en") {
+    const en = [side, withEnd, (isQuarter ? "Quarter panel" : part.en).toLowerCase()].filter(Boolean).join(" ");
+    return { panel, label: en[0].toUpperCase() + en.slice(1), structural: !!part.structural };
+  }
   const words = [base];
-  if (!isQuarter && end && HAS_END.has(key)) words.push(ADJ[end][g]);
+  if (withEnd) words.push(ADJ[withEnd][g]);
   if (side) words.push(ADJ[side][g]);
-  const panel = [key, isQuarter ? "" : HAS_END.has(key) ? end : "", side].filter(Boolean).join("_");
   return { panel, label: words.join(" "), structural: !!part.structural };
 }
 
@@ -435,10 +452,10 @@ function markAction(code: string, label: string, when: string): BodyAction {
   return "other";
 }
 
-const PAINT_LEVEL: Record<string, string> = {
-  slightly_thick: "немного повышена",
-  very_thick: "сильно повышена",
-  extremely_thick: "очень сильно повышена",
+const PAINT_LEVEL: Record<string, Pair> = {
+  slightly_thick: ["немного повышена", "slightly above factory"],
+  very_thick: ["сильно повышена", "well above factory"],
+  extremely_thick: ["очень сильно повышена", "far above factory"],
 };
 
 // ─── Общие куски ─────────────────────────────────────────────────────────
@@ -446,25 +463,36 @@ const PAINT_LEVEL: Record<string, string> = {
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const str = (v: unknown): string | undefined => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 
-const ACCIDENT_TAG: Record<string, string> = {
-  NONE: "Без ДТП",
-  ACCIDENT: "Было ДТП",
-  REPLACE: "Замена деталей",
+const ACCIDENT_TAG: Record<string, Pair> = {
+  NONE: ["Без ДТП", "No accidents"],
+  ACCIDENT: ["Было ДТП", "Accident history"],
+  REPLACE: ["Замена деталей", "Parts replaced"],
 };
 
-const HEY_ACCIDENT: Record<string, string> = {
-  complete_no_accident: "Без ДТП",
-  accident: "Было ДТП",
-  simple_exchange_no_accident: "Простая замена, без ДТП",
+const HEY_ACCIDENT: Record<string, Pair> = {
+  complete_no_accident: ["Без ДТП", "No accidents"],
+  accident: ["Было ДТП", "Accident history"],
+  simple_exchange_no_accident: ["Простая замена, без ДТП", "Simple part swap, no accident"],
 };
 
-function checkGroups(raw: unknown): CheckGroup[] {
+/**
+ * Оценка HeyDealer по коду (`complete_no_accident` → «No accidents»). В каталоге
+ * она лежит в insp_grade строкой-кодом; незнакомый код — как есть.
+ */
+export function heyGradeLabel(code: string, lang: CardLang): string {
+  return look(HEY_ACCIDENT, code, lang) ?? code;
+}
+
+const INSPECTION: Pair = ["Осмотр", "Inspection"];
+const CONDITION: Pair = ["Состояние узлов", "Component condition"];
+
+function checkGroups(raw: unknown, lang: CardLang): CheckGroup[] {
   if (!Array.isArray(raw)) return [];
   const out: CheckGroup[] = [];
   const loose: CheckItem[] = [];
   const item = (x: Record<string, unknown>): CheckItem => ({
-    name: CHECK_NAMES[String(x.name ?? "").toLowerCase()] ?? String(x.name ?? "—"),
-    status: checkStatus(String(x.status ?? "")),
+    name: look(CHECK_NAMES, String(x.name ?? "").toLowerCase(), lang) ?? String(x.name ?? "—"),
+    status: checkStatus(String(x.status ?? ""), lang),
     ok: checkOk(x),
   });
   for (const g of raw) {
@@ -475,15 +503,18 @@ function checkGroups(raw: unknown): CheckGroup[] {
       // Внешние панели K Car уже есть в схеме кузова — второй раз списком не нужны.
       if (title.toLowerCase() === "exterior panels") continue;
       out.push({
-        title: CHECK_GROUPS[title.toLowerCase()] ?? CHECK_NAMES[title.toLowerCase()] ?? (title || "Осмотр"),
+        title:
+          look(CHECK_GROUPS, title.toLowerCase(), lang) ??
+          look(CHECK_NAMES, title.toLowerCase(), lang) ??
+          (title || pick(lang, INSPECTION)),
         items: (o.items as Record<string, unknown>[]).map(item),
       });
     } else {
       loose.push(item(o));
     }
   }
-  if (loose.length) out.push({ title: "Осмотр", items: loose });
-  return mergeOneLiners(out);
+  if (loose.length) out.push({ title: pick(lang, INSPECTION), items: loose });
+  return mergeOneLiners(out, lang);
 }
 
 /**
@@ -491,12 +522,13 @@ function checkGroups(raw: unknown): CheckGroup[] {
  * одну «Состояние узлов», подставляя группу в имя: иначе вместо таблицы —
  * тринадцать карточек с одной строкой.
  */
-function mergeOneLiners(groups: CheckGroup[]): CheckGroup[] {
+function mergeOneLiners(groups: CheckGroup[], lang: CardLang): CheckGroup[] {
   if (groups.length < 6) return groups;
+  const operation = look(CHECK_NAMES, "operating condition", lang);
   const items = groups.flatMap((g) =>
-    g.items.map((it) => ({ ...it, name: it.name === "Работа" || it.name === g.title ? g.title : `${g.title}: ${it.name}` })),
+    g.items.map((it) => ({ ...it, name: it.name === operation || it.name === g.title ? g.title : `${g.title}: ${it.name}` })),
   );
-  return [{ title: "Состояние узлов", items }];
+  return [{ title: pick(lang, CONDITION), items }];
 }
 
 function optionList(raw: unknown): string[] {
@@ -515,8 +547,8 @@ function optionList(raw: unknown): string[] {
   return [...new Set(out)];
 }
 
-function makeTitle(make: string | null, model: string | undefined, year: number | null): string {
-  return [year, make, model].filter(Boolean).join(" ") || "Машина";
+function makeTitle(make: string | null, model: string | undefined, year: number | null, lang: CardLang): string {
+  return [year, make, model].filter(Boolean).join(" ") || pick(lang, ["Машина", "Car"]);
 }
 
 const krwText = (v: unknown) => (positive(v) ? `₩${positive(v)!.toLocaleString("ru-RU")}` : null);
@@ -557,7 +589,7 @@ function lotFlags(
 
 // ─── Переходник: лот аукциона ────────────────────────────────────────────
 
-export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
+export function fromLot(house: CarnectHouse, lot: CarnectLotDetail, lang: CardLang = "ru"): CarCard {
   const raw = lot as Record<string, unknown>;
   const group = canonicalModelGroup(lot.modelGroup);
   const make = canonicalMake(lot.make, group, lot.titleEn);
@@ -596,17 +628,17 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
 
   const marks = ((lot.panelDiagram as { marks?: Record<string, unknown>[] } | undefined)?.marks ?? []).map(
     (m): BodyMark => {
-      const p = panelOf(String(m.nameEn ?? m.key ?? ""));
+      const p = panelOf(String(m.nameEn ?? m.key ?? ""), lang);
       const when = m.when === "current" ? "current" : "past";
       return { ...p, action: markAction(String(m.code ?? ""), String(m.labelEn ?? ""), when), when };
     },
   );
 
-  const notes = parseNotes(str(lot.notes));
+  const notes = parseNotes(str(lot.notes), lang);
   const rec = (lot.inspectionRecord ?? {}) as Record<string, unknown>;
   const act = [
-    rec.recordNo != null ? `№ ${rec.recordNo}` : null,
-    str(rec.inspectedOn) ? `от ${str(rec.inspectedOn)}` : null,
+    rec.recordNo != null ? `${pick(lang, ["№", "No."])} ${rec.recordNo}` : null,
+    str(rec.inspectedOn) ? `${pick(lang, ["от", "dated"])} ${str(rec.inspectedOn)}` : null,
   ].filter(Boolean).join(" ");
   // Ключи: «Keys 1EA» в заметках K Car или «Smart key2(inside)» у Lotte.
   const stored = str(props["Stored items"]);
@@ -618,19 +650,20 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
   return {
     house,
     sourceLabel: HOUSES[house].name.replace(/ \(.*\)$/, ""),
-    title: makeTitle(make, group ?? lot.model, year),
+    title: makeTitle(make, group ?? lot.model, year, lang),
     grade: str(lot.grade) ?? str(lot.titleEn),
     make,
+    modelGroup: group,
     model: str(lot.model),
     year,
     km: positive(lot.km),
     cc: positive(lot.cc),
-    fuel: fuelLabel(lot.fuel),
-    trans: transLabel(lot.trans),
+    fuel: fuelLabel(lot.fuel, lang),
+    trans: transLabel(lot.trans, lang),
     color: str(lot.color) === "Other" ? undefined : str(lot.color),
     body: str(raw.body) ?? str(raw.vehicleType) ?? str(raw.segment),
     seats: num(raw.seats) ?? (props.Seating ? Number(props.Seating) || null : null),
-    usage: usageLabel(lot.usage),
+    usage: usageLabel(lot.usage, lang),
     firstRegistration: str(lot.firstRegistrationDate),
     vin: str(lot.vin),
     plate: str(lot.vehicleNo),
@@ -643,8 +676,12 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
     photos: lot.photos?.length ? lot.photos : lot.photo ? [lot.photo] : [],
     inspGrade: str(lot.inspGrade),
     accident:
-      ACCIDENT_TAG[String(raw.accidentTag ?? "")] ??
-      (str(raw.accidentHistory) === "No" ? "Без ДТП" : str(raw.accidentHistory) === "Yes" ? "Было ДТП" : undefined),
+      look(ACCIDENT_TAG, String(raw.accidentTag ?? ""), lang) ??
+      (str(raw.accidentHistory) === "No"
+        ? look(ACCIDENT_TAG, "NONE", lang)
+        : str(raw.accidentHistory) === "Yes"
+          ? look(ACCIDENT_TAG, "ACCIDENT", lang)
+          : undefined),
     legal: legalRaw ? { seizures: num(legalRaw.seizures), mortgages: num(legalRaw.mortgages) } : null,
     history,
     bodyMarks: marks,
@@ -655,7 +692,7 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
     keys: notes.keys != null ? String(notes.keys) : storedKeys || undefined,
     engineCode: str(raw.motorCode) ?? str(props.engine_model),
     inspectionAct: act ? [act, str(rec.recordIssuer)].filter(Boolean).join(", ") : undefined,
-    checks: checkGroups(lot.inspection),
+    checks: checkGroups(lot.inspection, lang),
     options: optionList(lot.options),
     internal: {
       sourceUrl: `${CARNECT_ORIGIN}/lot/${house}/${encodeURIComponent(lot.lotId)}`,
@@ -694,51 +731,54 @@ export function fromLot(house: CarnectHouse, lot: CarnectLotDetail): CarCard {
 // ─── Переходник: машина HeyDealer ────────────────────────────────────────
 
 /** Подписи строк осмотра HeyDealer (`conditionRows`). Незнакомые — как у источника. */
-const HEY_ROWS: Record<string, string> = {
-  tire: "Шины",
-  outer_panel_scratch: "Панели с повреждениями",
-  wheel_scratch: "Диски с царапинами",
-  leakage: "Течи",
-  dashboard_warning: "Ошибки на приборке",
-  option_malfunction: "Неисправные опции",
+const HEY_ROWS: Record<string, Pair> = {
+  tire: ["Шины", "Tires"],
+  outer_panel_scratch: ["Панели с повреждениями", "Damaged panels"],
+  wheel_scratch: ["Диски с царапинами", "Scratched wheels"],
+  leakage: ["Течи", "Leaks"],
+  dashboard_warning: ["Ошибки на приборке", "Dashboard warnings"],
+  option_malfunction: ["Неисправные опции", "Faulty options"],
 };
 
-function heyRow(r: Record<string, unknown>): CheckItem {
-  const name = HEY_ROWS[String(r.key)] ?? String(r.label ?? r.key ?? "—");
+function heyRow(r: Record<string, unknown>, lang: CardLang): CheckItem {
+  const name = look(HEY_ROWS, String(r.key), lang) ?? String(r.label ?? r.key ?? "—");
+  const none = pick(lang, ["нет", "none"]);
   let status: string;
-  if (r.kind === "tires") status = `остаток: перед ${r.front ?? "?"}%, зад ${r.rear ?? "?"}%`;
-  else if (r.kind === "count") status = r.count ? `${r.count}` : "нет";
-  else if (r.kind === "bool") status = r.ok === false ? "есть" : "нет";
-  else status = typeof r.ok === "boolean" ? (r.ok ? "в порядке" : "есть замечания") : "—";
+  if (r.kind === "tires") {
+    const [f, b] = [r.front ?? "?", r.rear ?? "?"];
+    status = lang === "en" ? `tread left: front ${f}%, rear ${b}%` : `остаток: перед ${f}%, зад ${b}%`;
+  } else if (r.kind === "count") status = r.count ? `${r.count}` : none;
+  else if (r.kind === "bool") status = r.ok === false ? pick(lang, ["есть", "yes"]) : none;
+  else status = typeof r.ok === "boolean" ? pick(lang, r.ok ? ["в порядке", "OK"] : ["есть замечания", "issues noted"]) : "—";
   return { name, status, ok: typeof r.ok === "boolean" ? r.ok : null };
 }
 
 /** Строки «Body Panel : None» у HeyDealer Self — подписи и частые значения. */
-const SELLER_LABEL: Record<string, string> = {
-  "body panel": "Кузовные панели",
-  tire: "Шины",
-  tires: "Шины",
-  "wheel scratch": "Царапины на дисках",
-  "spare key": "Запасной ключ",
+const SELLER_LABEL: Record<string, Pair> = {
+  "body panel": ["Кузовные панели", "Body panels"],
+  tire: ["Шины", "Tires"],
+  tires: ["Шины", "Tires"],
+  "wheel scratch": ["Царапины на дисках", "Wheel scratches"],
+  "spare key": ["Запасной ключ", "Spare key"],
 };
-const SELLER_VALUE: Record<string, string> = {
-  none: "нет",
-  "all good": "в порядке",
-  present: "есть",
-  absent: "нет",
+const SELLER_VALUE: Record<string, Pair> = {
+  none: ["нет", "none"],
+  "all good": ["в порядке", "all good"],
+  present: ["есть", "yes"],
+  absent: ["нет", "no"],
 };
 
 /** «Wheel Scratch : 1 wheel» → «Царапины на дисках: 1 wheel». Незнакомое — как есть, с хангылем — выкидываем. */
-function sellerLine(line: string): string | null {
+function sellerLine(line: string, lang: CardLang): string | null {
   const m = /^\s*([^:]+?)\s*:\s*(.+)$/.exec(line);
   if (!m) return /[\u3131-\uD79D]/.test(line) ? null : line.trim() || null;
-  const label = SELLER_LABEL[m[1].toLowerCase()] ?? m[1];
-  const value = SELLER_VALUE[m[2].trim().toLowerCase()] ?? m[2].trim().replace(/^(\d+) wheels?$/i, "$1");
+  const label = look(SELLER_LABEL, m[1].toLowerCase(), lang) ?? m[1];
+  const value = look(SELLER_VALUE, m[2].trim().toLowerCase(), lang) ?? m[2].trim().replace(/^(\d+) wheels?$/i, "$1");
   const out = `${label}: ${value}`;
   return /[\u3131-\uD79D]/.test(out) ? null : out;
 }
 
-export function fromHey(car: HeyCarDetail): CarCard {
+export function fromHey(car: HeyCarDetail, lang: CardLang = "ru"): CarCard {
   const h = car.heydealer ?? {};
   const raw = car as Record<string, unknown>;
   const type = HEY_TYPES.find((t) => t.type === (h.auctionType ?? car.auctionType));
@@ -748,7 +788,7 @@ export function fromHey(car: HeyCarDetail): CarCard {
   const hist = h.history ?? {};
 
   const repairs: BodyMark[] = (h.accidentDiagram?.repairs ?? []).map((r) => {
-    const p = panelOf(r.partKey ?? r.part ?? "");
+    const p = panelOf(r.partKey ?? r.part ?? "", lang);
     const rep = String(r.repair ?? "").toLowerCase();
     return {
       ...p,
@@ -762,7 +802,12 @@ export function fromHey(car: HeyCarDetail): CarCard {
   const paint: BodyMark[] = ((h.paint as { measurements?: { part?: string; level?: string }[] } | undefined)
     ?.measurements ?? [])
     .filter((m) => m.level && m.level !== "normal")
-    .map((m) => ({ ...panelOf(m.part ?? ""), action: "painted" as const, when: "past" as const, paintLevel: PAINT_LEVEL[m.level!] ?? m.level }))
+    .map((m) => ({
+      ...panelOf(m.part ?? "", lang),
+      action: "painted" as const,
+      when: "past" as const,
+      paintLevel: look(PAINT_LEVEL, m.level!, lang) ?? m.level,
+    }))
     .filter((m) => !repaired.has(m.panel));
 
   const krw = positive(car.krw);
@@ -776,23 +821,24 @@ export function fromHey(car: HeyCarDetail): CarCard {
     house: "heydealer",
     sourceLabel: "HeyDealer",
     typeLabel: type?.label,
-    typeHint: type?.hint,
+    typeHint: type && pick(lang, [type.hint, type.hintEn]),
     // ⚠️ Строка модели HeyDealer уже содержит комплектацию («Torres Gasoline 1.5
     // 2WD T7»), а она же лежит в gradeEn — в заголовке была бы дважды. Берём
     // модельную группу; не распознали — строку как есть.
-    title: makeTitle(make, heyModelGroup(make, car.model) ?? car.model, year),
+    title: makeTitle(make, heyModelGroup(make, car.model) ?? car.model, year, lang),
     grade: str(car.gradeEn),
     make,
+    modelGroup: heyModelGroup(make, car.model),
     model: str(car.model),
     year,
     km: positive(car.km),
     cc: positive(car.cc),
-    fuel: fuelLabel(car.fuel),
-    trans: transLabel(car.trans),
+    fuel: fuelLabel(car.fuel, lang),
+    trans: transLabel(car.trans, lang),
     color: str(car.color),
     interior: str(h.interior),
     body: str(vi.bodyType),
-    usage: usageLabel(str(vi.purpose)),
+    usage: usageLabel(str(vi.purpose), lang),
     firstRegistration: car.regYear ? `${car.regYear}-${String(car.regMonth ?? 1).padStart(2, "0")}` : undefined,
     // ⚠️ VIN у HeyDealer обрезан (11 знаков из 17) — так отдаёт источник.
     vin: str(vi.vin),
@@ -801,7 +847,7 @@ export function fromHey(car: HeyCarDetail): CarCard {
     newPriceKrw: positive(car.originPriceKrw ?? h.msrpKrw),
     endAt: str(car.endAt ?? h.endAt),
     photos,
-    accident: HEY_ACCIDENT[String(h.accidentGrade ?? "")] ?? str(h.accidentSummary),
+    accident: look(HEY_ACCIDENT, String(h.accidentGrade ?? ""), lang) ?? str(h.accidentSummary),
     legal: null,
     history: Object.keys(hist).length
       ? {
@@ -824,13 +870,18 @@ export function fromHey(car: HeyCarDetail): CarCard {
     // инспектора (checks), и строки продавца рядом с ним только путают.
     sellerSays:
       (h.auctionType ?? car.auctionType) === "self"
-        ? (h.conditionItems ?? []).map(sellerLine).filter((x): x is string => !!x)
+        ? (h.conditionItems ?? []).map((l) => sellerLine(l, lang)).filter((x): x is string => !!x)
         : [],
-    keys: (h.conditionItems ?? []).some((l) => /spare key\s*:\s*present/i.test(l)) ? "есть запасной" : undefined,
+    keys: (h.conditionItems ?? []).some((l) => /spare key\s*:\s*present/i.test(l)) ? pick(lang, ["есть запасной", "spare key included"]) : undefined,
     engineCode: str(vi.motorCode),
     manufactured: str(vi.manufacturedDate)?.slice(0, 10),
     checks: h.conditionRows?.length
-      ? [{ title: "Осмотр HeyDealer", items: h.conditionRows.map((r) => heyRow(r as Record<string, unknown>)) }]
+      ? [
+          {
+            title: pick(lang, ["Осмотр HeyDealer", "HeyDealer inspection"]),
+            items: h.conditionRows.map((r) => heyRow(r as Record<string, unknown>, lang)),
+          },
+        ]
       : [],
     options: optionList(car.options),
     internal: {

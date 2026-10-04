@@ -10,7 +10,9 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         // /carpicture НЕ блокируем: middleware отдаёт для них 410,
         // Google должен это увидеть, чтобы навсегда выкинуть URL из индекса
-        disallow: ["/admin", "/admin/", "/api/", "/cdn-cgi/"],
+        // /*/auction/lot/ — страницы машин аукционов: noindex, живут дни, а
+        // каждый обход ботом — это запрос к carnect (docs/carnect.md).
+        disallow: ["/admin", "/admin/", "/api/", "/cdn-cgi/", "/*/auction/lot/"],
       },
     ],
     // sitemap.xml is the master index — it includes all sub-sitemaps

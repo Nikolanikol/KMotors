@@ -9,13 +9,14 @@
 // app/error.tsx, где теряются header, footer и весь layout: человек видит
 // голую страницу ошибки вместо сайта с нерабочим разделом.
 //
-// ⚠️ Языков два, ru и английский на всё остальное — ровно как у самого раздела
-// аукционов (ka/ar там намеренно идут английским фолбэком). Заводить сюда
-// четыре локали, когда в разделе их две, значит обещать перевод, которого
-// на соседнем экране нет.
+// Ловит и сбой источника на странице машины: та нарочно БРОСАЕТ, чтобы
+// «недоступно» не попало в кеш на час (lot/[house]/[lot]/page.tsx).
+//
+// ⚠️ Язык — английский на всех локалях, как у всего раздела с 04.10.2026
+// (решение владельца). Русский текст оставлен: вернут русский разделу —
+// вернуть и здесь, выбрав по pathname.
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { WifiOff } from "lucide-react";
 
 const TEXT: Record<string, { title: string; hint: string; retry: string }> = {
@@ -26,7 +27,7 @@ const TEXT: Record<string, { title: string; hint: string; retry: string }> = {
   },
   en: {
     title: "Auction is temporarily unavailable",
-    hint: "Could not load the lots. Please try again — the auction itself is unaffected.",
+    hint: "Could not load the data. Please try again in a minute — the auction itself is unaffected.",
     retry: "Try again",
   },
 };
@@ -38,8 +39,7 @@ export default function AuctionError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const pathname = usePathname();
-  const t = TEXT[pathname.split("/")[1]] ?? TEXT.en;
+  const t = TEXT.en;
 
   useEffect(() => {
     console.error("Auction error:", error);

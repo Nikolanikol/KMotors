@@ -1,13 +1,16 @@
-// Страница машины carnect — раскладка будущей публичной карточки, пока в админке.
+// Страница машины carnect — общая для витрины (/[lang]/auction/lot/…) и админки.
 //
 // Устроена по образцу карточки Encar (`[lang]/catalog/[id]`): заголовок над
 // галереей, под ней «главное» плашкой и характеристики, справа липкая колонка
 // с ценой. Компоненты те же, что у страниц лотов аукциона: Carousel (галерея с
 // лайтбоксом), SpecCard / SpecRows, OverviewStrip, AuctionCountdown.
 //
-// Всё, что на странице, видит клиент. Служебное — отдельной панелью внизу
-// (InternalPanel), и только на служебном хосте: разделение живёт в модели
-// (card.ts, `internal`), а решение «показывать ли» — в странице (serviceHost.ts).
+// Всё, что на странице, видит клиент. Служебное — слотом `internal` внизу:
+// что туда положить, решает маршрут. Админка рисует InternalPanel сразу, витрина
+// — InternalPanelLoader, который подтягивает панель только на служебном хосте и
+// держит её вне общего кеша страницы (см. InternalPanelLoader.tsx).
+//
+// Язык — пропом `lang` (text.ts): витрина на английском, админка на русском.
 // Отметки «видит клиент» / «только мы» у блоков были макетом для владельца
 // (02.10.2026) и сняты перед выкладкой (04.10.2026).
 
@@ -16,26 +19,22 @@ import type { ReactNode } from "react";
 
 import { ArrowLeftRight, Calendar, Car, Fuel, Gauge, Settings2 } from "lucide-react";
 
-import AuctionCountdown from "@/components/Auction/AuctionCountdown";
 import OverviewStrip from "@/components/Auction/OverviewStrip";
 import { SpecCard, SpecRows } from "@/components/Auction/SpecCard";
 import { yearWithAge } from "@/components/Auction/carAge";
 import Carousel from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import type { CarCard } from "@/lib/carnect/card";
+import { gradeInfo } from "@/lib/carnect/grades";
+import type { CardLang } from "@/lib/carnect/lang";
+
+import { waHref } from "@/lib/contact";
 
 import BodyDiagram from "./BodyDiagram";
-import InternalPanel from "./InternalPanel";
 import LotRequestCard from "./LotRequestCard";
-
-const krw = (v: number | null | undefined) => (v ? `₩${v.toLocaleString("ru-RU")}` : null);
-const kmText = (v: number | null | undefined) => (v ? `${v.toLocaleString("ru-RU")} км` : null);
-const n = (v: number | null | undefined) => (v == null ? null : v.toLocaleString("ru-RU"));
-
-/** «2026-10-06T19:15:05+09:00» → «06.10 в 19:15 (Корея)». Время берём как есть, оно корейское. */
-function koreanTime(iso: string | undefined): string | null {
-  const m = iso && /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
-  return m ? `${m[3]}.${m[2]} в ${m[4]}:${m[5]} (Корея)` : null;
-}
+import LotStickyBar, { REQUEST_ANCHOR } from "./LotStickyBar";
+import LotTimer from "./LotTimer";
+import { fmt, koreanTime, tx, usd, won, yearAgeEn, type TextKey } from "./text";
+import { pad } from "./ui";
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return <SpecCard title={title}>{children}</SpecCard>;
@@ -49,13 +48,52 @@ function Muted({ children }: { children: ReactNode }) {
   );
 }
 
-const PRICE_LABEL: Record<CarCard["price"]["kind"], string> = {
-  start: "Старт торгов",
-  fixed: "Цена выкупа",
-  none: "Цена",
+const PRICE_LABEL: Record<CarCard["price"]["kind"], TextKey> = {
+  start: "priceStart",
+  fixed: "priceFixed",
+  none: "price",
 };
 
-function PriceCard({ card }: { card: CarCard }) {
+/**
+ * Оценка площадки с расшифровкой (grades.ts). У площадок без подтверждённой
+ * шкалы (SK, K Car) — только буква: выдуманная легенда хуже никакой.
+ */
+function GradeBlock({ card, lang }: { card: CarCard; lang: CardLang }) {
+  const info = gradeInfo(card.house, card.inspGrade, lang, card.sourceLabel);
+  return (
+    <div className="mt-4 text-sm" style={{ color: "var(--axis-gray)" }}>
+      <p>
+        {tx(lang, "grade")}:{" "}
+        <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+          {card.inspGrade}
+        </span>
+      </p>
+      {info && (
+        <>
+          <ul className="mt-1.5 space-y-1">
+            {info.parts.map((p) => (
+              <li key={p.label}>
+                <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+                  {p.letter}
+                </span>{" "}
+                — {p.label.toLowerCase()}: {p.text}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-[11px]">{info.note}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Главная цена строкой — и для блока цены, и для мобильной плашки. */
+function mainPrice(card: CarCard, lang: CardLang): string {
+  return won(lang, card.price.krw) ?? tx(lang, card.house === "heydealer" ? "byBidding" : "atAuction");
+}
+
+function PriceCard({ card, lang, krwToUsd }: { card: CarCard; lang: CardLang; krwToUsd?: number }) {
+  const t = (k: TextKey) => tx(lang, k);
   const hey = card.house === "heydealer";
   return (
     <section
@@ -63,37 +101,45 @@ function PriceCard({ card }: { card: CarCard }) {
       style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(182,119,73,0.4)" }}
     >
       <div className="mb-2 text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
-        {PRICE_LABEL[card.price.kind]}
+        {t(PRICE_LABEL[card.price.kind])}
       </div>
       <div className="text-3xl font-bold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-        {krw(card.price.krw) ?? (hey ? "ставками" : "на торгах")}
+        {mainPrice(card, lang)}
       </div>
+      {/* Справка в $ — курс Кукмин-банка, как у Encar (text.ts, usd). */}
+      {usd(lang, card.price.krw, krwToUsd) && (
+        <div className="mt-0.5 text-base font-semibold" style={{ color: "var(--axis-gray)" }}>
+          {usd(lang, card.price.krw, krwToUsd)}
+        </div>
+      )}
       {card.price.kind === "start" && (
         <p className="mt-1 text-xs" style={{ color: "var(--axis-gray)" }}>
-          Стартовая — итог торгов обычно выше; сверху сбор аукциона, доставка, растаможка.
+          {t("startNote")}
         </p>
       )}
       {card.price.kind === "none" && hey && (
         <p className="mt-1 text-xs" style={{ color: "var(--axis-gray)" }}>
-          Цены нет: дилеры делают ставки до окончания торгов.
+          {t("noPriceHey")}
         </p>
       )}
       {card.newPriceKrw && (
         <p className="mt-2 text-sm" style={{ color: "var(--axis-gray)" }}>
-          Новая стоила {krw(card.newPriceKrw)}
+          {t("newPrice")} {won(lang, card.newPriceKrw)}
         </p>
       )}
 
       {card.auctionDate && (
         <div className="mt-4 rounded-xl px-3 py-2" style={{ border: "1px solid var(--axis-bronze)" }}>
           <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
-            торги {card.auctionDate}
-            {card.startAt ? ` в ${card.startAt.slice(11, 16)}` : ""}
+            {t("auctionOn")} {card.auctionDate}
+            {card.startAt ? ` ${t("at")} ${card.startAt.slice(11, 16)}` : ""}
           </div>
-          <AuctionCountdown
+          <LotTimer
+            at={card.startAt}
             date={card.auctionDate}
-            fallback={`до ${card.auctionDate}`}
-            labels={{ h: "ч", m: "м", s: "с", over: "торги прошли" }}
+            kind="starts"
+            lang={lang}
+            fallback={card.auctionDate}
             className="block text-xl font-bold leading-tight"
             style={{ color: "var(--axis-bronze)" }}
           />
@@ -102,22 +148,23 @@ function PriceCard({ card }: { card: CarCard }) {
       {card.endAt && (
         <div className="mt-4 rounded-xl px-3 py-2" style={{ border: "1px solid var(--axis-bronze)" }}>
           <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
-            торги до
+            {t("auctionUntil")}
           </div>
-          <div className="text-lg font-bold" style={{ color: "var(--axis-bronze)" }}>
-            {koreanTime(card.endAt)}
+          <div className="text-sm font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+            {koreanTime(lang, card.endAt)}
           </div>
+          <LotTimer
+            at={card.endAt}
+            kind="ends"
+            lang={lang}
+            fallback=""
+            className="block text-xl font-bold leading-tight"
+            style={{ color: "var(--axis-bronze)" }}
+          />
         </div>
       )}
 
-      {card.inspGrade && (
-        <p className="mt-4 text-sm" style={{ color: "var(--axis-gray)" }}>
-          Оценка площадки:{" "}
-          <span className="font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-            {card.inspGrade}
-          </span>
-        </p>
-      )}
+      {card.inspGrade && <GradeBlock card={card} lang={lang} />}
     </section>
   );
 }
@@ -126,14 +173,45 @@ function PriceCard({ card }: { card: CarCard }) {
  * Правая колонка: цена и под ней плашка заявки. Одна и та же на узком экране
  * (под фото) и на широком (липкая справа) — разойтись им не с чего.
  */
-function Side({ card, id }: { card: CarCard; id: string }) {
+/** «K Car · Sejong, лот 1234, торги 2026-10-06» — по нему менеджер найдёт машину. */
+function lotRefOf(card: CarCard, id: string, lang: CardLang): string {
+  const t = (k: TextKey) => tx(lang, k);
   const where = [card.sourceLabel, card.typeLabel, card.venue].filter(Boolean).join(" · ");
-  const when = card.auctionDate ? `торги ${card.auctionDate}` : card.endAt ? `торги до ${koreanTime(card.endAt)}` : null;
-  const lotRef = [where, `лот ${card.lotNo ?? id}`, when].filter(Boolean).join(", ");
+  const when = card.auctionDate
+    ? `${t("auctionOn")} ${card.auctionDate}`
+    : card.endAt
+      ? `${t("auctionUntil")} ${koreanTime(lang, card.endAt)}`
+      : null;
+  return [where, `${t("lot")} ${card.lotNo ?? id}`, when].filter(Boolean).join(", ");
+}
+
+function Side({
+  card,
+  id,
+  lang,
+  pageUrl,
+  krwToUsd,
+}: {
+  card: CarCard;
+  id: string;
+  lang: CardLang;
+  pageUrl?: string;
+  krwToUsd?: number;
+}) {
   return (
     <div className="space-y-4">
-      <PriceCard card={card} />
-      <LotRequestCard carId={`${card.house}/${id}`} carName={card.title} lotRef={lotRef} fixedPrice={card.price.kind === "fixed"} />
+      <PriceCard card={card} lang={lang} krwToUsd={krwToUsd} />
+      <LotRequestCard
+        carId={`${card.house}/${id}`}
+        carName={card.title}
+        lotRef={lotRefOf(card, id, lang)}
+        // ⚠️ Менеджер читает заявку в Telegram по-русски, на каком бы языке ни
+        // была витрина: строка лота для него собирается отдельно.
+        lotRefRu={lotRefOf(card, id, "ru")}
+        fixedPrice={card.price.kind === "fixed"}
+        lang={lang}
+        pageUrl={pageUrl}
+      />
     </div>
   );
 }
@@ -141,27 +219,44 @@ function Side({ card, id }: { card: CarCard; id: string }) {
 export default function CarCardView({
   card,
   backHref,
-  meta,
-  showInternal,
+  id,
+  lang,
+  pageUrl,
+  internal,
+  withHeader = false,
+  krwToUsd,
+  similar,
 }: {
   card: CarCard;
   backHref: string;
-  meta: { id: string; ms: number; fetchedAt?: string };
-  /**
-   * Служебная панель. true только на служебном хосте — решает страница через
-   * isServiceHost(); на www панели нет в разметке вовсе.
-   */
-  showInternal: boolean;
+  /** Id машины у источника (лот или HeyDealer). */
+  id: string;
+  lang: CardLang;
+  /** НАШ абсолютный адрес страницы — уходит в текст WhatsApp (contact.ts). */
+  pageUrl?: string;
+  /** Служебная панель внизу: что положить, решает маршрут. */
+  internal?: ReactNode;
+  /** Витрина: над страницей шапка сайта, нужен отступ сверху. */
+  withHeader?: boolean;
+  /** Курс для справки в $ (getCarRates). Нет — справка не показывается. */
+  krwToUsd?: number;
+  /** Блок «Похожие машины» (SimilarCars) — внизу, перед звуком двигателя. */
+  similar?: ReactNode;
 }) {
+  const t = (k: TextKey) => tx(lang, k);
+  const n = (v: number | null | undefined) => (v == null ? null : fmt(lang, v));
+  const kmText = (v: number | null | undefined) => (v ? `${fmt(lang, v)} ${t("km")}` : null);
+  const yesNo = (v: number | null | undefined, extra?: string) =>
+    v ? `${t("yes")} (${v})${extra ?? ""}` : v === 0 ? t("no") : null;
   const h = card.history;
   const hey = card.house === "heydealer";
   const selfType = hey && !card.hasBodyData && !card.checks.length;
 
   return (
-    <main className="min-h-screen px-4 py-6" style={{ backgroundColor: "var(--background, #0A0A0A)" }}>
+    <main className={`min-h-screen ${pad(withHeader)}`} style={{ backgroundColor: "var(--background, #0A0A0A)" }}>
       <div className="mx-auto max-w-7xl">
         <Link href={backHref} className="text-sm" style={{ color: "var(--axis-bronze)" }}>
-          ← каталог
+          {t("backToCatalog")}
         </Link>
 
         <div className="mt-3 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
@@ -206,7 +301,7 @@ export default function CarCardView({
               </div>
             </div>
 
-            <Block title={`Фото — ${card.photos.length}`}>
+            <Block title={`${t("photos")} — ${card.photos.length}`}>
               {card.photos.length ? (
                 // ⚠️ imageSource="raw": фото на CDN площадки / HeyDealer, параметры
                 // Encar с водяным знаком им дописывать нельзя. labels обязательны —
@@ -216,102 +311,103 @@ export default function CarCardView({
                   mode="static"
                   imageSource="raw"
                   carName={card.title}
-                  photoLabel="фото"
-                  labels={{ open: "Открыть галерею", prev: "Предыдущее фото", next: "Следующее фото", close: "Закрыть" }}
+                  photoLabel={t("photoWord")}
+                  labels={{ open: t("galleryOpen"), prev: t("galleryPrev"), next: t("galleryNext"), close: t("galleryClose") }}
                 />
               ) : (
-                <Muted>Фото нет.</Muted>
+                <Muted>{t("noPhotos")}</Muted>
               )}
             </Block>
 
             {/* Цена на узком экране — сразу под фото, как у карточки Encar. */}
-            <div className="lg:hidden">
-              <Side card={card} id={meta.id} />
+            {/* id — цель мобильной плашки: её кнопка прокручивает сюда. */}
+            <div className="scroll-mt-24 lg:hidden" id={REQUEST_ANCHOR}>
+              <Side card={card} id={id} lang={lang} pageUrl={pageUrl} krwToUsd={krwToUsd} />
             </div>
 
             <OverviewStrip
               items={[
-                { icon: <Car size={20} />, label: "Модель", value: card.model },
-                { icon: <Calendar size={20} />, label: "Год", value: yearWithAge(card.year) },
-                { icon: <Gauge size={20} />, label: "Пробег", value: kmText(card.km) },
-                { icon: <Fuel size={20} />, label: "Топливо", value: card.fuel },
-                { icon: <Settings2 size={20} />, label: "Коробка", value: card.trans },
-                { icon: <ArrowLeftRight size={20} />, label: "Объём", value: card.cc ? `${n(card.cc)} см³` : null },
+                { icon: <Car size={20} />, label: t("model"), value: card.model },
+                { icon: <Calendar size={20} />, label: t("year"), value: lang === "en" ? yearAgeEn(card.year) : yearWithAge(card.year) },
+                { icon: <Gauge size={20} />, label: t("mileage"), value: kmText(card.km) },
+                { icon: <Fuel size={20} />, label: t("fuel"), value: card.fuel },
+                { icon: <Settings2 size={20} />, label: t("gearbox"), value: card.trans },
+                { icon: <ArrowLeftRight size={20} />, label: t("engine"), value: card.cc ? `${n(card.cc)} ${t("cc")}` : null },
               ]}
             />
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <Block title="Характеристики">
+              <Block title={t("specs")}>
                 <SpecRows
                   rows={[
-                    { label: "Марка", value: card.make },
-                    { label: "Комплектация", value: card.grade },
-                    { label: "Кузов", value: card.body },
-                    { label: "Цвет", value: card.color },
-                    { label: "Салон", value: card.interior },
-                    { label: "Мест", value: card.seats },
-                    { label: "Использование", value: card.usage },
-                    { label: "Дата производства", value: card.manufactured },
-                    { label: "Первая регистрация", value: card.firstRegistration },
-                    { label: "Код двигателя", value: card.engineCode, mono: true },
+                    { label: t("make"), value: card.make },
+                    { label: t("trim"), value: card.grade },
+                    { label: t("body"), value: card.body },
+                    { label: t("color"), value: card.color },
+                    { label: t("interior"), value: card.interior },
+                    { label: t("seats"), value: card.seats },
+                    { label: t("usage"), value: card.usage },
+                    { label: t("manufactured"), value: card.manufactured },
+                    { label: t("firstReg"), value: card.firstRegistration },
+                    { label: t("engineCode"), value: card.engineCode, mono: true },
                   ]}
                 />
               </Block>
-              <Block title="Документы и торги">
+              <Block title={t("docs")}>
                 <SpecRows
                   rows={[
                     { label: "VIN", value: card.vin, mono: true },
-                    { label: "Госномер", value: card.plate, mono: true },
-                    { label: "Номер лота", value: card.lotNo },
-                    { label: "Акт осмотра", value: card.inspectionAct },
-                    { label: "Ключи", value: card.keys },
-                    { label: "Аукционный дом", value: card.venue ?? (hey ? null : card.sourceLabel) },
-                    { label: "Площадка", value: card.sourceLabel + (card.typeLabel ? ` · ${card.typeLabel}` : "") },
+                    { label: t("plate"), value: card.plate, mono: true },
+                    { label: t("lotNo"), value: card.lotNo },
+                    { label: t("inspectionAct"), value: card.inspectionAct },
+                    { label: t("keys"), value: card.keys },
+                    { label: t("venue"), value: card.venue ?? (hey ? null : card.sourceLabel) },
+                    { label: t("source"), value: card.sourceLabel + (card.typeLabel ? ` · ${card.typeLabel}` : "") },
                   ]}
                 />
                 {hey && card.vin && (
                   <p className="mt-2 text-[11px]" style={{ color: "var(--axis-gray)" }}>
-                    Последние символы VIN площадка скрывает.
+                    {t("vinCut")}
                   </p>
                 )}
               </Block>
             </div>
 
-            <Block title="Кузов">
+            <Block title={t("bodyTitle")}>
               {card.bodyMarks.length ? (
-                <BodyDiagram marks={card.bodyMarks} />
+                <BodyDiagram marks={card.bodyMarks} lang={lang} />
               ) : card.hasBodyData ? (
-                <Muted>Повреждений и следов ремонта кузова не отмечено.</Muted>
+                <Muted>{t("bodyClean")}</Muted>
               ) : selfType ? (
-                <Muted>Осмотра нет: тип Self — фото и описание делает сам продавец.</Muted>
+                <Muted>{t("bodySelf")}</Muted>
               ) : card.inspectionSheet ? (
-                <Muted>Площадка отдаёт схему кузова только картинкой — это лист осмотра ниже.</Muted>
+                <Muted>{t("bodySheet")}</Muted>
               ) : (
-                <Muted>Площадка не отдаёт сведений о кузове.</Muted>
+                <Muted>{t("bodyNone")}</Muted>
               )}
             </Block>
 
             {card.inspectionSheet && (
-              <Block title="Лист осмотра площадки">
+              <Block title={t("sheet")}>
                 {/* Скан площадки: на белом фоне, как напечатан, — иначе тёмная
                     тема съедает тонкие линии схемы. Клик открывает оригинал. */}
                 <a href={card.inspectionSheet} target="_blank" rel="noreferrer" className="block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={card.inspectionSheet}
-                    alt="Лист осмотра площадки"
+                    alt={t("sheet")}
                     loading="lazy"
                     className="mx-auto w-full max-w-3xl rounded-lg bg-white p-2"
                   />
                 </a>
                 <p className="mt-2 text-center text-xs" style={{ color: "var(--axis-gray)" }}>
-                  Оригинал листа осмотра аукциона. Нажмите, чтобы открыть в полном размере.
+                  {t("sheetNote")}
                 </p>
               </Block>
             )}
 
             {card.defects.length > 0 && (
-              <Block title="Замечания площадки">
+              <Block title={t("defects")}>
                 {/* Что нашла площадка при осмотре — дословно, только переведено.
                     Юридический текст площадки отсечён в defects.ts. */}
                 <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
@@ -325,26 +421,26 @@ export default function CarCardView({
                   ))}
                 </ul>
                 <p className="mt-3 text-xs" style={{ color: "var(--axis-gray)" }}>
-                  Список составлен площадкой при осмотре перед торгами.
+                  {t("defectsNote")}
                 </p>
               </Block>
             )}
 
             {card.sellerSays.length > 0 && (
-              <Block title="Со слов продавца">
+              <Block title={t("sellerSays")}>
                 <ul className="space-y-1.5 text-sm" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
                   {card.sellerSays.map((l) => (
                     <li key={l}>{l}</li>
                   ))}
                 </ul>
                 <p className="mt-3 text-xs" style={{ color: "var(--axis-gray)" }}>
-                  Осмотра нет: тип Self, состояние описывает сам продавец.
+                  {t("sellerNote")}
                 </p>
               </Block>
             )}
 
             {card.checks.length > 0 && (
-              <Block title="Состояние узлов">
+              <Block title={t("checks")}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {card.checks.map((g, gi) => (
                     <div key={g.title + gi}>
@@ -376,27 +472,29 @@ export default function CarCardView({
             {(h || card.legal) && (
               <div className="grid gap-4 lg:grid-cols-2">
                 {h && (
-                  <Block title="Страховая история">
+                  <Block title={t("history")}>
                     <SpecRows
                       rows={[
-                        { label: "Смен владельцев", value: n(h.owners) },
-                        { label: "Смен номеров", value: n(h.plateChanges) },
+                        { label: t("owners"), value: n(h.owners) },
+                        { label: t("plateChanges"), value: n(h.plateChanges) },
                         {
-                          label: "ДТП по своей страховке",
-                          value: h.myClaims != null ? `${h.myClaims}${h.myClaimsKrw ? ` · ${krw(h.myClaimsKrw)}` : ""}` : null,
+                          label: t("myClaims"),
+                          value: h.myClaims != null ? `${h.myClaims}${h.myClaimsKrw ? ` · ${won(lang, h.myClaimsKrw)}` : ""}` : null,
                         },
                         {
-                          label: "ДТП по чужой страховке",
+                          label: t("otherClaims"),
                           value:
-                            h.otherClaims != null ? `${h.otherClaims}${h.otherClaimsKrw ? ` · ${krw(h.otherClaimsKrw)}` : ""}` : null,
+                            h.otherClaims != null
+                              ? `${h.otherClaims}${h.otherClaimsKrw ? ` · ${won(lang, h.otherClaimsKrw)}` : ""}`
+                              : null,
                         },
-                        { label: "Ущерб по страховке", value: h.damageRange },
-                        { label: "Тотал", value: h.totalLoss ? `да (${h.totalLoss})` : h.totalLoss === 0 ? "нет" : null, accent: !!h.totalLoss },
-                        { label: "Утопленник", value: h.flood ? `да (${h.flood})` : h.flood === 0 ? "нет" : null, accent: !!h.flood },
-                        { label: "Угон", value: h.theft ? `да (${h.theft})` : h.theft === 0 ? "нет" : null, accent: !!h.theft },
+                        { label: t("damage"), value: h.damageRange },
+                        { label: t("totalLoss"), value: yesNo(h.totalLoss), accent: !!h.totalLoss },
+                        { label: t("flood"), value: yesNo(h.flood), accent: !!h.flood },
+                        { label: t("theft"), value: yesNo(h.theft), accent: !!h.theft },
                         {
-                          label: "Периоды без страховки",
-                          value: h.uninsured ? `${h.uninsured} — ДТП за это время в истории нет` : h.uninsured === 0 ? "нет" : null,
+                          label: t("uninsured"),
+                          value: h.uninsured ? `${h.uninsured} — ${t("uninsuredNote")}` : h.uninsured === 0 ? t("no") : null,
                           accent: !!h.uninsured,
                         },
                       ]}
@@ -404,11 +502,19 @@ export default function CarCardView({
                   </Block>
                 )}
                 {card.legal && (
-                  <Block title="Юридическая чистота">
+                  <Block title={t("legal")}>
                     <SpecRows
                       rows={[
-                        { label: "Аресты", value: card.legal.seizures ? `есть (${card.legal.seizures})` : "нет", accent: !!card.legal.seizures },
-                        { label: "Залоги", value: card.legal.mortgages ? `есть (${card.legal.mortgages})` : "нет", accent: !!card.legal.mortgages },
+                        {
+                          label: t("seizures"),
+                          value: card.legal.seizures ? `${t("present")} (${card.legal.seizures})` : t("no"),
+                          accent: !!card.legal.seizures,
+                        },
+                        {
+                          label: t("mortgages"),
+                          value: card.legal.mortgages ? `${t("present")} (${card.legal.mortgages})` : t("no"),
+                          accent: !!card.legal.mortgages,
+                        },
                       ]}
                     />
                   </Block>
@@ -417,7 +523,7 @@ export default function CarCardView({
             )}
 
             {card.options.length > 0 && (
-              <Block title={`Опции — ${card.options.length}`}>
+              <Block title={`${t("options")} — ${card.options.length}`}>
                 <div className="flex flex-wrap gap-1.5">
                   {card.options.map((o) => (
                     <span
@@ -431,8 +537,9 @@ export default function CarCardView({
                 </div>
               </Block>
             )}
+            {similar}
             {card.engineSound && (
-              <Block title="Звук двигателя">
+              <Block title={t("engineSound")}>
                 {/* Внизу страницы и preload="none": ролик весит мегабайты, а
                     смотрят его немногие (решение владельца 04.10.2026). До
                     нажатия «play» браузер не скачивает ничего — ни файла, ни
@@ -447,7 +554,7 @@ export default function CarCardView({
                   className="mx-auto block aspect-[9/16] h-[70vh] max-h-[640px] w-auto max-w-full rounded-xl bg-black object-contain"
                 />
                 <p className="mt-2 text-xs" style={{ color: "var(--axis-gray)" }}>
-                  Запись работающего двигателя. Включите звук.
+                  {t("engineSoundNote")}
                 </p>
               </Block>
             )}
@@ -455,12 +562,21 @@ export default function CarCardView({
 
           {/* ─── Правая колонка: цена и заявка (липкая) ─── */}
           <div className="hidden h-fit min-w-0 lg:sticky lg:top-6 lg:block">
-            <Side card={card} id={meta.id} />
+            <Side card={card} id={id} lang={lang} pageUrl={pageUrl} krwToUsd={krwToUsd} />
           </div>
         </div>
 
-        {/* ─── Только для нас: только на служебном хосте (serviceHost.ts) ─── */}
-        {showInternal && <InternalPanel card={card} meta={meta} />}
+        {/* ─── Только для нас: слот, наполняет маршрут (только служебный хост) ─── */}
+        {internal}
+
+        {/* Место под мобильную плашку: иначе она закрывает низ страницы. */}
+        <div className="h-20 lg:hidden" aria-hidden />
+        <LotStickyBar
+          price={mainPrice(card, lang)}
+          priceUsd={usd(lang, card.price.krw, krwToUsd)}
+          label={t("wantCar")}
+          waHref={waHref(`${t("wantCar")}: ${card.title} (${lotRefOf(card, id, lang)})${pageUrl ? ` — ${pageUrl}` : ""}`)}
+        />
       </div>
     </main>
   );

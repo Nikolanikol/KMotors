@@ -20,16 +20,31 @@
 // покупателя — разные вещи.
 
 import type { BodyAction, BodyMark } from "@/lib/carnect/card";
+import { pick, type CardLang, type Pair } from "@/lib/carnect/lang";
 
-export const ACTION: Record<BodyAction, { label: string; color: string; rank: number }> = {
-  replaced: { label: "замена", color: "#E5484D", rank: 1 },
-  welded: { label: "сварка / рихтовка", color: "#F59E0B", rank: 2 },
-  painted: { label: "окрас", color: "#60A5FA", rank: 3 },
-  adjusted: { label: "регулировка", color: "#A1A1AA", rank: 4 },
-  other: { label: "ремонт", color: "#A1A1AA", rank: 5 },
-  need_replace: { label: "нужна замена", color: "#F87171", rank: 0 },
-  need_repair: { label: "нужен ремонт", color: "#C084FC", rank: 0 },
+export const ACTION: Record<BodyAction, { label: Pair; color: string; rank: number }> = {
+  replaced: { label: ["замена", "replaced"], color: "#E5484D", rank: 1 },
+  welded: { label: ["сварка / рихтовка", "welded / panel-beaten"], color: "#F59E0B", rank: 2 },
+  painted: { label: ["окрас", "repainted"], color: "#60A5FA", rank: 3 },
+  adjusted: { label: ["регулировка", "adjusted"], color: "#A1A1AA", rank: 4 },
+  other: { label: ["ремонт", "repaired"], color: "#A1A1AA", rank: 5 },
+  need_replace: { label: ["нужна замена", "needs replacement"], color: "#F87171", rank: 0 },
+  need_repair: { label: ["нужен ремонт", "needs repair"], color: "#C084FC", rank: 0 },
 };
+
+/** Подписи схемы — пары [ru, en] (lang.ts). */
+const T = {
+  aria: ["Схема кузова: левый борт, вид сверху, правый борт", "Body diagram: left side, top view, right side"],
+  front: ["▲ перед", "▲ front"],
+  left: ["левый борт", "left side"],
+  top: ["вид сверху", "top view"],
+  right: ["правый борт", "right side"],
+  hidden: ["Есть отметки по элементам, которых не видно на развёртке", "Marks on parts not visible on the diagram"],
+  seeList: ["смотрите список", "see the list"],
+  structural: ["силовой элемент", "structural"],
+  thickness: ["толщина", "paint thickness"],
+  now: ["сейчас", "now"],
+} satisfies Record<string, Pair>;
 
 const BODY = "#1C1C1C";
 const LINE = "#5A5A5A";
@@ -146,13 +161,12 @@ function zoneOf(panel: string | null): string | null {
   return panel;
 }
 
-type Paint = { past?: BodyMark; now?: BodyMark };
+/** title — подсказка зоны при наведении, собирается на языке карточки. */
+type Paint = { past?: BodyMark; now?: BodyMark; title?: string };
 
 function Zone({ id, d, base, paint }: { id: string; d: string; base: string; paint: Map<string, Paint> }) {
   const p = paint.get(id);
-  const title = [p?.past && `${p.past.label}: ${ACTION[p.past.action].label}`, p?.now && `${p.now.label}: ${ACTION[p.now.action].label}`]
-    .filter(Boolean)
-    .join("; ");
+  const title = p?.title;
   return (
     <g>
       {title && <title>{title}</title>}
@@ -253,7 +267,8 @@ function TopView({ transform, paint }: { transform: string; paint: Map<string, P
   );
 }
 
-export default function BodyDiagram({ marks }: { marks: BodyMark[] }) {
+export default function BodyDiagram({ marks, lang = "ru" }: { marks: BodyMark[]; lang?: CardLang }) {
+  const act = (a: BodyAction) => pick(lang, ACTION[a].label);
   // На зону — самая тяжёлая отметка каждого вида (прошлое и текущее отдельно).
   const paint = new Map<string, Paint>();
   for (const m of marks) {
@@ -264,6 +279,11 @@ export default function BodyDiagram({ marks }: { marks: BodyMark[] }) {
     const prev = cur[key];
     if (!prev || ACTION[m.action].rank < ACTION[prev.action].rank) cur[key] = m;
     paint.set(z, cur);
+  }
+  for (const p of paint.values()) {
+    p.title = [p.past && `${p.past.label}: ${act(p.past.action)}`, p.now && `${p.now.label}: ${act(p.now.action)}`]
+      .filter(Boolean)
+      .join("; ");
   }
 
   const used = [...new Set(marks.map((m) => m.action))].sort((a, b) => ACTION[a].rank - ACTION[b].rank);
@@ -277,23 +297,23 @@ export default function BodyDiagram({ marks }: { marks: BodyMark[] }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
       <figure className="mx-auto w-full max-w-[420px]">
-        <svg viewBox="-4 0 512 440" className="w-full" role="img" aria-label="Схема кузова: левый борт, вид сверху, правый борт">
+        <svg viewBox="-4 0 512 440" className="w-full" role="img" aria-label={pick(lang, T.aria)}>
           <Hatches />
           {/* Борта «откинуты» от крыши: крыша к виду сверху, колёса наружу. */}
           <SideView side="left" transform="matrix(0 1 -1 0 148 24)" paint={paint} />
           <TopView transform="translate(172 24)" paint={paint} />
           <SideView side="right" transform="matrix(0 1 1 0 356 24)" paint={paint} />
           <text x={252} y={14} textAnchor="middle" fontSize={11} fill="#8A8A8A">
-            ▲ перед
+            {pick(lang, T.front)}
           </text>
           <text x={78} y={436} textAnchor="middle" fontSize={11} fill="#8A8A8A">
-            левый борт
+            {pick(lang, T.left)}
           </text>
           <text x={252} y={436} textAnchor="middle" fontSize={11} fill="#8A8A8A">
-            вид сверху
+            {pick(lang, T.top)}
           </text>
           <text x={426} y={436} textAnchor="middle" fontSize={11} fill="#8A8A8A">
-            правый борт
+            {pick(lang, T.right)}
           </text>
         </svg>
       </figure>
@@ -312,14 +332,14 @@ export default function BodyDiagram({ marks }: { marks: BodyMark[] }) {
                       : { backgroundColor: ACTION[a].color }
                   }
                 />
-                {ACTION[a].label}
+                {act(a)}
               </span>
             );
           })}
         </div>
         {hidden.length > 0 && (
           <p className="mb-2 text-xs" style={{ color: "#E5484D" }}>
-            Есть отметки по элементам, которых не видно на развёртке ({hidden.map((m) => m.label).join(", ")}) — смотрите список.
+            {pick(lang, T.hidden)} ({hidden.map((m) => m.label).join(", ")}) — {pick(lang, T.seeList)}.
           </p>
         )}
         <ul className="text-sm">
@@ -333,14 +353,14 @@ export default function BodyDiagram({ marks }: { marks: BodyMark[] }) {
                 {m.label}
                 {m.structural && (
                   <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ border: "1px solid #E5484D", color: "#E5484D" }}>
-                    силовой элемент
+                    {pick(lang, T.structural)}
                   </span>
                 )}
               </span>
               <span className="text-right" style={{ color: ACTION[m.action].color }}>
-                {ACTION[m.action].label}
-                {m.paintLevel ? ` (толщина ${m.paintLevel})` : ""}
-                {m.when === "current" ? " · сейчас" : ""}
+                {act(m.action)}
+                {m.paintLevel ? ` (${pick(lang, T.thickness)} ${m.paintLevel})` : ""}
+                {m.when === "current" ? ` · ${pick(lang, T.now)}` : ""}
               </span>
             </li>
           ))}

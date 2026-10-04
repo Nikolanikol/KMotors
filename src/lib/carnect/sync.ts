@@ -52,6 +52,7 @@ import {
   positive,
 } from "./normalize";
 import { notifyWorkChat } from "./notify";
+import { kstIso } from "./time";
 import type { CarnectListLot } from "./types";
 
 export type FeedId = CarnectHouse | "auctions" | "hey-self" | "hey-zero" | "hey-instant";
@@ -151,19 +152,6 @@ interface LotRow {
 }
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
-
-/**
- * Время из источника → ISO с зоной. K Car отдаёт startAt без зоны, время
- * корейское — без явного +09:00 Date.parse счёл бы его UTC и сдвинул на 9
- * часов (тот же класс ошибки, что у дат Encar в CLAUDE.md).
- */
-function kstIso(v: unknown): string | null {
-  const s = str(v);
-  if (!s) return null;
-  const withZone = /[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : `${s}+09:00`;
-  const t = Date.parse(withZone);
-  return Number.isFinite(t) ? new Date(t).toISOString() : null;
-}
 
 /** Лот аукциона → строка. Цена — стартовая; её нет у Lotte (carnect отдаёт 0). */
 export function auctionRow(house: CarnectHouse, lot: CarnectListLot, now: string): LotRow {

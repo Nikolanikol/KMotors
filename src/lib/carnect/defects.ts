@@ -1,4 +1,5 @@
-// Замечания площадки (`notes` лота) → список дефектов по-русски.
+// Замечания площадки (`notes` лота) → список дефектов по-русски или по-английски
+// (язык карточки — lang.ts).
 //
 // Решение владельца 04.10.2026: дефекты, найденные площадкой, клиент ВИДИТ.
 // Это самое ценное в данных лота — у Lotte K8 там «течь масла, течь антифриза,
@@ -15,6 +16,8 @@
 // промолчать о дефекте. Фраза с хангылем выбрасывается: корейский клиенту не
 // показываем (то же правило, что у Encar, CLAUDE.md).
 
+import { pick, type CardLang, type Pair } from "./lang";
+
 /** Куски с юридическим текстом и служебными пометками площадки — не дефекты. */
 const BOILERPLATE =
   /claim|dealer stock|transferred to a dealer|deregistration|see photos|inspect the actual|before bidding|vehicle location|sub-grade/i;
@@ -23,84 +26,84 @@ const BOILERPLATE =
 const NEUTRAL = /manual|first[- ]aid|tool ?kit|warning triangle/i;
 
 /** Состояние — окончание фразы. Длинные раньше коротких: «needs repair» до «repair». */
-const CONDITIONS: [RegExp, string][] = [
-  [/\bbent severe$/i, "сильно погнуто"],
-  [/\bbent$/i, "погнуто"],
-  [/\bneeds? repair$/i, "требует ремонта"],
-  [/\bneeds? replacement$/i, "требует замены"],
-  [/\bnot working$/i, "не работает"],
-  [/\bnoise\/leak$/i, "шум и течь"],
-  [/\bleak$/i, "течь"],
-  [/\bnoise$/i, "шум"],
-  [/\bfault$/i, "неисправность"],
-  [/\bdefect(ive)?$/i, "дефект"],
-  [/\bdamaged?$/i, "повреждение"],
-  [/\bcorrosion$/i, "коррозия"],
-  [/\brust$/i, "ржавчина"],
-  [/\bscratch(es)?$/i, "царапины"],
-  [/\bdent(s)?$/i, "вмятины"],
-  [/\bcrack(ed|s)?$/i, "трещина"],
-  [/\bworn$/i, "износ"],
-  [/\bdust$/i, "загрязнение"],
-  [/\bwarning( light)?$/i, "горит ошибка"],
+const CONDITIONS: [RegExp, Pair][] = [
+  [/\bbent severe$/i, ["сильно погнуто", "badly bent"]],
+  [/\bbent$/i, ["погнуто", "bent"]],
+  [/\bneeds? repair$/i, ["требует ремонта", "needs repair"]],
+  [/\bneeds? replacement$/i, ["требует замены", "needs replacement"]],
+  [/\bnot working$/i, ["не работает", "not working"]],
+  [/\bnoise\/leak$/i, ["шум и течь", "noise and leak"]],
+  [/\bleak$/i, ["течь", "leak"]],
+  [/\bnoise$/i, ["шум", "noise"]],
+  [/\bfault$/i, ["неисправность", "fault"]],
+  [/\bdefect(ive)?$/i, ["дефект", "defect"]],
+  [/\bdamaged?$/i, ["повреждение", "damaged"]],
+  [/\bcorrosion$/i, ["коррозия", "corrosion"]],
+  [/\brust$/i, ["ржавчина", "rust"]],
+  [/\bscratch(es)?$/i, ["царапины", "scratches"]],
+  [/\bdent(s)?$/i, ["вмятины", "dents"]],
+  [/\bcrack(ed|s)?$/i, ["трещина", "crack"]],
+  [/\bworn$/i, ["износ", "worn"]],
+  [/\bdust$/i, ["загрязнение", "dirty"]],
+  [/\bwarning( light)?$/i, ["горит ошибка", "warning light on"]],
 ];
 
 /** Узел — начало фразы, в нижнем регистре. */
-const SUBJECTS: Record<string, string> = {
-  engine: "Двигатель",
-  "engine oil": "Моторное масло",
-  oil: "Масло",
-  coolant: "Охлаждающая жидкость",
-  transmission: "Коробка передач",
-  "transmission oil": "Масло КПП",
-  turbo: "Турбина",
-  "belt/bearing": "Ремень / подшипник",
-  belt: "Ремень",
-  "exhaust line": "Выхлопная система",
-  exhaust: "Выхлопная система",
-  underbody: "Днище",
-  undercover: "Защита днища",
-  ps: "Гидроусилитель руля",
-  "power steering": "Гидроусилитель руля",
-  steering: "Рулевое управление",
-  brake: "Тормоза",
-  brakes: "Тормоза",
-  suspension: "Подвеска",
-  "shock absorber": "Амортизатор",
-  battery: "Аккумулятор",
-  electrical: "Электрика",
-  "a/c": "Кондиционер",
-  aircon: "Кондиционер",
-  heater: "Отопитель",
-  airbag: "Подушка безопасности",
-  seat: "Сиденье",
-  seats: "Сиденья",
-  "interior trim": "Отделка салона",
-  interior: "Салон",
-  headliner: "Потолок салона",
-  dashboard: "Приборная панель",
-  cluster: "Приборная панель",
-  "hi pass": "Транспондер Hi-Pass",
-  navigation: "Навигация",
-  sunroof: "Люк",
-  camera: "Камера",
-  "rear camera": "Камера заднего вида",
-  sensor: "Датчик",
-  "parking sensor": "Парктроник",
-  "smart key": "Смарт-ключ",
-  headlight: "Фара",
-  headlights: "Фары",
-  lamp: "Фонарь",
-  windshield: "Лобовое стекло",
-  glass: "Стекло",
-  mirror: "Зеркало",
-  door: "Дверь",
-  wheel: "Диски",
-  wheels: "Диски",
-  tire: "Шины",
-  tires: "Шины",
-  body: "Кузов",
-  paint: "Лакокрасочное покрытие",
+const SUBJECTS: Record<string, Pair> = {
+  engine: ["Двигатель", "Engine"],
+  "engine oil": ["Моторное масло", "Engine oil"],
+  oil: ["Масло", "Oil"],
+  coolant: ["Охлаждающая жидкость", "Coolant"],
+  transmission: ["Коробка передач", "Transmission"],
+  "transmission oil": ["Масло КПП", "Transmission oil"],
+  turbo: ["Турбина", "Turbo"],
+  "belt/bearing": ["Ремень / подшипник", "Belt / bearing"],
+  belt: ["Ремень", "Belt"],
+  "exhaust line": ["Выхлопная система", "Exhaust"],
+  exhaust: ["Выхлопная система", "Exhaust"],
+  underbody: ["Днище", "Underbody"],
+  undercover: ["Защита днища", "Underbody cover"],
+  ps: ["Гидроусилитель руля", "Power steering"],
+  "power steering": ["Гидроусилитель руля", "Power steering"],
+  steering: ["Рулевое управление", "Steering"],
+  brake: ["Тормоза", "Brakes"],
+  brakes: ["Тормоза", "Brakes"],
+  suspension: ["Подвеска", "Suspension"],
+  "shock absorber": ["Амортизатор", "Shock absorber"],
+  battery: ["Аккумулятор", "Battery"],
+  electrical: ["Электрика", "Electrical"],
+  "a/c": ["Кондиционер", "A/C"],
+  aircon: ["Кондиционер", "A/C"],
+  heater: ["Отопитель", "Heater"],
+  airbag: ["Подушка безопасности", "Airbag"],
+  seat: ["Сиденье", "Seat"],
+  seats: ["Сиденья", "Seats"],
+  "interior trim": ["Отделка салона", "Interior trim"],
+  interior: ["Салон", "Interior"],
+  headliner: ["Потолок салона", "Headliner"],
+  dashboard: ["Приборная панель", "Dashboard"],
+  cluster: ["Приборная панель", "Instrument cluster"],
+  "hi pass": ["Транспондер Hi-Pass", "Hi-Pass transponder"],
+  navigation: ["Навигация", "Navigation"],
+  sunroof: ["Люк", "Sunroof"],
+  camera: ["Камера", "Camera"],
+  "rear camera": ["Камера заднего вида", "Rear camera"],
+  sensor: ["Датчик", "Sensor"],
+  "parking sensor": ["Парктроник", "Parking sensor"],
+  "smart key": ["Смарт-ключ", "Smart key"],
+  headlight: ["Фара", "Headlight"],
+  headlights: ["Фары", "Headlights"],
+  lamp: ["Фонарь", "Lamp"],
+  windshield: ["Лобовое стекло", "Windshield"],
+  glass: ["Стекло", "Glass"],
+  mirror: ["Зеркало", "Mirror"],
+  door: ["Дверь", "Door"],
+  wheel: ["Диски", "Wheels"],
+  wheels: ["Диски", "Wheels"],
+  tire: ["Шины", "Tires"],
+  tires: ["Шины", "Tires"],
+  body: ["Кузов", "Body"],
+  paint: ["Лакокрасочное покрытие", "Paint"],
 };
 
 const HANGUL = /[ㄱ-힝]/;
@@ -114,7 +117,7 @@ function unglue(s: string): string {
  * Одна фраза → «Узел: состояние». Незнакомая — исходной строкой с known: false
  * (по таким пополняют словарь, их видно в служебной панели). С хангылем — null.
  */
-export function translateDefect(phrase: string): { text: string; known: boolean } | null {
+export function translateDefect(phrase: string, lang: CardLang = "ru"): { text: string; known: boolean } | null {
   const p = unglue(phrase);
   if (!p) return null;
 
@@ -127,14 +130,14 @@ export function translateDefect(phrase: string): { text: string; known: boolean 
     const m = re.exec(body);
     if (!m) continue;
     const subject = SUBJECTS[body.slice(0, m.index).trim().toLowerCase()];
-    if (subject) return { text: `${subject}: ${cond}${count}`, known: true };
+    if (subject) return { text: `${pick(lang, subject)}: ${pick(lang, cond)}${count}`, known: true };
     break;
   }
   return HANGUL.test(p) ? null : { text: p, known: false };
 }
 
 export interface PlatformNotes {
-  /** Дефекты по-русски, без дублей, в порядке площадки. */
+  /** Дефекты на языке карточки, без дублей, в порядке площадки. */
   defects: string[];
   /** «Keys 1EA» у K Car — число ключей. */
   keys: number | null;
@@ -143,7 +146,7 @@ export interface PlatformNotes {
 }
 
 /** Разбирает `notes` лота. Пустые и чисто служебные заметки дают пустой список. */
-export function parseNotes(notes: string | undefined | null): PlatformNotes {
+export function parseNotes(notes: string | undefined | null, lang: CardLang = "ru"): PlatformNotes {
   const out: PlatformNotes = { defects: [], keys: null, unknown: [] };
   if (!notes) return out;
   for (const chunk of notes.split(/\s+·\s+|★/)) {
@@ -157,7 +160,7 @@ export function parseNotes(notes: string | undefined | null): PlatformNotes {
         continue;
       }
       if (NEUTRAL.test(phrase)) continue;
-      const t = translateDefect(phrase);
+      const t = translateDefect(phrase, lang);
       if (!t || !t.known) out.unknown.push(phrase);
       if (t && !out.defects.includes(t.text)) out.defects.push(t.text);
     }

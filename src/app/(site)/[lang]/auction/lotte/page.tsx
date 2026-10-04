@@ -1,37 +1,11 @@
-// Публичная витрина аукционов, вкладка Lotte.
-//
-// Отличается от вкладки K Car ровно одним: прогноза цены молотка здесь нет и
-// быть не может — история прошедших торгов есть только у K Car, а премия
-// одной площадки к другой неприменима, это разные торги с разной механикой.
-//
-// Всё остальное — шапка с оговоркой о стартовой цене, вкладки, фильтры и
-// сетка — общее, в ../shell.
+// Адрес прежней витрины аукционов (dokanmazad, выключена 04.10.2026).
+// Её лоты в новый каталог не переносятся — id у carnect другие, — поэтому
+// ведём в каталог целиком. Ссылки на старые адреса остались в переписке
+// с клиентами в мессенджерах; пустая 404 там хуже каталога.
 
-import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 
-import { auctionLabels } from "@/lib/auctionLabels";
-
-import { PlatformPage } from "../shell";
-
-export const dynamic = "force-dynamic";
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ lang: string }>;
-}): Promise<Metadata> {
+export default async function OldAuctionUrl({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
-  const L = auctionLabels(lang);
-  return { title: L.title, description: L.subtitle, robots: { index: false, follow: true } };
-}
-
-export default async function LotteAuctionPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ lang: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const [{ lang }, sp] = await Promise.all([params, searchParams]);
-  return <PlatformPage lang={lang} searchParams={sp} source="lotte" />;
+  permanentRedirect(`/${lang}/auction`);
 }
