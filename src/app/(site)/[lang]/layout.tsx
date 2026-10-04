@@ -7,7 +7,6 @@ import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import MessengerButtons from "@/components/MessengerButtons";
 import CookieBanner from "@/components/CookieBanner";
 import ProgressBar from "@/components/ProgressBar";
-import FavoritePriceAlert from "@/components/FavoritePriceAlert";
 import { loadResources } from "@/lib/loadLocale";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
@@ -60,7 +59,6 @@ export default async function LangLayout({ children, params }: Props) {
       <Footer />
       <MessengerButtons />
       <CookieBanner />
-      <FavoritePriceAlert />
     </I18nProvider>
     </RootShell>
   );

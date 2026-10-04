@@ -5,7 +5,10 @@ import { trackEvent } from "@/utils/gtag";
 import { convertNumberKm } from "@/utils/splitNumber";
 import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
-import { ArrowRight, Heart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+
+import HeartButton from "@/components/Favorites/HeartButton";
+import { favText } from "@/components/Favorites/favText";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -95,6 +98,31 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
       {/* Glossy overlay */}
       <div ref={glossyRef} className="absolute inset-0 z-20 pointer-events-none rounded-2xl transition-all duration-200" />
 
+      {/* ♥ — ВНЕ ссылки на машину, поверх фото: внутри <Link> клик по сердцу
+          открывал бы карточку. Название сохраняется уже переведённым — панель
+          избранного в шапке словаря машин не имеет (useFavorites, title). */}
+      <HeartButton
+        className="absolute right-3 top-3 z-30"
+        size="sm"
+        active={isFavorite(id)}
+        label={favText(lang)[isFavorite(id) ? "remove" : "add"]}
+        onToggle={() =>
+          toggleFavorite({
+            id,
+            // Фото у объявления Encar может не быть (CLAUDE.md) — панель покажет заглушку.
+            photo: photo ?? "",
+            model,
+            manufacture,
+            year,
+            mileage,
+            transmission,
+            fuel,
+            price,
+            title: [year, translateGenerationRow(manufacture, t), translateGenerationRow(model, t)].filter(Boolean).join(" "),
+          })
+        }
+      />
+
       {/* Image — кликабельна */}
       <Link href={`/${lang}/catalog/${id}`} target="_blank" aria-label={carName} onClick={() => { trackEvent("select_item", { car_id: id, car_name: carName, car_price: price, manufacturer: manufacture }); clarityEvent("car_card_click"); }}>
       <div className="relative aspect-[16/10] overflow-hidden" style={{ backgroundColor: "var(--axis-graphite)" }}>
@@ -123,7 +151,6 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
         >
           {year}
         </div>
-        {/* Favorite button hidden — TODO: re-enable when ready */}
       </div>
       </Link>
 
