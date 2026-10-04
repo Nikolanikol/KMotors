@@ -26,7 +26,8 @@ export const FUELS: { v: Fuel; label: string; en: string }[] = [
   { v: "hydrogen", label: "Водород", en: "Hydrogen" },
 ];
 
-export type SortKey = "new" | "price" | "year" | "km";
+/** soon — «скоро торги», нужна миграция sql/043 (до неё выдача идёт как new). */
+export type SortKey = "new" | "price" | "year" | "km" | "soon";
 
 export interface CatalogFilter {
   make?: string;
@@ -129,7 +130,7 @@ export function readFilter(sp: Record<string, string | string[] | undefined>): C
     // Ключ источника — только безопасные символы: он уходит в SQL параметром,
     // но мусору в фильтре всё равно делать нечего.
     src: many(sp.src).filter((s) => /^[a-z]+(:[a-z0-9_]+)?$/.test(s)),
-    sort: sort === "price" || sort === "year" || sort === "km" ? sort : "new",
+    sort: sort === "price" || sort === "year" || sort === "km" || sort === "soon" ? sort : "new",
   };
 }
 

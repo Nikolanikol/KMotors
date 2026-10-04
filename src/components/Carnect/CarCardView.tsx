@@ -19,7 +19,6 @@ import type { ReactNode } from "react";
 
 import { ArrowLeftRight, Calendar, Car, Fuel, Gauge, Settings2 } from "lucide-react";
 
-import AuctionCountdown from "@/components/Auction/AuctionCountdown";
 import OverviewStrip from "@/components/Auction/OverviewStrip";
 import { SpecCard, SpecRows } from "@/components/Auction/SpecCard";
 import { yearWithAge } from "@/components/Auction/carAge";
@@ -32,6 +31,7 @@ import { waHref } from "@/lib/contact";
 import BodyDiagram from "./BodyDiagram";
 import LotRequestCard from "./LotRequestCard";
 import LotStickyBar, { REQUEST_ANCHOR } from "./LotStickyBar";
+import LotTimer from "./LotTimer";
 import { fmt, koreanTime, tx, usd, won, yearAgeEn, type TextKey } from "./text";
 import { pad } from "./ui";
 
@@ -100,10 +100,12 @@ function PriceCard({ card, lang, krwToUsd }: { card: CarCard; lang: CardLang; kr
             {t("auctionOn")} {card.auctionDate}
             {card.startAt ? ` ${t("at")} ${card.startAt.slice(11, 16)}` : ""}
           </div>
-          <AuctionCountdown
+          <LotTimer
+            at={card.startAt}
             date={card.auctionDate}
-            fallback={`${t("until")} ${card.auctionDate}`}
-            labels={{ h: t("h"), m: t("m"), s: t("s"), over: t("auctionOver") }}
+            kind="starts"
+            lang={lang}
+            fallback={card.auctionDate}
             className="block text-xl font-bold leading-tight"
             style={{ color: "var(--axis-bronze)" }}
           />
@@ -114,9 +116,17 @@ function PriceCard({ card, lang, krwToUsd }: { card: CarCard; lang: CardLang; kr
           <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
             {t("auctionUntil")}
           </div>
-          <div className="text-lg font-bold" style={{ color: "var(--axis-bronze)" }}>
+          <div className="text-sm font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
             {koreanTime(lang, card.endAt)}
           </div>
+          <LotTimer
+            at={card.endAt}
+            kind="ends"
+            lang={lang}
+            fallback=""
+            className="block text-xl font-bold leading-tight"
+            style={{ color: "var(--axis-bronze)" }}
+          />
         </div>
       )}
 

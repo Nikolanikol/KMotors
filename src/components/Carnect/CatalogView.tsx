@@ -43,7 +43,8 @@ import {
 import { getCarRates } from "@/lib/kbFx";
 
 import AutoSubmitSelect from "./AutoSubmitSelect";
-import { fmt, tx, usd, won, type TextKey } from "./text";
+import LotTimer from "./LotTimer";
+import { fmt, koreanTimeUtc, tx, usd, won, type TextKey } from "./text";
 import TiltCard from "./TiltCard";
 import { C, Page, Panel } from "./ui";
 
@@ -231,7 +232,12 @@ function priceText(r: CatalogRow, lang: CardLang): string {
 
 function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
   const { lang } = ctx;
-  const when = r.auction_date ?? (r.end_at ? `${tx(lang, "until")} ${r.end_at.slice(0, 16).replace("T", " ")}` : null);
+  // Подпись до старта таймера (сервер, первый кадр): точное время по Корее или день торгов.
+  const when = r.end_at
+    ? `${tx(lang, r.house === "heydealer" ? "auctionUntil" : "auctionOn")} ${koreanTimeUtc(lang, r.end_at)}`
+    : r.auction_date
+      ? `${tx(lang, "auctionOn")} ${r.auction_date}`
+      : null;
   const fuel = FUELS.find((f) => f.v === r.fuel);
   const heyType = r.hey_type ? HEY_TYPES.find((x) => x.type === r.hey_type) : undefined;
   return (
@@ -266,6 +272,23 @@ function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
             {sourceLabel(r.house)}
             {r.venue || r.hey_type ? ` · ${sourceLabel(r.house, r)}` : ""}
           </span>
+          {/* Таймер — полосой по низу снимка, как у прежней витрины: угловых
+              ярлыков на фото уже хватает, а градиент читается и на светлом
+              полу павильона, и на тёмной тени. */}
+          {when && (
+            <div
+              className="absolute inset-x-0 bottom-0 px-2.5 pb-1.5 pt-5 text-xs font-semibold"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)", color: "var(--axis-cream, #F5F0EB)" }}
+            >
+              <LotTimer
+                at={r.end_at}
+                date={r.auction_date}
+                kind={r.house === "heydealer" ? "ends" : "starts"}
+                lang={lang}
+                fallback={when}
+              />
+            </div>
+          )}
         </div>
         <div className="p-3">
           <div className="text-sm font-semibold leading-tight">
@@ -290,7 +313,6 @@ function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
           <div className="mt-1 text-[11px]" style={{ color: C.muted }}>
             {[
               fuel && (lang === "en" ? fuel.en : fuel.label),
-              when,
               r.insp_grade && (r.house === "heydealer" ? heyGradeLabel(r.insp_grade, lang) : r.insp_grade),
             ]
               .filter(Boolean)
@@ -506,6 +528,7 @@ export default async function CatalogView({
           {t("sort")}
           <select name="sort" defaultValue={filter.sort ?? "new"} className={inputCls} style={inputStyle}>
             <option value="new">{t("sortNew")}</option>
+            <option value="soon">{t("sortSoon")}</option>
             <option value="price">{t("sortPrice")}</option>
             <option value="year">{t("sortYear")}</option>
             <option value="km">{t("sortKm")}</option>

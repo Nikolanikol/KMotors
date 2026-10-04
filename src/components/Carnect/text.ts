@@ -165,6 +165,16 @@ export const T = {
     "No cars match the filter. Loosen the conditions or clear the selected platforms.",
   ],
 
+  // ─── Таймер торгов (LotTimer) ───
+  endsIn: ["до конца торгов", "ends in"],
+  startsIn: ["до торгов", "auction in"],
+  auctionToday: ["торги сегодня", "auction today"],
+  auctionTomorrow: ["торги завтра", "auction tomorrow"],
+  auctionInDays: ["торги через {n} дн.", "auction in {n} days"],
+  biddingOver: ["торги закончились", "bidding closed"],
+  d: ["д", "d"],
+  sortSoon: ["скоро торги", "auction soonest"],
+
   // ─── Мобильная плашка ───
   wantCar: ["Хочу эту машину", "I want this car"],
 
@@ -206,6 +216,16 @@ export function usd(lang: CardLang, krw: number | null | undefined, krwToUsd: nu
   return `≈ $${fmt(lang, Math.round(krw * krwToUsd))}`;
 }
 
+/**
+ * То же из момента времени в UTC («2026-10-06T10:15:00.000Z», так лежит end_at в
+ * базе) — сначала переводим в корейское время, иначе час съедет на 9.
+ */
+export function koreanTimeUtc(lang: CardLang, iso: string | null | undefined): string | null {
+  const t = iso ? Date.parse(iso) : NaN;
+  if (!Number.isFinite(t)) return null;
+  return koreanTime(lang, new Date(t + 9 * 3600 * 1000).toISOString());
+}
+
 /** «2023 (3 years)» — год с возрастом. Русская форма со склонением — carAge.ts. */
 export function yearAgeEn(year: number | null | undefined, now = new Date()): string | null {
   if (!year) return null;
@@ -220,7 +240,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
  * «2026-10-06T19:15:05+09:00» → «06.10 в 19:15 (Корея)» / «Oct 6, 19:15 (Korea time)».
  * Время берём как есть — оно корейское.
  */
-export function koreanTime(lang: CardLang, iso: string | undefined): string | null {
+export function koreanTime(lang: CardLang, iso: string | null | undefined): string | null {
   const m = iso && /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
   if (!m) return null;
   return lang === "en"
