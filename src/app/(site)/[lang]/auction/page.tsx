@@ -19,7 +19,7 @@ import type { Metadata } from "next";
 import CatalogView, { type SP } from "@/components/Carnect/CatalogView";
 import { tx } from "@/components/Carnect/text";
 import { isServiceHost } from "@/lib/serviceHost";
-import { getViewer } from "@/lib/viewer";
+import { canSeeAuctionPrices } from "@/lib/viewer";
 
 const LANG = "en" as const;
 
@@ -38,7 +38,7 @@ export default async function AuctionPage({
 }) {
   // Гость не видит цен лотов (решение владельца 05.10.2026) — проверка входа на
   // сервере; страница и так динамическая (searchParams), кешу это не мешает.
-  const [{ lang }, sp, service, viewer] = await Promise.all([params, searchParams, isServiceHost(), getViewer()]);
+  const [{ lang }, sp, service, seesPrices] = await Promise.all([params, searchParams, isServiceHost(), canSeeAuctionPrices()]);
   return (
     <CatalogView
       searchParams={sp}
@@ -47,7 +47,7 @@ export default async function AuctionPage({
       lotBase={`/${lang}/auction/lot`}
       cached
       showReason={service}
-      signedIn={!!viewer}
+      signedIn={seesPrices}
       withHeader
       intro={
         <header className="mb-5">
