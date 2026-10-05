@@ -36,7 +36,7 @@ import SimilarCars from "@/components/Carnect/SimilarCars";
 import { loadCard } from "@/lib/carnect/loadCard";
 import { getSimilar } from "@/lib/carnect/similar";
 import { getCarRates } from "@/lib/kbFx";
-import { getViewer } from "@/lib/viewer";
+import { canSeeAuctionPrices } from "@/lib/viewer";
 
 /** Ответ зависит от посетителя (цена только после входа) — см. шапку. */
 export const dynamic = "force-dynamic";
@@ -59,8 +59,8 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
   const id = decodeURIComponent(rawLot);
   const back = `/${lang}/auction`;
 
-  const [res, rates, viewer] = await Promise.all([loadCard(house, id, LANG), getCarRates(), getViewer()]);
-  const priceLocked = !viewer;
+  const [res, rates, seesPrices] = await Promise.all([loadCard(house, id, LANG), getCarRates(), canSeeAuctionPrices()]);
+  const priceLocked = !seesPrices;
   if (!res) notFound();
   if (res.status === "failed") throw new Error(`carnect ${house}/${id}: ${res.parser ? "parser" : "unavailable"}`);
   if (res.status === "gone") {
