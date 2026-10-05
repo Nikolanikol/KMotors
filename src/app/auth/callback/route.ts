@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+import { notifySignup } from "@/lib/signupNotify";
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
@@ -27,8 +29,11 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Вход через Google: новый аккаунт — менеджеру в Telegram, как заявка.
+      // Дубли и старые аккаунты отсекает notifySignup (src/lib/signupNotify.ts).
+      if (data.user) await notifySignup(supabase, data.user, { method: "google", path: next });
       return NextResponse.redirect(`${siteUrl}${next}`);
     }
   }

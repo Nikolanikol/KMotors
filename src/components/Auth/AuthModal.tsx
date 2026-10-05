@@ -89,6 +89,15 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
   /** Вошёл — закрываем и перерисовываем страницу на сервере уже с ценой. */
   const done = (event: "sign_up" | "login", method: "email" | "google") => {
     trackEvent(event, { method, reason });
+    // Менеджеру в Telegram — регистрация это лид (src/lib/signupNotify.ts).
+    // Зовём и после входа: подтвердивший email позже приходит именно «входом»,
+    // а дубль сервер отсечёт сам (отметка signup_notified). Ждать не нужно.
+    fetch("/api/auth/signup-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method, path: `${pathname}${window.location.search}`, title: document.title }),
+      keepalive: true,
+    }).catch(() => {});
     setOpen(false);
     notifyAuthChanged(); // иконка профиля в шапке
     router.refresh(); // сервер перерисует страницу уже с ценой
