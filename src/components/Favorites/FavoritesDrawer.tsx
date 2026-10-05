@@ -29,6 +29,7 @@ import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { formatCarKrw } from "@/lib/carPricing";
 import { kstToday } from "@/lib/carnect/time";
 import { resolvePartImage } from "@/lib/partImage";
+import { resizedImage } from "@/lib/remoteImage";
 import { formatUsd } from "@/lib/pricing";
 import { encarThumbLoader } from "@/utils/encarLoader";
 
@@ -285,7 +286,7 @@ export function FavoritesDrawer({
                   <Row
                     key={f.key}
                     href={`/${lang}/auction/lot/${f.house}/${encodeURIComponent(f.externalId)}`}
-                    photo={f.photo}
+                    photo={resizedImage(f.photo, 256)}
                     title={f.title}
                     source={f.source}
                     price={f.priceKrw ? `₩${f.priceKrw.toLocaleString("en-US")}` : null}

@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import { encarLoader, encarThumbLoader } from "@/utils/encarLoader";
 import { trackOnce } from "@/utils/gtag";
+import { isHeavyImage } from "@/lib/remoteImage";
 
 // Лайтбокс (вместе с плагинами и их CSS) грузим только когда пользователь
 // кликнул на фото. Монтируем по клику ещё и потому, что ssr:false-компонент,
@@ -92,9 +93,15 @@ const CarouselLight = ({
   // он обещает адаптивные ступеньки, которых нет, и на каждую миниатюру
   // уезжал бы полноразмерный кадр в 217 КБ. С unoptimized браузер берёт один
   // файл и переиспользует его из кеша во всех размерах.
+  //
+  // Исключение — тяжёлые площадки аукционов (HeyDealer, Lotte, SK: оригиналы по
+  // 200–900 КБ, remoteImage.ts): им — стандартный оптимизатор Next, он режет под
+  // ширину, и миниатюра 90×60 весит килобайты, а не полный кадр.
   const raw = imageSource === "raw";
-  const imageProps = raw ? { unoptimized: true } : { loader: encarLoader };
-  const thumbProps = raw ? { unoptimized: true } : { loader: encarThumbLoader };
+  const imageProps = (src: string) =>
+    raw ? (isHeavyImage(src) ? { quality: 75 } : { unoptimized: true }) : { loader: encarLoader };
+  const thumbProps = (src: string) =>
+    raw ? (isHeavyImage(src) ? { quality: 60 } : { unoptimized: true }) : { loader: encarThumbLoader };
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [warm, setWarm] = useState(false);
@@ -271,7 +278,7 @@ const CarouselLight = ({
         {windowIdx.map((i) => (
           <Image
             key={i}
-            {...imageProps}
+            {...imageProps(getUrl(photos[i]))}
             src={getUrl(photos[i])}
             alt={
               carName
@@ -391,7 +398,7 @@ const CarouselLight = ({
               }}
             >
               <Image
-                {...thumbProps}
+                {...thumbProps(getUrl(photo))}
                 src={getUrl(photo)}
                 alt=""
                 fill

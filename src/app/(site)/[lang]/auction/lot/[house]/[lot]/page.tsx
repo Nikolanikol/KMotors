@@ -6,22 +6,28 @@
 // Карточка — общая с админкой (src/components/Carnect/CarCardView.tsx).
 // АНГЛИЙСКИЙ на всех локалях (решение владельца 04.10.2026).
 //
-// ⚠️ Кеш. Страница — ISR на час (пустой generateStaticParams включает его,
-// см. CLAUDE.md, «Отсутствие generateStaticParams ОТКЛЮЧАЕТ ISR»), а не
-// force-dynamic, как в админке. Поэтому на ней НЕТ ничего, что зависит от
-// хоста: кеш Next один на www и служебный хост, и ответ служебного хоста ушёл
-// бы клиентам. Служебная панель приезжает отдельно, уже в браузере —
-// InternalPanelLoader, и только на служебном хосте.
+// ⚠️ Страница ДИНАМИЧЕСКАЯ с 05.10.2026 (до этого ISR на час). Причина — цены:
+// гость их не видит (решение владельца), а ответ, зависящий от посетителя, в
+// общий кеш класть нельзя — цена зарегистрированного уехала бы гостям. Дорогая
+// часть кешируется и так: детали лота — unstable_cache на час (cached.ts),
+// курс — кеш данных fetch (kbFx.ts). На рендер остаётся проверка входа.
 //
-// ⚠️ Сбой источника — БРОСОК, а не плашка: брошенный рендер в кеш не попадает
-// (ловит error.tsx сегмента), а плашка «недоступно» закешировалась бы на час
-// при живом лоте. «Ушла с торгов» — устойчивый факт, его кешировать можно.
+// ⚠️ Цена у гостя ВЫЧИЩАЕТСЯ из данных до отрисовки (card.price.krw, похожие),
+// а не прячется стилями: всё, что уходит в клиентские компоненты, видно в
+// «Просмотре кода». Лоты без цены (Lotte, HeyDealer Self/Zero) не трогаем.
+//
+// Служебная панель по-прежнему приходит отдельно (InternalPanelLoader) —
+// так она не попадает в разметку www при любой схеме кеша.
+//
+// Сбой источника — бросок, а не плашка (ловит error.tsx сегмента): так сбой
+// не путается с «ушла с торгов».
 //
 // noindex, nofollow плюс запрет в robots.ts: обход ботами — это запросы к
 // carnect, а лоты живут дни.
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import CarCardView from "@/components/Carnect/CarCardView";
 import InternalPanelLoader from "@/components/Carnect/InternalPanelLoader";
@@ -30,18 +36,10 @@ import SimilarCars from "@/components/Carnect/SimilarCars";
 import { loadCard } from "@/lib/carnect/loadCard";
 import { getSimilar } from "@/lib/carnect/similar";
 import { getCarRates } from "@/lib/kbFx";
+import { getViewer } from "@/lib/viewer";
 
-/**
- * Как у деталей в cached.ts: чаще страница всё равно не обновится. Цена в $
- * запекается в HTML с курсом — правило «revalidate не выше 86400» соблюдено.
- */
-export const revalidate = 3600;
-export const dynamicParams = true;
-
-/** ⚠️ Пустой список — не заглушка, а включатель ISR (см. шапку). */
-export function generateStaticParams() {
-  return [];
-}
+/** Ответ зависит от посетителя (цена только после входа) — см. шапку. */
+export const dynamic = "force-dynamic";
 
 const LANG = "en" as const;
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
@@ -61,23 +59,19 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
   const id = decodeURIComponent(rawLot);
   const back = `/${lang}/auction`;
 
-  const [res, rates] = await Promise.all([loadCard(house, id, LANG), getCarRates()]);
+  const [res, rates, viewer] = await Promise.all([loadCard(house, id, LANG), getCarRates(), getViewer()]);
+  const priceLocked = !viewer;
   if (!res) notFound();
   if (res.status === "failed") throw new Error(`carnect ${house}/${id}: ${res.parser ? "parser" : "unavailable"}`);
   if (res.status === "gone") {
     return <LotState id={id} gone parser={false} lang={LANG} backHref={back} withHeader />;
   }
-  // Похожие — из нашей базы, обновляются вместе со страницей (раз в час).
-  const similar = await getSimilar({
-    house,
-    externalId: id,
-    make: res.card.make,
-    modelGroup: res.card.modelGroup,
-    year: res.card.year,
-  });
+  // ⚠️ Гостю — без цен (см. шапку): и у самой машины, и у похожих (SimilarSection).
+  const card = priceLocked ? { ...res.card, price: { ...res.card.price, krw: null } } : res.card;
   return (
     <CarCardView
-      card={res.card}
+      card={card}
+      priceLocked={priceLocked && res.card.price.kind !== "none"}
       backHref={back}
       id={id}
       lang={LANG}
@@ -85,17 +79,57 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
       withHeader
       krwToUsd={rates.krwToUsd}
       internal={<InternalPanelLoader house={house} id={id} />}
+      // Похожие — за Suspense: страница уходит посетителю, не дожидаясь их
+      // выборки, блок дописывается в тот же ответ потоком (он внизу страницы).
       similar={
-        <SimilarCars
-          rows={similar}
-          lang={LANG}
-          catalogBase={back}
-          lotBase={`/${lang}/auction/lot`}
-          krwToUsd={rates.krwToUsd}
-          make={res.card.make}
-          modelGroup={res.card.modelGroup}
-        />
+        <Suspense fallback={null}>
+          <SimilarSection
+            house={house}
+            id={id}
+            lang={lang}
+            make={res.card.make}
+            modelGroup={res.card.modelGroup}
+            year={res.card.year}
+            priceLocked={priceLocked}
+            krwToUsd={rates.krwToUsd}
+          />
+        </Suspense>
       }
+    />
+  );
+}
+
+/** Блок «Похожие машины»: своя выборка (кеш 10 минут, similar.ts), гостю — без цен. */
+async function SimilarSection({
+  house,
+  id,
+  lang,
+  make,
+  modelGroup,
+  year,
+  priceLocked,
+  krwToUsd,
+}: {
+  house: string;
+  id: string;
+  lang: string;
+  make: string | null;
+  modelGroup: string | null;
+  year: number | null;
+  priceLocked: boolean;
+  krwToUsd: number;
+}) {
+  const rows = await getSimilar({ house, externalId: id, make, modelGroup, year });
+  return (
+    <SimilarCars
+      rows={priceLocked ? rows.map((r) => ({ ...r, price_krw: null })) : rows}
+      lang={LANG}
+      catalogBase={`/${lang}/auction`}
+      lotBase={`/${lang}/auction/lot`}
+      krwToUsd={krwToUsd}
+      priceLocked={priceLocked}
+      make={make}
+      modelGroup={modelGroup}
     />
   );
 }

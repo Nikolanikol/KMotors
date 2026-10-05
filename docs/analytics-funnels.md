@@ -59,11 +59,36 @@ GA4: `G-ZMRTQCD8SF` (подключён в `src/app/RootShell.tsx`). Все со
 drawer) → `begin_checkout` → `generate_lead` (`source=parts_cart`). Ветка пустого поиска:
 `search_no_results` → `no_results_request` / `no_results_messenger`.
 
+### Регистрация ради цены (`section = auction`)
+
+`price_gate_view` (гость увидел замок, `reason`: price / price_filter) → `price_gate_click`
+→ `auth_modal_open` → `sign_up` (`method` email / google, `reason`) или `login`.
+`login_start` — ушёл на Google (вернётся уже вошедшим). `sign_up` с `confirmed: false` —
+Supabase требует подтвердить email, человек ещё не внутри.
+
 ### Калькулятор (`section = calculator`)
 
 `calc_view` (`country`) → `calc_input` (первое изменение, `field`) → `calc_engaged`
 (3+ изменения: человек считает СВОЮ машину) → `view_block` `calc_result` → `contact` /
 `generate_lead` с этой же `section`.
+
+## Что уже настроено в GA4 (05.10.2026)
+
+- Ключевые события: `generate_lead`, `contact` (звёздочки в Администратор → События).
+- Специальные параметры, область «Событие», 11 штук: Раздел `section`, Блок страницы
+  `block`, Источник заявки `source`, Результат выдачи `result`, Незаполненное поле
+  `missing`, Уточнение клика `label`, Каталог `item_list_name`, Площадка аукциона `house`,
+  Страна калькулятора `country`, Способ связи `method`, Корзина открыта `via`.
+  ⚠️ Архивные параметры восстановить нельзя — только создать заново; параметр
+  созданного измерения не меняется, только название.
+- Внутренний трафик: правило «Владелец» по IP `14.5.115.104`; фильтр Internal Traffic —
+  в «Тестировании», перевести в «Активно» через 1–2 дня после проверки.
+- Исследование «Воронки» (метод «Исследование воронки»), вкладки Encar / Аукцион /
+  Запчасти / Калькулятор, открытая воронка. В шаге «Увидел цену» — параметр
+  «Блок страницы» по регулярному выражению `sidebar|price` (компьютер и телефон).
+- Проверено Tag Assistant: `view_item_list` пришёл с `section`, `item_list_name`, `result`,
+  `count`, `page`, `filtered`. Тег `AW-18196150435` — Google Реклама, получает те же
+  события автоматически; для воронок смотреть только `G-ZMRTQCD8SF`.
 
 ## Настройка в GA4 — по шагам (делает владелец)
 

@@ -42,10 +42,13 @@ import {
 } from "@/lib/carnect/query";
 
 import { getCarRates } from "@/lib/kbFx";
+import { resizedImage } from "@/lib/remoteImage";
 
 import FunnelTracker from "@/components/analytics/FunnelTracker";
 
 import AuctionHeart from "./AuctionHeart";
+import PriceLock from "@/components/Auth/PriceLock";
+
 import AutoSubmitSelect from "./AutoSubmitSelect";
 import LotTimer from "./LotTimer";
 import { fmt, koreanTimeUtc, tx, usd, won, type TextKey } from "./text";
@@ -63,6 +66,11 @@ export interface Ctx {
   lotBase: string;
   /** Курс для справки в $ под ценой (getCarRates, Кукмин-банк). */
   krwToUsd?: number;
+  /**
+   * Гость: цены лотов скрыты (решение владельца 05.10.2026). Сами цены к этому
+   * моменту уже вычищены из строк (см. CatalogView) — флаг только рисует замок.
+   */
+  priceLocked: boolean;
 }
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -260,6 +268,7 @@ export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
           title: [r.year, r.make, r.model_group].filter(Boolean).join(" ") || r.title || r.external_id,
           source,
           photo: r.photo_url,
+          // У гостя price_krw уже null — в снимок избранного цена не попадёт.
           priceKrw: r.price_krw,
           priceKind: r.price_kind,
           auctionDate: r.auction_date,
@@ -282,7 +291,9 @@ export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
             // Приближение при наведении — как у карточек Encar.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={r.photo_url}
+              // Тяжёлые площадки — уменьшенная копия через оптимизатор (remoteImage.ts):
+              // оригинал HeyDealer весит ~650 КБ при плитке в 300 px.
+              src={resizedImage(r.photo_url, 640) ?? r.photo_url}
               alt=""
               loading="lazy"
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -327,9 +338,15 @@ export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
             {r.title ?? ""}
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-sm font-semibold" style={{ color: C.accent }}>
-              {priceText(r, lang)}
-            </span>
+            {/* Гостю — замок вместо цены. Лоты без цены (Lotte, HeyDealer Self/Zero)
+                прятать нечего: там остаётся «by bidding / price at auction». */}
+            {ctx.priceLocked && r.price_kind !== "none" ? (
+              <PriceLock lang={lang} size="sm" />
+            ) : (
+              <span className="text-sm font-semibold" style={{ color: C.accent }}>
+                {priceText(r, lang)}
+              </span>
+            )}
             <span className="text-xs" style={{ color: C.muted }}>
               {r.km ? `${fmt(lang, r.km)} ${tx(lang, "km")}` : "—"}
             </span>
@@ -444,6 +461,7 @@ export default async function CatalogView({
   showReason,
   withHeader = false,
   intro,
+  signedIn,
 }: {
   searchParams: SP;
   lang: CardLang;
@@ -454,6 +472,12 @@ export default async function CatalogView({
   withHeader?: boolean;
   /** Шапка над фильтром: заголовок и оговорки, у витрины и админки свои. */
   intro: ReactNode;
+  /**
+   * Вошёл ли посетитель (getViewer). Гостю цены лотов НЕ отдаются: ни в разметке,
+   * ни в данных для клиентских компонентов; фильтр «цена до» и сортировка по
+   * цене игнорируются (по ним цену можно вычислить). Админка передаёт true.
+   */
+  signedIn: boolean;
 }) {
   const t = (k: TextKey) => tx(lang, k);
 
@@ -462,12 +486,24 @@ export default async function CatalogView({
   const prevMake = first(sp.prev_make);
   const sp2: SP = prevMake && prevMake !== first(sp.make) ? { ...sp, model: undefined } : sp;
 
+  const priceLocked = !signedIn;
   const filter = readFilter(sp2);
+  // ⚠️ Гостю фильтр и сортировка по цене не применяются, даже если их вписать в
+  // адрес руками: «до ₩5 млн» и порядок «сначала дешёвые» выдают цену без цены.
+  if (priceLocked) {
+    filter.price_max = undefined;
+    if (filter.sort === "price") filter.sort = "new";
+  }
   const pageRaw = Number(first(sp.page) || 1);
   const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
   // Курс читается из кеша данных (fetch с revalidate в kbFx.ts), а не из сети на запрос.
-  const [res, rates] = await Promise.all([(cached ? searchCatalogCached : searchCatalog)(filter, page), getCarRates()]);
-  const ctx: Ctx = { lang, base, lotBase, krwToUsd: rates.krwToUsd };
+  const [found, rates] = await Promise.all([(cached ? searchCatalogCached : searchCatalog)(filter, page), getCarRates()]);
+  // ⚠️ Цены вычищаются из строк ДО отрисовки: всё, что дальше уходит в
+  // клиентские компоненты (♥ со снимком лота, таймер), сериализуется в
+  // страницу, и цена в данных — это цена в «Просмотре кода».
+  const res: typeof found =
+    found.ok && priceLocked ? { ...found, rows: found.rows.map((r) => ({ ...r, price_krw: null })) } : found;
+  const ctx: Ctx = { lang, base, lotBase, krwToUsd: rates.krwToUsd, priceLocked };
   const pages = res.ok ? Math.max(1, Math.ceil(res.total / PAGE_SIZE)) : 1;
   const thisYear = new Date().getFullYear();
   const years = Array.from({ length: thisYear + 2 - 2005 }, (_, i) => thisYear + 1 - i);
@@ -561,21 +597,30 @@ export default async function CatalogView({
         </label>
         <label className="flex flex-col text-[11px]" style={{ color: C.muted }}>
           {t("priceMax")}
-          <input
-            name="price_max"
-            inputMode="numeric"
-            defaultValue={filter.price_max ? filter.price_max / 1_000_000 : ""}
-            placeholder="20"
-            className={`${inputCls} w-24`}
-            style={inputStyle}
-          />
+          {/* Гостю — замок вместо поля: фильтр по цене только после входа. */}
+          {priceLocked ? (
+            <PriceLock lang={lang} size="sm" reason="price_filter" className="h-[34px]" />
+          ) : (
+            <input
+              name="price_max"
+              inputMode="numeric"
+              defaultValue={filter.price_max ? filter.price_max / 1_000_000 : ""}
+              placeholder="20"
+              className={`${inputCls} w-24`}
+              style={inputStyle}
+            />
+          )}
         </label>
         <label className="flex flex-col text-[11px]" style={{ color: C.muted }}>
           {t("sort")}
           <select name="sort" defaultValue={filter.sort ?? "new"} className={inputCls} style={inputStyle}>
             <option value="new">{t("sortNew")}</option>
             <option value="soon">{t("sortSoon")}</option>
-            <option value="price">{t("sortPrice")}</option>
+            {/* Гостю — пункт виден, но выключен: сортировка по цене выдаёт цену. */}
+            <option value="price" disabled={priceLocked}>
+              {t("sortPrice")}
+              {priceLocked ? " 🔒" : ""}
+            </option>
             <option value="year">{t("sortYear")}</option>
             <option value="km">{t("sortKm")}</option>
           </select>
