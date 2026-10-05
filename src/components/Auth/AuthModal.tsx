@@ -161,7 +161,7 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
   };
 
   const input =
-    "w-full rounded-xl px-4 py-2.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(182,119,73,0.6)]";
+    "w-full rounded-xl px-4 py-2.5 text-sm outline-none transition placeholder:text-[var(--axis-gray)] hover:border-[rgba(182,119,73,0.4)]! focus:ring-2 focus:ring-[rgba(182,119,73,0.6)]";
   const inputStyle = {
     backgroundColor: "#1E1E1E",
     border: "1px solid rgba(74,74,74,0.5)",
@@ -170,17 +170,24 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={t(fromPrice ? "titlePrice" : "titleHeader")}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      <div className="absolute inset-0 cursor-pointer bg-black/75 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      {/* Тень в три слоя: ближняя держит край, дальняя отрывает окно от страницы,
+          бронзовое свечение связывает с брендом. Одна shadow-2xl на чёрном фоне
+          не видна вовсе. */}
       <div
-        className="relative w-full max-w-md rounded-t-3xl p-6 shadow-2xl sm:rounded-2xl"
-        style={{ backgroundColor: "var(--axis-charcoal, #141414)", border: "1px solid rgba(182,119,73,0.35)" }}
+        className="relative w-full max-w-md rounded-t-3xl p-6 sm:rounded-2xl"
+        style={{
+          backgroundColor: "var(--axis-charcoal, #141414)",
+          border: "1px solid rgba(182,119,73,0.35)",
+          boxShadow:
+            "0 2px 6px rgba(0,0,0,0.5), 0 24px 64px -8px rgba(0,0,0,0.9), 0 0 48px -6px rgba(182,119,73,0.28), inset 0 1px 0 rgba(255,255,255,0.05)",
+        }}
       >
         <button
           type="button"
           onClick={() => setOpen(false)}
           aria-label={t("close")}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full"
-          style={{ backgroundColor: "rgba(74,74,74,0.3)", color: "var(--axis-gray)" }}
+          className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[rgba(74,74,74,0.3)] text-[var(--axis-gray)] transition-colors hover:bg-[rgba(74,74,74,0.6)] hover:text-[var(--axis-white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         >
           <X className="h-4 w-4" />
         </button>
@@ -195,8 +202,7 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
         <button
           type="button"
           onClick={google}
-          className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold"
-          style={{ backgroundColor: "#fff", color: "#1f1f1f" }}
+          className="mt-5 flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-[#1f1f1f] shadow-sm transition hover:bg-[#ECECEC] hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         >
           <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
             <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
@@ -247,7 +253,7 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
           <button
             type="submit"
             disabled={busy}
-            className="h-11 w-full rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+            className="h-11 w-full cursor-pointer rounded-xl text-sm font-bold text-white shadow-[0_6px_20px_-6px_rgba(157,94,52,0.7)] transition hover:brightness-115 hover:shadow-[0_8px_26px_-6px_rgba(182,119,73,0.85)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] disabled:cursor-wait disabled:opacity-60 disabled:hover:brightness-100"
             style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}
           >
             {busy ? "…" : t(mode === "register" ? "submitRegister" : "submitLogin")}
@@ -260,8 +266,7 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
             setMode(mode === "register" ? "login" : "register");
             setError("");
           }}
-          className="mt-3 w-full text-center text-sm"
-          style={{ color: "var(--axis-bronze)" }}
+          className="mt-3 w-full cursor-pointer rounded-lg py-1.5 text-center text-sm text-[var(--axis-bronze)] underline-offset-4 transition-colors hover:text-[var(--axis-bronze-bright)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         >
           {t(mode === "register" ? "haveAccount" : "noAccount")}
         </button>

@@ -157,7 +157,7 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 gap-2 text-gray-400">
+      <div className="flex items-center justify-center py-16 gap-2 text-[var(--axis-gray)]">
         <Loader2 className="w-5 h-5 animate-spin" />
         <span className="text-sm">{l.loading}</span>
       </div>
@@ -167,14 +167,14 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-          <ShoppingCart className="w-8 h-8 text-gray-300" />
+        <div className="w-16 h-16 bg-white/[0.05] rounded-full flex items-center justify-center">
+          <ShoppingCart className="w-8 h-8 text-[var(--axis-gray-dim)]" />
         </div>
-        <p className="font-semibold text-gray-700">{l.empty}</p>
-        <p className="text-sm text-gray-400">{l.emptyDesc}</p>
+        <p className="font-semibold text-[var(--axis-silver)]">{l.empty}</p>
+        <p className="text-sm text-[var(--axis-gray)]">{l.emptyDesc}</p>
         <Link
           href={`/${lang}/parts`}
-          className="flex items-center gap-2 mt-2 text-[#002C5F] font-semibold text-sm hover:underline"
+          className="flex items-center gap-2 mt-2 rounded-xl border border-[rgba(182,119,73,0.4)] px-4 py-2 text-[var(--axis-bronze)] font-semibold text-sm transition hover:bg-[rgba(182,119,73,0.1)] hover:text-[var(--axis-bronze-bright)]"
         >
           {l.toCatalog}
           <ArrowRight className="w-4 h-4" />
@@ -184,29 +184,29 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
   }
 
   const renderItem = (item: CartProduct) => (
-    <div key={item.cart_item_id} className="p-3 border border-gray-100 rounded-xl hover:border-gray-200 transition space-y-2">
+    <div key={item.cart_item_id} className="p-3 border border-white/[0.06] bg-white/[0.02] rounded-xl hover:border-white/15 transition space-y-2">
       {/* Row 1: Image + Name + Delete */}
       <div className="flex gap-3">
         <Link
           href={`/${lang}/parts/${generatePartSlug(item.part_number, item.name_ru || item.name_en, lang as "ru" | "en" | "ko", item.product_id)}`}
-          className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 hover:border-[#002C5F] transition"
+          className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-white border border-white/10 hover:border-[var(--axis-bronze)] transition"
         >
           {item.image_url ? (
             <Image src={item.image_url} alt={item.name_en} width={56} height={56} className="object-contain w-full h-full p-1" unoptimized />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
+            <div className="w-full h-full flex items-center justify-center text-[var(--axis-gray-dim)] text-xs">?</div>
           )}
         </Link>
         <div className="flex-1 min-w-0">
           <Link
             href={`/${lang}/parts/${generatePartSlug(item.part_number, item.name_ru || item.name_en, lang as "ru" | "en" | "ko", item.product_id)}`}
-            className="text-sm font-semibold text-[#002C5F] line-clamp-2 hover:underline"
+            className="text-sm font-semibold text-[var(--axis-white)] line-clamp-2 transition-colors hover:text-[var(--axis-bronze-bright)]"
           >
             {displayName(item)}
           </Link>
-          <p className="text-xs text-gray-400 mt-0.5">{item.part_number}</p>
+          <p className="text-xs text-[var(--axis-gray)] mt-0.5">{item.part_number}</p>
         </div>
-        <button onClick={() => removeItem(item.cart_item_id)} className="text-gray-300 hover:text-red-500 transition shrink-0 self-start">
+        <button onClick={() => removeItem(item.cart_item_id)} className="-m-1.5 rounded-lg p-1.5 text-[var(--axis-gray)] hover:bg-red-500/10 hover:text-red-400 transition shrink-0 self-start">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -214,25 +214,25 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
       {/* Row 2: Weight/badge + Price + Qty */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{item.billed_weight_kg} {l.kg}</span>
+          <span className="text-xs text-[var(--axis-gray)]">{item.billed_weight_kg} {l.kg}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium inline-flex items-center gap-0.5 ${
             item.ship_method === "SEA" || item.ship_method === "CLARIFY"
-              ? "bg-blue-50 text-blue-600"
+              ? "bg-blue-500/10 text-blue-300"
               : item.ship_method === "EMS_PREMIUM"
-              ? "bg-orange-50 text-orange-600"
-              : "bg-green-50 text-green-600"
+              ? "bg-[rgba(182,119,73,0.14)] text-[var(--axis-bronze-bright)]"
+              : "bg-green-50 text-emerald-400"
           }`}>
             {item.ship_method === "SEA" || item.ship_method === "CLARIFY"
               ? <Ship className="w-2.5 h-2.5" />
               : <Plane className="w-2.5 h-2.5" />}
             {item.ship_method === "EMS" || item.ship_method === "EMS_PREMIUM" ? "EMS" : "SEA"}
           </span>
-          <span className="text-sm font-bold text-[#BB162B]">{formatUsd(item.price_krw, krwToUsd)}</span>
+          <span className="text-sm font-bold text-[var(--axis-bronze)]">{formatUsd(item.price_krw, krwToUsd)}</span>
         </div>
-        <div className="flex items-center gap-1 border border-gray-200 rounded-lg">
-          <button onClick={() => updateQty(item.cart_item_id, item.quantity - 1)} className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg leading-none">−</button>
+        <div className="flex items-center gap-1 border border-white/10 rounded-lg text-[var(--axis-white)]">
+          <button onClick={() => updateQty(item.cart_item_id, item.quantity - 1)} className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--axis-gray)] hover:bg-white/[0.08] hover:text-[var(--axis-white)] transition text-lg leading-none">−</button>
           <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>
-          <button onClick={() => updateQty(item.cart_item_id, item.quantity + 1)} className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-[#002C5F] transition text-lg leading-none">+</button>
+          <button onClick={() => updateQty(item.cart_item_id, item.quantity + 1)} className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--axis-gray)] hover:bg-white/[0.08] hover:text-[var(--axis-white)] transition text-lg leading-none">+</button>
         </div>
       </div>
     </div>
@@ -240,16 +240,16 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold text-[#002C5F]">{l.title} ({items.length})</h2>
+      <h2 className="text-lg font-bold text-[var(--axis-white)]">{l.title} ({items.length})</h2>
 
       {/* Авиадоставка */}
       {airItems.length > 0 && (
         <div>
           {seaItems.length > 0 && (
             <div className="flex items-center gap-2 mb-2 px-1">
-              <Plane className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-semibold text-gray-600">{l.air}</span>
-              <span className="text-xs text-gray-400">({airItems.length})</span>
+              <Plane className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm font-semibold text-[var(--axis-silver)]">{l.air}</span>
+              <span className="text-xs text-[var(--axis-gray)]">({airItems.length})</span>
             </div>
           )}
           <div className="space-y-3">
@@ -262,9 +262,9 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
       {seaItems.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2 px-1 mt-2">
-            <Ship className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-semibold text-gray-600">{l.sea}</span>
-            <span className="text-xs text-gray-400">({seaItems.length})</span>
+            <Ship className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-semibold text-[var(--axis-silver)]">{l.sea}</span>
+            <span className="text-xs text-[var(--axis-gray)]">({seaItems.length})</span>
           </div>
           <div className="space-y-3">
             {seaItems.map(renderItem)}
@@ -273,18 +273,18 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
       )}
 
       {/* Доставка + Итого */}
-      <div className="border-t border-gray-100 pt-4 space-y-3">
+      <div className="border-t border-white/[0.06] pt-4 space-y-3">
         {/* Страна доставки */}
         <div className="flex items-center justify-between">
           {shipCountry ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500">{l.shipTo}</span>
-              <span className="font-semibold text-[#002C5F]">
+              <span className="text-[var(--axis-gray)]">{l.shipTo}</span>
+              <span className="font-semibold text-[var(--axis-white)]">
                 {lang === "en" ? COUNTRY_NAMES[shipCountry]?.en : COUNTRY_NAMES[shipCountry]?.ru}
               </span>
               <button
                 onClick={() => setShowCountryPicker(!showCountryPicker)}
-                className="text-xs text-[#002C5F] underline underline-offset-2 hover:no-underline"
+                className="text-xs text-[var(--axis-bronze)] underline underline-offset-2 transition-colors hover:text-[var(--axis-bronze-bright)] hover:no-underline"
               >
                 {l.change}
               </button>
@@ -292,7 +292,7 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
           ) : (
             <button
               onClick={() => setShowCountryPicker(!showCountryPicker)}
-              className="text-sm text-[#002C5F] font-semibold underline underline-offset-2 hover:no-underline"
+              className="text-sm text-[var(--axis-bronze)] font-semibold underline underline-offset-2 transition-colors hover:text-[var(--axis-bronze-bright)] hover:no-underline"
             >
               {l.selectCountry}
             </button>
@@ -301,15 +301,15 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
 
         {/* Country picker inline */}
         {showCountryPicker && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 p-3 rounded-xl bg-gray-50 border border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
             {COUNTRY_SELECTOR_ORDER.map((code) => (
               <button
                 key={code}
                 onClick={() => { setShipCountry(code); setShowCountryPicker(false); }}
                 className={`text-left px-2.5 py-2 rounded-lg text-sm transition ${
                   shipCountry === code
-                    ? "bg-[#002C5F] text-white font-semibold"
-                    : "hover:bg-gray-100 text-gray-700"
+                    ? "bg-[var(--axis-bronze-deep)] text-white font-semibold"
+                    : "hover:bg-white/[0.06] text-[var(--axis-silver)]"
                 }`}
               >
                 {lang === "en" ? COUNTRY_NAMES[code]?.en : COUNTRY_NAMES[code]?.ru}
@@ -321,41 +321,41 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
         {/* Разбивка */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">{l.subtotal}</span>
+            <span className="text-[var(--axis-gray)]">{l.subtotal}</span>
             <span className="font-semibold">${usdFmt.format(subtotalUsd)}</span>
           </div>
           {airItems.length > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">
+              <span className="text-[var(--axis-gray)]">
                 {l.shipping}
                 {shipCountry && totalAirWeight > 0 && (
-                  <span className="text-xs text-gray-400 ml-1">
+                  <span className="text-xs text-[var(--axis-gray)] ml-1">
                     ({emsUsd ? l.ems : l.emsp} · {totalAirWeight.toFixed(1)} {l.kg})
                   </span>
                 )}
               </span>
               <span className="font-semibold">
-                {shippingUsd !== null ? `$${usdFmt.format(shippingUsd)}` : <span className="text-gray-400 italic">{l.selectCountry}</span>}
+                {shippingUsd !== null ? `$${usdFmt.format(shippingUsd)}` : <span className="text-[var(--axis-gray)] italic">{l.selectCountry}</span>}
               </span>
             </div>
           )}
           {seaItems.length > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">{l.sea}</span>
-              <span className="text-gray-400 italic text-xs">{l.seaTbd}</span>
+              <span className="text-[var(--axis-gray)]">{l.sea}</span>
+              <span className="text-[var(--axis-gray)] italic text-xs">{l.seaTbd}</span>
             </div>
           )}
         </div>
 
         {/* Total + checkout */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
           <div>
-            <p className="text-sm text-gray-500">{l.total}</p>
-            <p className="text-2xl font-bold text-[#002C5F]">${usdFmt.format(totalUsd)}</p>
+            <p className="text-sm text-[var(--axis-gray)]">{l.total}</p>
+            <p className="text-2xl font-bold text-[var(--axis-white)]">${usdFmt.format(totalUsd)}</p>
           </div>
           <Link
             href={`/${lang}/checkout`}
-            className="flex items-center gap-2 px-6 py-3 bg-[#BB162B] hover:bg-[#9a1122] text-white font-semibold rounded-xl transition text-sm"
+            className="flex items-center gap-2 px-6 py-3 bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] shadow-[0_6px_20px_-8px_rgba(157,94,52,0.8)] hover:brightness-115 active:scale-[0.99] text-white font-semibold rounded-xl transition text-sm"
           >
             {l.checkout}
             <ArrowRight className="w-4 h-4" />

@@ -5,6 +5,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ⚠️ Tailwind v4 сбросил курсор кнопок в `default` (в v3 был pointer) — и по
+   всему сайту кнопки перестали выглядеть нажимаемыми: меню профиля, окно входа,
+   вкладки кабинета (замечание владельца 05.10.2026). Возвращаем глобально, а не
+   классом в каждой кнопке: новую кнопку без cursor-pointer напишут всегда.
+   Отключённая кнопка — `not-allowed`, чтобы было видно, что клик не сработает. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
 /* ── K-Axis Brand Variables ───────────────────────────────── */
 :root {
   --axis-black:         #0A0A0A;

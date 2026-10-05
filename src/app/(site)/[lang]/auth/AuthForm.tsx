@@ -264,18 +264,26 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
 
   const switchMode = (m: Mode) => { setMode(m); setError(""); setSuccess(""); };
 
-  const inputCls = "w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#002C5F] focus:border-transparent transition";
+  // Поля и карточка — те же токены, что у окна входа (Auth/AuthModal.tsx): одна
+  // форма входа на сайте не должна выглядеть двумя разными продуктами.
+  const inputCls = "w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm bg-[var(--axis-graphite)] text-[var(--axis-white)] placeholder:text-[var(--axis-gray-dim)] [color-scheme:dark] hover:border-[rgba(182,119,73,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(182,119,73,0.6)] focus:border-transparent transition";
 
   return (
     <div
-      className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100 p-8"
+      className="w-full max-w-md rounded-2xl p-8"
+      style={{
+        backgroundColor: "var(--axis-charcoal)",
+        border: "1px solid rgba(182,119,73,0.3)",
+        boxShadow:
+          "0 2px 6px rgba(0,0,0,0.5), 0 24px 64px -8px rgba(0,0,0,0.9), 0 0 48px -6px rgba(182,119,73,0.22), inset 0 1px 0 rgba(255,255,255,0.05)",
+      }}
       dir={isRTL ? "rtl" : "ltr"}
     >
       {/* Logo */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold">
-          <span className="text-[#b67749] font-extrabold">K</span>
-          <span className="text-[#002C5F] font-light tracking-tight">-Axis</span>
+          <span className="text-[var(--axis-bronze)] font-extrabold">K</span>
+          <span className="text-[var(--axis-white)] font-light tracking-tight">-Axis</span>
         </h1>
       </div>
 
@@ -285,16 +293,16 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
           {mode === "forgot" && (
             <button
               onClick={() => switchMode("login")}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-[#002C5F] transition mb-3"
+              className="flex items-center gap-1 text-sm text-[var(--axis-gray)] hover:text-[var(--axis-white)] transition mb-3"
             >
               <ArrowLeft className="w-4 h-4" />
               {l.forgotBack}
             </button>
           )}
-          <h2 className="text-lg font-bold text-[#002C5F]">
+          <h2 className="text-lg font-bold text-[var(--axis-white)]">
             {mode === "forgot" ? l.forgotTitle : l.resetTitle}
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[var(--axis-gray)] mt-1">
             {mode === "forgot" ? l.forgotDesc : l.resetDesc}
           </p>
         </div>
@@ -302,13 +310,13 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
 
       {/* Tab switcher — only for login/register */}
       {(mode === "login" || mode === "register") && (
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
+        <div className="flex bg-[var(--axis-graphite)] border border-white/[0.06] rounded-xl p-1 mb-6">
           <button
             onClick={() => switchMode("login")}
             className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
               mode === "login"
-                ? "bg-white text-[#002C5F] shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] text-white shadow-[0_4px_14px_-6px_rgba(157,94,52,0.9)]"
+                : "text-[var(--axis-gray)] hover:text-[var(--axis-white)] hover:bg-white/[0.06]"
             }`}
           >
             {l.login}
@@ -317,8 +325,8 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
             onClick={() => switchMode("register")}
             className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
               mode === "register"
-                ? "bg-white text-[#002C5F] shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] text-white shadow-[0_4px_14px_-6px_rgba(157,94,52,0.9)]"
+                : "text-[var(--axis-gray)] hover:text-[var(--axis-white)] hover:bg-white/[0.06]"
             }`}
           >
             {l.register}
@@ -330,8 +338,8 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         {/* Name — register only */}
         {mode === "register" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {l.name} <span className="text-gray-400 font-normal">({l.nameHint})</span>
+            <label className="block text-sm font-medium text-[var(--axis-silver)] mb-1">
+              {l.name} <span className="text-[var(--axis-gray)] font-normal">({l.nameHint})</span>
             </label>
             <input
               type="text"
@@ -347,7 +355,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         {/* Email — login, register, forgot */}
         {mode !== "reset" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--axis-silver)] mb-1">
               {l.email}
             </label>
             <input
@@ -366,14 +374,14 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         {(mode === "login" || mode === "register") && (
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-[var(--axis-silver)]">
                 {l.password}
               </label>
               {mode === "login" && (
                 <button
                   type="button"
                   onClick={() => switchMode("forgot")}
-                  className="text-xs text-[#002C5F]/70 hover:text-[#002C5F] transition"
+                  className="text-xs text-[var(--axis-bronze)] hover:text-[var(--axis-bronze-bright)] hover:underline underline-offset-2 transition"
                 >
                   {l.forgotPassword}
                 </button>
@@ -392,13 +400,13 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 ${isRTL ? "left-3" : "right-3"}`}
+                className={`absolute top-1/2 -translate-y-1/2 text-[var(--axis-gray)] hover:text-[var(--axis-white)] ${isRTL ? "left-3" : "right-3"}`}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             {mode === "register" && (
-              <p className="text-xs text-gray-400 mt-1">{l.passwordHint}</p>
+              <p className="text-xs text-[var(--axis-gray)] mt-1">{l.passwordHint}</p>
             )}
           </div>
         )}
@@ -407,7 +415,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         {mode === "reset" && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--axis-silver)] mb-1">
                 {l.newPassword}
               </label>
               <div className="relative">
@@ -423,15 +431,15 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 ${isRTL ? "left-3" : "right-3"}`}
+                  className={`absolute top-1/2 -translate-y-1/2 text-[var(--axis-gray)] hover:text-[var(--axis-white)] ${isRTL ? "left-3" : "right-3"}`}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-1">{l.passwordHint}</p>
+              <p className="text-xs text-[var(--axis-gray)] mt-1">{l.passwordHint}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--axis-silver)] mb-1">
                 {l.confirmPassword}
               </label>
               <div className="relative">
@@ -447,7 +455,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 ${isRTL ? "left-3" : "right-3"}`}
+                  className={`absolute top-1/2 -translate-y-1/2 text-[var(--axis-gray)] hover:text-[var(--axis-white)] ${isRTL ? "left-3" : "right-3"}`}
                 >
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -458,14 +466,14 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-xl">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-2.5 rounded-xl">
             {error}
           </div>
         )}
 
         {/* Success */}
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-600 text-sm px-4 py-2.5 rounded-xl">
+          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm px-4 py-2.5 rounded-xl">
             {success}
           </div>
         )}
@@ -474,7 +482,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         <button
           type="submit"
           disabled={loading || !!success}
-          className="w-full bg-[#002C5F] hover:bg-[#001f45] disabled:bg-[#002C5F]/50 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
+          className="w-full bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] shadow-[0_6px_20px_-6px_rgba(157,94,52,0.7)] hover:brightness-115 hover:shadow-[0_8px_26px_-6px_rgba(182,119,73,0.85)] active:scale-[0.99] disabled:opacity-60 disabled:cursor-wait disabled:hover:brightness-100 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -494,14 +502,14 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
       {(mode === "login" || mode === "register") && (
         <>
           <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400">{l.orGoogle}</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-xs text-[var(--axis-gray)]">{l.orGoogle}</span>
+            <div className="flex-1 h-px bg-white/10" />
           </div>
 
           <button
             onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-2.5 rounded-xl transition text-sm font-medium text-gray-700"
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-[#ECECEC] shadow-sm hover:shadow-md active:scale-[0.99] py-2.5 rounded-xl transition text-sm font-semibold text-[#1f1f1f]"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

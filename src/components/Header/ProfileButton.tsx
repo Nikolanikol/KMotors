@@ -74,7 +74,7 @@ export default function ProfileButton({ lang, small = false }: { lang: string; s
         onClick={() =>
           signedIn ? setMenu((v) => !v) : openAuthModal({ lang: lang === "ru" ? "ru" : "en", reason: "header" })
         }
-        className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${size}`}
+        className={`relative flex cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:brightness-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${size}`}
         style={{
           backgroundColor: signedIn ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
           color: signedIn ? "var(--axis-orange)" : "var(--axis-silver)",
@@ -84,24 +84,29 @@ export default function ProfileButton({ lang, small = false }: { lang: string; s
         {signedIn ? <UserRound className={icon} strokeWidth={2.2} /> : <User className={icon} strokeWidth={2.2} />}
       </button>
 
+      {/* ⚠️ Цвет пунктов — КЛАССАМИ, а не style: инлайн-цвет перебивает hover:text-*,
+          и подсветка при наведении молча не работала. */}
       {menu && (
         <div
-          className="absolute right-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border border-white/10 py-2 shadow-2xl"
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-2 min-w-[220px] overflow-hidden rounded-xl border border-white/10 p-1.5 shadow-[0_18px_48px_-12px_rgba(0,0,0,0.85),0_0_0_1px_rgba(182,119,73,0.12)]"
           style={{ backgroundColor: "var(--axis-charcoal)" }}
         >
           <Link
             href={`/${lang}/account`}
+            role="menuitem"
             onClick={() => setMenu(false)}
-            className="block px-4 py-2 text-sm font-medium transition-colors hover:text-[var(--axis-white)]"
-            style={{ color: "var(--axis-gray)" }}
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--axis-silver)] transition-colors hover:bg-white/[0.07] hover:text-[var(--axis-white)] focus-visible:bg-white/[0.07] focus-visible:text-[var(--axis-white)] focus-visible:outline-none"
           >
+            <UserRound className="h-4 w-4 text-[var(--axis-bronze)]" />
             {l.account}
           </Link>
+          <div className="my-1 h-px bg-white/[0.06]" />
           <button
             type="button"
+            role="menuitem"
             onClick={signOut}
-            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium transition-colors hover:text-[var(--axis-white)]"
-            style={{ color: "var(--axis-gray)" }}
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[var(--axis-gray)] transition-colors hover:bg-red-500/10 hover:text-red-300 focus-visible:bg-red-500/10 focus-visible:text-red-300 focus-visible:outline-none"
           >
             <LogOut className="h-4 w-4" />
             {l.signOut}
