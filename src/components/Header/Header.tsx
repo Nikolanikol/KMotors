@@ -232,17 +232,19 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
    *  доступных; и на 1280 полный размер встаёт впритык, поэтому у него пункты
    *  компактные всегда. Классы целиком строками — иначе Tailwind их не соберёт. */
   const bp = lang === "ka"
-    ? { desktop: "hidden xl:flex", mobile: "flex xl:hidden", mobileOnly: "xl:hidden", item: "px-2.5 py-2 text-[14px]" }
-    : { desktop: "hidden lg:flex", mobile: "flex lg:hidden", mobileOnly: "lg:hidden", item: "px-2.5 xl:px-4 py-2 xl:py-2.5 text-[14px] xl:text-[15px]" };
+    ? { desktop: "hidden xl:flex", mobile: "flex xl:hidden", mobileOnly: "xl:hidden", item: "px-3 py-2 text-[14px]" }
+    : { desktop: "hidden lg:flex", mobile: "flex lg:hidden", mobileOnly: "lg:hidden", item: "px-3 xl:px-4 py-2 text-[14px] xl:text-[15px]" };
 
-  /** Пункт верхнего меню: таблетка с фоном; активный раздел — бронза.
-   *  1024–1279 px — компактнее: на грузинском полный размер не влезал, логотип
-   *  сжимался до нуля, а «Запчасти» ломались в две строки. */
+  /** Пункт верхнего меню (вариант D, выбор владельца 05.10.2026): текст без
+   *  рамок, «пилюля» только у активного раздела и при наведении. Таблетки с
+   *  рамкой у каждого пункта (версия до этого) выглядели как набор кнопок, а не
+   *  навигация. 1024–1279 px — компактнее: на грузинском полный размер не
+   *  влезал, логотип сжимался до нуля, а «Запчасти» ломались в две строки. */
   const navItem = (active: boolean) =>
-    `flex items-center whitespace-nowrap rounded-lg border ${bp.item} font-semibold tracking-wide transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${
+    `flex items-center whitespace-nowrap rounded-full ${bp.item} font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${
       active
-        ? "border-[rgba(182,119,73,0.45)] bg-[rgba(182,119,73,0.14)] text-[var(--axis-bronze-bright)]"
-        : "border-white/[0.08] bg-white/[0.04] text-[var(--axis-silver)] hover:border-white/15 hover:bg-white/[0.09] hover:text-[var(--axis-white)]"
+        ? "bg-[rgba(182,119,73,0.15)] text-[var(--axis-bronze-bright)]"
+        : "text-[var(--axis-silver)] hover:bg-white/[0.06] hover:text-[var(--axis-white)]"
     }`;
 
   const isActive = (href: string) => pathname === href || (href !== `/${lang}/` && pathname.startsWith(href));
@@ -273,11 +275,10 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
           </Link>
 
           {/* Desktop Nav.
-              Пункты — кнопки-«таблетки» с фоном и рамкой, а не голый серый текст:
-              на чёрной шапке текст 14px терялся (замечание владельца 05.10.2026).
+              Пункты — текст с «пилюлей» у активного и при наведении (navItem).
               ⚠️ Цвета — КЛАССАМИ (navItem), не style + onMouseEnter: инлайн-цвет
               перебивает hover:*, и подсветка ломается (см. чеклист UI в CLAUDE.md). */}
-          <nav className={`${bp.desktop} items-center gap-1.5 xl:gap-2`}>
+          <nav className={`${bp.desktop} items-center gap-1`}>
             {navLinks.map((link) =>
               link.children ? (
                 /* Выпадашка открывается по наведению и по фокусу с клавиатуры;
@@ -287,7 +288,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                   <Link
                     href={link.href}
                     aria-current={isActive(link.href) ? "page" : undefined}
-                    className={`${navItem(isActive(link.href))} gap-1.5 group-hover:bg-white/[0.09] group-hover:text-[var(--axis-white)] group-hover:border-white/15`}
+                    className={`${navItem(isActive(link.href))} gap-1.5 ${isActive(link.href) ? "" : "group-hover:bg-white/[0.06] group-hover:text-[var(--axis-white)]"}`}
                   >
                     {t(link.labelKey)}
                     <ChevronDown className="w-4 h-4 opacity-70 transition-transform duration-200 group-hover:rotate-180" />

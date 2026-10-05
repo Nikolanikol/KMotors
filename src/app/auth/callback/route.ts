@@ -31,9 +31,14 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Вход через Google: новый аккаунт — менеджеру в Telegram, как заявка.
+      // Новый аккаунт — менеджеру в Telegram, как заявка. Сюда приходит и вход
+      // через Google, и ссылка подтверждения почты — способ берём из аккаунта,
+      // а не считаем любой колбэк Google-входом (так было до 05.10.2026).
       // Дубли и старые аккаунты отсекает notifySignup (src/lib/signupNotify.ts).
-      if (data.user) await notifySignup(supabase, data.user, { method: "google", path: next });
+      if (data.user) {
+        const method = data.user.app_metadata?.provider === "google" ? "google" : "email";
+        await notifySignup(supabase, data.user, { method, path: next });
+      }
       return NextResponse.redirect(`${siteUrl}${next}`);
     }
   }

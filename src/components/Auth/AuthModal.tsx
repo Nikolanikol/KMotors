@@ -31,7 +31,7 @@ import { pick, type CardLang } from "@/lib/carnect/lang";
 import { createClient } from "@/lib/supabase/client";
 import { trackEvent } from "@/utils/gtag";
 
-import { AUTH_OPEN_EVENT, notifyAuthChanged, type AuthOpenDetail } from "./authEvents";
+import { AUTH_OPEN_EVENT, notifyAuthChanged, reportSignIn, type AuthOpenDetail } from "./authEvents";
 import { AUTH_TEXT as T } from "./authModalText";
 
 type Mode = "register" | "login";
@@ -91,13 +91,8 @@ export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
     trackEvent(event, { method, reason });
     // Менеджеру в Telegram — регистрация это лид (src/lib/signupNotify.ts).
     // Зовём и после входа: подтвердивший email позже приходит именно «входом»,
-    // а дубль сервер отсечёт сам (отметка signup_notified). Ждать не нужно.
-    fetch("/api/auth/signup-notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ method, path: `${pathname}${window.location.search}`, title: document.title }),
-      keepalive: true,
-    }).catch(() => {});
+    // а дубль сервер отсечёт сам (отметка signup_notified).
+    reportSignIn(method);
     setOpen(false);
     notifyAuthChanged(); // иконка профиля в шапке
     router.refresh(); // сервер перерисует страницу уже с ценой

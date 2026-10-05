@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { reportSignIn } from "@/components/Auth/authEvents";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
@@ -215,6 +216,8 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) { setError(l.errorInvalid); return; }
+        // Вход тоже: подтвердивший почту позже приходит именно входом.
+        reportSignIn("email");
         router.push(redirectTo);
         router.refresh();
       } else if (mode === "register") {
@@ -222,14 +225,17 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name: name.trim() || null, preferred_lang: lang } },
+          options: { data: { name: name.trim() || null, preferred_lang: lang, signup_source: "auth_page" } },
         });
         if (error) {
           setError(error.message.includes("already registered") ? l.errorEmail : error.message);
           return;
         }
         setSuccess(l.successRegister);
-        await supabase.auth.signInWithPassword({ email, password });
+        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+        // Без сессии (почта ещё не подтверждена) сервер не узнает, кто это, —
+        // уведомление уйдёт при первом входе после подтверждения.
+        if (!loginError) reportSignIn("email");
         router.push(redirectTo);
         router.refresh();
       } else if (mode === "forgot") {
