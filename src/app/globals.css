@@ -5,6 +5,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ⚠️ Tailwind v4 сбросил курсор кнопок в `default` (в v3 был pointer) — и по
+   всему сайту кнопки перестали выглядеть нажимаемыми: меню профиля, окно входа,
+   вкладки кабинета (замечание владельца 05.10.2026). Возвращаем глобально, а не
+   классом в каждой кнопке: новую кнопку без cursor-pointer напишут всегда.
+   Отключённая кнопка — `not-allowed`, чтобы было видно, что клик не сработает. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
 /* ── K-Axis Brand Variables ───────────────────────────────── */
 :root {
   --axis-black:         #0A0A0A;
@@ -719,4 +738,30 @@ select.PhoneInputCountrySelect {
   body[data-sticky-cta] .messenger-fab {
     bottom: 5.5rem;
   }
+}
+
+/* ── Индикатор перехода (src/components/NavigationStatus.tsx) ─────────────
+   <html data-nav="busy"> стоит от клика до смены адреса. Сигналов три: полоса
+   сверху (в компоненте), пульс нажатого элемента и приглушённые результаты.
+   Пульс и приглушение — с задержкой 120 мс: быстрый переход не должен мигать. */
+html[data-nav="busy"] {
+  cursor: progress;
+}
+[data-nav-target] {
+  animation: nav-pulse 1s ease-in-out 120ms infinite;
+}
+html[data-nav="busy"] [data-nav-dim] {
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity 200ms ease 120ms;
+}
+[data-nav-dim] {
+  transition: opacity 200ms ease;
+}
+@keyframes nav-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-nav-target] { animation: none; opacity: 0.6; }
 }

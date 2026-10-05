@@ -1,6 +1,7 @@
 "use client";
 import React, { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { navStart } from "@/lib/navStatus";
 
 export const Pagination = ({ count, pageSize = 20 }: { count: number; pageSize?: number }) => {
   const router = useRouter();
@@ -16,6 +17,7 @@ export const Pagination = ({ count, pageSize = 20 }: { count: number; pageSize?:
     if (page < 1 || page > totalPages || page === currentPage) return;
     const newParams = new URLSearchParams(params.toString());
     newParams.set("page", page.toString());
+    navStart(`?${newParams.toString()}`);
     startTransition(() => {
       router.push(`?${newParams.toString()}`, { scroll: false });
       // Скроллим к началу карточек, не к верху страницы

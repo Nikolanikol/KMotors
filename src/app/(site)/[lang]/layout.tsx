@@ -6,7 +6,6 @@ import Footer from "@/components/Footer/Footer";
 import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import MessengerButtons from "@/components/MessengerButtons";
 import CookieBanner from "@/components/CookieBanner";
-import ProgressBar from "@/components/ProgressBar";
 import { loadResources } from "@/lib/loadLocale";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
@@ -53,7 +52,6 @@ export default async function LangLayout({ children, params }: Props) {
   return (
     <RootShell lang={lang}>
     <I18nProvider lang={lang} resources={resources}>
-      <ProgressBar />
       <Header krwToUsd={krwToUsd} />
       <main className="flex-grow min-h-[70vh] pt-[68px]">{children}</main>
       <Footer />

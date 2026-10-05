@@ -126,14 +126,14 @@ const L: Record<string, Record<string, string>> = {
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS: Record<string, { ru: string; en: string; color: string }> = {
-  pending_payment:    { ru: "Ожидает оплаты",         en: "Awaiting payment",     color: "bg-orange-100 text-orange-800 border-orange-300" },
-  paid:               { ru: "Оплачен",                 en: "Paid",                 color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-  payment_submitted:  { ru: "Оплата отправлена",       en: "Payment submitted",    color: "bg-blue-100 text-blue-800 border-blue-300" },
-  payment_confirmed:  { ru: "Оплата подтверждена",     en: "Payment confirmed",    color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-  processing:         { ru: "В обработке",             en: "Processing",           color: "bg-blue-100 text-blue-800 border-blue-300" },
-  shipped:            { ru: "Отправлен",               en: "Shipped",              color: "bg-indigo-100 text-indigo-800 border-indigo-300" },
-  delivered:          { ru: "Доставлен",               en: "Delivered",            color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-  cancelled:          { ru: "Отменён",                 en: "Cancelled",            color: "bg-red-100 text-red-800 border-red-300" },
+  pending_payment:    { ru: "Ожидает оплаты",         en: "Awaiting payment",     color: "bg-orange-500/10 text-orange-300 border-orange-500/30" },
+  paid:               { ru: "Оплачен",                 en: "Paid",                 color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" },
+  payment_submitted:  { ru: "Оплата отправлена",       en: "Payment submitted",    color: "bg-blue-500/10 text-blue-300 border-blue-500/30" },
+  payment_confirmed:  { ru: "Оплата подтверждена",     en: "Payment confirmed",    color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" },
+  processing:         { ru: "В обработке",             en: "Processing",           color: "bg-blue-500/10 text-blue-300 border-blue-500/30" },
+  shipped:            { ru: "Отправлен",               en: "Shipped",              color: "bg-indigo-500/10 text-indigo-300 border-indigo-500/30" },
+  delivered:          { ru: "Доставлен",               en: "Delivered",            color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" },
+  cancelled:          { ru: "Отменён",                 en: "Cancelled",            color: "bg-red-500/10 text-red-300 border-red-500/30" },
 };
 
 const SHIP_LABEL: Record<string, { ru: string; en: string }> = {
@@ -212,7 +212,7 @@ export default function OrdersTab({ lang, userId }: Props) {
   };
 
   const statusCfg = (status: string) =>
-    STATUS[status] ?? { ru: status, en: status, color: "bg-gray-50 text-gray-600 border-gray-200" };
+    STATUS[status] ?? { ru: status, en: status, color: "bg-white/[0.04] text-[var(--axis-silver)] border-white/10" };
 
   const shipLabel = (method: string) =>
     isRu
@@ -226,7 +226,7 @@ export default function OrdersTab({ lang, userId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 gap-2 text-gray-400">
+      <div className="flex items-center justify-center py-16 gap-2 text-[var(--axis-gray)]">
         <Loader2 className="w-5 h-5 animate-spin" />
         <span className="text-sm">{l.loading}</span>
       </div>
@@ -236,13 +236,13 @@ export default function OrdersTab({ lang, userId }: Props) {
   if (!orders.length) {
     return (
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-[#002C5F]">{l.title}</h2>
+        <h2 className="text-lg font-bold text-[var(--axis-white)]">{l.title}</h2>
         <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-            <Package className="w-8 h-8 text-gray-300" />
+          <div className="w-16 h-16 bg-white/[0.05] rounded-full flex items-center justify-center">
+            <Package className="w-8 h-8 text-[var(--axis-gray-dim)]" />
           </div>
-          <p className="font-semibold text-gray-700">{l.empty}</p>
-          <p className="text-sm text-gray-400 text-center max-w-xs">{l.emptyDesc}</p>
+          <p className="font-semibold text-[var(--axis-silver)]">{l.empty}</p>
+          <p className="text-sm text-[var(--axis-gray)] text-center max-w-xs">{l.emptyDesc}</p>
         </div>
       </div>
     );
@@ -250,7 +250,7 @@ export default function OrdersTab({ lang, userId }: Props) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold text-[#002C5F]">{l.title} ({orders.length})</h2>
+      <h2 className="text-lg font-bold text-[var(--axis-white)]">{l.title} ({orders.length})</h2>
 
       {orders.map((order) => {
         const st = statusCfg(order.status);
@@ -258,17 +258,17 @@ export default function OrdersTab({ lang, userId }: Props) {
         const itemCount = order.items?.length ?? 0;
 
         return (
-          <div key={order.id} className="border border-gray-100 rounded-2xl overflow-hidden">
+          <div key={order.id} className="border border-white/[0.06] bg-white/[0.02] rounded-2xl overflow-hidden transition-colors hover:border-white/10">
             {/* ── Header ── */}
             <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-[#002C5F] text-sm">{order.order_number}</span>
+                  <span className="font-bold text-[var(--axis-white)] text-sm">{order.order_number}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${st.color}`}>
                     {isRu ? st.ru : st.en}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-[var(--axis-gray)] mt-0.5">
                   {formatDate(order.created_at)} · {shipLabel(order.shipping_method)} · {order.shipping_country}
                 </p>
                 {/* По умолчанию ведём на СВОЮ страницу отслеживания: раньше
@@ -282,7 +282,7 @@ export default function OrdersTab({ lang, userId }: Props) {
                       href={order.tracking_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[var(--axis-bronze)] hover:text-[var(--axis-bronze-bright)] hover:underline underline-offset-2 transition-colors"
                     >
                       {l.tracking}: {order.tracking_number}
                       <ExternalLink className="w-3 h-3" />
@@ -290,7 +290,7 @@ export default function OrdersTab({ lang, userId }: Props) {
                   ) : (
                     <Link
                       href={`/${lang}/tracking?n=${encodeURIComponent(order.tracking_number)}`}
-                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                      className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-[var(--axis-bronze)] hover:text-[var(--axis-bronze-bright)] hover:underline underline-offset-2 transition-colors"
                     >
                       {l.tracking}: {order.tracking_number}
                     </Link>
@@ -300,15 +300,15 @@ export default function OrdersTab({ lang, userId }: Props) {
 
               <div className="flex items-center gap-4 shrink-0">
                 <div className="text-right">
-                  <p className="text-xs text-gray-400">{l.total}</p>
-                  <p className="text-base font-bold text-[#002C5F]">
+                  <p className="text-xs text-[var(--axis-gray)]">{l.total}</p>
+                  <p className="text-base font-bold text-[var(--axis-white)]">
                     ${usdFmt.format(order.total_usd)}
                   </p>
                 </div>
                 {itemCount > 0 && (
                   <button
                     onClick={() => toggleExpand(order.id)}
-                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#002C5F] transition border border-gray-200 rounded-lg px-2.5 py-1.5"
+                    className="flex items-center gap-1 text-xs text-[var(--axis-silver)] hover:text-[var(--axis-white)] hover:bg-white/[0.06] hover:border-white/20 transition border border-white/10 rounded-lg px-2.5 py-1.5"
                   >
                     {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     {itemCount} {lang === "ru" ? ruPlural(itemCount, "позиция", "позиции", "позиций") : l.items}
@@ -318,37 +318,37 @@ export default function OrdersTab({ lang, userId }: Props) {
             </div>
 
             {/* ── Price breakdown ── */}
-            <div className="px-4 pb-3 flex gap-4 text-xs text-gray-500 border-t border-gray-50">
-              <span className="pt-2">{l.subtotal}: <b className="text-gray-700">${usdFmt.format(
+            <div className="px-4 pb-3 flex gap-4 text-xs text-[var(--axis-gray)] border-t border-white/[0.06]">
+              <span className="pt-2">{l.subtotal}: <b className="text-[var(--axis-silver)]">${usdFmt.format(
                 (order.items ?? []).reduce((s, i) => s + krwToDisplayUsd(i.price_krw, order.exchange_rate) * i.quantity, 0)
               )}</b></span>
               {order.shipping_cost_usd > 0 && (
-                <span className="pt-2">{l.shipping}: <b className="text-gray-700">${usdFmt.format(order.shipping_cost_usd)}</b></span>
+                <span className="pt-2">{l.shipping}: <b className="text-[var(--axis-silver)]">${usdFmt.format(order.shipping_cost_usd)}</b></span>
               )}
             </div>
 
             {/* ── Items list (expandable) ── */}
             {isOpen && itemCount > 0 && (
-              <div className="border-t border-gray-100 bg-gray-50/50 p-4 space-y-3">
+              <div className="border-t border-white/[0.06] bg-black/25 p-4 space-y-3">
                 {(order.items ?? []).map((item) => (
                   <div key={item.id} className="flex gap-3 items-center">
-                    <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-100">
+                    <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-white border border-white/10">
                       {item.image_url ? (
                         <Image src={item.image_url} alt={item.name_en} width={40} height={40} className="object-contain w-full h-full p-1" unoptimized />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">?</div>
+                        <div className="w-full h-full flex items-center justify-center text-[var(--axis-gray-dim)] text-xs">?</div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#002C5F] line-clamp-1">{itemName(item)}</p>
-                      <p className="text-xs text-gray-400">{item.part_number}</p>
+                      <p className="text-sm font-medium text-[var(--axis-white)] line-clamp-1">{itemName(item)}</p>
+                      <p className="text-xs text-[var(--axis-gray)]">{item.part_number}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-[#BB162B]">
+                      <p className="text-sm font-semibold text-[var(--axis-bronze)]">
                         ${usdFmt.format(krwToDisplayUsd(item.price_krw, order.exchange_rate))}
                       </p>
                       {item.quantity > 1 && (
-                        <p className="text-xs text-gray-400">{l.qty} {item.quantity}</p>
+                        <p className="text-xs text-[var(--axis-gray)]">{l.qty} {item.quantity}</p>
                       )}
                     </div>
                   </div>

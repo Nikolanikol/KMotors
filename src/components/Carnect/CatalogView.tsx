@@ -416,7 +416,7 @@ function Pager({ ctx, sp, page, pages }: { ctx: Ctx; sp: SP; page: number; pages
         </span>
       ))}
       {page < pages ? go(page + 1, "→", "next") : null}
-      <form method="get" action={ctx.base} className="ml-3 flex items-center gap-1.5 text-sm">
+      <form method="get" action={ctx.base} data-nav-form className="ml-3 flex items-center gap-1.5 text-sm">
         {hidden.map(([k, v]) => (
           <input key={k} type="hidden" name={k} value={v} />
         ))}
@@ -525,8 +525,9 @@ export default async function CatalogView({
       />
       {intro}
 
-      {/* GET-форма: состояние фильтра живёт в адресе. */}
-      <form method="get" action={base} className="mb-4 flex flex-wrap items-end gap-2">
+      {/* GET-форма: состояние фильтра живёт в адресе. data-nav-form — отправка
+          клиентской навигацией с индикатором загрузки (components/NavigationStatus). */}
+      <form method="get" action={base} data-nav-form className="mb-4 flex flex-wrap items-end gap-2">
         <input type="hidden" name="prev_make" value={filter.make ?? ""} />
         {filter.src?.length ? <input type="hidden" name="src" value={filter.src.join(",")} /> : null}
         <label className="flex flex-col text-[11px]" style={{ color: C.muted }}>
@@ -664,7 +665,9 @@ export default async function CatalogView({
           )}
         </Panel>
       ) : (
-        <>
+        // data-nav-dim: пока грузится новая выдача, старая приглушена — иначе
+        // прежние лоты выглядят как результат только что нажатого фильтра.
+        <div data-nav-dim>
           <SourceBar ctx={ctx} sp={sp2} counts={res.bySource} selected={filter.src ?? []} />
 
           <p className="mb-3 text-sm" style={{ color: C.muted }}>
@@ -687,7 +690,7 @@ export default async function CatalogView({
           )}
 
           {pages > 1 && <Pager ctx={ctx} sp={sp2} page={page} pages={pages} />}
-        </>
+        </div>
       )}
     </Page>
   );

@@ -76,35 +76,46 @@ export default function AccountClient({ lang, user, profile, krwToUsd }: Props) 
 
   return (
     <div
-      className="min-h-screen bg-[#F5F7FA] py-8 px-4 text-gray-900"
+      className="min-h-screen bg-[var(--axis-black)] py-8 px-4 text-[var(--axis-white)]"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="max-w-3xl mx-auto">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-5">
-          <Link href={`/${lang}`} className="hover:text-[#002C5F] transition-colors">{bc.home}</Link>
+        <nav className="flex items-center gap-1.5 text-sm text-[var(--axis-gray)] mb-5">
+          <Link href={`/${lang}`} className="hover:text-[var(--axis-bronze-bright)] transition-colors">{bc.home}</Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-[#002C5F] font-medium">{bc.account}</span>
+          <span className="text-[var(--axis-white)] font-medium">{bc.account}</span>
         </nav>
 
         {/* Шапка */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#002C5F]">
-            {profile?.name || user.email.split("@")[0]}
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{user.email}</p>
+        <div className="mb-6 flex items-center gap-4">
+          {/* Инициал в бронзовом кольце — тот же знак, что у иконки профиля в шапке. */}
+          <div
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold uppercase text-[var(--axis-bronze-bright)]"
+            style={{ backgroundColor: "rgba(182,119,73,0.14)", border: "1.5px solid rgba(182,119,73,0.45)" }}
+          >
+            {(profile?.name || user.email).trim().charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold text-[var(--axis-white)]">
+              {profile?.name || user.email.split("@")[0]}
+            </h1>
+            <p className="mt-0.5 truncate text-sm text-[var(--axis-gray)]">{user.email}</p>
+          </div>
         </div>
 
         {/* Вкладки */}
-        <div className="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 mb-6">
+        <div className="flex gap-1 bg-[var(--axis-charcoal)] rounded-2xl p-1.5 shadow-sm border border-white/[0.06] mb-6">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => switchTab(id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all ${
+              aria-current={activeTab === id ? "page" : undefined}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${
                 activeTab === id
-                  ? "bg-[#002C5F] text-white shadow-sm"
-                  : "text-gray-500 hover:text-[#002C5F] hover:bg-gray-50"
+                  ? "bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] text-white shadow-[0_4px_14px_-6px_rgba(157,94,52,0.9)]"
+                  : "text-[var(--axis-gray)] hover:text-[var(--axis-white)] hover:bg-white/[0.06]"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -114,7 +125,7 @@ export default function AccountClient({ lang, user, profile, krwToUsd }: Props) 
         </div>
 
         {/* Контент вкладки */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-[var(--axis-charcoal)] rounded-2xl border border-white/[0.06] p-6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.9)]">
           {activeTab === "profile" && (
             <ProfileForm lang={lang} user={user} profile={profile} />
           )}
