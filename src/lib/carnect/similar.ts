@@ -17,6 +17,8 @@
 //
 // Не бросает: Supabase не ответил — пустой список, страница важнее блока.
 
+import { unstable_cache } from "next/cache";
+
 import { createServerClient } from "@/lib/supabase";
 
 import type { CatalogRow } from "./query";
@@ -57,7 +59,7 @@ function interleave(rows: CatalogRow[]): CatalogRow[] {
   return out;
 }
 
-export async function getSimilar(car: {
+async function getSimilarUncached(car: {
   house: string;
   externalId: string;
   make: string | null;
@@ -126,9 +128,39 @@ export async function getSimilar(car: {
       if (wide.error) throw new Error(wide.error.message);
       take(wide.data);
     }
-    return out.slice(0, SIMILAR_MAX);
+    // +1: сама машина фильтруется уже после кеша (getSimilar).
+    return out.slice(0, SIMILAR_MAX + 1);
   } catch (e) {
     console.error("[carnect] похожие машины:", e instanceof Error ? e.message : e);
     return [];
   }
+}
+
+// ─── Кеш ─────────────────────────────────────────────────────────────────
+//
+// 10 минут, как выборка каталога (query.ts): база обновляется кроном, а
+// одну и ту же модель открывают многие. Ключ — модель и год, а не лот: у
+// соседних лотов одной модели похожие общие (исключение себя — после кеша).
+// Пустой результат кешируется: «похожих нет» — тоже ответ, и Supabase не
+// дёргается заново. Сбой (getSimilarUncached сам вернул []) неотличим от
+// пустоты — приемлемо: блок второстепенный, через 10 минут попробует снова.
+
+const similarCached = unstable_cache(
+  async (make: string, modelGroup: string, year: number | null) =>
+    getSimilarUncached({ house: "", externalId: "", make, modelGroup, year }),
+  ["carnect-similar-v1"],
+  { revalidate: 600 },
+);
+
+export async function getSimilar(car: {
+  house: string;
+  externalId: string;
+  make: string | null;
+  modelGroup: string | null;
+  year: number | null;
+}): Promise<CatalogRow[]> {
+  if (!car.make || !car.modelGroup) return [];
+  // Берём на один больше: сама машина может оказаться в списке и уйдёт фильтром.
+  const rows = await similarCached(car.make, car.modelGroup, car.year);
+  return rows.filter((r) => !(r.house === car.house && r.external_id === car.externalId)).slice(0, SIMILAR_MAX);
 }

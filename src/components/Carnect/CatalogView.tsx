@@ -42,6 +42,7 @@ import {
 } from "@/lib/carnect/query";
 
 import { getCarRates } from "@/lib/kbFx";
+import { resizedImage } from "@/lib/remoteImage";
 
 import FunnelTracker from "@/components/analytics/FunnelTracker";
 
@@ -290,7 +291,9 @@ export function Tile({ ctx, r }: { ctx: Ctx; r: CatalogRow }) {
             // Приближение при наведении — как у карточек Encar.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={r.photo_url}
+              // Тяжёлые площадки — уменьшенная копия через оптимизатор (remoteImage.ts):
+              // оригинал HeyDealer весит ~650 КБ при плитке в 300 px.
+              src={resizedImage(r.photo_url, 640) ?? r.photo_url}
               alt=""
               loading="lazy"
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

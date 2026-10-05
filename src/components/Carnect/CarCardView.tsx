@@ -597,7 +597,9 @@ export default function CarCardView({
                 </div>
               </Block>
             )}
-            {similar && <div data-track-block="similar">{similar}</div>}
+            {/* Метка воронки «similar» — внутри SimilarCars: блок бывает пустым
+                (похожих нет), а за Suspense обёртка есть всегда. */}
+            {similar}
             {card.engineSound && (
               <Block title={t("engineSound")} track="engine_sound">
                 {/* Внизу страницы и preload="none": ролик весит мегабайты, а

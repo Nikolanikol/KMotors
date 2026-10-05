@@ -27,6 +27,7 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import CarCardView from "@/components/Carnect/CarCardView";
 import InternalPanelLoader from "@/components/Carnect/InternalPanelLoader";
@@ -65,17 +66,8 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
   if (res.status === "gone") {
     return <LotState id={id} gone parser={false} lang={LANG} backHref={back} withHeader />;
   }
-  // Похожие — из нашей базы.
-  const similarAll = await getSimilar({
-    house,
-    externalId: id,
-    make: res.card.make,
-    modelGroup: res.card.modelGroup,
-    year: res.card.year,
-  });
-  // ⚠️ Гостю — без цен (см. шапку): и у самой машины, и у похожих.
+  // ⚠️ Гостю — без цен (см. шапку): и у самой машины, и у похожих (SimilarSection).
   const card = priceLocked ? { ...res.card, price: { ...res.card.price, krw: null } } : res.card;
-  const similar = priceLocked ? similarAll.map((r) => ({ ...r, price_krw: null })) : similarAll;
   return (
     <CarCardView
       card={card}
@@ -87,18 +79,57 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
       withHeader
       krwToUsd={rates.krwToUsd}
       internal={<InternalPanelLoader house={house} id={id} />}
+      // Похожие — за Suspense: страница уходит посетителю, не дожидаясь их
+      // выборки, блок дописывается в тот же ответ потоком (он внизу страницы).
       similar={
-        <SimilarCars
-          rows={similar}
-          lang={LANG}
-          catalogBase={back}
-          lotBase={`/${lang}/auction/lot`}
-          krwToUsd={rates.krwToUsd}
-          priceLocked={priceLocked}
-          make={res.card.make}
-          modelGroup={res.card.modelGroup}
-        />
+        <Suspense fallback={null}>
+          <SimilarSection
+            house={house}
+            id={id}
+            lang={lang}
+            make={res.card.make}
+            modelGroup={res.card.modelGroup}
+            year={res.card.year}
+            priceLocked={priceLocked}
+            krwToUsd={rates.krwToUsd}
+          />
+        </Suspense>
       }
+    />
+  );
+}
+
+/** Блок «Похожие машины»: своя выборка (кеш 10 минут, similar.ts), гостю — без цен. */
+async function SimilarSection({
+  house,
+  id,
+  lang,
+  make,
+  modelGroup,
+  year,
+  priceLocked,
+  krwToUsd,
+}: {
+  house: string;
+  id: string;
+  lang: string;
+  make: string | null;
+  modelGroup: string | null;
+  year: number | null;
+  priceLocked: boolean;
+  krwToUsd: number;
+}) {
+  const rows = await getSimilar({ house, externalId: id, make, modelGroup, year });
+  return (
+    <SimilarCars
+      rows={priceLocked ? rows.map((r) => ({ ...r, price_krw: null })) : rows}
+      lang={LANG}
+      catalogBase={`/${lang}/auction`}
+      lotBase={`/${lang}/auction/lot`}
+      krwToUsd={krwToUsd}
+      priceLocked={priceLocked}
+      make={make}
+      modelGroup={modelGroup}
     />
   );
 }

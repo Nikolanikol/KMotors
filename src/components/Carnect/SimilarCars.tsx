@@ -42,7 +42,7 @@ export default function SimilarCars({
       : catalogBase;
 
   return (
-    <section className="rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: `1px solid ${C.line}` }}>
+    <section data-track-block="similar" className="rounded-2xl p-5" style={{ backgroundColor: "var(--axis-charcoal)", border: `1px solid ${C.line}` }}>
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 className="text-lg font-semibold" style={{ color: "var(--axis-white)" }}>
           {tx(lang, "similar")}
