@@ -12,11 +12,13 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCartCount } from "@/hooks/useCartCount";
 import { CartDrawer, CART_OPEN_EVENT } from "@/components/Cart/CartDrawer";
-import AuthModal from "@/components/Auth/AuthModal";
 import { FavoritesDrawer } from "@/components/Favorites/FavoritesDrawer";
 import { FAVORITES_OPEN_EVENT, favText } from "@/components/Favorites/favText";
 import { useAuctionFavorites } from "@/hooks/useAuctionFavorites";
 import { useCountry } from "@/hooks/useCountry";
+
+import AuthModalHost from "./AuthModalHost";
+import ProfileButton from "./ProfileButton";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
@@ -24,9 +26,9 @@ const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 const INSTAGRAM_URL = "https://www.instagram.com/axiskoreancar";
 
 /**
- * Иконка Instagram в шапке — рядом с переключателем языков. На мобильной шапке
- * размер совпадает с корзиной (36px), иначе ряд «языки + инстаграм + корзина +
- * бургер» не помещается на узких телефонах.
+ * Иконка Instagram — с 05.10.2026 только в мобильном меню (и в подвале). Из
+ * верхней строки шапки убрана при пересборке: единственная кнопка, которая
+ * уводит с сайта, а не к заявке; её место заняла иконка профиля.
  */
 const InstagramLink = ({ position }: { position: "desktop" | "mobile" }) => (
   <a
@@ -177,12 +179,16 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
   const segments = pathname.split("/");
   const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
 
-  const navLinks: { href: string; labelKey: string; children?: { href: string; labelKey: string }[] }[] = [
-    { href: `/${lang}/`, labelKey: "nav.home" },
-    // ⚠️ Аукцион под тем же гейтом, что каталог авто: это те же корейские
-    // машины, и правило блокировки Кореи распространяется на них целиком.
-    // Забыть здесь — значит оставить корейскому посетителю живую ссылку на
-    // раздел, который для него закрыт.
+  // ─── Навигация (пересобрана 05.10.2026, решение владельца) ───────────────
+  // Было 7 пунктов в строку, стало 4: «Авто ▾», «Запчасти ▾», «Калькулятор»,
+  // «Блог». «Главная» убрана — на неё ведёт логотип. Калькулятор и блог —
+  // отдельными пунктами: это страницы с самым большим входящим трафиком.
+  //
+  // ⚠️ Каталог Encar и аукцион — под гейтом isCatalogBlocked (Корея): это те
+  // же корейские машины, для Кореи они закрыты и на сервере (middleware).
+  // Забыть здесь — оставить корейскому посетителю ссылку на 403. Если из
+  // «Авто» остаётся один пункт («Как купить»), группа сворачивается в него.
+  const carLinks = [
     ...(!isCatalogBlocked
       ? [
           { href: `/${lang}/catalog`, labelKey: "nav.catalog" },
@@ -190,6 +196,11 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
         ]
       : []),
     { href: `/${lang}/buy`, labelKey: "nav.buy" },
+  ];
+  const navLinks: { href: string; labelKey: string; children?: { href: string; labelKey: string }[] }[] = [
+    carLinks.length > 1
+      ? { href: carLinks[0].href, labelKey: "nav.cars", children: carLinks }
+      : carLinks[0],
     {
       href: `/${lang}/parts`,
       labelKey: "nav.parts",
@@ -200,8 +211,8 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
         { href: `/${lang}/tracking`, labelKey: "nav.tracking" },
       ],
     },
-    { href: `/${lang}/blog`, labelKey: "nav.blog" },
     { href: `/${lang}/calculator`, labelKey: "nav.calculator" },
+    { href: `/${lang}/blog`, labelKey: "nav.blog" },
   ];
 
   useEffect(() => {
@@ -302,23 +313,16 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
           </nav>
 
           {/* Right side */}
+          {/* Справа — только действия: язык, профиль, избранное, корзина, заявка.
+              Телефон и Instagram — в подвале и мобильном меню (05.10.2026):
+              номер корейский (+82), из СНГ по нему почти не звонят, а занимал
+              он больше любой иконки. */}
           <div className="hidden lg:flex items-center gap-4">
             <LanguageSwitcher />
-            <InstagramLink position="desktop" />
-            <a
-              href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-              className="text-sm transition-colors"
-              style={{ color: "var(--axis-gray)" }}
-              onClick={() => trackEvent("contact", { method: "phone_header", position: "desktop" })}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
-            >
-              {process.env.NEXT_PUBLIC_NUMBER_PHONE}
-            </a>
-            <ContactForm isVisible={false} />
 
-            {/* Favorites + Cart — grouped together */}
+            {/* Profile + Favorites + Cart — grouped together */}
             <div className="flex items-center gap-2">
+                <ProfileButton lang={lang} />
                 <FavButton count={favTotal} open={isFavOpen} onClick={() => setIsFavOpen((v) => !v)} label={favText(lang).title} />
                 <button
                   type="button"
@@ -343,15 +347,18 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                     </span>
                   )}
                 </button>
-
             </div>
+            {/* Заявка — прямой кнопкой, а не пунктом меню: это конверсия, лишний
+                клик до формы стоит заявок. WhatsApp/Telegram — в плавающей
+                кнопке внизу справа на всех страницах. */}
+            <ContactForm isVisible={false} />
           </div>
 
-          {/* Mobile right */}
+          {/* Mobile right: профиль, избранное, корзина, меню. Язык, Instagram,
+              телефон и заявка — внутри меню ☰. */}
           <div className="flex lg:hidden items-center gap-2">
-            <LanguageSwitcher />
-            <InstagramLink position="mobile" />
             <div className="flex items-center gap-1.5">
+                <ProfileButton lang={lang} small />
                 <FavButton count={favTotal} open={isFavOpen} onClick={() => setIsFavOpen((v) => !v)} label={favText(lang).title} small />
                 <button
                   type="button"
@@ -412,19 +419,26 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
           <nav className="flex flex-col items-center justify-center flex-1 gap-6">
             {navLinks.map((link) => (
               <div key={link.href} className="flex flex-col items-center gap-2.5">
-                <Link
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-heading transition-colors"
-                  style={{ color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-white)" }}
-                >
-                  {t(link.labelKey)}
-                </Link>
-                {/* Выпадашки на мобильном нет — вложенные пункты просто идут
-                    следом помельче. Дубль самого родителя отсеиваем по href. */}
+                {/* У группы заголовок — просто подпись, а все подпункты видны
+                    целиком: по слову «Авто» не догадаться, что оно ведёт в
+                    каталог Encar, поэтому «Каталог» обязан стоять пунктом. */}
+                {link.children ? (
+                  <span className="text-2xl font-heading" style={{ color: "var(--axis-white)" }}>
+                    {t(link.labelKey)}
+                  </span>
+                ) : (
+                  <Link
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-2xl font-heading transition-colors"
+                    style={{ color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-white)" }}
+                  >
+                    {t(link.labelKey)}
+                  </Link>
+                )}
+                {/* Выпадашки на мобильном нет — подпункты идут следом помельче. */}
                 {link.children
-                  ?.filter((child) => child.href !== link.href)
-                  .map((child) => (
+                  ?.map((child) => (
                     <Link
                       key={child.href}
                       href={child.href}
@@ -440,6 +454,10 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
           </nav>
 
           <div className="flex flex-col items-center gap-4 pb-8">
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <InstagramLink position="mobile" />
+            </div>
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
               className="text-sm"
@@ -454,8 +472,8 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
       </div>
 
       <FavoritesDrawer open={isFavOpen} onClose={closeFav} lang={lang} krwToUsd={krwToUsd} />
-      {/* Окно входа: открывается событием (openAuthModal), например из замка цены аукциона. */}
-      <AuthModal />
+      {/* Окно входа: грузится лениво при первом openAuthModal (замок цены, иконка профиля). */}
+      <AuthModalHost />
       <CartDrawer
         open={isCartOpen}
         onClose={closeCart}

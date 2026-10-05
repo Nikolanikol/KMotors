@@ -8,8 +8,10 @@
 // на котором его теряем. После входа router.refresh() перерисовывает страницу
 // на сервере уже с ценой, человек остаётся на месте.
 //
-// Открывается событием (openAuthModal), как панели корзины и избранного:
-// кнопки на страницах не тянут к себе состояние шапки. Смонтировано в Header.
+// Открывается событием (openAuthModal из authEvents.ts), как панели корзины и
+// избранного. ⚠️ Модуль тянет клиент Supabase, поэтому грузится ЛЕНИВО: шапка
+// монтирует его только при первом открытии (AuthModalHost в Header) и передаёт
+// то самое первое событие пропом `initial` — слушатель ещё не существовал.
 //
 // ⚠️ Телефон при регистрации по email ОБЯЗАТЕЛЕН — ради него регистрация и
 // затевалась: менеджеру нужно, кому писать по лоту. Лежит в user_metadata.phone.
@@ -29,23 +31,12 @@ import { pick, type CardLang } from "@/lib/carnect/lang";
 import { createClient } from "@/lib/supabase/client";
 import { trackEvent } from "@/utils/gtag";
 
+import { AUTH_OPEN_EVENT, notifyAuthChanged, type AuthOpenDetail } from "./authEvents";
 import { AUTH_TEXT as T } from "./authModalText";
-
-export const AUTH_OPEN_EVENT = "kaxis_auth_open";
-
-export interface AuthOpenDetail {
-  lang: CardLang;
-  /** Откуда открыли — в аналитику: price (цена лота), price_filter, … */
-  reason: string;
-}
-
-export function openAuthModal(detail: AuthOpenDetail) {
-  window.dispatchEvent(new CustomEvent<AuthOpenDetail>(AUTH_OPEN_EVENT, { detail }));
-}
 
 type Mode = "register" | "login";
 
-export default function AuthModal() {
+export default function AuthModal({ initial }: { initial?: AuthOpenDetail }) {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -62,8 +53,7 @@ export default function AuthModal() {
   const t = (k: keyof typeof T) => pick(lang, T[k]);
 
   useEffect(() => {
-    const onOpen = (e: Event) => {
-      const d = (e as CustomEvent<AuthOpenDetail>).detail;
+    const show = (d: AuthOpenDetail | undefined) => {
       setLang(d?.lang ?? "en");
       setReason(d?.reason ?? "price");
       setError("");
@@ -71,9 +61,12 @@ export default function AuthModal() {
       setOpen(true);
       trackEvent("auth_modal_open", { reason: d?.reason });
     };
+    // Первое открытие пришло ДО монтирования (окно грузится лениво) — оно в initial.
+    if (initial) show(initial);
+    const onOpen = (e: Event) => show((e as CustomEvent<AuthOpenDetail>).detail);
     window.addEventListener(AUTH_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(AUTH_OPEN_EVENT, onOpen);
-  }, []);
+  }, [initial]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,11 +82,16 @@ export default function AuthModal() {
 
   if (!open) return null;
 
+  // Замок цены (price, price_filter) — «войдите, чтобы увидеть цену»; иконка
+  // профиля в шапке — общий «вход в K-Axis».
+  const fromPrice = reason.startsWith("price");
+
   /** Вошёл — закрываем и перерисовываем страницу на сервере уже с ценой. */
   const done = (event: "sign_up" | "login", method: "email" | "google") => {
     trackEvent(event, { method, reason });
     setOpen(false);
-    router.refresh();
+    notifyAuthChanged(); // иконка профиля в шапке
+    router.refresh(); // сервер перерисует страницу уже с ценой
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -162,7 +160,7 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={t("titlePrice")}>
+    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={t(fromPrice ? "titlePrice" : "titleHeader")}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
       <div
         className="relative w-full max-w-md rounded-t-3xl p-6 shadow-2xl sm:rounded-2xl"
@@ -179,10 +177,10 @@ export default function AuthModal() {
         </button>
 
         <h2 className="pr-8 text-lg font-bold" style={{ color: "var(--axis-white)" }}>
-          {t("titlePrice")}
+          {t(fromPrice ? "titlePrice" : "titleHeader")}
         </h2>
         <p className="mt-1 text-sm" style={{ color: "var(--axis-gray)" }}>
-          {t("subPrice")}
+          {t(fromPrice ? "subPrice" : "subHeader")}
         </p>
 
         <button

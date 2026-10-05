@@ -15,7 +15,7 @@ import { useEffect } from "react";
 import { pick, type CardLang, type Pair } from "@/lib/carnect/lang";
 import { trackEvent, trackOnce } from "@/utils/gtag";
 
-import { openAuthModal } from "./AuthModal";
+import { openAuthModal } from "./authEvents";
 
 const LABEL: Pair = ["Войдите, чтобы увидеть цену", "Sign in to see the price"];
 const SHORT: Pair = ["Цена после входа", "Sign in for price"];

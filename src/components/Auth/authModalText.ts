@@ -9,6 +9,12 @@ export const AUTH_TEXT = {
     "Цены аукционов открыты зарегистрированным клиентам. Это бесплатно и занимает минуту.",
     "Auction prices are available to registered clients. It's free and takes a minute.",
   ],
+  // Открыли из шапки (иконка профиля), а не с замка цены — заголовок общий.
+  titleHeader: ["Вход в K-Axis", "Sign in to K-Axis"],
+  subHeader: [
+    "Цены аукционов, избранное и ваши заявки — в одном аккаунте.",
+    "Auction prices, saved cars and your requests — in one account.",
+  ],
   google: ["Продолжить с Google", "Continue with Google"],
   or: ["или", "or"],
   register: ["Регистрация", "Create account"],
