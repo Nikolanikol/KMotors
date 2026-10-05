@@ -227,6 +227,24 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
     return () => { document.body.style.overflow = ""; };
   }, [isMobileMenuOpen]);
 
+  /** С какой ширины шапка «десктопная». Грузинский — с 1280 px: его слова
+   *  длиннее, и на 1024 меню с правым блоком занимают ~1150 px из 1000
+   *  доступных; и на 1280 полный размер встаёт впритык, поэтому у него пункты
+   *  компактные всегда. Классы целиком строками — иначе Tailwind их не соберёт. */
+  const bp = lang === "ka"
+    ? { desktop: "hidden xl:flex", mobile: "flex xl:hidden", mobileOnly: "xl:hidden", item: "px-2.5 py-2 text-[14px]" }
+    : { desktop: "hidden lg:flex", mobile: "flex lg:hidden", mobileOnly: "lg:hidden", item: "px-2.5 xl:px-4 py-2 xl:py-2.5 text-[14px] xl:text-[15px]" };
+
+  /** Пункт верхнего меню: таблетка с фоном; активный раздел — бронза.
+   *  1024–1279 px — компактнее: на грузинском полный размер не влезал, логотип
+   *  сжимался до нуля, а «Запчасти» ломались в две строки. */
+  const navItem = (active: boolean) =>
+    `flex items-center whitespace-nowrap rounded-lg border ${bp.item} font-semibold tracking-wide transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${
+      active
+        ? "border-[rgba(182,119,73,0.45)] bg-[rgba(182,119,73,0.14)] text-[var(--axis-bronze-bright)]"
+        : "border-white/[0.08] bg-white/[0.04] text-[var(--axis-silver)] hover:border-white/15 hover:bg-white/[0.09] hover:text-[var(--axis-white)]"
+    }`;
+
   const isActive = (href: string) => pathname === href || (href !== `/${lang}/` && pathname.startsWith(href));
 
   return (
@@ -239,7 +257,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href={`/${lang}`} className="flex items-center gap-2.5 group" aria-label="K-Axis">
+          <Link href={`/${lang}`} className="flex shrink-0 items-center gap-2.5 group" aria-label="K-Axis">
             {/* < sm: знак + название текстом */}
             <BrandMark className="sm:hidden" />
             <BrandName className="text-xl sm:hidden" />
@@ -254,40 +272,46 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
             />
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-6">
+          {/* Desktop Nav.
+              Пункты — кнопки-«таблетки» с фоном и рамкой, а не голый серый текст:
+              на чёрной шапке текст 14px терялся (замечание владельца 05.10.2026).
+              ⚠️ Цвета — КЛАССАМИ (navItem), не style + onMouseEnter: инлайн-цвет
+              перебивает hover:*, и подсветка ломается (см. чеклист UI в CLAUDE.md). */}
+          <nav className={`${bp.desktop} items-center gap-1.5 xl:gap-2`}>
             {navLinks.map((link) =>
               link.children ? (
                 /* Выпадашка открывается по наведению и по фокусу с клавиатуры;
-                   отступ pt-3 держит мост между пунктом и панелью, иначе меню
+                   отступ pt-2 держит мост между пунктом и панелью, иначе меню
                    схлопывается, пока курсор идёт по зазору. */
                 <div key={link.href} className="relative group">
                   <Link
                     href={link.href}
-                    className="flex items-center gap-1 text-sm font-medium tracking-wide transition-colors duration-200"
-                    style={{
-                      color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
-                    }}
-                    onMouseEnter={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
-                    onMouseLeave={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                    aria-current={isActive(link.href) ? "page" : undefined}
+                    className={`${navItem(isActive(link.href))} gap-1.5 group-hover:bg-white/[0.09] group-hover:text-[var(--axis-white)] group-hover:border-white/15`}
                   >
                     {t(link.labelKey)}
-                    <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-180" />
+                    <ChevronDown className="w-4 h-4 opacity-70 transition-transform duration-200 group-hover:rotate-180" />
                   </Link>
 
-                  <div className="absolute left-0 top-full pt-3 opacity-0 invisible translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
+                  <div className="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0">
                     <div
-                      className="min-w-[220px] rounded-xl border border-white/10 py-2 shadow-2xl"
-                      style={{ backgroundColor: "var(--axis-charcoal)" }}
+                      className="min-w-[250px] rounded-xl p-2"
+                      style={{
+                        backgroundColor: "var(--axis-charcoal)",
+                        border: "1px solid rgba(182,119,73,0.25)",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.5), 0 22px 50px -10px rgba(0,0,0,0.9), 0 0 36px -8px rgba(182,119,73,0.22)",
+                      }}
                     >
                       {link.children.map((child) => (
                         <Link
                           key={child.href}
                           href={child.href}
-                          className="block px-4 py-2 text-sm font-medium transition-colors duration-200"
-                          style={{ color: isActive(child.href) ? "var(--axis-orange)" : "var(--axis-gray)" }}
-                          onMouseEnter={(e) => { if (!isActive(child.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
-                          onMouseLeave={(e) => { if (!isActive(child.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                          aria-current={isActive(child.href) ? "page" : undefined}
+                          className={`block rounded-lg px-4 py-3 text-[15px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${
+                            isActive(child.href)
+                              ? "bg-[rgba(182,119,73,0.14)] text-[var(--axis-bronze-bright)]"
+                              : "text-[var(--axis-silver)] hover:bg-white/[0.08] hover:text-[var(--axis-white)]"
+                          }`}
                         >
                           {t(child.labelKey)}
                         </Link>
@@ -299,12 +323,8 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm font-medium tracking-wide transition-colors duration-200"
-                  style={{
-                    color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-gray)",
-                  }}
-                  onMouseEnter={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-white)"; }}
-                  onMouseLeave={(e) => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+                  aria-current={isActive(link.href) ? "page" : undefined}
+                  className={navItem(isActive(link.href))}
                 >
                   {t(link.labelKey)}
                 </Link>
@@ -317,7 +337,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
               Телефон и Instagram — в подвале и мобильном меню (05.10.2026):
               номер корейский (+82), из СНГ по нему почти не звонят, а занимал
               он больше любой иконки. */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className={`${bp.desktop} items-center gap-4`}>
             <LanguageSwitcher />
 
             {/* Profile + Favorites + Cart — grouped together */}
@@ -356,7 +376,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
 
           {/* Mobile right: профиль, избранное, корзина, меню. Язык, Instagram,
               телефон и заявка — внутри меню ☰. */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className={`${bp.mobile} items-center gap-2`}>
             <div className="flex items-center gap-1.5">
                 <ProfileButton lang={lang} small />
                 <FavButton count={favTotal} open={isFavOpen} onClick={() => setIsFavOpen((v) => !v)} label={favText(lang).title} small />
@@ -397,7 +417,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
 
       {/* Mobile fullscreen overlay */}
       <div
-        className={`fixed inset-0 z-[60] backdrop-blur-xl transition-transform duration-300 lg:hidden ${
+        className={`fixed inset-0 z-[60] backdrop-blur-xl transition-transform duration-300 ${bp.mobileOnly} ${
           isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
         style={{
