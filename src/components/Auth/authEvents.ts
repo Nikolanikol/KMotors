@@ -36,3 +36,21 @@ export function hasSessionCookie(): boolean {
   if (typeof document === "undefined") return false;
   return /(?:^|;\s*)sb-[^=]+-auth-token(?:\.\d+)?=/.test(document.cookie);
 }
+
+/**
+ * Сообщить серверу о входе — менеджеру уйдёт уведомление о регистрации
+ * (src/lib/signupNotify.ts). Звать после КАЖДОГО удачного входа или регистрации
+ * по email: и окно входа (AuthModal), и страница /auth. Сервер сам отсекает
+ * старые аккаунты и повторы, поэтому лишний вызов безвреден, а пропущенный —
+ * потерянный лид: так страница /auth с первого дня регистрировала людей мимо
+ * Telegram (найдено 05.10.2026 по пустой метке signup_source в auth.users).
+ * Не ждём ответа: keepalive доставит запрос и после перехода на другую страницу.
+ */
+export function reportSignIn(method: "email" | "google") {
+  fetch("/api/auth/signup-notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ method, path: `${location.pathname}${location.search}`, title: document.title }),
+    keepalive: true,
+  }).catch(() => {});
+}
