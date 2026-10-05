@@ -23,6 +23,9 @@ const LABELS: Record<string, Record<string, string>> = {
     password: "Пароль",
     passwordPlaceholder: "Минимум 6 символов",
     name: "Имя",
+    phone: "Телефон",
+    phonePlaceholder: "+7 999 000 00 00",
+    errorPhone: "Укажите телефон — по нему менеджер свяжется с вами",
     namePlaceholder: "Как к вам обращаться",
     nameHint: "необязательно",
     noAccount: "Нет аккаунта?",
@@ -57,6 +60,9 @@ const LABELS: Record<string, Record<string, string>> = {
     password: "Password",
     passwordPlaceholder: "At least 6 characters",
     name: "Name",
+    phone: "Phone",
+    phonePlaceholder: "+1 555 000 0000",
+    errorPhone: "Enter your phone number — our manager will contact you on it",
     namePlaceholder: "What should we call you",
     nameHint: "optional",
     noAccount: "Don't have an account?",
@@ -91,6 +97,9 @@ const LABELS: Record<string, Record<string, string>> = {
     password: "비밀번호",
     passwordPlaceholder: "6자 이상",
     name: "이름",
+    phone: "전화번호",
+    phonePlaceholder: "+82 10 0000 0000",
+    errorPhone: "전화번호를 입력하세요",
     namePlaceholder: "이름을 입력하세요",
     nameHint: "선택 사항",
     noAccount: "계정이 없으신가요?",
@@ -125,6 +134,9 @@ const LABELS: Record<string, Record<string, string>> = {
     password: "პაროლი",
     passwordPlaceholder: "მინიმუმ 6 სიმბოლო",
     name: "სახელი",
+    phone: "ტელეფონი",
+    phonePlaceholder: "+995 500 00 00 00",
+    errorPhone: "მიუთითეთ ტელეფონის ნომერი",
     namePlaceholder: "თქვენი სახელი",
     nameHint: "სურვილისამებრ",
     noAccount: "არ გაქვთ ანგარიში?",
@@ -159,6 +171,9 @@ const LABELS: Record<string, Record<string, string>> = {
     password: "كلمة المرور",
     passwordPlaceholder: "6 أحرف على الأقل",
     name: "الاسم",
+    phone: "الهاتف",
+    phonePlaceholder: "+971 50 000 0000",
+    errorPhone: "أدخل رقم هاتفك",
     namePlaceholder: "اسمك",
     nameHint: "اختياري",
     noAccount: "ليس لديك حساب؟",
@@ -197,6 +212,7 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -222,10 +238,13 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
         router.refresh();
       } else if (mode === "register") {
         if (password.length < 6) { setError(l.errorWeak); return; }
+        // Телефон обязателен, как в окне входа: регистрация — это лид, и
+        // менеджеру нужно, кому писать (решение владельца 05.10.2026).
+        if (phone.replace(/\D/g, "").length < 7) { setError(l.errorPhone); return; }
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name: name.trim() || null, preferred_lang: lang, signup_source: "auth_page" } },
+          options: { data: { name: name.trim() || null, preferred_lang: lang, phone: phone.trim(), signup_source: "auth_page" } },
         });
         if (error) {
           setError(error.message.includes("already registered") ? l.errorEmail : error.message);
@@ -353,6 +372,24 @@ export default function AuthForm({ lang, initialMode, from }: Props) {
               onChange={(e) => setName(e.target.value)}
               placeholder={l.namePlaceholder}
               autoComplete="name"
+              className={inputCls}
+            />
+          </div>
+        )}
+
+        {/* Телефон — только регистрация, обязателен (см. handleSubmit) */}
+        {mode === "register" && (
+          <div>
+            <label className="block text-sm font-medium text-[var(--axis-silver)] mb-1">
+              {l.phone}
+            </label>
+            <input
+              type="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={l.phonePlaceholder}
+              autoComplete="tel"
               className={inputCls}
             />
           </div>
