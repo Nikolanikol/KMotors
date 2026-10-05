@@ -11,6 +11,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { navStart } from "@/lib/navStatus";
 
 /**
  * Подписи приходят пропом по той же причине, что у карточки: фильтры стоят и
@@ -120,6 +121,7 @@ export default function LotFilters({
       else next.set(k, v);
     }
     next.delete("page");
+    navStart(`?${next.toString()}`);
     startTransition(() => router.push(`?${next.toString()}`, { scroll: false }));
   };
 

@@ -1,6 +1,9 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
+import { Suspense } from "react";
+
+import NavigationStatus from "@/components/NavigationStatus";
 
 // Общая оболочка <html>/<body> для всех корневых layout.
 //
@@ -89,6 +92,12 @@ export default function RootShell({
         />
       </head>
       <body className="min-h-screen flex flex-col mx-auto">
+        {/* Индикатор перехода на всех трёх корнях, включая админку. Suspense —
+            из-за useSearchParams: без него статические страницы при сборке
+            ушли бы в клиентский рендер целиком. */}
+        <Suspense fallback={null}>
+          <NavigationStatus />
+        </Suspense>
         {children}
 
         {/* GA4 — afterInteractive (нужен быстро для конверсий) */}

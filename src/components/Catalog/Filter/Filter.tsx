@@ -29,6 +29,7 @@ import {
 import MyFilterPrice from "./FilterComponents/MyFilterPrice";
 import MyFilterMileage from "./FilterComponents/MyFilterMileage";
 import MyFilterYear from "./FilterComponents/MyFilterYear";
+import { navStart } from "@/lib/navStatus";
 
 /*************  ✨ Windsurf Command ⭐  *************/
 
@@ -91,6 +92,7 @@ const Filter = ({}) => {
     saveHistory(trimmed);
     setCarNo(trimmed);
     const lang = i18n.language || "ru";
+    navStart(`/${lang}/catalog?carNo=${encodeURIComponent(trimmed)}&page=1`);
     startTransition(() => {
       router.push(`/${lang}/catalog?carNo=${encodeURIComponent(trimmed)}&page=1`);
     });
@@ -100,6 +102,7 @@ const Filter = ({}) => {
     setCarNo("");
     setCarNoError("");
     const lang = i18n.language || "ru";
+    navStart(`/${lang}/catalog?page=1`);
     startTransition(() => {
       router.push(`/${lang}/catalog?page=1`);
     });
@@ -133,10 +136,10 @@ const Filter = ({}) => {
   const handleAction = (value: string | null) => {
     if (value != null) {
       const lang = i18n.language || "ru";
+      const href = `/${lang}/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}&manufacture=%${manufacture}`;
+      navStart(href);
       startTransition(() => {
-        router.push(
-          `/${lang}/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}&manufacture=%${manufacture}`,
-        );
+        router.push(href);
       });
     }
   };
