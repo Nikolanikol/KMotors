@@ -21,6 +21,7 @@ export default function SimilarCars({
   krwToUsd,
   make,
   modelGroup,
+  priceLocked = false,
 }: {
   rows: CatalogRow[];
   lang: CardLang;
@@ -30,9 +31,11 @@ export default function SimilarCars({
   krwToUsd?: number;
   make: string | null;
   modelGroup: string | null;
+  /** Гость: вместо цен — замок. Сами цены страница уже вычистила из rows. */
+  priceLocked?: boolean;
 }) {
   if (!rows.length) return null;
-  const ctx = { lang, base: catalogBase, lotBase, krwToUsd };
+  const ctx = { lang, base: catalogBase, lotBase, krwToUsd, priceLocked };
   const all =
     make && modelGroup
       ? `${catalogBase}?${new URLSearchParams({ make, model: modelGroup }).toString()}`

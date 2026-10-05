@@ -12,6 +12,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCartCount } from "@/hooks/useCartCount";
 import { CartDrawer, CART_OPEN_EVENT } from "@/components/Cart/CartDrawer";
+import AuthModal from "@/components/Auth/AuthModal";
 import { FavoritesDrawer } from "@/components/Favorites/FavoritesDrawer";
 import { FAVORITES_OPEN_EVENT, favText } from "@/components/Favorites/favText";
 import { useAuctionFavorites } from "@/hooks/useAuctionFavorites";
@@ -453,6 +454,8 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
       </div>
 
       <FavoritesDrawer open={isFavOpen} onClose={closeFav} lang={lang} krwToUsd={krwToUsd} />
+      {/* Окно входа: открывается событием (openAuthModal), например из замка цены аукциона. */}
+      <AuthModal />
       <CartDrawer
         open={isCartOpen}
         onClose={closeCart}

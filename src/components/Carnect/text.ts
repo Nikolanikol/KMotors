@@ -181,6 +181,7 @@ export const T = {
 
   // ─── Мобильная плашка ───
   wantCar: ["Хочу эту машину", "I want this car"],
+  priceLockedShort: ["Цена после входа", "Sign in for price"],
 
   // ─── Состояния ───
   loading: ["Загружаем машину…", "Loading the car…"],

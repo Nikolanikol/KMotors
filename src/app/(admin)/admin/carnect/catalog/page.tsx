@@ -20,6 +20,8 @@ export default async function CarnectCatalog({ searchParams }: { searchParams: P
       lotBase="/admin/carnect"
       cached={false}
       showReason={service}
+      // Сюда пускают только админа (requireAdmin) — цены видны всегда.
+      signedIn
       intro={
         <header className="mb-4">
           <h1 className="text-xl font-semibold">Каталог аукционов</h1>

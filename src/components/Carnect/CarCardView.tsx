@@ -19,21 +19,21 @@ import type { ReactNode } from "react";
 
 import { ArrowLeftRight, Calendar, Car, Fuel, Gauge, Settings2 } from "lucide-react";
 
+import FunnelTracker from "@/components/analytics/FunnelTracker";
 import OverviewStrip from "@/components/Auction/OverviewStrip";
 import { SpecCard, SpecRows } from "@/components/Auction/SpecCard";
 import { yearWithAge } from "@/components/Auction/carAge";
+import PriceLock from "@/components/Auth/PriceLock";
 import Carousel from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import type { CarCard } from "@/lib/carnect/card";
 import { gradeInfo } from "@/lib/carnect/grades";
-import { kstIso } from "@/lib/carnect/time";
 import type { CardLang } from "@/lib/carnect/lang";
-
-import FunnelTracker from "@/components/analytics/FunnelTracker";
+import { kstIso } from "@/lib/carnect/time";
 import { waHref } from "@/lib/contact";
 
+import AuctionHeart from "./AuctionHeart";
 import BodyDiagram from "./BodyDiagram";
 import LotRequestCard from "./LotRequestCard";
-import AuctionHeart from "./AuctionHeart";
 import LotShare from "./LotShare";
 import LotStickyBar, { REQUEST_ANCHOR } from "./LotStickyBar";
 import LotTimer from "./LotTimer";
@@ -101,7 +101,17 @@ function mainPrice(card: CarCard, lang: CardLang): string {
   return won(lang, card.price.krw) ?? tx(lang, card.house === "heydealer" ? "byBidding" : "atAuction");
 }
 
-function PriceCard({ card, lang, krwToUsd }: { card: CarCard; lang: CardLang; krwToUsd?: number }) {
+function PriceCard({
+  card,
+  lang,
+  krwToUsd,
+  priceLocked,
+}: {
+  card: CarCard;
+  lang: CardLang;
+  krwToUsd?: number;
+  priceLocked: boolean;
+}) {
   const t = (k: TextKey) => tx(lang, k);
   const hey = card.house === "heydealer";
   return (
@@ -112,9 +122,14 @@ function PriceCard({ card, lang, krwToUsd }: { card: CarCard; lang: CardLang; kr
       <div className="mb-2 text-[11px] uppercase tracking-wide" style={{ color: "var(--axis-gray)" }}>
         {t(PRICE_LABEL[card.price.kind])}
       </div>
-      <div className="text-3xl font-bold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-        {mainPrice(card, lang)}
-      </div>
+      {/* Гостю — замок: цены в данных нет вовсе (страница вычистила card.price.krw). */}
+      {priceLocked ? (
+        <PriceLock lang={lang} className="mt-1" />
+      ) : (
+        <div className="text-3xl font-bold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
+          {mainPrice(card, lang)}
+        </div>
+      )}
       {/* Справка в $ — курс Кукмин-банка, как у Encar (text.ts, usd). */}
       {usd(lang, card.price.krw, krwToUsd) && (
         <div className="mt-0.5 text-base font-semibold" style={{ color: "var(--axis-gray)" }}>
@@ -200,17 +215,19 @@ function Side({
   lang,
   pageUrl,
   krwToUsd,
+  priceLocked,
 }: {
   card: CarCard;
   id: string;
   lang: CardLang;
   pageUrl?: string;
   krwToUsd?: number;
+  priceLocked: boolean;
 }) {
   return (
     <div className="space-y-4">
       <div data-track-block="price">
-        <PriceCard card={card} lang={lang} krwToUsd={krwToUsd} />
+        <PriceCard card={card} lang={lang} krwToUsd={krwToUsd} priceLocked={priceLocked} />
       </div>
       <LotRequestCard
         carId={`${card.house}/${id}`}
@@ -237,6 +254,7 @@ export default function CarCardView({
   withHeader = false,
   krwToUsd,
   similar,
+  priceLocked = false,
 }: {
   card: CarCard;
   backHref: string;
@@ -253,6 +271,12 @@ export default function CarCardView({
   krwToUsd?: number;
   /** Блок «Похожие машины» (SimilarCars) — внизу, перед звуком двигателя. */
   similar?: ReactNode;
+  /**
+   * Гость на витрине: вместо цены — замок «войдите, чтобы увидеть цену».
+   * Саму цену маршрут уже вычистил из card (см. страницу лота), флаг только
+   * рисует. Админка не передаёт — там false.
+   */
+  priceLocked?: boolean;
 }) {
   const t = (k: TextKey) => tx(lang, k);
   const n = (v: number | null | undefined) => (v == null ? null : fmt(lang, v));
@@ -358,7 +382,7 @@ export default function CarCardView({
             {/* Цена на узком экране — сразу под фото, как у карточки Encar. */}
             {/* id — цель мобильной плашки: её кнопка прокручивает сюда. */}
             <div className="scroll-mt-24 lg:hidden" id={REQUEST_ANCHOR}>
-              <Side card={card} id={id} lang={lang} pageUrl={pageUrl} krwToUsd={krwToUsd} />
+              <Side card={card} id={id} lang={lang} pageUrl={pageUrl} krwToUsd={krwToUsd} priceLocked={priceLocked} />
             </div>
 
             <OverviewStrip
@@ -598,7 +622,7 @@ export default function CarCardView({
 
           {/* ─── Правая колонка: цена и заявка (липкая) ─── */}
           <div className="hidden h-fit min-w-0 lg:sticky lg:top-6 lg:block">
-            <Side card={card} id={id} lang={lang} pageUrl={pageUrl} krwToUsd={krwToUsd} />
+            <Side card={card} id={id} lang={lang} pageUrl={pageUrl} krwToUsd={krwToUsd} priceLocked={priceLocked} />
           </div>
         </div>
 
@@ -618,7 +642,7 @@ export default function CarCardView({
         {/* Место под мобильную плашку: иначе она закрывает низ страницы. */}
         <div className="h-20 lg:hidden" aria-hidden />
         <LotStickyBar
-          price={mainPrice(card, lang)}
+          price={priceLocked ? t("priceLockedShort") : mainPrice(card, lang)}
           priceUsd={usd(lang, card.price.krw, krwToUsd)}
           label={t("wantCar")}
           waHref={waHref(`${t("wantCar")}: ${card.title} (${lotRefOf(card, id, lang)})${pageUrl ? ` — ${pageUrl}` : ""}`)}

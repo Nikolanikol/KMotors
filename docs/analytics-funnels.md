@@ -59,6 +59,13 @@ GA4: `G-ZMRTQCD8SF` (подключён в `src/app/RootShell.tsx`). Все со
 drawer) → `begin_checkout` → `generate_lead` (`source=parts_cart`). Ветка пустого поиска:
 `search_no_results` → `no_results_request` / `no_results_messenger`.
 
+### Регистрация ради цены (`section = auction`)
+
+`price_gate_view` (гость увидел замок, `reason`: price / price_filter) → `price_gate_click`
+→ `auth_modal_open` → `sign_up` (`method` email / google, `reason`) или `login`.
+`login_start` — ушёл на Google (вернётся уже вошедшим). `sign_up` с `confirmed: false` —
+Supabase требует подтвердить email, человек ещё не внутри.
+
 ### Калькулятор (`section = calculator`)
 
 `calc_view` (`country`) → `calc_input` (первое изменение, `field`) → `calc_engaged`
