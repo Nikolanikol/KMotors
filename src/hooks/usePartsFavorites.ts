@@ -6,6 +6,11 @@ import { trackEvent } from "@/utils/gtag";
 const STORAGE_KEY = "kmotors_parts_favorites";
 const SYNC_EVENT = "kmotors_parts_favorites_sync";
 
+/**
+ * Запчасть в избранном (ключ kmotors_parts_favorites). image_url здесь уже
+ * «чистый» (карточка товара сохраняет его после withCleanImage); показывать всё
+ * равно через resolvePartImage — правило CLAUDE.md про картинки запчастей.
+ */
 export interface FavoritePart {
   id: number;
   name_ru: string;
@@ -51,6 +56,8 @@ export function usePartsFavorites() {
     const exists = prev.some((f) => f.id === part.id);
     const next = exists ? prev.filter((f) => f.id !== part.id) : [...prev, part];
     writeStorage(next);
+    // Стандартное имя GA4, общее с избранным машин (было add_to_parts_favorites,
+    // переименовано 05.10.2026 ради единой воронки). Раздел ставит trackEvent.
     trackEvent(exists ? "remove_from_wishlist" : "add_to_wishlist", {
       part_id: part.id,
       part_number: part.part_number,

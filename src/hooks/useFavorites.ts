@@ -6,6 +6,15 @@ import { trackEvent } from "@/utils/gtag";
 const STORAGE_KEY = "kmotors_favorites";
 const SYNC_EVENT = "kmotors_favorites_sync";
 
+/**
+ * Машина Encar в избранном (ключ kmotors_favorites). Её читают панель избранного
+ * в шапке (FavoritesDrawer), страница /favorites и сравнение /compare.
+ *
+ * ⚠️ Поля объявлены строками, но Encar отдаёт год, пробег и цену ЧИСЛАМИ, и в
+ * старых записях они числами и лежат. Читая запись, приводить через String():
+ * year.slice на числе бросает TypeError (так ♥ не работал 05.10.2026).
+ * price — в 만원, как в листинге; в воны и со сбором — formatCarKrw (carPricing.ts).
+ */
 export interface FavoriteCar {
   id: string;
   photo: string;
@@ -61,6 +70,8 @@ export function useFavorites() {
     const exists = prev.some((f) => f.id === car.id);
     const next = exists ? prev.filter((f) => f.id !== car.id) : [...prev, car];
     writeStorage(next);
+    // Имя события — стандартное GA4 и одно на все три хранилища избранного
+    // (Encar, аукцион, запчасти); раздел (section) trackEvent ставит сам.
     trackEvent(exists ? "remove_from_wishlist" : "add_to_wishlist", {
       car_id: car.id,
       car_name: `${car.manufacture} ${car.model} ${car.year}`,

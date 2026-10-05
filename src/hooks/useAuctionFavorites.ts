@@ -81,6 +81,7 @@ export function useAuctionFavorites() {
     // Новые сверху: в панели последним сохранённое ищут первым.
     const next = exists ? prev.filter((f) => f.key !== lot.key) : [{ ...lot, savedAt: Date.now() }, ...prev];
     write(next);
+    // Стандартное имя GA4, общее с избранным Encar и запчастей. Раздел ставит trackEvent.
     trackEvent(exists ? "remove_from_wishlist" : "add_to_wishlist", {
       car_id: lot.key,
       car_name: lot.title,
