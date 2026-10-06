@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { notifyAccountVisit } from "@/lib/signupNotify";
 import AccountClient from "./AccountClient";
 import type { Metadata } from "next";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
@@ -29,6 +31,10 @@ export default async function AccountPage({ params }: Props) {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/${lang}/auth?mode=login&from=/${lang}/account`);
+
+  // Вход в кабинет — менеджеру в Telegram (src/lib/signupNotify.ts). after():
+  // отправка идёт ПОСЛЕ ответа, кабинет не ждёт Telegram и не падает из-за него.
+  after(() => notifyAccountVisit(user));
 
   // Загружаем профиль
   const { data: profile } = await supabase

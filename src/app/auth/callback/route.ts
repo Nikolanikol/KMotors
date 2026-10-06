@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       // Дубли и старые аккаунты отсекает notifySignup (src/lib/signupNotify.ts).
       if (data.user) {
         const method = data.user.app_metadata?.provider === "google" ? "google" : "email";
-        await notifySignup(supabase, data.user, { method, path: next });
+        await notifySignup(data.user, { method, path: next });
       }
       return NextResponse.redirect(`${siteUrl}${next}`);
     }

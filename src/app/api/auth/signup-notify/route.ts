@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   if (error || !data.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = (await req.json().catch(() => ({}))) as { path?: string; title?: string; method?: string };
-  const result = await notifySignup(supabase, data.user, {
+  const result = await notifySignup(data.user, {
     method: body.method === "google" ? "google" : "email",
     path: body.path,
     title: body.title,
