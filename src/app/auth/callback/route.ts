@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { notifySignup } from "@/lib/signupNotify";
+import { tagUserSite } from "@/lib/userSite";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       // Дубли и старые аккаунты отсекает notifySignup (src/lib/signupNotify.ts).
       if (data.user) {
         const method = data.user.app_metadata?.provider === "google" ? "google" : "email";
-        await notifySignup(supabase, data.user, { method, path: next });
+        await Promise.all([notifySignup(data.user, { method, path: next }), tagUserSite(data.user)]);
       }
       return NextResponse.redirect(`${siteUrl}${next}`);
     }
