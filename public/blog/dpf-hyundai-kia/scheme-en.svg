@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" font-family="Inter, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8A8A8A"/>
+    </marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#C88858"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" rx="24" fill="#141414"/>
+
+  <text x="48" y="62" fill="#F5F0EB" font-size="28" font-weight="700">Hyundai / Kia diesel exhaust aftertreatment</text>
+  <text x="48" y="94" fill="#8A8A8A" font-size="18">Gas flows left to right. Bronze — what clogs; circles — sensors.</text>
+
+  <!-- EGR -->
+  <rect x="48" y="138" width="220" height="64" rx="12" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="158" y="166" fill="#F5F0EB" font-size="17" font-weight="600" text-anchor="middle">EGR valve and</text>
+  <text x="158" y="188" fill="#C0C0C0" font-size="17" text-anchor="middle">cooler</text>
+  <path d="M245 300 C 300 300, 300 230, 245 202" fill="none" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <path d="M70 202 C 40 230, 40 270, 60 288" fill="none" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="300" y="250" fill="#8A8A8A" font-size="15">part of the gas</text>
+  <text x="300" y="270" fill="#8A8A8A" font-size="15">returns to intake</text>
+
+  <!-- main line -->
+  <rect x="48" y="290" width="200" height="96" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="148" y="332" fill="#F5F0EB" font-size="20" font-weight="700" text-anchor="middle">Engine</text>
+  <text x="148" y="358" fill="#C0C0C0" font-size="15" text-anchor="middle">R 2.0/2.2 · U 1.6</text>
+
+  <line x1="248" y1="338" x2="318" y2="338" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="320" y="290" width="160" height="96" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="400" y="332" fill="#F5F0EB" font-size="20" font-weight="700" text-anchor="middle">Turbo</text>
+  <text x="400" y="358" fill="#C0C0C0" font-size="15" text-anchor="middle">with actuator</text>
+
+  <line x1="480" y1="338" x2="548" y2="338" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="550" y="290" width="190" height="96" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="645" y="326" fill="#F5F0EB" font-size="18" font-weight="700" text-anchor="middle">Diesel oxidation</text>
+  <text x="645" y="350" fill="#F5F0EB" font-size="18" font-weight="700" text-anchor="middle">catalyst</text>
+  <text x="645" y="372" fill="#C0C0C0" font-size="14" text-anchor="middle">DOC — heats the gas</text>
+
+  <line x1="740" y1="338" x2="808" y2="338" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="810" y="282" width="190" height="112" rx="14" fill="rgba(182,119,73,0.16)" stroke="#B67749" stroke-width="2.5"/>
+  <text x="905" y="326" fill="#C88858" font-size="20" font-weight="700" text-anchor="middle">Particulate</text>
+  <text x="905" y="350" fill="#C88858" font-size="20" font-weight="700" text-anchor="middle">filter</text>
+  <text x="905" y="374" fill="#C0C0C0" font-size="14" text-anchor="middle">CPF / DPF</text>
+
+  <line x1="1000" y1="338" x2="1038" y2="338" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="1040" y="290" width="120" height="96" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.18)" stroke-dasharray="6 5"/>
+  <text x="1100" y="330" fill="#F5F0EB" font-size="17" font-weight="700" text-anchor="middle">SCR</text>
+  <text x="1100" y="352" fill="#C0C0C0" font-size="13" text-anchor="middle">urea,</text>
+  <text x="1100" y="370" fill="#C0C0C0" font-size="13" text-anchor="middle">newer engines</text>
+
+  <!-- differential pressure sensor -->
+  <rect x="790" y="150" width="230" height="70" rx="12" fill="#1E1E1E" stroke="#B67749" stroke-width="1.5"/>
+  <text x="905" y="180" fill="#F5F0EB" font-size="17" font-weight="600" text-anchor="middle">Differential</text>
+  <text x="905" y="204" fill="#F5F0EB" font-size="17" font-weight="600" text-anchor="middle">pressure sensor</text>
+  <path d="M830 220 L830 250 L790 250 L790 320" fill="none" stroke="#C88858" stroke-width="2.5" stroke-dasharray="7 5"/>
+  <path d="M980 220 L980 250 L1022 250 L1022 320" fill="none" stroke="#C88858" stroke-width="2.5" stroke-dasharray="7 5"/>
+  <circle cx="790" cy="320" r="6" fill="#C88858"/>
+  <circle cx="1022" cy="320" r="6" fill="#C88858"/>
+  <text x="1030" y="176" fill="#C0C0C0" font-size="14">tubes: before</text>
+  <text x="1030" y="196" fill="#C0C0C0" font-size="14">and after filter</text>
+
+  <!-- sensors -->
+  <circle cx="515" cy="338" r="11" fill="#141414" stroke="#C88858" stroke-width="3"/>
+  <circle cx="775" cy="338" r="11" fill="#141414" stroke="#C88858" stroke-width="3"/>
+  <circle cx="1020" cy="372" r="11" fill="#141414" stroke="#C88858" stroke-width="3"/>
+  <line x1="515" y1="350" x2="515" y2="440" stroke="#4A4A4A" stroke-width="1.5"/>
+  <line x1="775" y1="350" x2="775" y2="440" stroke="#4A4A4A" stroke-width="1.5"/>
+  <line x1="1020" y1="384" x2="1020" y2="500" stroke="#4A4A4A" stroke-width="1.5"/>
+  <text x="515" y="466" fill="#C0C0C0" font-size="15" text-anchor="middle">temperature</text>
+  <text x="515" y="486" fill="#C0C0C0" font-size="15" text-anchor="middle">sensor</text>
+  <text x="775" y="466" fill="#C0C0C0" font-size="15" text-anchor="middle">temperature</text>
+  <text x="775" y="486" fill="#C0C0C0" font-size="15" text-anchor="middle">sensor</text>
+  <text x="1020" y="526" fill="#C0C0C0" font-size="15" text-anchor="middle">soot (PM) sensor</text>
+  <text x="1020" y="546" fill="#8A8A8A" font-size="13" text-anchor="middle">Euro 6</text>
+
+  <text x="48" y="560" fill="#8A8A8A" font-size="14">Simplified. Parts vary by engine and year: Euro 5 has no PM sensor and no SCR.</text>
+</svg>
