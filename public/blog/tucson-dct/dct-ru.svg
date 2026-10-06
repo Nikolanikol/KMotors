@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="Inter, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8A8A8A"/></marker>
+  </defs>
+  <rect width="1200" height="720" rx="24" fill="#141414"/>
+  <text x="48" y="62" fill="#F5F0EB" font-size="28" font-weight="700">Как работает робот DCT</text>
+  <text x="48" y="94" fill="#8A8A8A" font-size="18">Две коробки в одной: нечётные передачи на одном валу, чётные — на другом.</text>
+
+  <!-- engine -->
+  <rect x="48" y="200" width="150" height="150" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="123" y="270" fill="#F5F0EB" font-size="20" font-weight="700" text-anchor="middle">Двигатель</text>
+  <line x1="198" y1="275" x2="258" y2="275" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- clutches -->
+  <rect x="260" y="160" width="170" height="100" rx="14" fill="rgba(182,119,73,0.16)" stroke="#B67749" stroke-width="2.5"/>
+  <text x="345" y="202" fill="#C88858" font-size="20" font-weight="700" text-anchor="middle">Сцепление 1</text>
+  <text x="345" y="228" fill="#C0C0C0" font-size="15" text-anchor="middle">замкнуто — едем</text>
+  <rect x="260" y="290" width="170" height="100" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="345" y="332" fill="#F5F0EB" font-size="20" font-weight="700" text-anchor="middle">Сцепление 2</text>
+  <text x="345" y="358" fill="#C0C0C0" font-size="15" text-anchor="middle">разомкнуто — ждёт</text>
+
+  <!-- shafts -->
+  <line x1="430" y1="210" x2="498" y2="210" stroke="#C88858" stroke-width="3" marker-end="url(#a)"/>
+  <line x1="430" y1="340" x2="498" y2="340" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="500" y="170" width="380" height="80" rx="14" fill="#1E1E1E" stroke="#B67749" stroke-width="2"/>
+  <text x="520" y="203" fill="#F5F0EB" font-size="18" font-weight="600">Вал 1 — нечётные</text>
+  <g font-size="18" font-weight="700" text-anchor="middle">
+    <circle cx="560" cy="228" r="16" fill="#9D5E34"/><text x="560" y="234" fill="#fff">1</text>
+    <circle cx="610" cy="228" r="16" fill="#1E1E1E" stroke="#4A4A4A"/><text x="610" y="234" fill="#C0C0C0">3</text>
+    <circle cx="660" cy="228" r="16" fill="#1E1E1E" stroke="#4A4A4A"/><text x="660" y="234" fill="#C0C0C0">5</text>
+    <circle cx="710" cy="228" r="16" fill="#1E1E1E" stroke="#4A4A4A"/><text x="710" y="234" fill="#C0C0C0">7</text>
+  </g>
+  <text x="745" y="234" fill="#C88858" font-size="15">← включена</text>
+  <rect x="500" y="300" width="380" height="80" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="520" y="333" fill="#F5F0EB" font-size="18" font-weight="600">Вал 2 — чётные</text>
+  <g font-size="18" font-weight="700" text-anchor="middle">
+    <circle cx="560" cy="358" r="16" fill="#1E1E1E" stroke="#C88858" stroke-width="2.5" stroke-dasharray="4 3"/><text x="560" y="364" fill="#C88858">2</text>
+    <circle cx="610" cy="358" r="16" fill="#1E1E1E" stroke="#4A4A4A"/><text x="610" y="364" fill="#C0C0C0">4</text>
+    <circle cx="660" cy="358" r="16" fill="#1E1E1E" stroke="#4A4A4A"/><text x="660" y="364" fill="#C0C0C0">6</text>
+    <circle cx="710" cy="358" r="16" fill="#1E1E1E" stroke="#4A4A4A"/><text x="710" y="364" fill="#C0C0C0">R</text>
+  </g>
+  <text x="745" y="364" fill="#C88858" font-size="15">← уже выбрана</text>
+
+  <line x1="880" y1="210" x2="938" y2="262" stroke="#C88858" stroke-width="3" marker-end="url(#a)"/>
+  <line x1="880" y1="340" x2="938" y2="290" stroke="#8A8A8A" stroke-width="2.5" marker-end="url(#a)"/>
+  <rect x="940" y="225" width="212" height="100" rx="14" fill="#1E1E1E" stroke="rgba(255,255,255,0.12)"/>
+  <text x="1046" y="268" fill="#F5F0EB" font-size="20" font-weight="700" text-anchor="middle">К колёсам</text>
+  <text x="1046" y="294" fill="#C0C0C0" font-size="15" text-anchor="middle">общий выход</text>
+
+  <text x="48" y="440" fill="#C0C0C0" font-size="17">Переключение 1 → 2: сцепление 1 размыкается, сцепление 2 замыкается — за доли секунды, без разрыва тяги.</text>
+
+  <!-- dry vs wet -->
+  <rect x="48" y="480" width="540" height="190" rx="16" fill="rgba(229,72,77,0.07)" stroke="rgba(229,72,77,0.35)"/>
+  <text x="72" y="520" fill="#F5F0EB" font-size="21" font-weight="700">Сухой 7DCT</text>
+  <text x="72" y="552" fill="#C0C0C0" font-size="16">Диски работают на воздухе. В пробке и на подъёме</text>
+  <text x="72" y="576" fill="#C0C0C0" font-size="16">греются и изнашиваются быстрее всего.</text>
+  <text x="72" y="616" fill="#8A8A8A" font-size="15">Tucson TL и NX4, Sportage QL и NQ5, K5 JF —</text>
+  <text x="72" y="640" fill="#8A8A8A" font-size="15">бензин 1.6 турбо и дизели 1.6 / 1.7</text>
+  <rect x="612" y="480" width="540" height="190" rx="16" fill="rgba(182,119,73,0.08)" stroke="rgba(182,119,73,0.4)"/>
+  <text x="636" y="520" fill="#F5F0EB" font-size="21" font-weight="700">Мокрый 8DCT</text>
+  <text x="636" y="552" fill="#C0C0C0" font-size="16">Диски в масле: оно их охлаждает. Держит</text>
+  <text x="636" y="576" fill="#C0C0C0" font-size="16">больше нагрузки и меньше боится пробок.</text>
+  <text x="636" y="616" fill="#8A8A8A" font-size="15">Santa Fe 2.5 турбо, Sonata N Line,</text>
+  <text x="636" y="640" fill="#8A8A8A" font-size="15">Avante N</text>
+</svg>
