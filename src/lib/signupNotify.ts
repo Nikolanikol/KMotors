@@ -20,6 +20,7 @@
 import type { User } from "@supabase/supabase-js";
 
 import { createServerClient as createAdminClient } from "@/lib/supabase";
+import { tagUserSite } from "@/lib/userSite";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
 /** Неделя: письмо подтверждения могут открыть не сразу. */
@@ -164,6 +165,7 @@ const VISIT_COOLDOWN_MS = 6 * 3600 * 1000;
  * которую колбэк потерял, приходит здесь при первом заходе в кабинет.
  */
 export async function notifyAccountVisit(user: User): Promise<void> {
+  await tagUserSite(user); // открыл кабинет на нашем сайте — значит наш
   try {
     const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
     if (!meta.signup_notified && Date.now() - Date.parse(user.created_at) <= NEW_ACCOUNT_MS) {

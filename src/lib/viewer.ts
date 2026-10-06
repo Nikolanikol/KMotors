@@ -11,7 +11,10 @@
 // Не бросает: Supabase лёг — считаем гостем. Страница важнее цены.
 
 import { isServiceHost } from "@/lib/serviceHost";
+import { after } from "next/server";
+
 import { createClient } from "@/lib/supabase/server";
+import { hasSiteTag, tagUserSite } from "@/lib/userSite";
 
 export interface Viewer {
   id: string;
@@ -23,6 +26,10 @@ export async function getViewer(): Promise<Viewer | null> {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) return null;
+    // Давние пользователи без метки сайта получают её здесь: страницы аукциона
+    // проверяют вход на каждый показ. После ответа и один раз на человека.
+    const user = data.user;
+    if (!hasSiteTag(user)) after(() => tagUserSite(user));
     return { id: data.user.id, email: data.user.email ?? null };
   } catch (e) {
     console.error("[viewer] проверка входа не удалась:", e instanceof Error ? e.message : e);
