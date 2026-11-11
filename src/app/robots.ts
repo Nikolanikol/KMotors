@@ -12,7 +12,10 @@ export default function robots(): MetadataRoute.Robots {
         // Google должен это увидеть, чтобы навсегда выкинуть URL из индекса
         // /*/auction/lot/ — страницы машин аукционов: noindex, живут дни, а
         // каждый обход ботом — это запрос к carnect (docs/carnect.md).
-        disallow: ["/admin", "/admin/", "/api/", "/cdn-cgi/", "/*/auction/lot/"],
+        // /*/auction? — витрина с фильтрами: бесконечный перебор комбинаций,
+        // каждая — промах кеша и вызов carnect_search. Боты-нарушители всё
+        // равно получат 403 в middleware.
+        disallow: ["/admin", "/admin/", "/api/", "/cdn-cgi/", "/*/auction/lot/", "/*/auction?"],
       },
     ],
     // sitemap.xml is the master index — it includes all sub-sitemaps

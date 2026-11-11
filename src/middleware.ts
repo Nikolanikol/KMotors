@@ -149,6 +149,16 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   return response;
 }
 
+// Витрина аукциона без подпутей: /auction, /ru/auction. Лоты (/auction/lot/…)
+// закрыты в robots.ts, /auction/lotte и /auction/sk только редиректят.
+const AUCTION_SHOWCASE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?auction\/?$/;
+
+// Сборщики превью ссылок: isbot считает их ботами, но это один запрос на одну
+// присланную человеком ссылку, а не обход. meta-externalagent сюда НЕ входит —
+// это краулер Meta для ИИ, превью Facebook/Instagram ходят как facebookexternalhit.
+const LINK_PREVIEW_BOT =
+  /TelegramBot|WhatsApp|facebookexternalhit|Facebot|Twitterbot|Slackbot|Discordbot|LinkedInBot|vkShare|Viber|SkypeUriPreview/i;
+
 async function handle(request: NextRequest, event: NextFetchEvent) {
   const ua = request.headers.get("user-agent") || "";
 
@@ -206,6 +216,29 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
   if (path === "/robots.txt" && !isCanonicalHost(request)) {
     return new NextResponse("User-agent: *\nDisallow: /\n", {
       headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  // --- Боты на витрине аукциона с фильтрами: 403 до рендера ---
+  // Замер 11.11.2026: GPTBot, PerplexityBot, meta-externalagent, SemrushBot
+  // перебирали /{lang}/auction?make=…&page=… — ~6.5 рендеров/с круглосуточно,
+  // каждый — промах кеша (ключ «фильтр + страница» у них всегда новый) и вызов
+  // carnect_search (131 мс), одно ядро базы занято постоянно. Страница и так
+  // noindex/nofollow — ботам с параметрами там делать нечего. Голую /auction
+  // не трогаем (кешируется), остальной сайт — тоже: GPTBot/Perplexity приводят
+  // покупателей запчастей.
+  // Превью ссылок в мессенджерах (LINK_PREVIEW_BOT) пропускаем: они приходят
+  // по одному запросу на присланную ссылку, а без них менеджер, скинувший
+  // клиенту витрину с фильтром, получил бы голую ссылку без карточки.
+  if (
+    request.nextUrl.search &&
+    AUCTION_SHOWCASE.test(path) &&
+    isbot(ua) &&
+    !LINK_PREVIEW_BOT.test(ua)
+  ) {
+    return new NextResponse(null, {
+      status: 403,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
     });
   }
 
