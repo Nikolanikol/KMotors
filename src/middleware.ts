@@ -149,6 +149,16 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   return response;
 }
 
+// Витрина аукциона без подпутей: /auction, /ru/auction. Лоты (/auction/lot/…)
+// закрыты в robots.ts, /auction/lotte и /auction/sk только редиректят.
+const AUCTION_SHOWCASE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?auction\/?$/;
+
+// Сборщики превью ссылок: isbot считает их ботами, но это один запрос на одну
+// присланную человеком ссылку, а не обход. meta-externalagent сюда НЕ входит —
+// это краулер Meta для ИИ, превью Facebook/Instagram ходят как facebookexternalhit.
+const LINK_PREVIEW_BOT =
+  /TelegramBot|WhatsApp|facebookexternalhit|Facebot|Twitterbot|Slackbot|Discordbot|LinkedInBot|vkShare|Viber|SkypeUriPreview/i;
+
 async function handle(request: NextRequest, event: NextFetchEvent) {
   const ua = request.headers.get("user-agent") || "";
 
@@ -217,10 +227,14 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
   // noindex/nofollow — ботам с параметрами там делать нечего. Голую /auction
   // не трогаем (кешируется), остальной сайт — тоже: GPTBot/Perplexity приводят
   // покупателей запчастей.
+  // Превью ссылок в мессенджерах (LINK_PREVIEW_BOT) пропускаем: они приходят
+  // по одному запросу на присланную ссылку, а без них менеджер, скинувший
+  // клиенту витрину с фильтром, получил бы голую ссылку без карточки.
   if (
     request.nextUrl.search &&
-    /^\/(?:(?:ru|en|ka|ar|ko)\/)?auction\/?$/.test(path) &&
-    isbot(request.headers.get("user-agent") || "")
+    AUCTION_SHOWCASE.test(path) &&
+    isbot(ua) &&
+    !LINK_PREVIEW_BOT.test(ua)
   ) {
     return new NextResponse(null, {
       status: 403,
