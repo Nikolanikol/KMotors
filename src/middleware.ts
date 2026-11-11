@@ -209,6 +209,25 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
     });
   }
 
+  // --- Боты на витрине аукциона с фильтрами: 403 до рендера ---
+  // Замер 11.11.2026: GPTBot, PerplexityBot, meta-externalagent, SemrushBot
+  // перебирали /{lang}/auction?make=…&page=… — ~6.5 рендеров/с круглосуточно,
+  // каждый — промах кеша (ключ «фильтр + страница» у них всегда новый) и вызов
+  // carnect_search (131 мс), одно ядро базы занято постоянно. Страница и так
+  // noindex/nofollow — ботам с параметрами там делать нечего. Голую /auction
+  // не трогаем (кешируется), остальной сайт — тоже: GPTBot/Perplexity приводят
+  // покупателей запчастей.
+  if (
+    request.nextUrl.search &&
+    /^\/(?:(?:ru|en|ka|ar|ko)\/)?auction\/?$/.test(path) &&
+    isbot(request.headers.get("user-agent") || "")
+  ) {
+    return new NextResponse(null, {
+      status: 403,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    });
+  }
+
   // --- Пропускаем статику, API, sitemaps, файлы ---
   if (isExcluded(path)) {
     return NextResponse.next();
