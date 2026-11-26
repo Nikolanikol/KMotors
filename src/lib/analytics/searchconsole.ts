@@ -1,4 +1,4 @@
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
+import { SITE_URL } from "@/lib/site";
 
 // Кэш токена на время жизни процесса (сбрасывается при редеплое)
 let cachedToken: string | null = null;

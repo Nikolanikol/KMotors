@@ -9,6 +9,7 @@
 // fetchVehicleData, у которого есть запасной прокси, и этот обход достаётся карточке даром.
 import { fetchVehicleData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
+import { SITE_URL } from "@/lib/site";
 import { getFx } from "@/lib/fx";
 import { carPriceKrw, carPriceUsd } from "@/lib/carPricing";
 import { normalizeBrand } from "@/lib/carLabels";
@@ -218,7 +219,7 @@ export async function buildVehicleCard(id: string): Promise<VehicleCard | null> 
 
   return {
     id: String(v.vehicleId ?? id),
-    source: `https://www.kmotors.shop/en/catalog/${id}`,
+    source: `${SITE_URL}/en/catalog/${id}`,
     // Encar склеивает марку с историческим названием (ChevroletGMDaewoo) — чиним общим словарём
     brand: normalizeBrand(category.manufacturerEnglishName) || category.manufacturerEnglishName || "",
     model: category.modelGroupEnglishName || category.modelEnglishName || "",

@@ -20,9 +20,9 @@
 import type { User } from "@supabase/supabase-js";
 
 import { createServerClient as createAdminClient } from "@/lib/supabase";
+import { SITE_URL } from "@/lib/site";
 import { tagUserSite } from "@/lib/userSite";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
 /** Неделя: письмо подтверждения могут открыть не сразу. */
 const NEW_ACCOUNT_MS = 7 * 24 * 3600 * 1000;
 
@@ -121,7 +121,7 @@ export async function notifySignup(user: User, ctx: SignupContext): Promise<"sen
     const text = [
       `🆕 Регистрация на сайте${path?.includes("/auction") ? " — ради цены аукциона" : ""}`,
       ...lines,
-      path ? `🚗 Страница: ${title ? `${title}\n` : ""}${SITE}${path}` : null,
+      path ? `🚗 Страница: ${title ? `${title}\n` : ""}${SITE_URL}${path}` : null,
     ]
       .filter(Boolean)
       .join("\n");
@@ -140,7 +140,7 @@ export async function notifySignup(user: User, ctx: SignupContext): Promise<"sen
         // Пустая строка, а не null: у leads телефон заполнен у всех заявок, и
         // у Google-регистраций без телефона запись не должна упасть на NOT NULL.
         phone: phone || "",
-        message: [`Регистрация (${methodOf(user)})`, user.email, path && `${SITE}${path}`].filter(Boolean).join(" · "),
+        message: [`Регистрация (${methodOf(user)})`, user.email, path && `${SITE_URL}${path}`].filter(Boolean).join(" · "),
         source_page: "signup",
         site: "kmotors",
       });

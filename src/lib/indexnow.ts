@@ -3,8 +3,10 @@
 //
 // Ключ и хост совпадают с существующим /api/indexnow (ключ лежит в /{KEY}.txt).
 
+import { SITE_URL } from "@/lib/site";
+
 const KEY = "f0a070ba837a4a414a58457c67b26450";
-const HOST = "https://www.kmotors.shop";
+const HOST = SITE_URL;
 const ENDPOINT = "https://api.indexnow.org/indexnow";
 const BATCH = 10_000; // лимит IndexNow на один запрос
 
@@ -24,7 +26,7 @@ export async function submitIndexNow(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        host: "www.kmotors.shop",
+        host: new URL(SITE_URL).host,
         key: KEY,
         keyLocation: `${HOST}/${KEY}.txt`,
         urlList: chunk,

@@ -1,6 +1,7 @@
 // Клиент Encar для постера: поиск по фильтрам + детали/история/диагностика.
 // fetch (не axios) — конвенция KMotors. Детали авто берём через общий fetchVehicleData.
 import { fetchVehicleData } from '@/lib/vehicle';
+import { SITE_URL } from '@/lib/site';
 import type { Preset } from './config';
 
 const SEARCH = 'https://api.encar.com/search/car/list/premium';
@@ -168,5 +169,5 @@ export async function fetchDetail(id: string, photoLimit: number): Promise<Encar
 
 /** Ссылка на карточку авто в магазине KMotors (catalog/[id] рендерит любой encar id). */
 export function kmotorsUrl(id: string): string {
-  return `https://www.kmotors.shop/en/catalog/${id}`;
+  return `${SITE_URL}/en/catalog/${id}`;
 }

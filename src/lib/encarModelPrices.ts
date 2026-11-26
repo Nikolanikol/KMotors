@@ -3,6 +3,8 @@
 // Модели на encar именуются по-корейски (ModelGroup) — карта ниже собрана
 // из nav-фасетов encar для Hyundai/Kia/Genesis.
 
+import { encarToKrw } from "@/lib/carPricing";
+
 const MFR = { hyundai: "현대", kia: "기아", genesis: "제네시스" } as const;
 
 // Ключ — англ. название модели в нижнем регистре (без марки), значение —
@@ -142,7 +144,7 @@ export async function fetchEncarModelPrice(
     const prices = use.map((e) => e.price).sort((a, b) => a - b);
     if (prices.length < 3) return null;
 
-    const toUsd = (manwon: number) => Math.round((manwon * 10000) / krwPerUsd / 100) * 100;
+    const toUsd = (manwon: number) => Math.round(encarToKrw(manwon) / krwPerUsd / 100) * 100;
     const years = use.map((e) => e.year).filter((y) => y > 1990);
 
     return {
