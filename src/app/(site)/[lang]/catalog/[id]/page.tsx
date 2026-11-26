@@ -12,10 +12,10 @@ import { FC, Suspense } from "react";
 import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSection";
 import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { carPriceKrw, convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
-import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
+import CustomsDictionary from "@/components/I18nProvider/CustomsDictionary";
 import { makeAlternates } from "@/lib/seo";
 import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
@@ -138,9 +138,9 @@ export async function generateMetadata({
   // Цена в сниппете обязана совпадать с той, что человек увидит на странице,
   // иначе клик заканчивается разочарованием. Поэтому и цифра, и курс берутся
   // из тех же модулей, что питают карточку: carPricing (цена + стояночный
-  // сбор) и getCarRates (курс KB, по которому считается инвойс).
+  // сбор) и getFx("car") (курс KB, по которому считается инвойс).
   // Соц-краулерам курс не ждём: у них жёсткий таймаут на превью.
-  const rates = isSocialBot ? null : await getCarRates();
+  const rates = isSocialBot ? null : await getFx("car");
   const priceLabel = (() => {
     if (!krwPrice || !rates) return null;
     if (lang === "ru" && rates.krwToRub)
@@ -286,7 +286,7 @@ async function SoldCarPage({ lang, id }: { lang: string; id: string }) {
   const snapshot = await getCarSnapshot(id);
   const [similar, rates] = await Promise.all([
     getSimilarCars(snapshot),
-    getCarRates(),
+    getFx("car"),
   ]);
 
   // Имя собираем только из английских полей: если снимок пришёл из бэкфилла,
@@ -356,7 +356,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     .filter(Boolean)
     .join(" ");
   const carData = formatDate(data?.category?.yearMonth);
-  const rates = await getCarRates();
+  // Курс авто (KB) — для цены; таможенный (10 валют) — для виджета растаможки.
+  // Оба запроса идут через единый вход @/lib/fx и читаются из кеша данных Next.
+  const [rates, customsRates] = await Promise.all([
+    getFx("car"),
+    getFx("customs"),
+  ]);
   const mainPhoto = data?.photos?.[0]?.path
     ? `https://ci.encar.com${data.photos[0].path}`
     : null;
@@ -606,6 +611,8 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     >
       {/* Header и DetailInfo ниже переводят характеристики через словарь Encar */}
       <CarsDictionary lang={lang} />
+      {/* Тексты виджета растаможки и строк чека ядра — неймспейс customs */}
+      <CustomsDictionary lang={lang} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
@@ -638,6 +645,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 yearMonth={data?.category?.yearMonth || ""}
                 engineVolume={data?.spec?.displacement ?? 0}
                 fuelType={data?.spec?.fuelName}
+                rates={customsRates}
                 carId={id}
                 carName={fullCarName}
                 lang={lang}
@@ -775,14 +783,6 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
               krwToRub={rates.krwToRub}
               krwToUsd={rates.krwToUsd}
               lang={lang}
-              // ⚠️ Проп мёртвый: CarDetailSidebar импортирует CustomsCalculator,
-              // но не рендерит его, и priceKRW/yearMonth/engineVolume/fuelType
-              // внутри не читаются (lint: «defined but never used»). Оставлено
-              // как есть — чистка сайдбара к ценам отношения не имеет.
-              priceKRW={data?.advertisement?.price * 10000}
-              yearMonth={data?.category?.yearMonth}
-              engineVolume={data?.spec?.displacement ?? 0}
-              fuelType={data?.spec?.fuelName}
             />
           </div>
         </div>
