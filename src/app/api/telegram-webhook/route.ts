@@ -7,7 +7,7 @@ import { publishApproved } from "@/lib/seo-publish";
 import { getCarSnapshot } from "@/lib/carsSeen";
 import { deactivateAllForChat, deactivateOwn, saveSubscription } from "@/lib/savedSearches";
 import { normalizeBrand } from "@/lib/carLabels";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
       let soldPriceLine = "";
       if (soldSnapshot?.price_manwon) {
         const krw = carPriceKrw(soldSnapshot.price_manwon);
-        const { krwToUsd } = await getCarRates();
+        const { krwToUsd } = await getFx("car");
         soldPriceLine =
           ` — было ${krw.toLocaleString("ru-RU")} ₩` +
           ` (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`;

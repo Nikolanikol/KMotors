@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 import { getIndexableCategorySlugs } from "@/lib/partsCategories";
 import { PartsCatalogClient } from "./PartsCatalogClient";
 import type { Brand, Category, VehicleModel, ModelChip, Product } from "./PartsCatalogClient";
@@ -51,7 +51,7 @@ async function fetchCatalogData() {
       .select("*", { count: "exact", head: true })
       .then((r) => r.count ?? 0),
 
-    getCurrencyRates(),
+    getFx("market"),
 
     // SSR: first page of products for search engine indexing
     supabase

@@ -41,7 +41,7 @@ import {
   type SourceCount,
 } from "@/lib/carnect/query";
 
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { resizedImage } from "@/lib/remoteImage";
 
 import FunnelTracker from "@/components/analytics/FunnelTracker";
@@ -497,7 +497,7 @@ export default async function CatalogView({
   const pageRaw = Number(first(sp.page) || 1);
   const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
   // Курс читается из кеша данных (fetch с revalidate в kbFx.ts), а не из сети на запрос.
-  const [found, rates] = await Promise.all([(cached ? searchCatalogCached : searchCatalog)(filter, page), getCarRates()]);
+  const [found, rates] = await Promise.all([(cached ? searchCatalogCached : searchCatalog)(filter, page), getFx("car")]);
   // ⚠️ Цены вычищаются из строк ДО отрисовки: всё, что дальше уходит в
   // клиентские компоненты (♥ со снимком лота, таймер), сериализуется в
   // страницу, и цена в данных — это цена в «Просмотре кода».

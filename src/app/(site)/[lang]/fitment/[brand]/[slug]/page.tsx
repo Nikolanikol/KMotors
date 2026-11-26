@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 import { makeAlternates } from "@/lib/seo";
 import { generatePartSlug } from "@/utils/partSlug";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
@@ -161,7 +161,7 @@ export default async function FitmentPage({ params, searchParams }: Props) {
   const { lang, brand, slug } = await params;
   const { page: pageParam } = await searchParams;
 
-  const [v, { krwToUsd }] = await Promise.all([findVehicle(brand, slug), getCurrencyRates()]);
+  const [v, { krwToUsd }] = await Promise.all([findVehicle(brand, slug), getFx("market")]);
   if (!v) notFound();
 
   const supabase = createServerClient();

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import CalculatorPanel from "@/components/Customs/CalculatorPanel";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
-import { getRates } from "@/lib/customs/fx/getRates";
+import { getFx } from "@/lib/fx";
 import { customsText, hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { makeAlternates } from "@/lib/seo";
 
@@ -96,7 +96,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function CalculatorPage({ params }: Props) {
   const { lang } = await params;
-  const rates = await getRates();
+  const rates = await getFx("customs");
 
   const title = customsText(lang, "hub.meta.title");
   const description = customsText(lang, "hub.meta.description");

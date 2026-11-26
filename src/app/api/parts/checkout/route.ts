@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
 import { krwToDisplayUsd } from "@/lib/pricing";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 
 interface ShippingAddress {
   name: string;
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     // почти до нуля было можно. Даже без автоматической оплаты это расхождение:
     // менеджер видел сумму, посчитанную не по нашему курсу.
     // Клиентский курс остаётся только для показа цен в интерфейсе.
-    const { krwToUsd } = await getCurrencyRates();
+    const { krwToUsd } = await getFx("market");
 
     // ── Validation ───────────────────────────────────────────────────────────
     const ALLOWED_COUNTRIES = ["RU", "KZ", "GE", "AM", "KG", "UZ", "AZ", "AE", "SA", "QA", "KW", "BH", "OM"];

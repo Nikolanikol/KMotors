@@ -35,7 +35,7 @@ import LotState from "@/components/Carnect/LotState";
 import SimilarCars from "@/components/Carnect/SimilarCars";
 import { loadCard } from "@/lib/carnect/loadCard";
 import { getSimilar } from "@/lib/carnect/similar";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { canSeeAuctionPrices } from "@/lib/viewer";
 
 /** Ответ зависит от посетителя (цена только после входа) — см. шапку. */
@@ -59,7 +59,7 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
   const id = decodeURIComponent(rawLot);
   const back = `/${lang}/auction`;
 
-  const [res, rates, seesPrices] = await Promise.all([loadCard(house, id, LANG), getCarRates(), canSeeAuctionPrices()]);
+  const [res, rates, seesPrices] = await Promise.all([loadCard(house, id, LANG), getFx("car"), canSeeAuctionPrices()]);
   const priceLocked = !seesPrices;
   if (!res) notFound();
   if (res.status === "failed") throw new Error(`carnect ${house}/${id}: ${res.parser ? "parser" : "unavailable"}`);

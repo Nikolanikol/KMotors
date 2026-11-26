@@ -7,7 +7,7 @@ import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 
 export const revalidate = 86400;
 
@@ -73,7 +73,7 @@ export default async function ModelPage({ params }: Props) {
   //
   // Округление до $500: это диапазон «от и до», а не расчёт — «$26 103»
   // выглядел бы точностью, которой у ручной вилки нет.
-  const { rubToUsd } = await getCurrencyRates();
+  const { rubToUsd } = await getFx("market");
   const usdBadge = (thousandsRub: number) =>
     Math.round((thousandsRub * 1000 * rubToUsd) / 500) * 500;
 

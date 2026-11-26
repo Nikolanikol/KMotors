@@ -7,7 +7,7 @@ import FunnelTracker from "@/components/analytics/FunnelTracker";
 import CarCard from "./CarCard";
 import { Suspense } from "react";
 import { headers } from "next/headers";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { catalogPageSize } from "@/utils/device";
 import { Search, WifiOff } from "lucide-react";
 
@@ -53,7 +53,7 @@ const CarsRow = async ({ searchParams, lang = "ru" }: { searchParams: CarSearchP
 
   const [{ data, count, failed }, rates] = await Promise.all([
     getCars(newString, offset, pageSize),
-    getCarRates(),
+    getFx("car"),
   ]);
 
   // Апстрим не ответил — это не «пустая выдача», сообщение должно отличаться.

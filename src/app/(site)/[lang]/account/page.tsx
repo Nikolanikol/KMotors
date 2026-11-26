@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { notifyAccountVisit } from "@/lib/signupNotify";
 import AccountClient from "./AccountClient";
 import type { Metadata } from "next";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 
 interface Props {
   params: Promise<{ lang: string }>;
@@ -46,7 +46,7 @@ export default async function AccountPage({ params }: Props) {
   // Курс с сервера — тем же путём, что на /checkout. CartTab раньше ходил за ним
   // в браузере в api.frankfurter.dev со своей константой 0.00066 («June 2026»),
   // расходившейся с реальным курсом на 8%, и глушил ошибку молча.
-  const { krwToUsd } = await getCurrencyRates();
+  const { krwToUsd } = await getFx("market");
 
   return (
     <Suspense fallback={null}>
