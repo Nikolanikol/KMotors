@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 import { makeAlternates } from "@/lib/seo";
 import {
   getPartsCategories,
@@ -186,7 +186,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const supabase = createServerClient();
   const [{ krwToUsd }, total, productsRes] = await Promise.all([
-    getCurrencyRates(),
+    getFx("market"),
     getCategoryCount(ids),
     supabase
       .from("parts_products")

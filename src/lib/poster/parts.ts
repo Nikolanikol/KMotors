@@ -1,6 +1,6 @@
 // Автопостинг запчастей из parts_products в тему «Запчасти» Telegram-группы.
 import { createServerClient } from '@/lib/supabase';
-import { getCurrencyRates } from '@/utils/getCurrencyRates';
+import { getFx } from '@/lib/fx';
 import { GROUP_ID, PARTS_TOPIC_ID, PARTS_CONFIG } from './config';
 
 export interface Part {
@@ -162,7 +162,7 @@ export async function runPartsOnce(opts: { dryRun?: boolean } = {}): Promise<Par
   if (!part) return { posted: false, reason: 'нет подходящих запчастей в выборке' };
 
   const image = resolveImage(part);
-  const { krwToUsd } = await getCurrencyRates();
+  const { krwToUsd } = await getFx('market');
   const usd = part.price_krw ? usdFromKrw(part.price_krw, krwToUsd) : null;
   const caption = buildPartCaption(part, usd);
 

@@ -1,5 +1,5 @@
 // Оркестрация одного тика постера: выбрать пресет → найти → отфильтровать → запостить.
-import { getCarRates } from '@/lib/kbFx';
+import { getFx } from '@/lib/fx';
 import { PRESETS, POST_CONFIG, GROUP_ID, CARS_TOPIC_ID, rotationSequence } from './config';
 import { searchListings, fetchDetail, type Listing } from './encar';
 import { prefilter, deepGate } from './quality';
@@ -57,7 +57,7 @@ export async function runOnce(opts: RunOptions = {}): Promise<RunResult> {
       continue;
     }
 
-    const { krwToUsd } = await getCarRates();
+    const { krwToUsd } = await getFx('car');
     const options = optionHighlights(detail.optionCodes);
     const caption = buildCaption(l, usdLabel(l.priceMan, krwToUsd), gate.signals, options);
 

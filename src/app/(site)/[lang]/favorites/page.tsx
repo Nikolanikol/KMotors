@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import FavoritesClient from "./FavoritesClient";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
@@ -23,7 +23,7 @@ export default async function FavoritesPage({
   const { lang } = await params;
   // Курс с сервера. Раньше FavoritesClient держал свою константу 0.00066
   // («June 2026») и догружал курс запросом из браузера, глуша ошибку молча.
-  const { krwToUsd } = await getCurrencyRates();
+  const { krwToUsd } = await getFx("market");
   return (
     <>
       {/* FavoritesClient переводит характеристики через словарь Encar */}

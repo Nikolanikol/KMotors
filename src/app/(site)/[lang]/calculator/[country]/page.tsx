@@ -6,7 +6,7 @@ import {
   DEFAULT_COUNTRY,
   type CountryId,
 } from "@/lib/customs/core/registry";
-import { getRates } from "@/lib/customs/fx/getRates";
+import { getFx } from "@/lib/fx";
 import { customsText, hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { makeAlternates } from "@/lib/seo";
 
@@ -75,7 +75,7 @@ export default async function CountryCalculatorPage({ params }: Props) {
   // Курсы получает серверный слой: нет CORS-сюрпризов, лимиты провайдеров под
   // контролем, и значения попадают в HTML первого ответа, а не подгружаются
   // после гидратации.
-  const rates = await getRates();
+  const rates = await getFx("customs");
 
   const title = customsText(lang, `${country}.meta.title`);
   const description = customsText(lang, `${country}.meta.description`);

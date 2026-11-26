@@ -9,7 +9,7 @@
 // fetchVehicleData, у которого есть запасной прокси, и этот обход достаётся карточке даром.
 import { fetchVehicleData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { carPriceKrw, carPriceUsd } from "@/lib/carPricing";
 import { normalizeBrand } from "@/lib/carLabels";
 import { OPTION_EN } from "@/components/Catalog/CarDetail/OptionsRow/data";
@@ -177,7 +177,7 @@ export async function buildVehicleCard(id: string): Promise<VehicleCard | null> 
   const category = v.category ?? {};
   const spec = v.spec ?? {};
   const record = await fetchVehicleRecord(id, v.vehicleNo);
-  const rates = await getCarRates().catch(() => null);
+  const rates = await getFx("car").catch(() => null);
 
   const codes: string[] = v.options?.standard ?? [];
   // Сортируем по значимости сразу: слайды берут первые несколько, и решать, что важнее,

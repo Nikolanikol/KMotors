@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
 import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
@@ -375,7 +375,7 @@ function buildMeta(
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
 
-  const [data, { krwToUsd }] = await Promise.all([getCachedProduct(slug), getCurrencyRates()]);
+  const [data, { krwToUsd }] = await Promise.all([getCachedProduct(slug), getFx("market")]);
   if (!data) return {};
 
   const p = data.product;
@@ -416,7 +416,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const [data, { krwToUsd }] = await Promise.all([
     getCachedProduct(slug),
-    getCurrencyRates(),
+    getFx("market"),
   ]);
   if (!data) notFound();
 

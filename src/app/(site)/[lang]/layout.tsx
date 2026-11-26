@@ -7,7 +7,7 @@ import I18nProvider from "@/components/I18nProvider/I18nProvider";
 import MessengerButtons from "@/components/MessengerButtons";
 import CookieBanner from "@/components/CookieBanner";
 import { loadResources } from "@/lib/loadLocale";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 
 const LANGS = ["ru", "en", "ka", "ar"];
 
@@ -47,7 +47,7 @@ export default async function LangLayout({ children, params }: Props) {
   // прежнее: за курсом ходит ТОЛЬКО сервер, клиент получает готовое число пропсом.
   // Оба запроса внутри идут с `next: { revalidate: 86400 }`, то есть на каждый
   // рендер это чтение из кеша данных, а не поход по сети.
-  const { krwToUsd } = await getCurrencyRates();
+  const { krwToUsd } = await getFx("market");
 
   return (
     <RootShell lang={lang}>

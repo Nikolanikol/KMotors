@@ -18,7 +18,7 @@ import LotState from "@/components/Carnect/LotState";
 import SimilarCars from "@/components/Carnect/SimilarCars";
 import { loadCard } from "@/lib/carnect/loadCard";
 import { getSimilar } from "@/lib/carnect/similar";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { isServiceHost } from "@/lib/serviceHost";
 
 import { requireAdmin } from "../../../auction/shell";
@@ -35,7 +35,7 @@ export default async function CarnectCarPage({ params }: { params: Promise<{ hou
 
   const showInternal = await isServiceHost();
   const t0 = Date.now();
-  const [res, rates] = await Promise.all([loadCard(house, id, "ru"), getCarRates()]);
+  const [res, rates] = await Promise.all([loadCard(house, id, "ru"), getFx("car")]);
   const ms = Date.now() - t0;
   if (!res) notFound();
   if (res.status !== "ok") {

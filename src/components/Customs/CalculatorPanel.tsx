@@ -22,7 +22,7 @@ import {
   rateBetween,
   type CurrencyCode,
   type Rates,
-} from "@/lib/customs/fx/types";
+} from "@/lib/fx/types";
 
 /** Курс пары строкой для поля формы, либо null, если пары нет в наборе. */
 function liveRateValue(pair: RatePair, rates: Rates): string | null {

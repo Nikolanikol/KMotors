@@ -6,7 +6,7 @@ import {
   SOURCE_LABELS,
   type CurrencyCode,
   type Rates,
-} from "@/lib/customs/fx/types";
+} from "@/lib/fx/types";
 import { resolveDate } from "@/lib/customs/i18nText";
 
 interface FxNoteProps {

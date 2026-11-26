@@ -17,7 +17,7 @@ import {
   MAX_CARS_PER_MESSAGE,
   type SavedSearch,
 } from "@/lib/savedSearches";
-import { getCarRates } from "@/lib/kbFx";
+import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
@@ -215,7 +215,7 @@ export async function GET(req: NextRequest) {
     byQuery.set(s.query, list);
   }
 
-  const { krwToUsd } = await getCarRates();
+  const { krwToUsd } = await getFx("car");
   const results: SendResult[] = [];
   let checked = 0;
   let failedQueries = 0;

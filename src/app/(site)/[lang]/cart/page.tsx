@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCurrencyRates } from "@/utils/getCurrencyRates";
+import { getFx } from "@/lib/fx";
 import { CartClient } from "./CartClient";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 
@@ -14,7 +14,7 @@ interface Props {
 
 export default async function CartPage({ params }: Props) {
   const { lang } = await params;
-  const { krwToUsd } = await getCurrencyRates();
+  const { krwToUsd } = await getFx("market");
   return (
     <>
       <SectionDictionary lang={lang} sections={["parts"]} />
