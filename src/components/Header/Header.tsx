@@ -2,6 +2,7 @@
 
 import { langOrDefault } from "@/lib/lang";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,14 +13,28 @@ import { trackEvent } from "@/utils/gtag";
 import { useFavorites } from "@/hooks/useFavorites";
 import { usePartsFavorites } from "@/hooks/usePartsFavorites";
 import { useCartCount } from "@/hooks/useCartCount";
-import { CartDrawer, CART_OPEN_EVENT } from "@/components/Cart/CartDrawer";
-import { FavoritesDrawer } from "@/components/Favorites/FavoritesDrawer";
+import { CART_OPEN_EVENT } from "@/components/Cart/cartEvents";
 import { FAVORITES_OPEN_EVENT, favText } from "@/components/Favorites/favText";
 import { useAuctionFavorites } from "@/hooks/useAuctionFavorites";
 import { useCountry } from "@/hooks/useCountry";
 
 import AuthModalHost from "./AuthModalHost";
 import ProfileButton from "./ProfileButton";
+
+// ⚠️ Панели корзины и избранного грузятся ЛЕНИВО (как AuthModal в AuthModalHost):
+// шапка есть на каждой странице, а панели нужны лишь после клика. Статический
+// импорт CartDrawer / FavoritesDrawer возвращает их код (с хуками, лотами,
+// форматтерами цен) в бандл каждой страницы. Счётчики на иконках от этого не
+// зависят — их считают хуки шапки. Константы событий лежат в лёгких модулях
+// (cartEvents.ts, favText.ts), а не в файлах панелей.
+const loadCartDrawer = () => import("@/components/Cart/CartDrawer").then((m) => m.CartDrawer);
+const loadFavoritesDrawer = () => import("@/components/Favorites/FavoritesDrawer").then((m) => m.FavoritesDrawer);
+const CartDrawer = dynamic(loadCartDrawer, { ssr: false });
+const FavoritesDrawer = dynamic(loadFavoritesDrawer, { ssr: false });
+
+/** Прогрев: наведение, фокус или касание иконки подтягивает код панели до клика. */
+const warmCart = () => void loadCartDrawer();
+const warmFavorites = () => void loadFavoritesDrawer();
 
 
 /** Ссылка без хвоста igsh/utm — это одноразовый токен шаринга из QR-кода. */
@@ -120,6 +135,9 @@ function FavButton({
     <button
       type="button"
       onClick={onClick}
+      onPointerEnter={warmFavorites}
+      onFocus={warmFavorites}
+      onTouchStart={warmFavorites}
       aria-expanded={open}
       aria-controls="favorites-drawer"
       aria-label={label}
@@ -157,10 +175,18 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
   const { favorites: favLots } = useAuctionFavorites();
   const favTotal = favCars.length + favParts.length + favLots.length;
   const [isFavOpen, setIsFavOpen] = useState(false);
+  // Панель подключается при ПЕРВОМ запросе на открытие и остаётся в дереве:
+  // дальше она сама держит анимацию выезда (флаги mounted/shown). Состояние
+  // open живёт здесь, поэтому событие, пришедшее до загрузки кода, не теряется —
+  // панель смонтируется уже с open=true и откроется сразу после загрузки.
+  const [favRequested, setFavRequested] = useState(false);
   const closeFav = useCallback(() => setIsFavOpen(false), []);
   const { isCatalogBlocked } = useCountry();
   const cartCount = useCartCount();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartRequested, setCartRequested] = useState(false);
+  useEffect(() => { if (isFavOpen) setFavRequested(true); }, [isFavOpen]);
+  useEffect(() => { if (isCartOpen) setCartRequested(true); }, [isCartOpen]);
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   // Кнопки со страниц («Купить сейчас», «Перейти в корзину») открывают панель
@@ -348,6 +374,9 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                 <button
                   type="button"
                   onClick={() => setIsCartOpen((v) => !v)}
+                  onPointerEnter={warmCart}
+                  onFocus={warmCart}
+                  onTouchStart={warmCart}
                   aria-expanded={isCartOpen}
                   aria-controls="cart-drawer"
                   className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)] cursor-pointer"
@@ -384,6 +413,9 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                 <button
                   type="button"
                   onClick={() => setIsCartOpen((v) => !v)}
+                  onPointerEnter={warmCart}
+                  onFocus={warmCart}
+                  onTouchStart={warmCart}
                   aria-expanded={isCartOpen}
                   aria-controls="cart-drawer"
                   className="relative flex items-center justify-center w-9 h-9 rounded-full cursor-pointer"
@@ -492,15 +524,17 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
         </div>
       </div>
 
-      <FavoritesDrawer open={isFavOpen} onClose={closeFav} lang={lang} krwToUsd={krwToUsd} />
+      {favRequested && <FavoritesDrawer open={isFavOpen} onClose={closeFav} lang={lang} krwToUsd={krwToUsd} />}
       {/* Окно входа: грузится лениво при первом openAuthModal (замок цены, иконка профиля). */}
       <AuthModalHost />
-      <CartDrawer
-        open={isCartOpen}
-        onClose={closeCart}
-        lang={lang}
-        krwToUsd={krwToUsd}
-      />
+      {cartRequested && (
+        <CartDrawer
+          open={isCartOpen}
+          onClose={closeCart}
+          lang={lang}
+          krwToUsd={krwToUsd}
+        />
+      )}
     </>
   );
 }
