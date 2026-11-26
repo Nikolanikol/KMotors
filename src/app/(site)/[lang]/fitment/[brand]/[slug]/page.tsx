@@ -10,6 +10,7 @@ import { generatePartSlug } from "@/utils/partSlug";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
+import { SITE_URL } from "@/lib/site";
 
 // 24 часа, а не false: страница показывает цены (krwToUsd, кеш курса 24ч) и
 // списки деталей поколения, которые растут вместе с каталогом. При
@@ -33,8 +34,6 @@ export const dynamicParams = true;
  * намеренно: страниц тут 142 категории и 627 fitment, а не 48 тысяч —
  * выигрыш не окупает смену URL. `revalidate` выше остаётся декоративным.
  */
-
-const BASE = "https://www.kmotors.shop";
 const PAGE_SIZE = 24;
 // thin-content threshold: generation pages with fewer parts → noindex
 const GEN_MIN_PARTS = 10;
@@ -153,7 +152,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     description: copy.desc,
     ...(v.parts_count < GEN_MIN_PARTS && { robots: { index: false, follow: true } }),
     alternates: makeAlternates(lang, path),
-    openGraph: { title: copy.title, description: copy.desc, url: `${BASE}/${lang}${path}`, type: "website" },
+    openGraph: { title: copy.title, description: copy.desc, url: `${SITE_URL}/${lang}${path}`, type: "website" },
   };
 }
 
@@ -209,9 +208,9 @@ export default async function FitmentPage({ params, searchParams }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${BASE}/${lang}/` },
-      { "@type": "ListItem", position: 2, name: lang === "ru" ? "Запчасти" : "Parts", item: `${BASE}/${lang}/parts` },
-      { "@type": "ListItem", position: 3, name: full, item: `${BASE}/${lang}${path}` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: lang === "ru" ? "Запчасти" : "Parts", item: `${SITE_URL}/${lang}/parts` },
+      { "@type": "ListItem", position: 3, name: full, item: `${SITE_URL}/${lang}${path}` },
     ],
   };
 

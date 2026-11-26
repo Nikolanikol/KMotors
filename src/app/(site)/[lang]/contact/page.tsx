@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ContactClientPage from "@/app/contact/ContactClientPage";
 import { makeAlternates } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 
 const CONTACT_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://www.kmotors.shop/${lang}/contact`,
+      url: `${SITE_URL}/${lang}/contact`,
       // Картинку даёт [lang]/opengraph-image.tsx — заданный здесь images
       // перекрыл бы файловую конвенцию.
     },
@@ -87,8 +88,8 @@ export default async function ContactPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: CONTACT_LABEL[lang] || "Contact", item: `https://www.kmotors.shop/${lang}/contact` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CONTACT_LABEL[lang] || "Contact", item: `${SITE_URL}/${lang}/contact` },
     ],
   };
 

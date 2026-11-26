@@ -13,7 +13,7 @@ import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSec
 import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getFx } from "@/lib/fx";
-import { carPriceKrw, convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
+import { carPriceKrw, convertedCarPrice, encarToKrw, formatCarKrw } from "@/lib/carPricing";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import CustomsDictionary from "@/components/I18nProvider/CustomsDictionary";
 import { makeAlternates } from "@/lib/seo";
@@ -23,6 +23,7 @@ import { buildSpecBits, loadCarsDict, normalizeBrand } from "@/lib/carLabels";
 import { getCarSnapshot, markCarSold, recordCarSeen } from "@/lib/carsSeen";
 import { getSimilarCars } from "@/lib/similarCars";
 import SoldCar from "@/components/Catalog/CarDetail/SoldCar/SoldCar";
+import { SITE_URL } from "@/lib/site";
 
 // Lazy load — не нужны сразу при загрузке
 const DetailInfoSection = dynamic(
@@ -444,19 +445,19 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
         "@type": "ListItem",
         position: 1,
         name: "K-Axis",
-        item: `https://www.kmotors.shop/${lang}/`,
+        item: `${SITE_URL}/${lang}/`,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: CATALOG_LABEL[lang] || "Catalog",
-        item: `https://www.kmotors.shop/${lang}/catalog`,
+        item: `${SITE_URL}/${lang}/catalog`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: carName,
-        item: `https://www.kmotors.shop/${lang}/catalog/${id}`,
+        item: `${SITE_URL}/${lang}/catalog/${id}`,
       },
     ],
   };
@@ -514,7 +515,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     }),
     offers: {
       "@type": "Offer",
-      url: `https://www.kmotors.shop/${lang}/catalog/${data?.vehicleId}`,
+      url: `${SITE_URL}/${lang}/catalog/${data?.vehicleId}`,
       // KRW намеренно: главная цена в карточке (CarDetailSidebar) — воны,
       // конвертация в ₽/$ идёт ниже как справочная. Валюта в разметке обязана
       // совпадать с видимой ценой, иначе Google бракует Offer.
@@ -527,7 +528,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       seller: {
         "@type": "Organization",
         name: "K-Axis",
-        url: "https://www.kmotors.shop",
+        url: `${SITE_URL}`,
       },
       // Ставка указана только для того направления, где она действительно
       // фиксирована: морской фрахт до Владивостока. По остальным странам цена
@@ -641,7 +642,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 // Намеренно БЕЗ стояночного сбора (решение владельца
                 // 27.08.2026): база таможни — стоимость сделки, наш сбор в неё
                 // не входит. Не «приводить к carPriceKrw».
-                priceKRW={data.advertisement.price * 10000}
+                priceKRW={encarToKrw(data.advertisement.price)}
                 yearMonth={data?.category?.yearMonth || ""}
                 engineVolume={data?.spec?.displacement ?? 0}
                 fuelType={data?.spec?.fuelName}

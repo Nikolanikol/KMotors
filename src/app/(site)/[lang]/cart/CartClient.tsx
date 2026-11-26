@@ -8,6 +8,7 @@ import { trackEvent, trackOnce } from "@/utils/gtag";
 import { OrderModal } from "@/app/parts/sections/OrderModal";
 import { CartLineItem } from "@/components/Cart/CartLineItem";
 import { cartText, cartSubtotal, cartMessageLines, usdFmt } from "@/components/Cart/cartText";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Страница корзины. Просмотр и правка состава живут ещё и в выдвижной панели
@@ -120,7 +121,7 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
         onClose={() => setOrderOpen(false)}
         productName={`${l.cartOf} · ${items.length} ${l.items}`}
         partNumber={`${count} ${l.pcs}`}
-        productUrl={`https://www.kmotors.shop/${lang}/cart`}
+        productUrl={`${SITE_URL}/${lang}/cart`}
         priceText={`$${usdFmt.format(subtotal)}`}
         source="parts_cart"
         title={l.managerTitle}

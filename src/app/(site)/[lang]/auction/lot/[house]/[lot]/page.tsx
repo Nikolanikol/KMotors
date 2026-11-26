@@ -37,13 +37,12 @@ import { loadCard } from "@/lib/carnect/loadCard";
 import { getSimilar } from "@/lib/carnect/similar";
 import { getFx } from "@/lib/fx";
 import { canSeeAuctionPrices } from "@/lib/viewer";
+import { SITE_URL } from "@/lib/site";
 
 /** Ответ зависит от посетителя (цена только после входа) — см. шапку. */
 export const dynamic = "force-dynamic";
 
 const LANG = "en" as const;
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
-
 type Params = { lang: string; house: string; lot: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
@@ -75,7 +74,7 @@ export default async function AuctionLotPage({ params }: { params: Promise<Param
       backHref={back}
       id={id}
       lang={LANG}
-      pageUrl={`${SITE}/${lang}/auction/lot/${house}/${encodeURIComponent(id)}`}
+      pageUrl={`${SITE_URL}/${lang}/auction/lot/${house}/${encodeURIComponent(id)}`}
       withHeader
       krwToUsd={rates.krwToUsd}
       internal={<InternalPanelLoader house={house} id={id} />}

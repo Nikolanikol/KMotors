@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BuyClientPage from "@/app/buy/BuyClientPage";
 import { makeAlternates } from "@/lib/seo";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
+import { SITE_URL } from "@/lib/site";
 
 const BUY_META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -68,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://www.kmotors.shop/${lang}/buy`,
+      url: `${SITE_URL}/${lang}/buy`,
       // Картинку даёт [lang]/opengraph-image.tsx — заданный здесь images
       // перекрыл бы файловую конвенцию.
     },
@@ -88,8 +89,8 @@ export default async function BuyPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: BUY_LABEL[lang] || "How to Buy", item: `https://www.kmotors.shop/${lang}/buy` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BUY_LABEL[lang] || "How to Buy", item: `${SITE_URL}/${lang}/buy` },
     ],
   };
 

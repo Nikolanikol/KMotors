@@ -18,6 +18,7 @@ import {
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -38,8 +39,6 @@ export const dynamicParams = true;
  * намеренно: страниц тут 142 категории и 627 fitment, а не 48 тысяч —
  * выигрыш не окупает смену URL. `revalidate` выше остаётся декоративным.
  */
-
-const BASE = "https://www.kmotors.shop";
 const PAGE_SIZE = 24;
 // Порог тонкого контента: категории меньше — рендерим, но не индексируем.
 // Тот же приём, что GEN_MIN_PARTS на fitment-страницах.
@@ -167,7 +166,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     description: copy.desc,
     ...(noindex && { robots: { index: false, follow: true } }),
     alternates: makeAlternates(lang, path),
-    openGraph: { title: copy.title, description: copy.desc, url: `${BASE}/${lang}${path}`, type: "website" },
+    openGraph: { title: copy.title, description: copy.desc, url: `${SITE_URL}/${lang}${path}`, type: "website" },
   };
 }
 
@@ -207,13 +206,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const path = `/parts/category/${slug}`;
 
   const trail = [
-    { name: "K-Axis", item: `${BASE}/${lang}/` },
-    { name: copy.parts, item: `${BASE}/${lang}/parts` },
+    { name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+    { name: copy.parts, item: `${SITE_URL}/${lang}/parts` },
     ...ancestors.map((a) => ({
       name: localizedName(a, lang),
-      item: `${BASE}/${lang}/parts/category/${a.slug}`,
+      item: `${SITE_URL}/${lang}/parts/category/${a.slug}`,
     })),
-    { name, item: `${BASE}/${lang}${path}` },
+    { name, item: `${SITE_URL}/${lang}${path}` },
   ];
 
   const breadcrumbSchema = {
@@ -238,7 +237,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         itemListElement: products.map((p, i) => ({
           "@type": "ListItem",
           position: from + i + 1,
-          url: `${BASE}/${lang}/parts/${p.part_number}`,
+          url: `${SITE_URL}/${lang}/parts/${p.part_number}`,
           name: lang === "ru" ? p.name_ru || p.name_en : p.name_en || p.name_ru,
         })),
       }

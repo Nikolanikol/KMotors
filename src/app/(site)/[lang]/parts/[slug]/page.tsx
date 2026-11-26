@@ -15,6 +15,7 @@ import type {
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import { makeAlternates } from "@/lib/seo";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
+import { SITE_URL } from "@/lib/site";
 
 // Страницы продуктов рендерятся по требованию: generateStaticParams убран,
 // 50k × 4 langs при сборке неприемлемо. dynamicParams = true (дефолт) —
@@ -392,8 +393,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Canonical всегда указывает на чистый URL по артикулу — независимо от того,
   // по какому slug-варианту открыли страницу
   const canonicalSlug = generatePartSlug(p.part_number, null, "ru", p.id);
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
-
   return {
     // absolute — глушит суффикс "| K-Axis" из шаблона в layout.tsx,
     // освобождая 9 символов пиксельного бюджета под название детали.
@@ -403,7 +402,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: "website",
-      url: `${BASE}/${lang}/parts/${canonicalSlug}`,
+      url: `${SITE_URL}/${lang}/parts/${canonicalSlug}`,
     },
     alternates: makeAlternates(lang, `/parts/${canonicalSlug}`),
   };
@@ -438,7 +437,6 @@ export default async function ProductDetailPage({ params }: Props) {
   // множитель ×1.23, тогда как витрина считает по тиерам маржи из pricing.ts, —
   // расхождение доходило до 5% и делало Offer невалидным для rich results.
   const priceUsd = krwToDisplayUsd(product.price_krw, krwToUsd);
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
   const productName =
     lang === "ko"
       ? product.name_ko || product.name_en || product.name_ru
@@ -460,14 +458,14 @@ export default async function ProductDetailPage({ params }: Props) {
     },
     offers: {
       "@type": "Offer",
-      url: `${BASE}/${lang}/parts/${canonicalSlug}`,
+      url: `${SITE_URL}/${lang}/parts/${canonicalSlug}`,
       priceCurrency: "USD",
       price: priceUsd,
       availability: "https://schema.org/InStock",
       seller: {
         "@type": "Organization",
         name: "K-Axis",
-        url: BASE,
+        url: SITE_URL,
       },
     },
     ...(data.categoryName && {
@@ -479,12 +477,12 @@ export default async function ProductDetailPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${BASE}/${lang}/` },
-      { "@type": "ListItem", position: 2, name: lang === "ru" ? "Запчасти" : "Parts", item: `${BASE}/${lang}/parts` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: lang === "ru" ? "Запчасти" : "Parts", item: `${SITE_URL}/${lang}/parts` },
       ...(data.categoryName
-        ? [{ "@type": "ListItem", position: 3, name: lang === "ru" ? data.categoryName.ru : data.categoryName.en, item: `${BASE}/${lang}/parts?cat=${data.categoryName.slug}` }]
+        ? [{ "@type": "ListItem", position: 3, name: lang === "ru" ? data.categoryName.ru : data.categoryName.en, item: `${SITE_URL}/${lang}/parts?cat=${data.categoryName.slug}` }]
         : []),
-      { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${BASE}/${lang}/parts/${canonicalSlug}` },
+      { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${SITE_URL}/${lang}/parts/${canonicalSlug}` },
     ],
   };
 

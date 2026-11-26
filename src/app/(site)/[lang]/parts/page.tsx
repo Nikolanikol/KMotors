@@ -7,15 +7,13 @@ import { createServerClient } from "@/lib/supabase";
 import { PartsTopLinks } from "@/app/parts/sections/PartsTopLinks";
 import { PopularModels } from "@/app/parts/sections/PopularModels";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
+import { LANGS } from "@/lib/lang";
+import { SITE_URL } from "@/lib/site";
 
 // Lazy load — грузятся после Hero
 const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").then(m => ({ default: m.PartsCatalog })));
 const About = dynamic(() => import("@/app/parts/sections/About").then(m => ({ default: m.About })));
 const ContactForm = dynamic(() => import("@/app/parts/sections/ContactForm").then(m => ({ default: m.ContactForm })));
-
-const LANGS = ["ru", "en", "ka", "ar"];
-const BASE = process.env.NEXT_PUBLIC_SITE_URL!;
-
 // Час, а не false. Первый экран каталога рендерится на сервере ради SEO, и
 // вместе с ним PartsTopLinks + PopularModels — это видимый ботам граф
 // внутренних ссылок. При revalidate = false он оставался слепком с билда, и
@@ -88,7 +86,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const sp = await searchParams;
   const meta = PARTS_META[lang] || PARTS_META.ru;
 
-  const cleanUrl = `${BASE}/${lang}/parts`;
+  const cleanUrl = `${SITE_URL}/${lang}/parts`;
 
   // Если в URL есть любые фильтры — не индексируем, canonical на чистый URL
   const hasFilters = Object.keys(sp).length > 0;
@@ -107,11 +105,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     alternates: {
       canonical: cleanUrl,
       languages: {
-        ru: `${BASE}/ru/parts`,
-        en: `${BASE}/en/parts`,
-        ka: `${BASE}/ka/parts`,
-        ar: `${BASE}/ar/parts`,
-        "x-default": `${BASE}/ru/parts`,
+        ru: `${SITE_URL}/ru/parts`,
+        en: `${SITE_URL}/en/parts`,
+        ka: `${SITE_URL}/ka/parts`,
+        ar: `${SITE_URL}/ar/parts`,
+        "x-default": `${SITE_URL}/ru/parts`,
       },
     },
   };
@@ -130,8 +128,8 @@ export default async function PartsPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${BASE}/${lang}/` },
-      { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `${BASE}/${lang}/parts` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `${SITE_URL}/${lang}/parts` },
     ],
   };
 
@@ -140,11 +138,11 @@ export default async function PartsPage({ params }: Props) {
     "@type": "Service",
     name: meta.title,
     description: meta.description,
-    url: `${BASE}/${lang}/parts`,
+    url: `${SITE_URL}/${lang}/parts`,
     provider: {
       "@type": "Organization",
       name: "K-Axis",
-      url: `${BASE}/`,
+      url: `${SITE_URL}/`,
     },
     serviceType: "Auto Parts Import",
     areaServed: [

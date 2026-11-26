@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import { makeAlternates } from "@/lib/seo";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { catalogPageSize } from "@/utils/device";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -80,7 +81,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       title,
       description,
-      url: `https://www.kmotors.shop/${lang}/catalog`,
+      url: `${SITE_URL}/${lang}/catalog`,
       // Картинку даёт catalog/opengraph-image.tsx — см. комментарий на главной.
     },
     alternates: makeAlternates(lang, "/catalog"),
@@ -147,8 +148,8 @@ export default async function CatalogPage({ params, searchParams }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `https://www.kmotors.shop/${lang}/catalog` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: CATALOG_LABEL[lang] || "Catalog", item: `${SITE_URL}/${lang}/catalog` },
     ],
   };
 
@@ -166,12 +167,12 @@ export default async function CatalogPage({ params, searchParams }: Props) {
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: CATALOG_LABEL[lang] || "Catalog",
-        url: `https://www.kmotors.shop/${lang}/catalog`,
+        url: `${SITE_URL}/${lang}/catalog`,
         numberOfItems: data.length,
         itemListElement: data.map((car: { Id: string; Manufacturer?: string; Model?: string; Year?: string; Price?: string }, index: number) => ({
           "@type": "ListItem",
           position: index + 1,
-          url: `https://www.kmotors.shop/${lang}/catalog/${car.Id}`,
+          url: `${SITE_URL}/${lang}/catalog/${car.Id}`,
           name: [car.Manufacturer, car.Model, car.Year].filter(Boolean).join(" "),
         })),
       };
