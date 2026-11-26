@@ -6,6 +6,7 @@ import { convertNumberKm } from "@/utils/splitNumber";
 import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { ArrowRight } from "lucide-react";
+import { WA_PHONE } from "@/lib/contact";
 
 import HeartButton from "@/components/Favorites/HeartButton";
 import { favText } from "@/components/Favorites/favText";
@@ -34,7 +35,6 @@ interface CarCardProps {
 }
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
-const WA_PHONE = "821058654344";
 
 const BUY_FROM_KOREA: Record<string, string> = {
   ru: "купить из Кореи", en: "buy from Korea", ko: "한국에서 구매",

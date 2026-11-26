@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { trackEvent } from "@/utils/gtag";
-
-const WA_PHONE = "821058654344";
+import { WA_PHONE } from "@/lib/contact";
 
 const TG_LABEL: Record<string, string> = {
   ru: "Написать в Telegram",

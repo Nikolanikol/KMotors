@@ -7,8 +7,7 @@ import { usePathname } from "next/navigation";
 import CarRequestForm from "./CarRequestForm";
 import { trackEvent } from "@/utils/gtag";
 import { clarityEvent } from "@/utils/clarity";
-
-const WA_PHONE = "821058654344";
+import { WA_PHONE } from "@/lib/contact";
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 const WA_TEXT: Record<string, (id: string, name: string) => string> = {
