@@ -60,3 +60,12 @@ S1 его не трогает; `FavoritesClient.tsx` входит и в tsc-ош
 - Стек dokanmazad (~5 400 строк, живёт только в `/admin/auction`), `data/*.db`
   в git, `scripts/` и `sql/` разового назначения, `vercel.json`/`netlify.toml`,
   `settings.local.json` (разрешения `node -e`, `python3 -c`), чистка памяти Claude.
+
+## Волна 2а — запущена 26.11.2026 после слияния волны 1 (решение владельца: виджет → на ядро)
+
+| Поток | Ветка | Модель | Владеет (только эти файлы) |
+|---|---|---|---|
+| S6 виджет растаможки на ядро | `step/11-widget-core` | Opus | `src/components/Catalog/CarDetail/CustomsCalculator/**`, `src/components/Catalog/CarDetail/CarDetailSidebar.tsx`, `src/app/(site)/[lang]/catalog/[id]/page.tsx` (весь файл, в т.ч. его импорты курса), `src/app/api/exchange-rate/route.ts` (удалить), `src/utils/customsCalculator/**` (удалить), `src/data/calcTranslations.ts` (удалить), `src/app/api/blog-generate/route.ts` (только курс), `src/locales/{ru,en,ka,ar}/customs.json` (если нужны ключи), `src/lib/customs/**` кроме `fx/` |
+| S7 потребители курса | `step/10-fx-consumers` | Sonnet | импорты курса во всех остальных файлах: `getCurrencyRates` / `kbFx` / `customs/fx` → `@/lib/fx`; обёртки НЕ удалять |
+
+Обёртки (`utils/getCurrencyRates.ts`, `lib/kbFx.ts`, `lib/customs/fx/*`) удаляются отдельным шагом ПОСЛЕ слияния обоих потоков.
