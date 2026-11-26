@@ -15,9 +15,9 @@ import { generatePartSlug } from "@/utils/partSlug";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
 import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
+import { WA_PHONE } from "@/lib/contact";
 
 const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
-const WA_PHONE = "821058654344";
 const TG_MANAGER = "axiskorea";
 
 // Форматтер ИТОГОВОЙ суммы — она уже посчитана в долларах через pricing.ts,
@@ -265,7 +265,7 @@ export default function FavoritesClient({ krwToUsd }: { krwToUsd: number }) {
                       <div className="relative bg-gray-50" style={{ paddingBottom: "62%" }}>
                         <div className="absolute inset-0 flex items-center justify-center">
                           {part.image_url
-                            ? <Image src={part.image_url} alt={name} fill unoptimized className="object-contain p-3" />
+                            ? <Image src={part.image_url} alt={name ?? ""} fill unoptimized className="object-contain p-3" />
                             : <Wrench className="w-8 h-8 text-gray-300" />}
                         </div>
                         {part.is_new && (

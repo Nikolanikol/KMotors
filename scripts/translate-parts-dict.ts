@@ -390,7 +390,7 @@ const WORDS: Record<string, string> = {
   "Protector": "Защита", "Deflector": "Дефлектор",
   "Clamp": "Хомут", "Clip": "Клипса", "Bolt": "Болт",
   "Nut": "Гайка", "Washer": "Шайба", "Stud": "Шпилька",
-  "Screw": "Винт", "Plug": "Заглушка", "Stopper": "Ограничитель",
+  "Screw": "Винт", "Stopper": "Ограничитель",
   "Battery": "Аккумулятор", "Antenna": "Антенна",
   "Horn": "Сигнал", "Speaker": "Динамик", "Amplifier": "Усилитель",
   "Heater": "Отопитель", "Blower": "Вентилятор",

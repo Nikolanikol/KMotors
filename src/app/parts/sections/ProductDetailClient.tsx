@@ -169,7 +169,7 @@ export function ProductDetailClient({
     // Track product view
     trackEvent("view_item", {
       item_id: String(product.id),
-      item_name: product.name_en || product.name_ru || product.name_ko,
+      item_name: product.name_en || product.name_ru || product.name_ko || undefined,
       part_number: product.part_number,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -356,7 +356,7 @@ export function ProductDetailClient({
               {product.image_url && !imgError ? (
                 <Image
                   src={product.image_url}
-                  alt={productName}
+                  alt={productName ?? ""}
                   fill
                   unoptimized
                   priority
