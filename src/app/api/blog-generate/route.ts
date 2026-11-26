@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createServerClient } from "@/lib/supabase";
 import { buildEncarGrounding } from "@/lib/encarModelPrices";
+import { getFx } from "@/lib/fx";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -61,20 +62,12 @@ async function fetchCoverImage(imageQuery: string): Promise<string | null> {
   return null;
 }
 
-// Курс KRW за 1 USD (для конвертации encar-цен в USD). Тот же бесплатный CDN,
-// что использует /api/exchange-rate. Фолбэк ~1350, если источник недоступен.
+// Курс KRW за 1 USD (для конвертации encar-цен в USD). Берётся из единого входа
+// @/lib/fx, рыночный вид: свой fetch к CDN с зашитым фолбэком 1350 убран — на
+// отказе источников модуль сам падает на датированный снимок и пишет это в лог.
 async function fetchKrwPerUsd(): Promise<number> {
-  try {
-    const res = await fetch(
-      "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json",
-      { cache: "no-store" }
-    );
-    const data = await res.json();
-    const krw = Number(data?.usd?.krw);
-    return krw > 0 ? krw : 1350;
-  } catch {
-    return 1350;
-  }
+  const { krwToUsd } = await getFx("market");
+  return 1 / krwToUsd;
 }
 
 interface BlogTopic {

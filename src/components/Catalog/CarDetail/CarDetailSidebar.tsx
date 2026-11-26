@@ -4,7 +4,6 @@ import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { Phone, MapPin, User, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CarRequestForm from "./CarRequestForm";
-import CustomsCalculator from "./CustomsCalculator/CustomsCalculator";
 
 interface Props {
   data: any;
@@ -13,13 +12,9 @@ interface Props {
   krwToRub?: number;
   krwToUsd?: number;
   lang: string;
-  priceKRW?: number;
-  yearMonth?: string;
-  engineVolume?: number;
-  fuelType?: string;
 }
 
-export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd, lang, priceKRW, yearMonth, engineVolume, fuelType }: Props) {
+export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd, lang }: Props) {
   const { t } = useTranslation(["common"]);
 
   const convertedPrice = convertedCarPrice(data?.advertisement?.price, lang, {

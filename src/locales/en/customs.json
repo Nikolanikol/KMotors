@@ -624,5 +624,26 @@
       "ratesInEur": "Rates are set in euros: both EEC No. 107 and the specific CCT rates. Som figures come from conversion at the NBKR rate on the clearance date, which may differ from today’s.",
       "notIncluded": "Shipping to Kyrgyzstan, bonded warehouse, broker and registration are not included. There is no recycling fee for personal use in Kyrgyzstan."
     }
+  },
+  "widget": {
+    "title": "Import duty estimate",
+    "subtitle": "For private individuals, based on this car",
+    "tabsLabel": "Destination country",
+    "hpLabel": "Engine power, hp",
+    "hpPlaceholder": "e.g. 150",
+    "hpHint": "Take it from the vehicle title: the recycling fee depends on power and grows many times over above 160 hp.",
+    "rate": "Rate as of {{date}}: ₩1,000,000 ≈ {{amount}} {{currency}}",
+    "rateFallback": "Live rates were unavailable — a saved snapshot from {{date}} is used.",
+    "total": "Total import payments",
+    "breakdown": "Breakdown",
+    "finalCost": "Car + customs",
+    "finalCostNote": "Price in Korea {{car}} + payments {{customs}}",
+    "uzBase": "A car from Encar is registered in Korea, so for Uzbekistan it counts as used whatever its year. The customs value includes shipping to the border — {{freight}} $.",
+    "shippingNote": "Shipping from Korea is not included — a manager will quote it.",
+    "disclaimer": "This is an estimate: a customs broker will confirm the exact amount on the clearance date.",
+    "fullCalc": "Full calculator",
+    "ctaTitle": "Want an exact quote with shipping? Leave a request",
+    "unavailable": "Could not calculate: the listing has no year of manufacture or price.",
+    "sum": "UZS"
   }
 }
