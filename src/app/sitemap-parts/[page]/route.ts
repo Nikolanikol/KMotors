@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase";
 import { generatePartSlug } from "@/utils/partSlug";
 import { SITE_URL } from "@/lib/site";
 import { LANGS } from "@/lib/lang";
+import { getPartContentDates } from "@/lib/partContent";
 
 export const revalidate = 86400; // refresh daily
 
@@ -75,6 +76,9 @@ export async function GET(
     }
 
     const fallbackDate = new Date().toISOString().slice(0, 10);
+    // Дата появления экспертного блока (kmotors_part_content): без неё Google не узнает, что
+    // карточка изменилась, потому что scraped_at у неё остался прежним. Только у артикулов с блоком.
+    const contentDates = await getPartContentDates();
     const urlBlocks: string[] = [];
 
     console.log(`[sitemap-parts] Starting to generate URLs for ${products.length} products...`);
@@ -87,9 +91,12 @@ export async function GET(
           continue;
         }
 
-        const lastmod = product.scraped_at
+        const scrapedDate = product.scraped_at
           ? new Date(product.scraped_at).toISOString().slice(0, 10)
           : fallbackDate;
+        const contentDate = product.part_number ? contentDates[product.part_number] : undefined;
+        // ISO-даты YYYY-MM-DD сравниваются как строки
+        const lastmod = contentDate && contentDate > scrapedDate ? contentDate : scrapedDate;
 
         const slug = generatePartSlug(product.part_number, null, "ru", product.id);
 

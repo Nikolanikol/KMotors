@@ -185,6 +185,10 @@
 
 Проданная машина = 404 от Encar = `fetchVehicleData` возвращает `null`.
 
+⚠️ Но не любой 404: **блокировку по IP Encar тоже отдаёт 404** — HTML со ссылкой на
+`has_been_cr_blocked_AWS.html`. Это авария, а не продажа: `isEncarBlockPage` отправляет её в
+прокси (13.11 блокировка сутки метила живые машины проданными — [постмортем](docs/postmortems.md)).
+
 `fetchVehicleData` отличает «продана» (Encar 404 → `null`) от «апстрим лежит» (бросает
 `VehicleUpstreamError`). `generateMetadata` ставит `noindex` ТОЛЬКО для случая продажи.
 Никогда не схлопывать эти две ветки в `catch(() => null)`

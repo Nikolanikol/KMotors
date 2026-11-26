@@ -6,6 +6,8 @@ import { withCleanImage } from "@/lib/partImage";
 import { getFx } from "@/lib/fx";
 import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 import { ProductDetailClient } from "@/app/parts/sections/ProductDetailClient";
+import { PartExpertContent } from "@/app/parts/sections/PartExpertContent";
+import { getPartContent } from "@/lib/partContent";
 import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
@@ -421,6 +423,9 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const { product } = data;
 
+  // Экспертный текст (kmotors_part_content). Только published; сбой чтения = нет блока.
+  const expertContent = await getPartContent(product.part_number);
+
   // 301 со старых URL "PN--name" (и любых slug-вариантов) на канонический "PN".
   // Сравниваем и декодированный slug, чтобы не зациклить редирект на кодированных символах.
   const canonicalSlug = generatePartSlug(product.part_number, null, "ru", product.id);
@@ -538,6 +543,9 @@ export default async function ProductDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} logistics={data.logistics} />
+      {expertContent && product.part_number && (
+        <PartExpertContent lang={lang} partNumber={product.part_number} content={expertContent} />
+      )}
     </>
   );
 }
