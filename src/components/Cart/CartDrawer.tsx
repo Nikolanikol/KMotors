@@ -22,12 +22,9 @@ import { cartText, cartSubtotal, usdFmt } from "./cartText";
  * корзины, где словарь раздела есть.
  */
 
-/** Событие «открыть корзину» — чтобы кнопки на страницах не тянули состояние шапки. */
-export const CART_OPEN_EVENT = "kmotors_cart_open";
-
-export function openCartDrawer() {
-  window.dispatchEvent(new Event(CART_OPEN_EVENT));
-}
+// Событие «открыть корзину» живёт в cartEvents.ts (без кода панели); здесь —
+// реэкспорт для прежних импортёров.
+export { CART_OPEN_EVENT, openCartDrawer } from "./cartEvents";
 
 export function CartDrawer({
   open,
