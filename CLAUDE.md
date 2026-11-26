@@ -127,8 +127,9 @@ npx tsc --noEmit
 
 **Цены и курсы**
 - ⚠️ ЕДИНСТВЕННАЯ точка входа за курсом — `src/lib/fx` (`getFx("market"|"car"|"customs")`,
-  правила — [src/lib/fx/CLAUDE.md](src/lib/fx/CLAUDE.md)); `getCurrencyRates()` и `getCarRates`
-  остаются обёртками над ним, новых прямых походов за курсом не заводить. Курс запрашивает
+  правила — [src/lib/fx/CLAUDE.md](src/lib/fx/CLAUDE.md)); старые обёртки
+  (`getCurrencyRates`, `kbFx`, `customs/fx`) удалены 26.11.2026, прямых походов за курсом
+  не заводить. Курс запрашивает
   ТОЛЬКО сервер; клиент получает его пропсом, своих запросов не делает. Никогда не
   зашивать курс константой. `?? FALLBACK` на внешнем курсе обязан логироваться.
 - Источники РАЗНЫЕ: рубль — ЦБ РФ (оттуда же `rubToUsd`), доллар — frankfurter (RUB не
@@ -183,6 +184,10 @@ npx tsc --noEmit
    глазами в браузере, на десктопе и мобильной ширине.
 
 **Роутинг, Корея, GSC**
+- ⚠️ Локали — только `src/lib/lang.ts` (`LANGS`, `isLang`, `langOrDefault`), адрес сайта —
+  только `SITE_URL` из `src/lib/site.ts`; локальных `LANGS` / `SUPPORTED_LANGS` / `BASE` /
+  `SITE` с «https://www.kmotors.shop» не заводить (их было 25 и 60, убраны 26.11.2026).
+  Цену объявления Encar приводить через `encarToKrw` (`src/lib/carPricing.ts`), не `* 10000`.
 - Публичные страницы — `src/app/(site)/[lang]/…`, `[lang]` ∈ `ru | en | ka | ar`
   (`src/lib/lang.ts`); `ko` отключена (301 → `/en`, не баг). Админка —
   `src/app/(admin)/admin/…`, вход по `ADMIN_PASSWORD` + cookie.

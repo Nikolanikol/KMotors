@@ -141,6 +141,31 @@
 отличающая страницу блокировки Encar от настоящего 404 — это правильное решение проблемы;
 в зачистку не включена.
 
+### 12–13 — дубли: локали, адрес сайта, цена Encar (26.11.2026)
+
+Шаг 12: общие хелперы `langOrDefault` в `src/lib/lang.ts` и `SITE_URL` в новом
+`src/lib/site.ts` (тег `cleanup/12-dedupe-helpers`). Шаг 13: пять потоков по непересекающимся
+каталогам (D1–D5), слиты `--no-ff`.
+
+| Шаг | Тег | Каталог | Файлов |
+|---|---|---|---|
+| 13a | `cleanup/13a-dedupe-api` | `src/app/api`, `src/app/auth` | 7 |
+| 13b | `cleanup/13b-dedupe-site` | `src/app/(site)` | 23 |
+| 13c | `cleanup/13c-dedupe-app-rest` | остальное в `src/app` | 12 |
+| 13d | `cleanup/13d-dedupe-components` | `src/components` | 14 |
+| 13e | `cleanup/13e-dedupe-lib` | `src/lib`, `utils` | 11 |
+
+Убрано: 25 локальных списков локалей (в 12 был мёртвый `ko`), локальные копии адреса сайта
+(`BASE`/`SITE`/`SITE_URL`), `× 10000` для цены Encar в трёх местах.
+
+Проверка: `tsc` 0 ошибок, vitest 406 тестов, lint 94 (как до шага). Сайтмапы: дифф всех
+`sitemap*`/`robots.ts`/`seo.ts` — только замена константы, форматы `<loc>` и hreflang те же;
+временный тест `makeAlternates` на канонический вид и язык `x-default` прошёл (удалён).
+
+Оставлено потоками (адрес сайта жёстким литералом, отдельный маленький шаг): `src/middleware.ts`
+(волна 3), `src/app/rootMetadata.ts`, `src/app/RootShell.tsx` (JSON-LD), `src/app/(root)/blog/[slug]/page.tsx`,
+`ProductDetailClient.tsx:301`, `telegram-webhook/route.ts:373` (вместе с Telegram-клиентом).
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026
