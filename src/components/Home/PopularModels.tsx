@@ -1,5 +1,6 @@
 "use client";
 
+import { isLang } from "@/lib/lang";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -133,7 +134,6 @@ const DETAILS_LABEL: Record<string, string> = {
   ar: "المزيد →",
 };
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 export default function PopularModels() {
   const { i18n } = useTranslation();
@@ -141,7 +141,7 @@ export default function PopularModels() {
   const { isCatalogBlocked } = useCountry();
 
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : i18n.language || "ru";
+  const lang = isLang(segments[1]) ? segments[1] : i18n.language || "ru";
   const isRu = lang === "ru";
 
   return (

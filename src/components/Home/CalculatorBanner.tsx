@@ -1,11 +1,11 @@
 "use client";
 
+import { langOrDefault } from "@/lib/lang";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Calculator } from "lucide-react";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 const COUNTRIES = [
   { flag: "🇷🇺", label: "Россия / Russia" },
@@ -17,7 +17,7 @@ export default function CalculatorBanner() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   return (
     <section className="relative py-16 overflow-hidden" style={{ backgroundColor: "var(--axis-black)" }}>

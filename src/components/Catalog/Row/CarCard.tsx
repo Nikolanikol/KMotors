@@ -1,5 +1,7 @@
 "use client";
 
+import { SITE_URL } from "@/lib/site";
+import { langOrDefault } from "@/lib/lang";
 import { useRef, useCallback } from "react";
 import { trackEvent } from "@/utils/gtag";
 import { convertNumberKm } from "@/utils/splitNumber";
@@ -34,7 +36,6 @@ interface CarCardProps {
   priority?: boolean;
 }
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 const BUY_FROM_KOREA: Record<string, string> = {
   ru: "купить из Кореи", en: "buy from Korea", ko: "한국에서 구매",
@@ -42,11 +43,11 @@ const BUY_FROM_KOREA: Record<string, string> = {
 };
 
 const WA_CAR_TEXT: Record<string, (id: string, name: string) => string> = {
-  ru: (id, name) => `Здравствуйте! Интересует ${name}, ID: ${id} — https://www.kmotors.shop/ru/catalog/${id}`,
-  en: (id, name) => `Hello! I'm interested in ${name}, ID: ${id} — https://www.kmotors.shop/en/catalog/${id}`,
-  ko: (id, name) => `안녕하세요! ${name} 차량에 관심 있습니다, ID: ${id} — https://www.kmotors.shop/ko/catalog/${id}`,
-  ka: (id, name) => `გამარჯობა! მაინტერესებს ${name}, ID: ${id} — https://www.kmotors.shop/ka/catalog/${id}`,
-  ar: (id, name) => `مرحباً! أنا مهتم بـ ${name}, ID: ${id} — https://www.kmotors.shop/ar/catalog/${id}`,
+  ru: (id, name) => `Здравствуйте! Интересует ${name}, ID: ${id} — ${SITE_URL}/ru/catalog/${id}`,
+  en: (id, name) => `Hello! I'm interested in ${name}, ID: ${id} — ${SITE_URL}/en/catalog/${id}`,
+  ko: (id, name) => `안녕하세요! ${name} 차량에 관심 있습니다, ID: ${id} — ${SITE_URL}/ko/catalog/${id}`,
+  ka: (id, name) => `გამარჯობა! მაინტერესებს ${name}, ID: ${id} — ${SITE_URL}/ka/catalog/${id}`,
+  ar: (id, name) => `مرحباً! أنا مهتم بـ ${name}, ID: ${id} — ${SITE_URL}/ar/catalog/${id}`,
 };
 
 const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, fuel, price, krwToRub, krwToUsd, priority = false }: CarCardProps) => {
@@ -54,7 +55,7 @@ const CarCard = ({ photo, id, model, manufacture, year, mileage, transmission, f
   const pathname = usePathname();
   const { isFavorite, toggleFavorite } = useFavorites();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const glossyRef = useRef<HTMLDivElement>(null);

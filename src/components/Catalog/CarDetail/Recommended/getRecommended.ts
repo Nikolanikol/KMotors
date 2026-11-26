@@ -3,6 +3,8 @@
 // /v1/readside/vehicles?vehicleIds=... (все машины сразу).
 // Всё server-side, кэш 1 час. Любой сбой → пустой массив (блок просто не покажется).
 
+import { encarToKrw } from "@/lib/carPricing";
+
 const ENCAR = "https://api.encar.com";
 const MOBILE_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
@@ -52,7 +54,7 @@ function toCard(d: any): RecommendedCar | null {
     year,
     mileage: Number(spec?.mileage ?? 0),
     fuel: spec?.fuelName ?? "",
-    priceKRW: Number(adv.price) * 10000,
+    priceKRW: encarToKrw(adv.price),
   };
 }
 

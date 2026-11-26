@@ -1,5 +1,6 @@
 "use client";
 
+import { langOrDefault } from "@/lib/lang";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -8,7 +9,6 @@ const PaintSplashCanvas = dynamic(() => import("@/components/ui/PaintSplashCanva
 import { useCountAnimation } from "@/hooks/useScrollAnimation";
 import { useCountry } from "@/hooks/useCountry";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 function StatCounter({ end, suffix, label }: { end: number; suffix: string; label: string }) {
   const ref = useCountAnimation(end, suffix);
@@ -28,7 +28,7 @@ const Main = () => {
   const { t } = useTranslation();
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
   const { isCatalogBlocked } = useCountry();
 
   return (
