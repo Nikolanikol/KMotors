@@ -19,6 +19,12 @@ export class VehicleUpstreamError extends Error {
   }
 }
 
+/** Страница блокировки Encar: HTML вместо JSON и ссылка на has_been_cr_blocked. */
+function isEncarBlockPage(res: Response, body: string): boolean {
+  const type = res.headers.get("content-type") ?? "";
+  return body.includes("has_been_cr_blocked") || type.includes("text/html");
+}
+
 export async function fetchVehicleData(id: string): Promise<any> {
   // Основной источник — прямой Encar API, кэш 1 час
   try {
@@ -26,8 +32,14 @@ export async function fetchVehicleData(id: string): Promise<any> {
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(PRIMARY_TIMEOUT_MS),
     });
-    // 404 от Encar = машина продана/удалена — это настоящий notFound
-    if (res.status === 404) return null;
+    // 404 от Encar = машина продана/удалена — это настоящий notFound.
+    // Но блокировка по IP тоже приходит как 404 — HTML-страница от CloudFront с
+    // переадресацией на has_been_cr_blocked_*.html. Это не «продана»: идём в прокси.
+    if (res.status === 404) {
+      const body = await res.text();
+      if (isEncarBlockPage(res, body)) throw new Error("Encar blocked");
+      return null;
+    }
     if (!res.ok) throw new Error(`Encar ${res.status}`);
     return await res.json();
   } catch {
