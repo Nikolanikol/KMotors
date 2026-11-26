@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import Main from "@/components/Home/Main";
 import NavCards from "@/components/Home/NavCards";
@@ -15,6 +16,7 @@ import { makeAlternates } from "@/lib/seo";
 // IntersectionObserver по образцу RecommendedCars, сохранив SSR карточек.
 import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
+import CarSliderSkeleton from "@/components/Home/CarSlider/CarSliderSkeleton";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { SITE_URL } from "@/lib/site";
 
@@ -146,14 +148,18 @@ export default async function Home({ params }: Props) {
       <NavCards />
       {!isCatalogBlocked && (
         <div className="py-16" style={{ backgroundColor: "var(--axis-black)" }}>
-          <CarSlider
-            reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%EA%B8%B0%EC%95%84.))&sr=%7CModifiedDate%7C0%7C20"
-            title="Kia"
-          />
-          <CarSlider
-            reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%ED%98%84%EB%8C%80.))&sr=%7CModifiedDate%7C0%7C20"
-            title="Hyundai"
-          />
+          <Suspense fallback={<CarSliderSkeleton />}>
+            <CarSlider
+              reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%EA%B8%B0%EC%95%84.))&sr=%7CModifiedDate%7C0%7C20"
+              title="Kia"
+            />
+          </Suspense>
+          <Suspense fallback={<CarSliderSkeleton />}>
+            <CarSlider
+              reqString="https://encar-proxy-main.onrender.com/api/catalog?count=true&q=(And.Hidden.N._.SellType.%EC%9D%BC%EB%B0%98._.(C.CarType.A._.Manufacturer.%ED%98%84%EB%8C%80.))&sr=%7CModifiedDate%7C0%7C20"
+              title="Hyundai"
+            />
+          </Suspense>
         </div>
       )}
       <Brands />
