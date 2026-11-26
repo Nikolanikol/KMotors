@@ -123,3 +123,44 @@ export async function getPartContent(partNumber: string | null): Promise<PartCon
     return null;
   }
 }
+
+/**
+ * Даты обновления опубликованных блоков: part_number → YYYY-MM-DD. Нужны сайтмапу запчастей:
+ * её `lastmod` брался только из parts_products.scraped_at, и Google не узнавал, что у карточки
+ * появился текст. Берём позднюю из двух дат — у остальных страниц lastmod не меняется.
+ *
+ * Не бросает: сбой = пустая карта, сайтмап уходит на прежний lastmod. Читает постранично:
+ * PostgREST отдаёт не больше 1000 строк за запрос, а блоков будет около тысячи.
+ */
+async function fetchContentDates(): Promise<Record<string, string>> {
+  const supabase = createServerClient();
+  const out: Record<string, string> = {};
+  for (let from = 0; from < 50_000; from += 1000) {
+    const { data, error } = await supabase
+      .from("kmotors_part_content")
+      .select("part_number, updated_at")
+      .eq("lang", "en")
+      .eq("status", "published")
+      .order("part_number", { ascending: true })
+      .range(from, from + 999);
+    if (error) throw new Error(`kmotors_part_content dates: ${error.message}`);
+    for (const r of data ?? []) {
+      if (r.part_number && r.updated_at) out[r.part_number] = String(r.updated_at).slice(0, 10);
+    }
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
+const getCachedDates = unstable_cache(fetchContentDates, ["kmotors-part-content-dates-v1"], {
+  revalidate: 3600,
+});
+
+export async function getPartContentDates(): Promise<Record<string, string>> {
+  try {
+    return await getCachedDates();
+  } catch (e) {
+    console.error("[partContent] dates read failed:", e instanceof Error ? e.message : e);
+    return {};
+  }
+}
