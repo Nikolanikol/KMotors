@@ -50,7 +50,7 @@
 | Лоты carnect по площадкам | `carnect-lotte` / `-sk` / `-glovis` / `-kcar` / `-autohub` | `/api/carnect/sync?feed=…` | GET | `5,12,17,22,26 5,20 * * *` | Coolify, timeout 600 |
 | HeyDealer через carnect | `carnect-hey-instant` / `-self` / `-zero` | `/api/carnect/sync?feed=hey-…` | GET | `35/45 5,20`, `10 6,21` | Coolify, timeout 1800 |
 | Автопостинг авто | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | crontab |
-| Автопостинг запчастей | `poster-parts` | `/api/poster/parts/run` | POST | `30 */2 * * *` | crontab |
+| Автопостинг запчастей — ОТКЛЮЧЁН 26.11.2026 (маршрут отвечает 200 `disabled`; строку crontab на VPS снять, в Coolify не переносить) | — | `/api/poster/parts/run` | POST | — | crontab, снять |
 | Черновик статьи блога | `blog` | `/api/blog-generate` | POST | `0 10 */3 * *` | crontab |
 | Синхронизация RSS-новостей | `rss` | `/api/rss-sync` | GET | `0 9 * * *` | crontab |
 | Сбор статистики GSC | `seo-collect` | `/api/seo/collect` | POST | `35 4 * * *` | crontab |

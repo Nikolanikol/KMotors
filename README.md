@@ -214,7 +214,7 @@ ssh. One runner serves every job:
 |---|---|---|---|---|---|---|
 | Auction lots | `showcase` | `/api/showcase/sync` | GET | `0 */4 * * *` | `x-poster-secret` | Coolify |
 | Telegram car poster | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | `x-poster-secret` | crontab |
-| Telegram parts poster | `poster-parts` | `/api/poster/parts/run` | POST | `30 */2 * * *` | `x-poster-secret` | crontab |
+| Telegram parts poster — ОТКЛЮЧЁН 26.11.2026 | — | `/api/poster/parts/run` | POST | — | `x-poster-secret` | строку crontab снять |
 | Blog article draft | `blog` | `/api/blog-generate` | POST | `0 10 */3 * *` | `x-poster-secret` | crontab |
 | RSS news sync | `rss` | `/api/rss-sync` | GET | `0 9 * * *` | `x-poster-secret` | crontab |
 | GSC stats collect | `seo-collect` | `/api/seo/collect` | POST | `35 4 * * *` | `x-seo-secret` | crontab |

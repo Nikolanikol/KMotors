@@ -50,6 +50,33 @@
 --from git+https://github.com/oraios/serena serena start-mcp-server --context claude-code
 --project <путь>` и вернуть строку правила из тега `cleanup/02-log`.
 
+### 04 — отключены автопостинг запчастей и письма клиентам (тег `cleanup/04-poster-email-off`, 26.11.2026)
+
+Решение владельца. Причина: цены в постере и в письме расходились с каталогом
+(постер ниже на 25–47%, письмо — на 18–42%, по стандартным наценкам `pricing.ts`).
+
+Что поменяли:
+- `src/app/api/poster/parts/run/route.ts`: после проверки секрета отвечает 200
+  `{ ok: true, posted: false, disabled: true }`, публикацию не запускает;
+- `src/app/api/parts/checkout/route.ts` и `src/app/api/paypal/capture-order/route.ts`:
+  убраны вызовы `sendOrderConfirmation` и `sendPaymentConfirmation`. Менеджеру заказ и
+  оплата по-прежнему уходят в Telegram. Отключены ОБА письма: «об оформлении» (там была
+  ошибка цены ×1.1) и «об оплате»;
+- `scripts/cron/run.mjs`: убрана запись `poster-parts`; в `scripts/cron/CLAUDE.md` и
+  README строка помечена отключённой.
+
+Осталось мёртвым кодом (удалять отдельным шагом по решению): `src/lib/poster/parts.ts`,
+`src/lib/email.ts` (пакет `resend` теперь без потребителей).
+
+⚠️ **Вручную на VPS:** снять строку `/api/poster/parts/run` из `crontab -e` (иначе cron
+каждые 2 часа ходит в маршрут, который отвечает «отключено»; вреда нет, но это шум).
+
+Проверка: lint по трём изменённым файлам чист; `tsc` даёт те же 5 ошибок в исходниках,
+что и до шага (в изменённых файлах новых нет).
+
+Откат: `git revert -m 1 <коммит слияния шага 04>` или
+`git checkout cleanup/03-serena-off -- src/app/api scripts/cron`.
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026
