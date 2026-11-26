@@ -4,7 +4,7 @@
 ### Калькулятор растаможки — семь стран в одном интерфейсе
 
 Вход: `/[lang]/calculator` (Россия по умолчанию) и `/[lang]/calculator/[country]`.
-Ядра в `src/lib/customs/core/countries/`, курсы в `src/lib/customs/fx/`, интерфейс в
+Ядра в `src/lib/customs/core/countries/`, курсы — единый модуль `src/lib/fx/` (таможенный вид, `getFx("customs")`), интерфейс в
 `src/components/Customs/`, тесты в `tests/customs/`. Словарь — неймспейс `customs`,
 подключается opt-in, как `cars`.
 

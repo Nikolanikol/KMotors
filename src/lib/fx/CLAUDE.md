@@ -52,7 +52,7 @@
   что это действительно другой курс по делу, а не форма существующего.
 - Тесты — `tests/fx/` (подмена `fetch`), ядро калькулятора — `tests/customs/fx.spec.ts`.
 
-## Переходные обёртки (волна 2 их снимет)
+## Обёртки сняты
 
-`src/utils/getCurrencyRates.ts`, `src/lib/kbFx.ts`, `src/lib/customs/fx/**` — реэкспорты
-прежних имён. Новый код импортирует из `@/lib/fx`.
+`src/utils/getCurrencyRates.ts`, `src/lib/kbFx.ts` и `src/lib/customs/fx/**` удалены
+26.11.2026 (шаг 11b): все потребители ходят в `@/lib/fx` напрямую.

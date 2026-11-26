@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { logDegradation } from "@/lib/customs/fx/getRates";
-import { parseErApi } from "@/lib/customs/fx/providers/erapi";
-import { parseCbr } from "@/lib/customs/fx/providers/cbr";
-import { mergeRates } from "@/lib/customs/fx/getRates";
-import { FALLBACK_PER_USD } from "@/lib/customs/fx/fallback";
+import { logDegradation, mergeRates, parseCbr } from "@/lib/fx/views/customs";
+import { parseErApi } from "@/lib/fx/sources/erapi";
+import { FX_SNAPSHOT } from "@/lib/fx/snapshot";
 import {
   TRACKED_CURRENCIES,
   formatRateValue,
   rateBetween,
   type ProviderRates,
-} from "@/lib/customs/fx/types";
+} from "@/lib/fx/types";
+
+const FALLBACK_PER_USD = FX_SNAPSHOT.perUsd;
 
 /** Сокращённый ответ open.er-api.com — форма та же, что у живого. */
 const ER_OK = {
