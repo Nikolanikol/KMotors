@@ -1,7 +1,7 @@
 import { createInstance, type i18n as I18nType, type Resource } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-const SUPPORTED = ['ru', 'en', 'ka', 'ar'] as const;
+import { LANGS as SUPPORTED } from '@/lib/lang';
 
 // Фабрика вместо глобального синглтона.
 // На сервере глобальный инстанс шарится между конкурентными запросами и всегда

@@ -1,14 +1,14 @@
-const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ka", "ar"];
+import { LANGS } from "@/lib/lang";
+import { SITE_URL } from "@/lib/site";
 
 export function makeAlternates(lang: string, path: string) {
   const languages: Record<string, string> = {};
   for (const l of LANGS) {
-    languages[l] = `${BASE}/${l}${path}`;
+    languages[l] = `${SITE_URL}/${l}${path}`;
   }
-  languages["x-default"] = `${BASE}/ru${path}`;
+  languages["x-default"] = `${SITE_URL}/ru${path}`;
   return {
-    canonical: `${BASE}/${lang}${path}`,
+    canonical: `${SITE_URL}/${lang}${path}`,
     languages,
   };
 }

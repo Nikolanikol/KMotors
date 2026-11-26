@@ -7,6 +7,8 @@
 // работа, и делать её заодно значит трогать половину витрины ради одной
 // строки. Но новую копию плодить нельзя: поменяется номер — и часть сайта
 // будет звать клиента не туда, причём молча.
+import { SITE_URL } from "@/lib/site";
+
 export const WA_PHONE = "821058654344";
 
 /** Ссылка в WhatsApp с готовым текстом. */
@@ -34,6 +36,5 @@ export function lotAskText(opts: {
 
 /** Абсолютный адрес нашей страницы лота. */
 export function lotUrl(lang: string, source: string, id: string): string {
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
-  return `${site}/${lang}/auction/${source === "kcar" ? "" : `${source}/`}${id}`;
+  return `${SITE_URL}/${lang}/auction/${source === "kcar" ? "" : `${source}/`}${id}`;
 }

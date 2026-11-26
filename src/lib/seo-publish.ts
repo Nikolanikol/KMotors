@@ -7,8 +7,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { submitIndexNow } from "@/lib/indexnow";
-
-const LANGS = ["ru", "en", "ka", "ar"]; // индексируемые языки карточек
+import { LANGS } from "@/lib/lang"; // индексируемые языки карточек
 
 export async function publishApproved(
   supabase: SupabaseClient,

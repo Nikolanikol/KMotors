@@ -19,7 +19,9 @@
 
 import { headers } from "next/headers";
 
-const CANONICAL_HOST = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop").hostname;
+import { SITE_URL } from "@/lib/site";
+
+const CANONICAL_HOST = new URL(SITE_URL).hostname;
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 
 export async function isServiceHost(): Promise<boolean> {
