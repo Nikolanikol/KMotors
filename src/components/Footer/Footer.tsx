@@ -1,4 +1,5 @@
 "use client";
+import { langOrDefault } from "@/lib/lang";
 import { type ReactNode } from "react";
 import { Mail, Phone, MapPin, ArrowUp, CreditCard } from "lucide-react";
 
@@ -29,7 +30,6 @@ import { useTranslation } from "react-i18next";
 import { useCountry } from "@/hooks/useCountry";
 import { FaCcPaypal, FaCcVisa } from "react-icons/fa";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 // Payment is arranged via the manager (e.g. PayPal invoice) — these badges are a trust signal.
 const PAY_HEADING: Record<string, string> = {
@@ -171,7 +171,7 @@ export default function Footer() {
   const { isCatalogBlocked } = useCountry();
 
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   const navLinks = [
     { href: `/${lang}/`, labelKey: "nav.home" },

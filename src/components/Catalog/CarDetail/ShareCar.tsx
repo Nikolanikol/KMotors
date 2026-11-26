@@ -1,5 +1,6 @@
 "use client";
 
+import { SITE_URL } from "@/lib/site";
 import { Share2, Check, User, Briefcase } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,9 +11,7 @@ import { shareLink } from "@/lib/shareLink";
 // Канонический хост публичного сайта. Всё остальное, что доезжает до браузера
 // (служебный поддомен за Cloudflare Access), — рабочий вход менеджера, см.
 // CLAUDE.md, раздел «Владельческий вход».
-const CANONICAL_HOST = new URL(
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop"
-).hostname;
+const CANONICAL_HOST = new URL(SITE_URL).hostname;
 
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { SITE_URL } from "@/lib/site";
+import { langOrDefault } from "@/lib/lang";
 import { useState, useEffect } from "react";
 import { X, MessageCircle, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -8,11 +10,10 @@ import CarRequestForm from "./CarRequestForm";
 import { trackEvent } from "@/utils/gtag";
 import { clarityEvent } from "@/utils/clarity";
 import { WA_PHONE } from "@/lib/contact";
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 const WA_TEXT: Record<string, (id: string, name: string) => string> = {
-  ru: (id, name) => `Здравствуйте! Интересует ${name}, ID: ${id} — https://www.kmotors.shop/ru/catalog/${id}`,
-  en: (id, name) => `Hello! I'm interested in ${name}, ID: ${id} — https://www.kmotors.shop/en/catalog/${id}`,
+  ru: (id, name) => `Здравствуйте! Интересует ${name}, ID: ${id} — ${SITE_URL}/ru/catalog/${id}`,
+  en: (id, name) => `Hello! I'm interested in ${name}, ID: ${id} — ${SITE_URL}/en/catalog/${id}`,
   ko: (id, name) => `안녕하세요! ${name} 차량에 관심 있습니다, ID: ${id}`,
   ka: (id, name) => `გამარჯობა! მაინტერესებს ${name}, ID: ${id}`,
   ar: (id, name) => `مرحباً! أنا مهتم بـ ${name}, ID: ${id}`,
@@ -27,7 +28,7 @@ export default function StickyMobileCTA({ carId, carName }: StickyMobileCTAProps
   const { t } = useTranslation();
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   const [visible, setVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);

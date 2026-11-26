@@ -13,6 +13,7 @@
 // (страница кешируется и одна на оба хоста), поэтому вторая кнопка появляется
 // после монтирования. Определение хоста — как в ShareCar / serviceHost.ts.
 
+import { SITE_URL } from "@/lib/site";
 import { Briefcase, Check, Share2, User } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,7 +21,7 @@ import { useEffect, useState } from "react";
 import { pick, type CardLang, type Pair } from "@/lib/carnect/lang";
 import { shareLink } from "@/lib/shareLink";
 
-const CANONICAL_HOST = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop").hostname;
+const CANONICAL_HOST = new URL(SITE_URL).hostname;
 const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 
 const T = {

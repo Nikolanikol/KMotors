@@ -14,13 +14,14 @@
 // Определение служебного хоста — как в serviceHost.ts: всё, что не
 // CANONICAL_HOST, localhost тоже служебный.
 
+import { SITE_URL } from "@/lib/site";
 import { useEffect, useState } from "react";
 
 import type { CarCard } from "@/lib/carnect/card";
 
 import InternalPanel from "./InternalPanel";
 
-const CANONICAL_HOST = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop").hostname;
+const CANONICAL_HOST = new URL(SITE_URL).hostname;
 
 type Loaded = { card: CarCard; meta: { id: string; ms: number; fetchedAt?: string } };
 

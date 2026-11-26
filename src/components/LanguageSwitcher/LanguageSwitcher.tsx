@@ -1,5 +1,6 @@
 'use client';
 
+import { isLang } from '@/lib/lang';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { trackEvent } from '@/utils/gtag';
@@ -13,8 +14,6 @@ const languages = [
   { code: 'ka', name: 'ქართული', flag: '🇬🇪' },
   { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
-
-const SUPPORTED_LANGS = languages.map((l) => l.code);
 
 export default function LanguageSwitcher() {
   const router = useRouter();
@@ -31,7 +30,7 @@ export default function LanguageSwitcher() {
     setMounted(true);
     const segments = pathname.split('/');
     const urlLang = segments[1];
-    const detected = SUPPORTED_LANGS.includes(urlLang)
+    const detected = isLang(urlLang)
       ? languages.find((l) => l.code === urlLang) || languages[0]
       : languages[0];
     setCurrentLanguage(detected);
@@ -66,7 +65,7 @@ export default function LanguageSwitcher() {
   const changeLanguage = (langCode: string) => {
     // Replace the lang segment in the URL: /ru/catalog/123 → /en/catalog/123
     const segments = pathname.split('/');
-    if (SUPPORTED_LANGS.includes(segments[1])) {
+    if (isLang(segments[1])) {
       segments[1] = langCode;
     } else {
       segments.splice(1, 0, langCode);

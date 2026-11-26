@@ -1,10 +1,10 @@
 "use client";
 
+import { langOrDefault } from "@/lib/lang";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 const STORAGE_KEY = "cookie-consent";
 
 const TEXT: Record<string, { message: string; accept: string; more: string }> = {
@@ -39,7 +39,7 @@ export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
   const t = TEXT[lang] ?? TEXT.ru;
 
   useEffect(() => {

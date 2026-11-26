@@ -1,12 +1,12 @@
 "use client";
 
+import { langOrDefault } from "@/lib/lang";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
 import { useCountry } from "@/hooks/useCountry";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 const CARDS = [
   {
@@ -70,7 +70,7 @@ export default function NavCards() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
   const labels = FALLBACK[lang] ?? FALLBACK.ru;
   const { isCatalogBlocked } = useCountry();
 

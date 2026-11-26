@@ -1,5 +1,6 @@
 "use client";
 
+import { langOrDefault } from "@/lib/lang";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
@@ -20,7 +21,6 @@ import { useCountry } from "@/hooks/useCountry";
 import AuthModalHost from "./AuthModalHost";
 import ProfileButton from "./ProfileButton";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 
 /** Ссылка без хвоста igsh/utm — это одноразовый токен шаринга из QR-кода. */
 const INSTAGRAM_URL = "https://www.instagram.com/axiskoreancar";
@@ -177,7 +177,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
   }, []);
 
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   // ─── Навигация (пересобрана 05.10.2026, решение владельца) ───────────────
   // Было 7 пунктов в строку, стало 4: «Авто ▾», «Запчасти ▾», «Калькулятор»,
