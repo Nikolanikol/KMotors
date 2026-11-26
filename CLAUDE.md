@@ -153,6 +153,11 @@ npx tsc --noEmit
 - ⚠️ «Продано / ушло» ≠ «апстрим лежит» — везде (Encar `null` против
   `VehicleUpstreamError`, витрины `gone` против `failed`, EMS `not_found` против
   `upstream_error`). Не схлопывать в `catch(() => null)`; сбой не кешировать.
+- ⚠️ Отправка в Telegram — ТОЛЬКО через `src/lib/telegram.ts` (`sendTelegram`, `telegramRequest`);
+  голый `fetch` на `api.telegram.org` не заводить (было 12 копий). Клиент механический: чат, токен,
+  `parse_mode` и политику ошибок задаёт вызывающий, чаты РАЗНЫЕ (лиды — `CHAT_ID` и `WORK`, заказы —
+  `WORK ?? CHAT`, SEO-гейт и блог — `CHAT_ID`, сбои синка и отчёт рассылки — `WORK`, постер — группа
+  и темы) — не сливать их в один.
 - Гейты крон-роутов FAIL-CLOSED: `if (!secret || req.headers.get("x-poster-secret") !== secret) return 401`.
 - SEO-пайплайн никогда не трогает живые данные до гейта одобрения в Telegram
   ([docs/core-seo.md](docs/core-seo.md)).
