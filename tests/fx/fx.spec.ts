@@ -82,8 +82,8 @@ describe("ЦБ РФ упал → снимок с логом", () => {
     const rates = await getFx("market");
 
     expect(rates.krwToUsd).toBe(0.00072);
-    expect(rates.krwToRub).toBeCloseTo(FX_SNAPSHOT.perUsd.RUB / FX_SNAPSHOT.perUsd.KRW, 12);
-    expect(rates.rubToUsd).toBeCloseTo(1 / FX_SNAPSHOT.perUsd.RUB, 12);
+    expect(rates.krwToRub).toBe(0.0609);
+    expect(rates.rubToUsd).toBe(1 / 84.28);
     expect(rates.updatedAt).toBe("2026-08-26");
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
@@ -97,7 +97,13 @@ describe("ЦБ РФ упал → снимок с логом", () => {
     stubFetch({});
     const rates = await getFx("market");
     expect(rates.updatedAt).toBe("fallback");
-    expect(rates.krwToUsd).toBeCloseTo(1 / FX_SNAPSHOT.perUsd.KRW, 12);
+    // Рыночный блок снимка — прежние значения getCurrencyRates, не кросс таможенного.
+    expect(rates).toEqual({
+      krwToRub: 0.0609,
+      krwToUsd: 0.00072,
+      rubToUsd: 1 / 84.28,
+      updatedAt: "fallback",
+    });
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 

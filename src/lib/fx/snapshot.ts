@@ -1,9 +1,12 @@
 import type { CurrencyCode, CurrencyRates, ProviderRates } from "@/lib/fx/types";
 
 /**
- * ЕДИНСТВЕННЫЙ вшитый снимок курсов на весь сайт — последний уровень
- * деградации для всех трёх видов курса. Других констант курса в коде нет и
+ * Вшитый снимок курсов — ОДИН файл на весь сайт, но у каждого вида свой
+ * датированный блок: таможенный (`FX_SNAPSHOT`) и рыночный (`MARKET_SNAPSHOT`,
+ * им же пользуется авто-вид на фолбэке). Других констант курса в коде нет и
  * быть не должно (CLAUDE.md, «Цены и курсы»).
+ *
+ * Ниже — таможенный блок.
  *
  * Берётся, только когда живые источники недоступны или отдали мусор, и каждое
  * такое падение логируется (`log.ts`). Выдавать снимок за живой курс нельзя:
@@ -40,12 +43,23 @@ export const snapshotProviderRates: ProviderRates = {
 };
 
 /**
- * Снимок в форме рыночного вида. Пары выводятся кроссом через доллар из того
- * же набора, а не хранятся отдельными числами: иначе это был бы второй снимок
- * со своей датой.
+ * Рыночный блок снимка — фолбэк рыночного и (через него) авто-вида.
+ *
+ * Свой блок, а не кросс из таможенного: значения и даты перенесены из прежнего
+ * `utils/getCurrencyRates.ts` без изменений, чтобы цены на фолбэке остались
+ * прежними. Таможенный блок старше (10.08 против 26–27.08.2026), и вывод из
+ * него сдвинул бы рубль на −4.5%. Свести блоки в один — решение владельца,
+ * вместе с обновлением снимка. Обновлять блок целиком и с датами.
  */
+export const MARKET_SNAPSHOT = {
+  krwToRub: { value: 0.0609, asOf: "2026-08-27", source: "ЦБ РФ" },
+  krwToUsd: { value: 0.00072, asOf: "2026-08-26", source: "frankfurter" },
+  rubToUsd: { value: 1 / 84.28, asOf: "2026-08-27", source: "ЦБ РФ" },
+} as const;
+
+/** Рыночный блок в форме вида. */
 export const snapshotMarket: Omit<CurrencyRates, "updatedAt"> = {
-  krwToUsd: 1 / FX_SNAPSHOT.perUsd.KRW,
-  krwToRub: FX_SNAPSHOT.perUsd.RUB / FX_SNAPSHOT.perUsd.KRW,
-  rubToUsd: 1 / FX_SNAPSHOT.perUsd.RUB,
+  krwToRub: MARKET_SNAPSHOT.krwToRub.value,
+  krwToUsd: MARKET_SNAPSHOT.krwToUsd.value,
+  rubToUsd: MARKET_SNAPSHOT.rubToUsd.value,
 };
