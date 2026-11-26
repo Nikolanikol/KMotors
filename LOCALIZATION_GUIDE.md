@@ -166,7 +166,7 @@ export default function CurrentLanguage() {
 
 ### 2. Добавить во все языки
 
-Не забудьте добавить тот же ключ в `en/common.json` и `ko/common.json`:
+Не забудьте добавить тот же ключ в `en/common.json` (локаль `ko` удалена 26.11.2026 — словарей `ko` в проекте больше нет):
 
 ```json
 // src/locales/en/common.json

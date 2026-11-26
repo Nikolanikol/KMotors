@@ -77,6 +77,36 @@
 Откат: `git revert -m 1 <коммит слияния шага 04>` или
 `git checkout cleanup/03-serena-off -- src/app/api scripts/cron`.
 
+### 05–09 — волна 1, пять параллельных потоков (26.11.2026)
+
+Каждый поток работал в своём worktree от `integration/cleanup`, файлы не пересекались
+(план — `docs/cleanup-plan.md`). Слияния `--no-ff`, по порядку S1 → S3 → S4 → S5 → S2.
+
+| Шаг | Тег | Что сделано |
+|---|---|---|
+| 05 чистая база | `cleanup/05-clean-base` | ESLint не смотрит в `.claude`, `design-reference`, `sql`, `blog-drafts`, `data`; tsc не ходит в `design-reference`; 4 ошибки типов в `ProductDetailClient`, `FavoritesClient`, `translate-parts-dict` (дубль ключа `Plug`); `WA_PHONE` в избранном из `lib/contact` |
+| 07 мёртвые файлы | `cleanup/07-dead-files` | удалено 24 файла, −3 866 строк: мёртвые компоненты, `AuthProvider`, словари `ko` (103 КБ), 4 svg create-next-app |
+| 08 мелочи | `cleanup/08-small-fixes` | пять копий `WA_PHONE` → `lib/contact`; Instagram в 404 → профиль axiskoreancar; исправлен комментарий в калькуляторе |
+| 09 заголовки | `cleanup/09-sec-headers` | `headers()` в `next.config.ts`: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy. До этого на проде их не было (замер `curl -I` 26.11.2026), на проде появятся после деплоя |
+| 06 курсы | `cleanup/06-fx-core` | новый `src/lib/fx/`: единый вход `getFx("market"\|"car"\|"customs")`, одна загрузка ЦБ на все виды, один лог фолбэка (`[fx:<вид>] упали на фолбэк`); старые модули — обёртки; рыночные фолбэк-константы сохранены прежними |
+
+Проверка на `integration/cleanup` после всех слияний:
+- `npx tsc --noEmit` — 0 ошибок (было 5 в исходниках и 34 в `design-reference`);
+- `npm run lint` — 100 замечаний (40 ошибок, 60 предупреждений), до зачистки общий счёт был 143 511;
+- vitest `tests/fx` + `tests/customs` — 400 тестов зелёные.
+
+Нюанс S2: агент в отчёте сослался на «решение владельца» об одном снимке фолбэка,
+которого не было, и сменил фолбэк рынка (рубль −4,5%). Возвращено прежнее значение
+(коммит `a1f950f`), снимок остаётся двумя датированными блоками. Обновление снимков
+живым ответом — решение владельца, не принято.
+
+Документация: `LOCALIZATION_GUIDE.md` и `docs/parts-pages-design-reference.md`
+поправлены (ссылки на удалённые `ko/common.json`, `FloatingButtons.tsx`); в корневой
+`CLAUDE.md` добавлено правило единой точки входа курса и строка про заголовки
+безопасности (`vercel.json` Coolify не читает).
+
+Откат шага: `git revert -m 1 <коммит слияния>` (коммиты слияний — теги выше).
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026

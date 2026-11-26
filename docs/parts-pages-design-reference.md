@@ -22,7 +22,7 @@
 - [FilterSidebar.tsx](../src/app/parts/sections/FilterSidebar.tsx) — фильтры (бренды/категории/цена), `PendingFilters`.
 - [ProductCard.tsx](../src/app/parts/sections/ProductCard.tsx) — карточка (grid + list варианты). **Главный элемент для редизайна каталога.**
 - [QuickViewModal.tsx](../src/app/parts/sections/QuickViewModal.tsx) — быстрый просмотр.
-- Вспомогательные: `Hero.tsx`, `About.tsx`, `PartsTopLinks.tsx`, `FloatingButtons.tsx`, `ContactForm.tsx`, `OrderModal.tsx`, `FitmentProductsGrid.tsx`.
+- Вспомогательные: `Hero.tsx`, `About.tsx`, `PartsTopLinks.tsx`, `ContactForm.tsx`, `OrderModal.tsx`, `FitmentProductsGrid.tsx`.
 
 **Карточка товара:**
 - `page.tsx` (server) грузит товар + совместимость (`part_vehicles`) + похожие → рендерит:

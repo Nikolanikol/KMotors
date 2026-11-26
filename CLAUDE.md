@@ -41,6 +41,7 @@ SEO-пайплайн, оплата через PayPal, операции чере�
 | отслеживание EMS | [src/app/tracking/CLAUDE.md](src/app/tracking/CLAUDE.md) |
 | UI-чеклист, бренд/бронза/логотип/иконки, шапка, избранное | [src/components/CLAUDE.md](src/components/CLAUDE.md) |
 | расписания, крон-раннер, Coolify Scheduled Tasks, crontab | [scripts/cron/CLAUDE.md](scripts/cron/CLAUDE.md) |
+| курсы валют: единая точка входа, три вида (рынок, авто по KB, таможня), фолбэк-снимки | [src/lib/fx/CLAUDE.md](src/lib/fx/CLAUDE.md) |
 | SEO, og-карточки, llms.txt, сайтмапы, блог, SEO-пайплайн, GA4, GSC | [docs/core-seo.md](docs/core-seo.md) |
 | i18n: разделы словаря по маршрутам, AuthProvider | [docs/core-i18n.md](docs/core-i18n.md) |
 | служебный хост, Cloudflare Access, Coolify Direction | [docs/core-infra.md](docs/core-infra.md) |
@@ -87,7 +88,7 @@ npx tsc --noEmit
   в main — это действие «выкатить», а не «сохранить».
 - Supabase развёрнут на том же VPS и является ЖИВОЙ ПРОДАКШЕН-БАЗОЙ. `.env` смотрит на неё.
   Любой SQL, скрипт с данными, команда supabase CLI бьёт прямо в прод. Staging-базы нет.
-- Coolify — единственный живой прод. `vercel.json` — только ради headers, `netlify.toml`
+- Coolify — единственный живой прод. `vercel.json` Coolify НЕ читает (заголовки безопасности с 26.11.2026 заданы в `next.config.ts`; до этого на проде их не было вовсе), `netlify.toml`
   мёртв, `output: 'standalone'` для Docker. «Vercel primary» не восстанавливать.
 - ⚠️ **Провал сборки НЕ роняет прод — и потому не виден.** Coolify оставляет прежний
   контейнер. После push проверять URL, которого в прежней сборке не было, а не главную.
@@ -124,8 +125,10 @@ npx tsc --noEmit
 Полный текст с историей — [docs/core-root-details.md](docs/core-root-details.md), если не указано иное.
 
 **Цены и курсы**
-- ⚠️ Курс запрашивает ТОЛЬКО сервер (`getCurrencyRates()`, для авто `getCarRates` из
-  `src/lib/kbFx.ts`); клиент получает его пропсом, своих запросов не делает. Никогда не
+- ⚠️ ЕДИНСТВЕННАЯ точка входа за курсом — `src/lib/fx` (`getFx("market"|"car"|"customs")`,
+  правила — [src/lib/fx/CLAUDE.md](src/lib/fx/CLAUDE.md)); `getCurrencyRates()` и `getCarRates`
+  остаются обёртками над ним, новых прямых походов за курсом не заводить. Курс запрашивает
+  ТОЛЬКО сервер; клиент получает его пропсом, своих запросов не делает. Никогда не
   зашивать курс константой. `?? FALLBACK` на внешнем курсе обязан логироваться.
 - Источники РАЗНЫЕ: рубль — ЦБ РФ (оттуда же `rubToUsd`), доллар — frankfurter (RUB не
   отдаёт). Не сводить к одному.
