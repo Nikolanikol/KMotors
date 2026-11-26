@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SITE_URL } from "@/lib/site";
 
 // Метаданные и viewport общие для всех трёх корневых layout: их три, потому
 // что <html lang> обязан приходить из сегмента [lang], а корневой layout его
@@ -10,7 +11,7 @@ export const viewport: Viewport = {
   themeColor: "#b67749",
 };
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.kmotors.shop"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "K-Axis — авто из Кореи | Hyundai, Kia, Genesis",
     template: "%s | K-Axis",

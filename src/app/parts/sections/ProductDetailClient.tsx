@@ -31,6 +31,7 @@ import { formatUsd } from "@/lib/pricing";
 import { ShoppingCart, X } from "lucide-react";
 import { addToPartsCart, removeFromPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { openCartDrawer } from "@/components/Cart/CartDrawer";
+import { SITE_URL } from "@/lib/site";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -298,7 +299,7 @@ export function ProductDetailClient({
   );
 
   // Используем стабильный URL без window — предотвращает hydration mismatch #418
-  const productUrl = `https://www.kmotors.shop/${lang}/parts/${partSlug}`;
+  const productUrl = `${SITE_URL}/${lang}/parts/${partSlug}`;
 
   return (
     <div className="parts-page min-h-screen bg-[var(--pn-bg)]">

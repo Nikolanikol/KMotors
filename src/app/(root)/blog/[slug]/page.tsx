@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { createServerClient } from "@/lib/supabase";
 import BlogPostClient from "./BlogPostClient";
+import { SITE_URL } from "@/lib/site";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: post.title_ru,
       description: post.excerpt_ru || post.title_ru,
-      url: `https://www.kmotors.shop/blog/${slug}`,
+      url: `${SITE_URL}/blog/${slug}`,
       // Обложка перекрывает файловую конвенцию — это и нужно. Без обложки
       // images остаётся undefined, и картинку даёт корневая opengraph-image.tsx.
       images: post.cover_url ? [{ url: post.cover_url, alt: post.title_ru }] : undefined,
@@ -53,13 +54,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       images: post.cover_url ? [post.cover_url] : undefined,
     },
     alternates: {
-      canonical: `https://www.kmotors.shop/blog/${slug}`,
+      canonical: `${SITE_URL}/blog/${slug}`,
       languages: {
-        ru: `https://www.kmotors.shop/blog/${slug}`,
-        en: `https://www.kmotors.shop/blog/${slug}`,
-        ka: `https://www.kmotors.shop/blog/${slug}`,
-        ar: `https://www.kmotors.shop/blog/${slug}`,
-        "x-default": `https://www.kmotors.shop/blog/${slug}`,
+        ru: `${SITE_URL}/blog/${slug}`,
+        en: `${SITE_URL}/blog/${slug}`,
+        ka: `${SITE_URL}/blog/${slug}`,
+        ar: `${SITE_URL}/blog/${slug}`,
+        "x-default": `${SITE_URL}/blog/${slug}`,
       },
     },
   };
@@ -74,26 +75,26 @@ export default async function BlogPostPage({ params }: PageProps) {
         "@context": "https://schema.org",
         "@type": "Article",
         headline: post.title_ru,
-        image: post.cover_url || "https://www.kmotors.shop/opengraph-image",
+        image: post.cover_url || `${SITE_URL}/opengraph-image`,
         datePublished: post.published_at,
         dateModified: post.published_at,
         author: {
           "@type": "Organization",
           name: "K-Axis",
-          url: "https://www.kmotors.shop/",
+          url: `${SITE_URL}/`,
         },
         publisher: {
           "@type": "Organization",
           name: "K-Axis",
           logo: {
             "@type": "ImageObject",
-            url: "https://www.kmotors.shop/favicon_io/android-chrome-192x192.png",
+            url: `${SITE_URL}/favicon_io/android-chrome-192x192.png`,
           },
         },
         description: post.excerpt_ru || post.title_ru,
         mainEntityOfPage: {
           "@type": "WebPage",
-          "@id": `https://www.kmotors.shop/blog/${slug}`,
+          "@id": `${SITE_URL}/blog/${slug}`,
         },
       }
     : null;

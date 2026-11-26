@@ -9,6 +9,7 @@ import { deactivateAllForChat, deactivateOwn, saveSubscription } from "@/lib/sav
 import { normalizeBrand } from "@/lib/carLabels";
 import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
+import { SITE_URL } from "@/lib/site";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -192,14 +193,14 @@ export async function POST(req: NextRequest) {
           (subscribed
             ? `\n🔁 Подписан на похожие — бот напишет сам`
             : `\n⚠️ Подписку оформить не удалось (нет снимка) — только ручной ответ`) +
-          `\n🔗 <a href="https://www.kmotors.shop/ru/catalog/${soldId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=sold">Открыть страницу</a>`
+          `\n🔗 <a href="${SITE_URL}/ru/catalog/${soldId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=sold">Открыть страницу</a>`
         : carId
         ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
           `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
-          `🔗 <a href="https://www.kmotors.shop/ru/catalog/${carId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=lead">Открыть на K-Axis</a>`
+          `🔗 <a href="${SITE_URL}/ru/catalog/${carId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=lead">Открыть на K-Axis</a>`
         : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
           `👤 Имя: ${fullName}\n` +
           `✈️ Telegram: ${username}\n` +
@@ -370,7 +371,7 @@ async function handleGenerateCommand(chatId: number) {
   await sendMessage(chatId, "⏳ Генерирую статью, подождите 30–60 секунд...");
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
+    const baseUrl = SITE_URL;
     // /api/blog-generate закрыт POSTER_CRON_SECRET — без заголовка получим 401.
     const res = await fetch(`${baseUrl}/api/blog-generate`, {
       method: "POST",

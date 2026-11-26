@@ -60,9 +60,9 @@ export default function RootShell({
               "@context": "https://schema.org",
               "@type": ["LocalBusiness", "AutoDealer"],
               name: "K-Axis",
-              url: "https://www.kmotors.shop/",
-              logo: "https://www.kmotors.shop/favicon_io/android-chrome-192x192.png",
-              image: "https://www.kmotors.shop/opengraph-image",
+              url: `${SITE_URL}/`,
+              logo: `${SITE_URL}/favicon_io/android-chrome-192x192.png`,
+              image: `${SITE_URL}/opengraph-image`,
               description: "Покупка и доставка автомобилей из Южной Кореи. Hyundai, Kia, Genesis.",
               telephone: "+821058654344",
               address: {
