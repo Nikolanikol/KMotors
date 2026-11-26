@@ -191,9 +191,9 @@ npx tsc --noEmit
 - Публичные страницы — `src/app/(site)/[lang]/…`, `[lang]` ∈ `ru | en | ka | ar`
   (`src/lib/lang.ts`); `ko` отключена (301 → `/en`, не баг). Админка —
   `src/app/(admin)/admin/…`, вход по `ADMIN_PASSWORD` + cookie.
-- ⚠️ Корея закрыта в ТРИ независимых слоя: 403 в `src/middleware.ts` (`isKoreaBlocked`:
-  каталог, аукцион, избранное, сравнение и API машин; новый такой маршрут — добавить в
-  регулярки), Cloudflare WAF (вне репозитория) и косметическое скрытие ссылок
+- ⚠️ Корея закрыта в ТРИ независимых слоя: 403 в `src/middleware.ts` (решает `classifyRequest` из
+  `src/lib/routes`; новый такой маршрут — в манифест ядра `src/lib/routes/<ядро>.ts`
+  (`*_KR_BLOCKED_PAGES`/`*_KR_BLOCKED_API`), НЕ в `middleware.ts`; проверка — `tests/routes`), Cloudflare WAF (вне репозитория) и косметическое скрытие ссылок
   (`useCountry.ts`). 403 из Кореи — работающее правило, а не сломанный прод. Владелец ходит
   через служебный хост ([docs/core-infra.md](docs/core-infra.md)).
 - ⚠️ В GSC Корея (`kor`) — трафик владельца: ВСЕГДА исключать из SEO-анализа.

@@ -166,6 +166,28 @@
 (волна 3), `src/app/rootMetadata.ts`, `src/app/RootShell.tsx` (JSON-LD), `src/app/(root)/blog/[slug]/page.tsx`,
 `ProductDetailClient.tsx:301`, `telegram-webhook/route.ts:373` (вместе с Telegram-клиентом).
 
+### 14–16 — развязка прода: главная, шапка, middleware (26.11.2026)
+
+Слиты `--no-ff` три потока волны 3 (теги `cleanup/14-home-encar`, `cleanup/15-header-lazy`,
+`cleanup/16-middleware`).
+
+- **14 (S10, главная):** `CarSlider` — запросы к Encar с таймаутом 8 с (20 с через прокси), не
+  бросают; `<Suspense>` + скелетон на главной; `tests/home/carSlider.spec.ts`.
+- **15 (S9, шапка):** `CartDrawer` и `FavoritesDrawer` через `next/dynamic` (`ssr:false`),
+  прогрев по `pointerenter`/`focus`/`touchstart`; события корзины вынесены в `Cart/cartEvents.ts`.
+- **16 (S8, middleware):** списки путей ядер — в `src/lib/routes/{cars,auction,parts,session,shared}.ts`,
+  решение — `classifyRequest`, `middleware.ts` стал тонким. `getUser()` вызывается только при наличии
+  cookie сессии и ограничен 2 с (при таймауте — страница без обновления сессии + `console.error`).
+  Регрессия: 120 путей и 19 200 комбинаций «путь × хост × страна × бот × query» совпали со старой
+  логикой (`tests/routes/legacy.ts` хранит дословную копию).
+
+Проверка после слияния: `tsc` 0 ошибок в исходниках (остался только устаревший артефакт `.next/types`
+про удалённый `/api/exchange-rate`), lint 94 (как до шага), vitest 589 прошло.
+
+⚠️ Не проверено вживую: таймаут `getUser()` при реально медленной Supabase (проверена только мусорная
+cookie); высота скелетона и скорость главной на холодном прокси Encar; эффект на размер бандла шапки
+(сборка локально падает без серверных ключей); мобильная ширина, hover и focus. Проверять после деплоя.
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026

@@ -174,7 +174,7 @@ tsx, не curl к PostgREST с подстановкой ключей из `.env`
 
 Изменение одного слоя не влияет на другие.
 
-- **Слой 3, запрет на origin (05.10.2026)** — `isKoreaBlocked` в `src/middleware.ts`:
+- **Слой 3, запрет на origin (05.10.2026)** — `isKoreaBlockedPath` в `src/lib/routes/index.ts` (списки — манифесты `src/lib/routes/*.ts`, вызывает `src/middleware.ts`):
   на каноническом хосте при `cf-ipcountry = KR` отдаётся 403 на каталог Encar, аукцион,
   избранное, сравнение (`KR_BLOCKED_PAGE`) и на ВСЕ API с данными машин
   (`KR_BLOCKED_API`: recommended, vehicle, carnect, cars, kcar, showcase). Решение
