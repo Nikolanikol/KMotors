@@ -9,6 +9,11 @@ export function isLang(lang: string): boolean {
   return (LANGS as readonly string[]).includes(lang);
 }
 
+/** Локаль из сегмента пути или значения; не наша (в т.ч. отключённая `ko`) — дефолтная. */
+export function langOrDefault(value: string | null | undefined): string {
+  return value && isLang(value) ? value : DEFAULT_LANG;
+}
+
 // Страна (cf-ipcountry, ISO-3166 alpha-2) → локаль.
 // Используется только как фолбэк, когда язык браузера не из наших четырёх.
 const COUNTRY_LANG: Record<string, string> = {
