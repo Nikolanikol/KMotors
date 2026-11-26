@@ -237,6 +237,23 @@ cookie); высота скелетона и скорость главной на
 модуля — единая функция выбора чата отдельным шагом. ⚠️ Живой отправки не было (токенов нет): проверено
 тестами, а не в Telegram.
 
+### 21 — неиспользуемые пакеты (тег `cleanup/21-packages`, 26.11.2026)
+
+Убрано 39 пакетов из `package.json` (20 `@radix-ui/*`, antd, bcryptjs, cmdk, date-fns, embla, jose, jsonwebtoken
+(+типы), lightgallery и `lg-*`, react-slick, slick-carousel, splide, input-otp, `i18next-*` детектор и http-backend,
+`next-nprogress-bar`, `@netlify/plugin-nextjs`). Оставлены осознанно: `better-sqlite3`, `dotenv`, `pg`, `ts-node`
+(нужны разовым `scripts/` и `sql/`), `resend` (его ещё импортируют мёртвые `email.ts` и `poster/parts.ts` — решение
+владельца), `tailwindcss-animate`, `@tailwindcss/typography`. Поток писал Opus (ветка `step/21-unused-packages`, коммит 5dce893).
+
+Проверка: лок 969 → 808 записей; платформенные `@next/swc-*` 8, `@img/sharp*` 22, `lightningcss-*` 21,
+`@tailwindcss/oxide-*` 12 — все целы. `@esbuild/*` 52 → 26: ушли 27 peer-записей `vitest/node_modules/esbuild`,
+это поведение npm 11 и на нетронутом `package.json` (969 → 942), а не следствие удаления пакетов.
+Лок под npm 11.21.3 (его ставит Dockerfile) совпадает с локом под 11.5.2; `npm ci --dry-run` зелёный под обоими.
+Мой независимый контроль: grep каждого удалённого имени по репозиторию (в т.ч. css, конфиги, scripts) — только два комментария;
+**чистая установка `npm ci` в отдельной копии** (удалённых пакетов физически нет) + `tsc` 0 ошибок, lint 0 ошибок, vitest 589.
+⚠️ Не проверено: настоящая `next build` (падает без серверных ключей) и сборка в Docker — после выкладки проверять URL, которого не было в прежней сборке.
+Решение владельца: `netlify.toml` и `design-reference/` (у него свой `package.json`) можно удалять — теперь на них ничего не ссылается.
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026
