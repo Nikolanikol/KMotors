@@ -125,7 +125,7 @@ export default function NotFound() {
                   style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
                   {t.telegram}
                 </a>
-                <a href="https://www.instagram.com/kmotors.shop/" target="_blank" rel="noopener noreferrer"
+                <a href="https://www.instagram.com/axiskoreancar" target="_blank" rel="noopener noreferrer"
                   className="inline-block font-bold py-2 px-6 rounded-lg text-center transition-colors"
                   style={{ border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
                   {t.instagram}

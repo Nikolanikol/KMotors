@@ -5,8 +5,8 @@ import { SearchX, Clock, ShieldCheck, Truck } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { clarityEvent } from "@/utils/clarity";
 import { OrderModal } from "./OrderModal";
+import { WA_PHONE } from "@/lib/contact";
 
-const WA_PHONE = "821058654344";
 const TG_MANAGER = "axiskorea";
 
 /**

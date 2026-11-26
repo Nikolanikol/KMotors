@@ -5,9 +5,8 @@ import { useTranslation } from "react-i18next";
 import { BellRing, MessageCircle, Send } from "lucide-react";
 import { trackEvent } from "@/utils/gtag";
 import { clarityEvent } from "@/utils/clarity";
+import { WA_PHONE } from "@/lib/contact";
 
-// Те же контакты, что в NoResultsBanner и MessengerButtons.
-const WA_PHONE = "821058654344";
 const TG_MANAGER = "axiskorea";
 // Клиентский бот сайта — он же принимает ?start=website из плавающей кнопки.
 const TG_BOT = "KMOTORS_form_bot";
