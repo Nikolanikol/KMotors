@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertCircle, Home, Search, MessageCircle } from "lucide-react";
-
-const SUPPORTED_LANGS = ["ru", "en", "ka", "ar"];
+import { langOrDefault } from "@/lib/lang";
 
 const T = {
   ru: {
@@ -89,7 +88,7 @@ const CardLink = ({ href, icon: Icon, title, desc }: { href: string; icon: any; 
 export default function NotFound() {
   const pathname = usePathname();
   const segments = pathname?.split("/") ?? [];
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
   const t = T[lang as keyof typeof T] || T.ru;
   const dir = "ltr"; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 

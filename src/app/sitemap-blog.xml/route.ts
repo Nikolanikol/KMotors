@@ -1,8 +1,7 @@
 // app/sitemap-blog.xml/route.ts
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-
-const BASE = "https://www.kmotors.shop";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -32,12 +31,12 @@ export async function GET() {
       const lastmod = post.published_at || new Date().toISOString();
       const alts =
         INDEXABLE.map(
-          (l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${BASE}/${l}/blog/${post.slug}"/>`
+          (l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE_URL}/${l}/blog/${post.slug}"/>`
         ).join("\n") +
-        `\n    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/blog/${post.slug}"/>`;
+        `\n    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/ru/blog/${post.slug}"/>`;
       for (const lang of INDEXABLE) {
         urlBlocks.push(`  <url>
-    <loc>${BASE}/${lang}/blog/${post.slug}</loc>
+    <loc>${SITE_URL}/${lang}/blog/${post.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

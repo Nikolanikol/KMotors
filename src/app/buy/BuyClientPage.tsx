@@ -11,14 +11,13 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { usePathname } from "next/navigation";
-
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+import { langOrDefault } from "@/lib/lang";
 
 export default function HowToBuyPage() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   const faqItems = t("buy.faq.items", { returnObjects: true }) as unknown as {
     q: string;

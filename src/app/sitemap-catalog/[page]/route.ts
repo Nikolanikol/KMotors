@@ -11,9 +11,8 @@ import {
   CATALOG_SITEMAP_PAGE_SIZE,
   getSitemapCars,
 } from "@/lib/carsSeen";
-
-const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ka", "ar"];
+import { SITE_URL } from "@/lib/site";
+import { LANGS } from "@/lib/lang";
 
 export const revalidate = 3600;
 
@@ -21,9 +20,9 @@ function alternates(id: string) {
   return [
     ...LANGS.map(
       (lang) =>
-        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}/catalog/${id}"/>`
+        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${SITE_URL}/${lang}/catalog/${id}"/>`
     ),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/catalog/${id}"/>`,
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/ru/catalog/${id}"/>`,
   ].join("\n");
 }
 
@@ -57,7 +56,7 @@ export async function GET(
     // priority ниже запчастей (0.7) осознанно: машина живёт недели, карточка
     // детали — годы. changefreq по-прежнему нет, он Google'ом игнорируется.
     return `  <url>
-    <loc>${BASE}/ru/catalog/${car.encar_id}</loc>
+    <loc>${SITE_URL}/ru/catalog/${car.encar_id}</loc>
     <lastmod>${lastmod}</lastmod>
     <priority>0.5</priority>
 ${alternates(car.encar_id)}

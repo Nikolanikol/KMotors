@@ -5,9 +5,8 @@ import { getIndexableCategorySlugs } from "@/lib/partsCategories";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
 import { hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { isTrackingIndexed } from "@/lib/emsTracking";
-
-const BASE = "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ka", "ar"];
+import { SITE_URL } from "@/lib/site";
+import { LANGS } from "@/lib/lang";
 
 interface PageConfig {
   path: string; // e.g. "" for home, "catalog", "blog", etc.
@@ -39,10 +38,10 @@ const PAGES: PageConfig[] = [
 
 function buildUrl(lang: string, path: string) {
   // Без хвостового слэша: trailingSlash=false, /ru/ отдаёт 308 → /ru
-  return path ? `${BASE}/${lang}/${path}` : `${BASE}/${lang}`;
+  return path ? `${SITE_URL}/${lang}/${path}` : `${SITE_URL}/${lang}`;
 }
 
-function alternates(path: string, langs: string[] = LANGS) {
+function alternates(path: string, langs: readonly string[] = LANGS) {
   const links = langs.map(
     (lang) => `    <xhtml:link rel="alternate" hreflang="${lang}" href="${buildUrl(lang, path)}"/>`
   );

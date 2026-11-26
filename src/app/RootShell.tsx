@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Suspense } from "react";
 
 import NavigationStatus from "@/components/NavigationStatus";
+import { SITE_URL } from "@/lib/site";
 
 // Общая оболочка <html>/<body> для всех корневых layout.
 //
@@ -116,7 +117,7 @@ export default function RootShell({
                 // внутренний трафик: в GA4 его отсекает фильтр данных по
                 // traffic_type = internal (Admin → Data filters). Определение
                 // служебного хоста то же, что в middleware.ts и serviceHost.ts.
-                var internal = location.hostname !== new URL(${JSON.stringify(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop")}).hostname;
+                var internal = location.hostname !== new URL(${JSON.stringify(SITE_URL)}).hostname;
                 // set — на ВСЕ события страницы, а не только на page_view из config.
                 if (internal) gtag('set', { traffic_type: 'internal' });
                 gtag('config', 'G-ZMRTQCD8SF', { send_page_view: true });

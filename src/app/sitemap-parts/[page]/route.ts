@@ -3,11 +3,11 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { generatePartSlug } from "@/utils/partSlug";
+import { SITE_URL } from "@/lib/site";
+import { LANGS } from "@/lib/lang";
 
 export const revalidate = 86400; // refresh daily
 
-const BASE      = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
-const LANGS     = ["ru", "en", "ka", "ar"];
 const PAGE_SIZE = 1_000; // Supabase limit is 1000 rows per request
 
 const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -19,9 +19,9 @@ function alternates(slug: string) {
   return [
     ...LANGS.map(
       (lang) =>
-        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}/parts/${slug}"/>`
+        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${SITE_URL}/${lang}/parts/${slug}"/>`
     ),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru/parts/${slug}"/>`,
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/ru/parts/${slug}"/>`,
   ].join("\n");
 }
 
@@ -95,7 +95,7 @@ export async function GET(
 
         // Only add RU as primary (one per product, with alternates)
         urlBlocks.push(`  <url>
-    <loc>${BASE}/ru/parts/${slug}</loc>
+    <loc>${SITE_URL}/ru/parts/${slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
