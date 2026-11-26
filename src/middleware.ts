@@ -3,25 +3,25 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
 import { isLang, resolveLang } from "@/lib/lang";
+import {
+  ADMIN_LOGIN_PATH,
+  classifyRequest,
+  hasSupabaseSessionCookie,
+  isCanonicalHostHeader,
+} from "@/lib/routes";
 
 // IP адреса которые не трекаем (разработчики, владельцы)
 const EXCLUDED_IPS = ["14.5.115.104"];
 
-// Канонический хост публичного сайта. Всё остальное, что доезжает до origin
-// (служебный поддомен за Cloudflare Access, превью-домены Coolify, обращение по
-// IP), считается служебным входом: он не индексируется, не попадает в аналитику
-// и не подчиняется гео-скрытию ссылок на каталог.
-const CANONICAL_HOST = new URL(
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop"
-).hostname;
+// ⚠️ Списки путей ядер (Корея, 410, редиректы, витрина аукциона, исключения)
+// живут в манифестах `src/lib/routes/*`. Новый маршрут ядра — туда, не сюда:
+// здесь только порядок шагов и сборка ответов.
 
+// Канонический хост — `CANONICAL_HOST` в `src/lib/routes/shared.ts`. Всё прочее
+// (служебный поддомен за Cloudflare Access, превью Coolify, обращение по IP) —
+// служебный вход: не индексируется, не считается в аналитике, без гео-скрытия.
 function isCanonicalHost(request: NextRequest): boolean {
-  const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
-  return (
-    host === CANONICAL_HOST ||
-    host === "localhost" ||
-    host === "127.0.0.1"
-  );
+  return isCanonicalHostHeader(request.headers.get("host"));
 }
 
 function shouldTrack(request: NextRequest): boolean {
@@ -65,37 +65,15 @@ function shouldTrack(request: NextRequest): boolean {
   return true;
 }
 
-// ─── Корея: всё про машины закрыто на www (решение владельца 05.10.2026) ─────
-//
-// Каталог Encar, аукционы, избранное/сравнение и ВСЕ API, которые отдают данные
-// машин, — «и вниз по дереву»: страница, её RSC-запросы, og-картинка и ручки,
-// из которых страница добирает данные. До этого закрывал только WAF Cloudflare,
-// и только часть путей: владелец 05.10.2026 открыл из Кореи страницу машины
-// аукциона, при том что список аукциона был закрыт. Это слой 3 — настоящий
-// запрет на origin, а не скрытие ссылок (слой 2, useCountry).
-//
-// ⚠️ Только канонический хост. Служебный (вход владельца через Cloudflare
-// Access) — рабочее место, его не трогаем. Кроны ходят на 127.0.0.1 без
-// cf-ipcountry — им запрет не мешает.
-// ⚠️ Страна — только cf-ipcountry: Cloudflare ставит его сам, клиент его не
-// подделает (запрос мимо Cloudflare — отдельная дыра, закрывается файрволом VPS).
-const KR_BLOCKED_PAGE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?(?:catalog|auction|favorites|compare)(?:\/|$)/;
-const KR_BLOCKED_API = /^\/api\/(?:recommended|vehicle|carnect|cars|kcar|showcase)(?:\/|$)/;
-
-function isKoreaBlocked(request: NextRequest, path: string): boolean {
-  if (!isCanonicalHost(request)) return false;
-  if ((request.headers.get("cf-ipcountry") || "").toUpperCase() !== "KR") return false;
-  return KR_BLOCKED_PAGE.test(path) || KR_BLOCKED_API.test(path);
-}
-
-function koreaBlockedResponse(path: string): NextResponse {
+// Ответ Кореи (слой 3 из трёх, решение владельца 05.10.2026; пути — в манифестах).
+function koreaBlockedResponse(api: boolean): NextResponse {
   const headers = {
     // Ответ зависит от страны — его нельзя класть ни в какой общий кеш, иначе
     // 403 уехал бы посетителям из других стран (или наоборот).
     "Cache-Control": "private, no-store",
     "X-Robots-Tag": "noindex, nofollow",
   };
-  if (path.startsWith("/api/")) {
+  if (api) {
     return NextResponse.json({ error: "not available in your region" }, { status: 403, headers });
   }
   return new NextResponse(
@@ -107,25 +85,53 @@ function koreaBlockedResponse(path: string): NextResponse {
   );
 }
 
-// Пути которые не нуждаются в lang-префиксе
-function isExcluded(path: string): boolean {
-  return (
-    path.startsWith("/admin") ||
-    path.startsWith("/api") ||
-    path.startsWith("/auth") ||
-    path.startsWith("/_next") ||
-    path.includes(".xml") ||
-    path.includes("robots") ||
-    path.includes("sitemap") ||
-    // ⚠️ Карточки соцсетей файловой конвенции Next. Расширения в пути НЕТ,
-    // поэтому без этой строки корневой /opengraph-image уходит редиректом на
-    // /ru/opengraph-image, которого не существует: 307 → 404, и все ссылки на
-    // сайт репостятся без картинки. Иконки (icon.svg, apple-icon.png) спасает
-    // расширение, og-карточку спасать нечем.
-    path.includes("opengraph-image") ||
-    path.includes("twitter-image") ||
-    path.match(/\.[a-zA-Z0-9]+$/) !== null
-  );
+// ─── Supabase: обновление сессии с потолком по времени ───────────────────────
+// ⚠️ Раньше здесь стоял голый `await supabase.auth.getUser()` на пути КАЖДОЙ
+// страницы: Supabase на VPS тормозит или лежит — висит весь сайт, включая блог и
+// калькулятор. Правило то же, что у Encar: страница из-за Supabase не падает и не
+// ждёт НИКОГДА.
+//  • Нет cookie сессии — вызова нет вовсе (supabase-js без сессии ответил бы
+//    локально, но создавать клиент незачем).
+//  • Есть — не дольше SUPABASE_TIMEOUT_MS; таймаут или исключение → лог, страница
+//    уходит без обновления сессии (обновит следующий запрос или клиент).
+const SUPABASE_TIMEOUT_MS = 2000;
+
+async function refreshSupabaseSession(request: NextRequest, response: NextResponse): Promise<void> {
+  if (!hasSupabaseSessionCookie(request.cookies.getAll().map((c) => c.name))) return;
+
+  // После таймаута ответ уже ушёл — запоздавший getUser не должен трогать его cookie.
+  let settled = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll(); },
+          setAll(cookiesToSet) {
+            if (settled) return;
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value);
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+    const timeout = new Promise<"timeout">((resolve) => {
+      timer = setTimeout(() => resolve("timeout"), SUPABASE_TIMEOUT_MS);
+    });
+    const result = await Promise.race([supabase.auth.getUser(), timeout]);
+    if (result === "timeout") {
+      console.error(`[middleware] supabase getUser: нет ответа за ${SUPABASE_TIMEOUT_MS} мс, сессия не обновлена (${request.nextUrl.pathname})`);
+    }
+  } catch (e) {
+    console.error(`[middleware] supabase getUser: ошибка, сессия не обновлена (${request.nextUrl.pathname}):`, e);
+  } finally {
+    settled = true;
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
@@ -149,124 +155,73 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   return response;
 }
 
-// Витрина аукциона без подпутей: /auction, /ru/auction. Лоты (/auction/lot/…)
-// закрыты в robots.ts, /auction/lotte и /auction/sk только редиректят.
-const AUCTION_SHOWCASE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?auction\/?$/;
-
-// Сборщики превью ссылок: isbot считает их ботами, но это один запрос на одну
-// присланную человеком ссылку, а не обход. meta-externalagent сюда НЕ входит —
-// это краулер Meta для ИИ, превью Facebook/Instagram ходят как facebookexternalhit.
-const LINK_PREVIEW_BOT =
-  /TelegramBot|WhatsApp|facebookexternalhit|Facebot|Twitterbot|Slackbot|Discordbot|LinkedInBot|vkShare|Viber|SkypeUriPreview/i;
-
 async function handle(request: NextRequest, event: NextFetchEvent) {
   const ua = request.headers.get("user-agent") || "";
-
-  // --- Блокируем Electron-ботов/скраперов (кроме localhost) ---
-  const host = request.headers.get("host") || "";
-  if (/electron/i.test(ua) && !host.startsWith("localhost")) {
-    return new NextResponse("Forbidden", { status: 403 });
-  }
-
   const path = request.nextUrl.pathname;
 
-  // --- Корея: машины и всё, что под ними (см. KR_BLOCKED_*) ---
-  if (isKoreaBlocked(request, path)) return koreaBlockedResponse(path);
+  // Порядок шагов и все пути — в classifyRequest (src/lib/routes/index.ts).
+  const decision = classifyRequest({
+    path,
+    hasSearch: !!request.nextUrl.search,
+    host: request.headers.get("host") || "",
+    ua,
+    isBot: isbot(ua),
+    country: request.headers.get("cf-ipcountry") || "",
+    canonical: isCanonicalHost(request),
+  });
 
-  // --- 410 для мусорных путей (проиндексированных Google по ошибке) ---
-  if (/^\/carpicture\d/.test(path) || path.startsWith("/cdn-cgi/")) {
-    return new NextResponse(null, { status: 410 });
-  }
+  switch (decision.kind) {
+    case "electron-forbidden":
+      return new NextResponse("Forbidden", { status: 403 });
 
-  // --- 301: корейский язык отключён → переносим на английский ---
-  // Аудитория преимущественно англоязычная; проиндексированные /ko/* URL
-  // получают постоянный редирект на /en/*, вес страниц консолидируется.
-  if (path === "/ko" || path.startsWith("/ko/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/en" + path.slice(3); // "/ko" → "/en", "/ko/x" → "/en/x"
-    return NextResponse.redirect(url, 301);
-  }
+    case "korea-blocked":
+      return koreaBlockedResponse(decision.api);
 
-  // --- 308: старые URL запчастей "PN--name-slug" → канонический "PN" ---
-  // Редирект должен быть настоящим HTTP (не из page.tsx: там loading.tsx
-  // запускает стриминг и статус уже отправлен как 200)
-  const oldPartsSlug = path.match(/^\/(ru|en|ko|ka|ar)\/parts\/([^/]+?)--[^/]+$/);
-  if (oldPartsSlug) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${oldPartsSlug[1]}/parts/${oldPartsSlug[2]}`;
-    return NextResponse.redirect(url, 308);
-  }
+    case "gone":
+      return new NextResponse(null, { status: 410 });
 
-  // --- Защита /admin ---
-  if (path.startsWith("/admin")) {
-    if (path === "/admin/login") return NextResponse.next();
-
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    const cookie = request.cookies.get("admin_session");
-    if (!adminPassword || !cookie || cookie.value !== "1") {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+    case "redirect": {
+      const url = request.nextUrl.clone();
+      url.pathname = decision.pathname;
+      return NextResponse.redirect(url, decision.status);
     }
-    return NextResponse.next();
+
+    case "admin": {
+      if (path === ADMIN_LOGIN_PATH) return NextResponse.next();
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      const cookie = request.cookies.get("admin_session");
+      if (!adminPassword || !cookie || cookie.value !== "1") {
+        return NextResponse.redirect(new URL(ADMIN_LOGIN_PATH, request.url));
+      }
+      return NextResponse.next();
+    }
+
+    case "service-robots":
+      // src/app/robots.ts отдаёт один и тот же файл на любом хосте — со ссылкой на
+      // sitemap.xml и разрешением обходить всё. На служебном поддомене это
+      // приглашение проиндексировать дубль сайта, поэтому подменяем ответ здесь.
+      return new NextResponse("User-agent: *\nDisallow: /\n", {
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      });
+
+    case "auction-bot-blocked":
+      return new NextResponse(null, {
+        status: 403,
+        headers: { "X-Robots-Tag": "noindex, nofollow" },
+      });
+
+    case "excluded":
+      return NextResponse.next();
+
+    case "page":
+      break;
   }
 
-  // --- robots.txt служебного хоста: запрет целиком ---
-  // src/app/robots.ts отдаёт один и тот же файл на любом хосте — со ссылкой на
-  // sitemap.xml и разрешением обходить всё. На служебном поддомене это
-  // приглашение проиндексировать дубль сайта, поэтому подменяем ответ здесь.
-  if (path === "/robots.txt" && !isCanonicalHost(request)) {
-    return new NextResponse("User-agent: *\nDisallow: /\n", {
-      headers: { "content-type": "text/plain; charset=utf-8" },
-    });
-  }
-
-  // --- Боты на витрине аукциона с фильтрами: 403 до рендера ---
-  // Замер 11.11.2026: GPTBot, PerplexityBot, meta-externalagent, SemrushBot
-  // перебирали /{lang}/auction?make=…&page=… — ~6.5 рендеров/с круглосуточно,
-  // каждый — промах кеша (ключ «фильтр + страница» у них всегда новый) и вызов
-  // carnect_search (131 мс), одно ядро базы занято постоянно. Страница и так
-  // noindex/nofollow — ботам с параметрами там делать нечего. Голую /auction
-  // не трогаем (кешируется), остальной сайт — тоже: GPTBot/Perplexity приводят
-  // покупателей запчастей.
-  // Превью ссылок в мессенджерах (LINK_PREVIEW_BOT) пропускаем: они приходят
-  // по одному запросу на присланную ссылку, а без них менеджер, скинувший
-  // клиенту витрину с фильтром, получил бы голую ссылку без карточки.
-  if (
-    request.nextUrl.search &&
-    AUCTION_SHOWCASE.test(path) &&
-    isbot(ua) &&
-    !LINK_PREVIEW_BOT.test(ua)
-  ) {
-    return new NextResponse(null, {
-      status: 403,
-      headers: { "X-Robots-Tag": "noindex, nofollow" },
-    });
-  }
-
-  // --- Пропускаем статику, API, sitemaps, файлы ---
-  if (isExcluded(path)) {
-    return NextResponse.next();
-  }
-
-  // --- Supabase: refresh сессии ---
+  // --- Supabase: refresh сессии (с таймаутом, без сессии — без вызова) ---
   const response = NextResponse.next({ request });
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-  await supabase.auth.getUser();
+  await refreshSupabaseSession(request, response);
 
-  // --- Определяем lang из URL ---
+// --- Определяем lang из URL ---
   const segments = path.split("/").filter(Boolean); // ['ru', 'catalog'] или ['catalog']
   const pathLang = segments[0];
 
