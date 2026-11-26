@@ -4,10 +4,11 @@ import { createServerClient } from "@/lib/supabase";
 import BlogPostClient from "@/app/(root)/blog/[slug]/BlogPostClient";
 import { BlogPost } from "@/types/blog";
 import { makeAlternates } from "@/lib/seo";
+import { LANGS } from "@/lib/lang";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
-const LANGS = ["ru", "en", "ka", "ar"];
 
 export async function generateStaticParams() {
   try {
@@ -69,7 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // переводов (Фаза 4); каждый язык self-canonical + hreflang через makeAlternates.
   const INDEXABLE = ["ru", "en"];
   const isIndexable = INDEXABLE.includes(lang);
-  const selfUrl = `https://www.kmotors.shop/${lang}/blog/${slug}`;
+  const selfUrl = `${SITE_URL}/${lang}/blog/${slug}`;
 
   return {
     title: `${post.title}`,
@@ -108,9 +109,9 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: BLOG_LABEL[lang] || "Blog", item: `https://www.kmotors.shop/${lang}/blog` },
-      { "@type": "ListItem", position: 3, name: post.title, item: `https://www.kmotors.shop/${lang}/blog/${slug}` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BLOG_LABEL[lang] || "Blog", item: `${SITE_URL}/${lang}/blog` },
+      { "@type": "ListItem", position: 3, name: post.title, item: `${SITE_URL}/${lang}/blog/${slug}` },
     ],
   } : null;
 
@@ -118,17 +119,17 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    image: post.cover_url || `https://www.kmotors.shop/${lang}/blog/opengraph-image`,
+    image: post.cover_url || `${SITE_URL}/${lang}/blog/opengraph-image`,
     datePublished: post.published_at,
     dateModified: post.published_at,
-    author: { "@type": "Organization", name: "K-Axis", url: "https://www.kmotors.shop/" },
+    author: { "@type": "Organization", name: "K-Axis", url: `${SITE_URL}/` },
     publisher: {
       "@type": "Organization",
       name: "K-Axis",
-      logo: { "@type": "ImageObject", url: "https://www.kmotors.shop/favicon_io/android-chrome-192x192.png" },
+      logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon_io/android-chrome-192x192.png` },
     },
     description: post.excerpt || post.title,
-    mainEntityOfPage: { "@type": "WebPage", "@id": `https://www.kmotors.shop/${lang}/blog/${slug}` },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/${lang}/blog/${slug}` },
   } : null;
 
   return (

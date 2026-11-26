@@ -4,6 +4,7 @@ import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/customs/core/registry";
 import { getFx } from "@/lib/fx";
 import { customsText, hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { makeAlternates } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Курс запекается в HTML в момент рендера, поэтому маршрут обязан
@@ -11,9 +12,6 @@ import { makeAlternates } from "@/lib/seo";
  * revalidate не выше 86400 на любом маршруте, который рендерит цену.
  */
 export const revalidate = 21600;
-
-const SITE = "https://www.kmotors.shop";
-
 interface Props {
   params: Promise<{ lang: string }>;
 }
@@ -77,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: title ?? "",
       description: description ?? "",
       type: "website",
-      url: `${SITE}/${lang}/calculator`,
+      url: `${SITE_URL}/${lang}/calculator`,
       // Картинку даёт calculator/opengraph-image.tsx — заданный здесь images
       // перекрыл бы файловую конвенцию.
     },
@@ -117,9 +115,9 @@ export default async function CalculatorPage({ params }: Props) {
     "@type": "WebPage",
     name: title,
     description,
-    url: `${SITE}/${lang}/calculator`,
+    url: `${SITE_URL}/${lang}/calculator`,
     inLanguage: lang,
-    isPartOf: { "@type": "WebSite", name: "K-Axis", url: `${SITE}/` },
+    isPartOf: { "@type": "WebSite", name: "K-Axis", url: `${SITE_URL}/` },
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -127,13 +125,13 @@ export default async function CalculatorPage({ params }: Props) {
           "@type": "ListItem",
           position: 1,
           name: "K-Axis",
-          item: `${SITE}/${lang}/`,
+          item: `${SITE_URL}/${lang}/`,
         },
         {
           "@type": "ListItem",
           position: 2,
           name: title,
-          item: `${SITE}/${lang}/calculator`,
+          item: `${SITE_URL}/${lang}/calculator`,
         },
       ],
     },
@@ -147,8 +145,8 @@ export default async function CalculatorPage({ params }: Props) {
         name: customsText(lang, `${country.id}.title`) ?? country.id,
         url:
           country.id === DEFAULT_COUNTRY
-            ? `${SITE}/${lang}/calculator`
-            : `${SITE}/${lang}/calculator/${country.id}`,
+            ? `${SITE_URL}/${lang}/calculator`
+            : `${SITE_URL}/${lang}/calculator/${country.id}`,
       })),
     },
   };

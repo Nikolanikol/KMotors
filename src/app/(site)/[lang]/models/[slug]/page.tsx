@@ -7,11 +7,12 @@ import { MODEL_PAGES, getModelBySlug } from "@/data/model-pages";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { makeAlternates } from "@/lib/seo";
+import { LANGS } from "@/lib/lang";
 import { getFx } from "@/lib/fx";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 86400;
 
-const LANGS = ["ru", "en", "ka", "ar"];
 
 interface Props {
   params: Promise<{ lang: string; slug: string }>;
@@ -41,8 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: content.title,
       description: content.subtitle,
-      url: `https://www.kmotors.shop/${lang}/models/${slug}`,
-      images: [{ url: `https://www.kmotors.shop${model.coverImage}`, alt: content.title }],
+      url: `${SITE_URL}/${lang}/models/${slug}`,
+      images: [{ url: `${SITE_URL}${model.coverImage}`, alt: content.title }],
       type: "website",
     },
     alternates: makeAlternates(lang, `/models/${slug}`),
@@ -94,9 +95,9 @@ export default async function ModelPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: isRu ? "Каталог" : "Catalog", item: `https://www.kmotors.shop/${lang}/catalog` },
-      { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelEn}`, item: `https://www.kmotors.shop/${lang}/models/${slug}` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: isRu ? "Каталог" : "Catalog", item: `${SITE_URL}/${lang}/catalog` },
+      { "@type": "ListItem", position: 3, name: `${model.manufacturerEn} ${model.modelEn}`, item: `${SITE_URL}/${lang}/models/${slug}` },
     ],
   };
 

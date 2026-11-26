@@ -10,8 +10,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { convertNumberKm } from "@/utils/splitNumber";
 import { formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
-
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
+import { langOrDefault } from "@/lib/lang";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = {
@@ -35,7 +34,7 @@ export default function CompareClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   const ids = useMemo(
     () => (searchParams.get("ids") ?? "").split(",").filter(Boolean),

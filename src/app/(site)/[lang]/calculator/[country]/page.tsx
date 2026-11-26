@@ -9,6 +9,7 @@ import {
 import { getFx } from "@/lib/fx";
 import { customsText, hasCustomsDictionary } from "@/lib/customs/serverDict";
 import { makeAlternates } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Курс запекается в HTML в момент рендера, поэтому маршрут обязан
@@ -17,9 +18,6 @@ import { makeAlternates } from "@/lib/seo";
  * Шесть часов совпадают с TTL запросов к провайдерам в слое fx.
  */
 export const revalidate = 21600;
-
-const SITE = "https://www.kmotors.shop";
-
 interface Props {
   params: Promise<{ lang: string; country: string }>;
 }
@@ -60,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: title ?? "",
       description: description ?? "",
       type: "website",
-      url: `${SITE}/${lang}/calculator/${country}`,
+      url: `${SITE_URL}/${lang}/calculator/${country}`,
     },
   };
 }
@@ -85,9 +83,9 @@ export default async function CountryCalculatorPage({ params }: Props) {
     "@type": "WebPage",
     name: title,
     description,
-    url: `${SITE}/${lang}/calculator/${country}`,
+    url: `${SITE_URL}/${lang}/calculator/${country}`,
     inLanguage: lang,
-    isPartOf: { "@type": "WebSite", name: "K-Axis", url: `${SITE}/` },
+    isPartOf: { "@type": "WebSite", name: "K-Axis", url: `${SITE_URL}/` },
     breadcrumb: {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -95,19 +93,19 @@ export default async function CountryCalculatorPage({ params }: Props) {
           "@type": "ListItem",
           position: 1,
           name: "K-Axis",
-          item: `${SITE}/${lang}/`,
+          item: `${SITE_URL}/${lang}/`,
         },
         {
           "@type": "ListItem",
           position: 2,
           name: customsText(lang, "hub.heading") ?? "",
-          item: `${SITE}/${lang}/calculator`,
+          item: `${SITE_URL}/${lang}/calculator`,
         },
         {
           "@type": "ListItem",
           position: 3,
           name: title,
-          item: `${SITE}/${lang}/calculator/${country}`,
+          item: `${SITE_URL}/${lang}/calculator/${country}`,
         },
       ],
     },

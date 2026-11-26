@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogClientPage from "@/app/(root)/blog/BlogClientPage";
 import { createServerClient } from "@/lib/supabase";
 import { BlogPost } from "@/types/blog";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -72,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: BLOG_META[lang]?.title || BLOG_META.ru.title,
       robots: { index: false, follow: true },
-      alternates: { canonical: "https://www.kmotors.shop/ru/blog" },
+      alternates: { canonical: `${SITE_URL}/ru/blog` },
     };
   }
 
@@ -84,12 +85,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: "https://www.kmotors.shop/ru/blog",
+      url: `${SITE_URL}/ru/blog`,
       // Картинку даёт blog/opengraph-image.tsx — см. комментарий на главной.
       type: "website",
     },
     alternates: {
-      canonical: "https://www.kmotors.shop/ru/blog",
+      canonical: `${SITE_URL}/ru/blog`,
     },
   };
 }
@@ -105,8 +106,8 @@ export default async function BlogPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: BLOG_META[lang]?.title.split("—")[0]?.trim() || "Blog", item: `https://www.kmotors.shop/${lang}/blog` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: BLOG_META[lang]?.title.split("—")[0]?.trim() || "Blog", item: `${SITE_URL}/${lang}/blog` },
     ],
   };
 

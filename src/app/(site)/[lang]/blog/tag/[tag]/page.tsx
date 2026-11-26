@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogTagClientPage from "./BlogTagClientPage";
 import { createServerClient } from "@/lib/supabase";
 import { BlogPost } from "@/types/blog";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -78,18 +79,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://www.kmotors.shop/${lang}/blog/tag/${tag}`,
+      url: `${SITE_URL}/${lang}/blog/tag/${tag}`,
       // Картинку даёт blog/opengraph-image.tsx — заданный здесь images
       // перекрыл бы файловую конвенцию.
     },
     alternates: {
-      canonical: `https://www.kmotors.shop/${lang}/blog/tag/${tag}`,
+      canonical: `${SITE_URL}/${lang}/blog/tag/${tag}`,
       languages: {
-        ru: `https://www.kmotors.shop/ru/blog/tag/${tag}`,
-        en: `https://www.kmotors.shop/en/blog/tag/${tag}`,
-        ka: `https://www.kmotors.shop/ka/blog/tag/${tag}`,
-        ar: `https://www.kmotors.shop/ar/blog/tag/${tag}`,
-        "x-default": `https://www.kmotors.shop/ru/blog/tag/${tag}`,
+        ru: `${SITE_URL}/ru/blog/tag/${tag}`,
+        en: `${SITE_URL}/en/blog/tag/${tag}`,
+        ka: `${SITE_URL}/ka/blog/tag/${tag}`,
+        ar: `${SITE_URL}/ar/blog/tag/${tag}`,
+        "x-default": `${SITE_URL}/ru/blog/tag/${tag}`,
       },
     },
   };

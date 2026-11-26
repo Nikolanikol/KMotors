@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
 import { trackEvent } from "@/utils/gtag";
 import { formatUsd, krwToDisplayUsd } from "@/lib/pricing";
 import { WA_PHONE } from "@/lib/contact";
+import { langOrDefault } from "@/lib/lang";
 
-const SUPPORTED_LANGS = ["ru", "en", "ko", "ka", "ar"];
 const TG_MANAGER = "axiskorea";
 
 // Форматтер ИТОГОВОЙ суммы — она уже посчитана в долларах через pricing.ts,
@@ -35,7 +35,7 @@ export default function FavoritesClient({ krwToUsd }: { krwToUsd: number }) {
   const { favorites: parts, removeFavorite: removePart } = usePartsFavorites();
   const pathname = usePathname();
   const segments = pathname.split("/");
-  const lang = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : "ru";
+  const lang = langOrDefault(segments[1]);
 
   const [tab, setTab] = useState<"cars" | "parts">("cars");
   const [selected, setSelected] = useState<string[]>([]);

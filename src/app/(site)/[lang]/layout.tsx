@@ -8,8 +8,7 @@ import MessengerButtons from "@/components/MessengerButtons";
 import CookieBanner from "@/components/CookieBanner";
 import { loadResources } from "@/lib/loadLocale";
 import { getFx } from "@/lib/fx";
-
-const LANGS = ["ru", "en", "ka", "ar"];
+import { isLang } from "@/lib/lang";
 
 interface Props {
   children: React.ReactNode;
@@ -32,7 +31,7 @@ interface Props {
 export default async function LangLayout({ children, params }: Props) {
   const { lang } = await params;
 
-  if (!LANGS.includes(lang)) {
+  if (!isLang(lang)) {
     notFound();
   }
 

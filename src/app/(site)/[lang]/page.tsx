@@ -16,6 +16,7 @@ import { makeAlternates } from "@/lib/seo";
 import Brands from "@/components/Home/Brands/Brands";
 import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
+import { SITE_URL } from "@/lib/site";
 
 // Ниже fold — lazy load
 const Stage = dynamic(() => import("@/components/Home/Stage"));
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://www.kmotors.shop/${lang}`,
+      url: `${SITE_URL}/${lang}`,
       siteName: "K-Axis",
       type: "website",
       locale: lang === "ko" ? "ko_KR" : lang === "ar" ? "ar_SA" : lang === "ka" ? "ka_GE" : lang === "en" ? "en_US" : "ru_RU",
@@ -93,14 +94,14 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "K-Axis",
-    url: "https://www.kmotors.shop/",
+    url: `${SITE_URL}/`,
     description: meta.description,
     inLanguage: lang,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `https://www.kmotors.shop/${lang}/catalog?manufacture={search_term_string}`,
+        urlTemplate: `${SITE_URL}/${lang}/catalog?manufacture={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -110,7 +111,7 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
     ],
   };
 
@@ -118,9 +119,9 @@ export default async function Home({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     name: "K-Axis",
-    url: "https://www.kmotors.shop",
-    logo: "https://www.kmotors.shop/favicon_io/android-chrome-512x512.png",
-    image: `https://www.kmotors.shop/${lang}/opengraph-image`,
+    url: `${SITE_URL}`,
+    logo: `${SITE_URL}/favicon_io/android-chrome-512x512.png`,
+    image: `${SITE_URL}/${lang}/opengraph-image`,
     telephone: "+821058654344",
     address: {
       "@type": "PostalAddress",

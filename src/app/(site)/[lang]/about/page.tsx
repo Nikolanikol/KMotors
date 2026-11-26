@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AboutClient from "./AboutClient";
 import { makeAlternates } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 
 const META: Record<string, { title: string; description: string }> = {
   ru: {
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: m.title,
       description: m.description,
-      url: `https://www.kmotors.shop/${lang}/about`,
+      url: `${SITE_URL}/${lang}/about`,
       // Картинку даёт [lang]/opengraph-image.tsx — заданный здесь images
       // перекрыл бы файловую конвенцию.
     },
@@ -67,8 +68,8 @@ export default async function AboutPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `https://www.kmotors.shop/${lang}/` },
-      { "@type": "ListItem", position: 2, name: LABEL[lang] || "About", item: `https://www.kmotors.shop/${lang}/about` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+      { "@type": "ListItem", position: 2, name: LABEL[lang] || "About", item: `${SITE_URL}/${lang}/about` },
     ],
   };
 
@@ -76,8 +77,8 @@ export default async function AboutPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "K-Axis",
-    url: "https://www.kmotors.shop",
-    logo: "https://www.kmotors.shop/favicon_io/android-chrome-512x512.png",
+    url: `${SITE_URL}`,
+    logo: `${SITE_URL}/favicon_io/android-chrome-512x512.png`,
     foundingDate: "2025",
     description: (META[lang] || META.ru).description,
     contactPoint: {

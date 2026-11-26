@@ -3,9 +3,7 @@ import TrackingClient from "@/app/tracking/TrackingClient";
 import { isTrackingIndexed } from "@/lib/emsTracking";
 import { makeAlternates } from "@/lib/seo";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
-
-const BASE = "https://www.kmotors.shop";
-
+import { SITE_URL } from "@/lib/site";
 const TRACKING_META: Record<string, { title: string; description: string }> = {
   ru: {
     title: "Отследить посылку Korea Post EMS — трек-номер онлайн",
@@ -52,7 +50,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `${BASE}/${lang}/tracking`,
+      url: `${SITE_URL}/${lang}/tracking`,
       // Картинку даёт [lang]/opengraph-image.tsx — заданный здесь images
       // перекрыл бы файловую конвенцию.
     },
@@ -67,12 +65,12 @@ export default async function TrackingPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${BASE}/${lang}/` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
       {
         "@type": "ListItem",
         position: 2,
         name: BREADCRUMB_LABEL[lang] || BREADCRUMB_LABEL.en,
-        item: `${BASE}/${lang}/tracking`,
+        item: `${SITE_URL}/${lang}/tracking`,
       },
     ],
   };
