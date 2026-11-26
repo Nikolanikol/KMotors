@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
 import { krwToDisplayUsd } from "@/lib/pricing";
 import { getFx } from "@/lib/fx";
+import { sendTelegram } from "@/lib/telegram";
 
 interface ShippingAddress {
   name: string;
@@ -35,11 +36,7 @@ async function sendTelegramNotification(text: string) {
   const chatId = process.env.TELEGRAM_WORK_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
-  }).catch(() => {});
+  await sendTelegram({ text, chatId, token, parseMode: "HTML", onError: "swallow" });
 }
 
 export async function POST(req: NextRequest) {

@@ -10,8 +10,8 @@ import { normalizeBrand } from "@/lib/carLabels";
 import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
 import { SITE_URL } from "@/lib/site";
+import { sendTelegram, telegramRequest } from "@/lib/telegram";
 
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
@@ -26,16 +26,13 @@ function ok() {
 }
 
 async function sendMessage(chatId: number, text: string, extra?: Record<string, unknown>) {
-  const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", ...extra }),
+  return sendTelegram({
+    text,
+    chatId,
+    parseMode: "HTML",
+    extra,
+    logLabel: "Telegram sendMessage error:",
   });
-  const data = await res.json();
-  if (!data.ok) {
-    console.error("Telegram sendMessage error:", JSON.stringify(data));
-  }
-  return data;
 }
 
 export async function GET() {
@@ -276,39 +273,23 @@ export async function POST(req: NextRequest) {
   if (chatId && data.startsWith("unsub:")) {
     const subId = Number(data.slice("unsub:".length));
     const ok0 = Number.isFinite(subId) && (await deactivateOwn(subId, chatId));
-    await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        callback_query_id: callbackId,
-        text: ok0 ? "Отписал. Больше не пишем." : "Подписка уже неактивна",
-      }),
+    await telegramRequest("answerCallbackQuery", {
+      callback_query_id: callbackId,
+      text: ok0 ? "Отписал. Больше не пишем." : "Подписка уже неактивна",
     });
     if (ok0 && messageId) {
-      await fetch(`${TELEGRAM_API}/editMessageReplyMarkup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } }),
-      });
+      await telegramRequest("editMessageReplyMarkup", { chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } });
     }
     return ok();
   }
 
   // Callback-кнопки (publish/delete) — только для администраторов
   if (!chatId || !isAdmin(chatId)) {
-    await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ callback_query_id: callbackId, text: "⛔ Нет доступа", show_alert: true }),
-    });
+    await telegramRequest("answerCallbackQuery", { callback_query_id: callbackId, text: "⛔ Нет доступа", show_alert: true });
     return ok();
   }
 
-  await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ callback_query_id: callbackId }),
-  });
+  await telegramRequest("answerCallbackQuery", { callback_query_id: callbackId });
 
   const supabase = createServerClient();
 
@@ -477,22 +458,10 @@ async function handleStatusCommand(chatId: number) {
 }
 
 async function editMessageRemoveButtons(chatId: number, messageId: number, statusText: string) {
-  await fetch(`${TELEGRAM_API}/editMessageReplyMarkup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } }),
-  });
-  await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text: statusText, reply_to_message_id: messageId }),
-  });
+  await telegramRequest("editMessageReplyMarkup", { chat_id: chatId, message_id: messageId, reply_markup: { inline_keyboard: [] } });
+  await telegramRequest("sendMessage", { chat_id: chatId, text: statusText, reply_to_message_id: messageId });
 }
 
 async function editMessage(chatId: number, messageId: number, text: string) {
-  await fetch(`${TELEGRAM_API}/editMessageText`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, message_id: messageId, text, reply_markup: { inline_keyboard: [] } }),
-  });
+  await telegramRequest("editMessageText", { chat_id: chatId, message_id: messageId, text, reply_markup: { inline_keyboard: [] } });
 }

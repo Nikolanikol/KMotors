@@ -5,8 +5,8 @@
 // делает Фаза 5 — здесь только фиксируем твоё решение.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sendTelegram } from "@/lib/telegram";
 
-const TG = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 
 function esc(s: string | null | undefined): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -105,14 +105,13 @@ export const rejectOne = (sb: SupabaseClient, id: number) => setStatus(sb, { id 
 
 // ── Отправка ────────────────────────────────────────────────────────────────
 async function tgSend(chatId: string, text: string, reply_markup?: object) {
-  const res = await fetch(`${TG}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", reply_markup }),
+  return sendTelegram({
+    text,
+    chatId,
+    parseMode: "HTML",
+    replyMarkup: reply_markup,
+    logLabel: "[seo-telegram] sendMessage:",
   });
-  const data = await res.json();
-  if (!data.ok) console.error("[seo-telegram] sendMessage:", JSON.stringify(data));
-  return data;
 }
 
 /** Отправляет дайджест батча администратору. */

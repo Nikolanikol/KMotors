@@ -22,6 +22,7 @@ import type { User } from "@supabase/supabase-js";
 import { createServerClient as createAdminClient } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/site";
 import { tagUserSite } from "@/lib/userSite";
+import { sendTelegram } from "@/lib/telegram";
 
 /** Неделя: письмо подтверждения могут открыть не сразу. */
 const NEW_ACCOUNT_MS = 7 * 24 * 3600 * 1000;
@@ -53,15 +54,8 @@ async function sendToManagers(text: string): Promise<boolean | "no_env"> {
   const targets = [process.env.TELEGRAM_CHAT_ID, process.env.TELEGRAM_WORK_CHAT_ID].filter(Boolean) as string[];
   if (!token || !targets.length) return "no_env";
   const results = await Promise.all(
-    targets.map((chat_id) =>
-      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id, text }),
-        signal: AbortSignal.timeout(8000),
-      })
-        .then((r) => r.json())
-        .catch(() => ({ ok: false })),
+    targets.map((chatId) =>
+      sendTelegram({ text, chatId, token, timeoutMs: 8000, onError: "swallow" }),
     ),
   );
   if (results.some((r) => r?.ok)) return true;

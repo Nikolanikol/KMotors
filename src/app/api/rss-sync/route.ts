@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { fetchRssFeed, parseRssItems, slugFromUrl, escapeHtml } from "@/lib/rss";
+import { telegramRequest } from "@/lib/telegram";
 
 const RSS_FEEDS = [
 
@@ -17,7 +18,6 @@ const MAX_NEW_PER_RUN = 5;
 // Only accept articles published within the last N days
 const MAX_AGE_DAYS = 100;
 
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 export async function GET(req: NextRequest) {
@@ -136,29 +136,21 @@ export async function GET(req: NextRequest) {
 
             if (item.imageUrl) {
               // Send as photo with caption — shows image preview
-              await fetch(`${TELEGRAM_API}/sendPhoto`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: CHAT_ID,
-                  photo: item.imageUrl,
-                  caption,
-                  parse_mode: "HTML",
-                  reply_markup: keyboard,
-                }),
+              await telegramRequest("sendPhoto", {
+                chat_id: CHAT_ID,
+                photo: item.imageUrl,
+                caption,
+                parse_mode: "HTML",
+                reply_markup: keyboard,
               });
             } else {
               // Fallback: text message
-              await fetch(`${TELEGRAM_API}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: CHAT_ID,
-                  text: caption,
-                  parse_mode: "HTML",
-                  reply_markup: keyboard,
-                  disable_web_page_preview: false,
-                }),
+              await telegramRequest("sendMessage", {
+                chat_id: CHAT_ID,
+                text: caption,
+                parse_mode: "HTML",
+                reply_markup: keyboard,
+                disable_web_page_preview: false,
               });
             }
 
