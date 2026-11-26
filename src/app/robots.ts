@@ -1,6 +1,5 @@
 import { MetadataRoute } from "next";
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
+import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -19,6 +18,6 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     // sitemap.xml is the master index — it includes all sub-sitemaps
-    sitemap: [`${BASE}/sitemap.xml`],
+    sitemap: [`${SITE_URL}/sitemap.xml`],
   };
 }

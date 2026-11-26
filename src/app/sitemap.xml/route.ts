@@ -6,8 +6,8 @@ import {
   CATALOG_SITEMAP_MAX,
   countSitemapCars,
 } from "@/lib/carsSeen";
+import { SITE_URL } from "@/lib/site";
 
-const BASE = "https://www.kmotors.shop";
 // Размер файла и потолок каталога живут В ОДНОМ месте — src/lib/carsSeen.ts, —
 // и оттуда же их берёт sitemap-catalog/[page]. Раньше это были две копии чисел
 // в двух файлах с предупреждением «меняешь здесь — меняй и там»; теперь
@@ -47,19 +47,19 @@ export async function GET() {
   const partsPages = Math.ceil(partsCount / PARTS_PAGE_SIZE) || 49;
 
   const staticSitemaps = [
-    `${BASE}/sitemap-main.xml`,
-    `${BASE}/sitemap-blog.xml`,
-    `${BASE}/sitemap-fitment.xml`,
+    `${SITE_URL}/sitemap-main.xml`,
+    `${SITE_URL}/sitemap-blog.xml`,
+    `${SITE_URL}/sitemap-fitment.xml`,
   ];
 
   const partsSitemaps = Array.from(
     { length: partsPages },
-    (_, i) => `${BASE}/sitemap-parts/${i + 1}`
+    (_, i) => `${SITE_URL}/sitemap-parts/${i + 1}`
   );
 
   const catalogSitemaps = Array.from(
     { length: catalogPages },
-    (_, i) => `${BASE}/sitemap-catalog/${i + 1}`
+    (_, i) => `${SITE_URL}/sitemap-catalog/${i + 1}`
   );
 
   const all = [...staticSitemaps, ...partsSitemaps, ...catalogSitemaps];

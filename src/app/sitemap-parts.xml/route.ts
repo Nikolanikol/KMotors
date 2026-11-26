@@ -1,10 +1,10 @@
 // sitemap-parts.xml — sitemap index pointing to paginated parts sitemaps
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 86400; // refresh daily
 
-const BASE      = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
 const PAGE_SIZE = 1_000; // Supabase limit is 1000 rows per request
 
 export async function GET() {
@@ -19,7 +19,7 @@ export async function GET() {
     const sitemaps = Array.from(
       { length: totalPages },
       (_, i) => `  <sitemap>
-    <loc>${BASE}/sitemap-parts/${i + 1}</loc>
+    <loc>${SITE_URL}/sitemap-parts/${i + 1}</loc>
   </sitemap>`
     );
 

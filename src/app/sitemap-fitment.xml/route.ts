@@ -2,11 +2,11 @@
 // One URL per vehicle generation with >=10 parts; RU primary + hreflang alternates.
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { SITE_URL } from "@/lib/site";
+import { LANGS } from "@/lib/lang";
 
 export const revalidate = 86400;
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
-const LANGS = ["ru", "en", "ka", "ar"];
 const MIN_PARTS = 10;
 
 const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -16,9 +16,9 @@ const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
 function alternates(path: string) {
   return [
     ...LANGS.map(
-      (lang) => `    <xhtml:link rel="alternate" hreflang="${lang}" href="${BASE}/${lang}${path}"/>`
+      (lang) => `    <xhtml:link rel="alternate" hreflang="${lang}" href="${SITE_URL}/${lang}${path}"/>`
     ),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE}/ru${path}"/>`,
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/ru${path}"/>`,
   ].join("\n");
 }
 
@@ -55,7 +55,7 @@ export async function GET() {
     const urlBlocks = vehicles.map((v) => {
       const path = `/fitment/${v.brand}/${v.slug}`;
       return `  <url>
-    <loc>${BASE}/ru${path}</loc>
+    <loc>${SITE_URL}/ru${path}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
 ${alternates(path)}

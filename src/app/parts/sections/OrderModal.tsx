@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MessengerSelector } from "@/components/ui/MessengerSelector";
+import { SITE_URL } from "@/lib/site";
 
 interface OrderModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ interface OrderModalProps {
 
 function projectLabel(): string {
   try {
-    const host = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop").host.replace(/^www\./, "");
+    const host = new URL(SITE_URL).host.replace(/^www\./, "");
     const name = host.split(".")[0];
     return `${name.charAt(0).toUpperCase()}${name.slice(1)} (${host})`;
   } catch {
