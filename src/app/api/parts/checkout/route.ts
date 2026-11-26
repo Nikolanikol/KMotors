@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
 import { krwToDisplayUsd } from "@/lib/pricing";
-import { sendOrderConfirmation } from "@/lib/email";
 import { getCurrencyRates } from "@/utils/getCurrencyRates";
 
 interface ShippingAddress {
@@ -256,25 +255,8 @@ export async function POST(req: NextRequest) {
 
     await sendTelegramNotification(tgText);
 
-    // ── Email to customer ────────────────────────────────────────────────────
-    if (user.email) {
-      // Detect lang from referer or default to "ru"
-      const referer = req.headers.get("referer") ?? "";
-      const langMatch = referer.match(/\/(\w{2})\//);
-      const emailLang = langMatch?.[1] ?? "ru";
-
-      sendOrderConfirmation({
-        to: user.email,
-        lang: emailLang,
-        orderNumber,
-        items: orderItems,
-        totalUsd,
-        shippingCostUsd: shippingCostUsd ?? 0,
-        shippingCountry: country,
-        shippingMethod: effectiveShipMethod,
-        krwToUsd,
-      }).catch((err) => console.error("Order email error:", err));
-    }
+    // Письмо клиенту об оформлении заказа ОТКЛЮЧЕНО (решение владельца 26.11.2026):
+    // цены строк в нём считались множителем 1.1 мимо `pricing.ts`. Менеджеру заказ уходит в Telegram выше.
 
     return NextResponse.json({ orderNumber, orderId: order.id, totalUsd });
   } catch (err) {

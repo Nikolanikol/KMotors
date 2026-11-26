@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
-import { sendPaymentConfirmation } from "@/lib/email";
 
 // ── PayPal access token ─────────────────────────────────────────────────────
 
@@ -172,16 +171,7 @@ export async function POST(req: NextRequest) {
 
     await sendTelegramNotification(tgText);
 
-    // Email to customer
-    if (user.email) {
-      sendPaymentConfirmation({
-        to: user.email,
-        lang: "ru",
-        orderNumber: order.order_number,
-        totalUsd: capturedAmount,
-        transactionId: paypalTransactionId,
-      }).catch((err) => console.error("Payment email error:", err));
-    }
+    // Письмо клиенту об оплате ОТКЛЮЧЕНО (решение владельца 26.11.2026); менеджеру уходит Telegram выше.
 
     return NextResponse.json({
       success: true,

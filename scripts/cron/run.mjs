@@ -74,14 +74,6 @@ const JOBS = {
     schedule: "0 */2 * * *",
     about: "автопостинг авто в телеграм-канал",
   },
-  "poster-parts": {
-    path: "/api/poster/parts/run",
-    method: "POST",
-    secretEnv: "POSTER_CRON_SECRET",
-    header: "x-poster-secret",
-    schedule: "30 */2 * * *",
-    about: "автопостинг запчастей",
-  },
   blog: {
     path: "/api/blog-generate",
     method: "POST",
