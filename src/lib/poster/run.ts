@@ -1,5 +1,6 @@
 // Оркестрация одного тика постера: выбрать пресет → найти → отфильтровать → запостить.
 import { getFx } from '@/lib/fx';
+import { telegramRequest } from '@/lib/telegram';
 import { PRESETS, POST_CONFIG, GROUP_ID, CARS_TOPIC_ID, rotationSequence } from './config';
 import { searchListings, fetchDetail, type Listing } from './encar';
 import { prefilter, deepGate } from './quality';
@@ -89,11 +90,11 @@ async function sendMediaGroup(photos: string[], caption: string): Promise<void> 
       : { type: 'photo', media: url },
   );
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMediaGroup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: GROUP_ID, message_thread_id: CARS_TOPIC_ID, media }),
-  });
+  const res = await telegramRequest(
+    'sendMediaGroup',
+    { chat_id: GROUP_ID, message_thread_id: CARS_TOPIC_ID, media },
+    { token },
+  );
   const data = await res.json();
   if (!data.ok) throw new Error(`Telegram sendMediaGroup: ${data.description ?? res.status}`);
 }

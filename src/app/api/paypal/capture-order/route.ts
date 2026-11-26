@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
+import { sendTelegram } from "@/lib/telegram";
 
 // ── PayPal access token ─────────────────────────────────────────────────────
 
@@ -33,11 +34,7 @@ async function sendTelegramNotification(text: string) {
   const chatId = process.env.TELEGRAM_WORK_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
-  }).catch(() => {});
+  await sendTelegram({ text, chatId, token, parseMode: "HTML", onError: "swallow" });
 }
 
 // ── POST /api/paypal/capture-order ──────────────────────────────────────────

@@ -4,8 +4,8 @@ import { createServerClient } from "@/lib/supabase";
 import { buildEncarGrounding } from "@/lib/encarModelPrices";
 import { getFx } from "@/lib/fx";
 import { SITE_URL } from "@/lib/site";
+import { telegramRequest } from "@/lib/telegram";
 
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 // Порог «тем осталось мало» — при таком остатке pending шлём предупреждение.
@@ -19,11 +19,7 @@ const PRIORITY_PENALTY = 3;
 async function notify(text: string): Promise<void> {
   if (!CHAT_ID) return;
   try {
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML" }),
-    });
+    await telegramRequest("sendMessage", { chat_id: CHAT_ID, text, parse_mode: "HTML" });
   } catch {
     /* уведомление — не критичный путь */
   }
@@ -455,15 +451,11 @@ async function handleGenerate(req: NextRequest) {
       ],
     };
 
-    await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: caption,
-        parse_mode: "HTML",
-        reply_markup: keyboard,
-      }),
+    await telegramRequest("sendMessage", {
+      chat_id: CHAT_ID,
+      text: caption,
+      parse_mode: "HTML",
+      reply_markup: keyboard,
     });
   }
 

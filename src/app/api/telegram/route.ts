@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { sendTelegram } from "@/lib/telegram";
 
 interface ContactPayload {
   name: string;
@@ -75,13 +76,7 @@ export async function POST(req: NextRequest) {
 📞 Телефон: ${phone}${messengerLine}${vin ? `\n🔑 VIN: ${vin.toUpperCase()}` : ""}${carName ? `\n🚗 Авто: ${carName}` : ""}${carId ? `\n🔗 encar.com/md/sl/mdsl_regcar.do?method=inspectionViewNew&carid=${carId}` : ""}${message ? `\n💬 Комментарий: ${message}` : ""}`;
 
     const results = await Promise.all(
-      notifyTargets.map(id =>
-        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: id, text }),
-        }).then(r => r.json())
-      )
+      notifyTargets.map(id => sendTelegram({ text, chatId: id, token: botToken }))
     );
 
     const data = results[0];

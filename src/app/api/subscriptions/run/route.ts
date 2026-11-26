@@ -20,8 +20,8 @@ import {
 import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
 import { SITE_URL } from "@/lib/site";
+import { sendTelegram } from "@/lib/telegram";
 
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
 export const dynamic = "force-dynamic";
@@ -106,19 +106,14 @@ interface SendResult {
 async function reportToWorkChat(lines: string[]): Promise<void> {
   if (!WORK_CHAT_ID) return;
   try {
-    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await sendTelegram({
+      text: lines.join("\n"),
+      chatId: WORK_CHAT_ID,
       // Без parse_mode: текст служебный, разметки в нём нет, а любой случайный
       // спецсимвол в HTML-режиме уронил бы отправку целиком.
-      body: JSON.stringify({
-        chat_id: WORK_CHAT_ID,
-        text: lines.join("\n"),
-        disable_web_page_preview: true,
-      }),
+      disableWebPagePreview: true,
+      logLabel: "[subscriptions] отчёт не ушёл:",
     });
-    const data = await res.json();
-    if (!data.ok) console.error("[subscriptions] отчёт не ушёл:", JSON.stringify(data));
   } catch (e) {
     console.error("[subscriptions] отчёт упал:", (e as Error)?.message);
   }
@@ -163,21 +158,16 @@ function carLine(c: Candidate, krwToUsd: number): string {
 }
 
 async function sendToChat(chatId: number, text: string, subId: number) {
-  const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-      reply_markup: {
-        inline_keyboard: [[{ text: "Отписаться", callback_data: `unsub:${subId}` }]],
-      },
-    }),
+  const data = await sendTelegram({
+    text,
+    chatId,
+    parseMode: "HTML",
+    disableWebPagePreview: true,
+    replyMarkup: {
+      inline_keyboard: [[{ text: "Отписаться", callback_data: `unsub:${subId}` }]],
+    },
+    logLabel: "[subscriptions] sendMessage:",
   });
-  const data = await res.json();
-  if (!data.ok) console.error("[subscriptions] sendMessage:", JSON.stringify(data));
   return !!data.ok;
 }
 

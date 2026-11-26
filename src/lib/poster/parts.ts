@@ -1,6 +1,7 @@
 // Автопостинг запчастей из parts_products в тему «Запчасти» Telegram-группы.
 import { createServerClient } from '@/lib/supabase';
 import { getFx } from '@/lib/fx';
+import { telegramRequest } from '@/lib/telegram';
 import { GROUP_ID, PARTS_TOPIC_ID, PARTS_CONFIG } from './config';
 
 export interface Part {
@@ -138,11 +139,7 @@ async function sendPart(image: string | null, caption: string): Promise<void> {
     ? ['sendPhoto', { ...common, photo: image, caption }]
     : ['sendMessage', { ...common, text: caption }];
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const res = await telegramRequest(method, body, { token });
   const data = await res.json();
   if (!data.ok) throw new Error(`Telegram ${method}: ${data.description ?? res.status}`);
 }
