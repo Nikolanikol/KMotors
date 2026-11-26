@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createServerClient } from "@/lib/supabase";
 import { buildEncarGrounding } from "@/lib/encarModelPrices";
 import { getFx } from "@/lib/fx";
+import { SITE_URL } from "@/lib/site";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -442,12 +443,11 @@ async function handleGenerate(req: NextRequest) {
       `🌐 Языки: RU · EN · KO · KA · AR\n` +
       `🏷 ${finalTags.join(", ")}`;
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
     const keyboard = {
       inline_keyboard: [
         [
           { text: "✅ Опубликовать", callback_data: `publish:${postId}` },
-          { text: "✏️ Редактировать", url: `${siteUrl}/admin/blog/${postId}` },
+          { text: "✏️ Редактировать", url: `${SITE_URL}/admin/blog/${postId}` },
         ],
         [
           { text: "❌ Удалить", callback_data: `delete:${postId}` },

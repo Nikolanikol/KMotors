@@ -19,9 +19,9 @@ import {
 } from "@/lib/savedSearches";
 import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
+import { SITE_URL } from "@/lib/site";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.kmotors.shop";
 const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
 export const dynamic = "force-dynamic";
@@ -159,7 +159,7 @@ function carLine(c: Candidate, krwToUsd: number): string {
     krw > 0
       ? ` — ${krw.toLocaleString("ru-RU")} ₩ (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`
       : "";
-  return `• <a href="${SITE}/ru/catalog/${c.id}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=subscription">${esc(name)}</a>${mileage}${price}`;
+  return `• <a href="${SITE_URL}/ru/catalog/${c.id}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=subscription">${esc(name)}</a>${mileage}${price}`;
 }
 
 async function sendToChat(chatId: number, text: string, subId: number) {
@@ -270,7 +270,7 @@ export async function GET(req: NextRequest) {
       const text =
         `${header}\n\n` +
         show.map((c) => carLine(c, krwToUsd)).join("\n") +
-        (more > 0 ? `\n\n…и ещё ${more} — <a href="${SITE}/ru/catalog">весь каталог</a>` : "");
+        (more > 0 ? `\n\n…и ещё ${more} — <a href="${SITE_URL}/ru/catalog">весь каталог</a>` : "");
 
       if (dryRun) {
         results.push({ chatId: sub.chat_id, sent: show.length });

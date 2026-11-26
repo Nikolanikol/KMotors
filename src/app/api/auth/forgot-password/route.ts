@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { Resend } from "resend";
+import { SITE_URL } from "@/lib/site";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
 const FROM = process.env.EMAIL_FROM ?? "K-Axis <onboarding@resend.dev>";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
 
 export async function POST(req: NextRequest) {
   const { email, lang = "ru" } = await req.json();

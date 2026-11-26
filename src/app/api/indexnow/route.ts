@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site";
 
 const KEY = "f0a070ba837a4a414a58457c67b26450";
-const HOST = "https://www.kmotors.shop";
 const ENDPOINT = "https://api.indexnow.org/indexnow";
 
 export async function POST(req: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   const fullUrls = urls.map((u: string) =>
-    u.startsWith("http") ? u : `${HOST}${u.startsWith("/") ? "" : "/"}${u}`
+    u.startsWith("http") ? u : `${SITE_URL}${u.startsWith("/") ? "" : "/"}${u}`
   );
 
   const res = await fetch(ENDPOINT, {
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       host: "www.kmotors.shop",
       key: KEY,
-      keyLocation: `${HOST}/${KEY}.txt`,
+      keyLocation: `${SITE_URL}/${KEY}.txt`,
       urlList: fullUrls,
     }),
   });

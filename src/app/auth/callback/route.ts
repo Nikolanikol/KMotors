@@ -3,13 +3,13 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { notifySignup } from "@/lib/signupNotify";
+import { SITE_URL } from "@/lib/site";
 import { tagUserSite } from "@/lib/userSite";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/ru/parts";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kmotors.shop";
 
   if (code) {
     const cookieStore = await cookies();
@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
         const method = data.user.app_metadata?.provider === "google" ? "google" : "email";
         await Promise.all([notifySignup(data.user, { method, path: next }), tagUserSite(data.user)]);
       }
-      return NextResponse.redirect(`${siteUrl}${next}`);
+      return NextResponse.redirect(`${SITE_URL}${next}`);
     }
   }
 
-  return NextResponse.redirect(`${siteUrl}/ru/auth?mode=login`);
+  return NextResponse.redirect(`${SITE_URL}/ru/auth?mode=login`);
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { cookies } from "next/headers";
+import { SITE_URL } from "@/lib/site";
 
 async function checkAuth(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -82,8 +83,8 @@ export async function PUT(
         body: JSON.stringify({
           host: "www.kmotors.shop",
           key: INDEXNOW_KEY,
-          keyLocation: `https://www.kmotors.shop/${INDEXNOW_KEY}.txt`,
-          urlList: [`https://www.kmotors.shop/ru/blog/${post.slug}`],
+          keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`,
+          urlList: [`${SITE_URL}/ru/blog/${post.slug}`],
         }),
       }).catch(() => {});
     }
