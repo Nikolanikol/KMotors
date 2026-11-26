@@ -8,9 +8,10 @@ import { createServerClient } from "@/lib/supabase";
  *
  * Инварианты:
  *  - Читаются ТОЛЬКО строки status = 'published'. draft/approved/rejected на сайт не идут.
- *  - Дополнительный предохранитель в коде: нужна уверенность не «low» и хотя бы один источник.
- *    Без каталожного слоя текст держится на догадке по названию детали — публиковать его нельзя
- *    даже если строку по ошибке перевели в published.
+ *  - Решение владельца 27.11.2026: показываем и карточки без источника (confidence low) — там
+ *    общее объяснение типа детали. Риск известен: при общем названии («Pressure Regulator»)
+ *    модель могла угадать не тот тип детали; поэтому в блоке без источника нет строки
+ *    «based on catalog data». Закрыть такую карточку — перевести строку в rejected.
  *  - Модуль НЕ бросает исключений: сбой чтения = карточка без блока, а не 500 на странице товара.
  *  - Содержимое jsonb не доверяем: форма проверяется, лишнее отбрасывается.
  */
@@ -97,7 +98,7 @@ function normalize(raw: unknown, sources: unknown): PartContent | null {
 async function fetchPartContent(partNumber: string): Promise<PartContent | null> {
   const { data, error } = await createServerClient()
     .from("kmotors_part_content")
-    .select("content, confidence, sources")
+    .select("content, sources")
     .eq("part_number", partNumber)
     .eq("lang", "en")
     .eq("status", "published")
@@ -105,8 +106,6 @@ async function fetchPartContent(partNumber: string): Promise<PartContent | null>
   // Бросаем, чтобы unstable_cache не запомнил сбой: кеш хранит только возвращённое значение.
   if (error) throw new Error(`kmotors_part_content: ${error.message}`);
   if (!data) return null;
-  if (data.confidence === "low") return null;
-  if (!Array.isArray(data.sources) || data.sources.length === 0) return null;
   return normalize(data.content, data.sources);
 }
 
