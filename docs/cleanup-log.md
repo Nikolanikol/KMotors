@@ -41,6 +41,15 @@
 
 Результат замера контекста — в разделе «Замеры» ниже.
 
+### 03 — Serena удалена (тег `cleanup/03-serena-off`, 26.11.2026)
+
+Решение владельца. `claude mcp remove serena -s local` (конфиг лежал в локальной области
+проекта, `~/.claude.json`). Правило «навигация через Serena» в корневом `CLAUDE.md`
+заменено на обычные `Grep`/`Glob`/`Read` плюс запрет подключать её заново. Память
+`serena-mcp-startup` переписана в «Serena удалена». Откат: `claude mcp add serena -- uvx
+--from git+https://github.com/oraios/serena serena start-mcp-server --context claude-code
+--project <путь>` и вернуть строку правила из тега `cleanup/02-log`.
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026
