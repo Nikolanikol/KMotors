@@ -21,7 +21,7 @@ import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 // неизвестные [slug] рендерятся при первом визите. Сборку это и обеспечивает;
 // revalidate тут отдельная ручка и на объём сборки не влияет.
 //
-// 24 часа, а не false: цена в HTML считается от krwToUsd (getCurrencyRates,
+// 24 часа, а не false: цена в HTML считается от krwToUsd (getFx("market"),
 // кеш 24ч). При revalidate = false страница не перерендеривается никогда, и
 // этот кеш курса не может сработать — курс замерзает на момент первого визита,
 // а /api/parts/checkout (POST, не кешируется) считает по свежему. Витрина и
@@ -381,7 +381,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = data.product;
   // Цена в сниппете обязана совпадать с ценой, которую видит посетитель, —
   // тот же formatUsd, что и в CarDetailSidebar/ProductDetailClient, а не своя
-  // арифметика. Курс живой (getCurrencyRates, кеш 24ч), константы в коде нет —
+  // арифметика. Курс живой (getFx("market"), кеш 24ч), константы в коде нет —
   // но «живой» он ровно настолько, насколько часто перерендеривается страница:
   // держать revalidate этого маршрута не выше 24ч обязательно, иначе курс
   // запекается в HTML намертво и превращается в ту самую константу.

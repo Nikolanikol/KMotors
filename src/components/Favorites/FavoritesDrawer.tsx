@@ -130,7 +130,7 @@ export function FavoritesDrawer({
   open: boolean;
   onClose: () => void;
   lang: string;
-  /** Курс запчастей (getCurrencyRates) — для цены запчасти в $, как в корзине. */
+  /** Курс запчастей (getFx("market")) — для цены запчасти в $, как в корзине. */
   krwToUsd: number;
 }) {
   const l = favText(lang);

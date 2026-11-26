@@ -22,7 +22,7 @@ interface Props {
   lang: string;
   user: { id: string; email: string };
   profile: Profile | null;
-  /** Курс KRW→USD с сервера (getCurrencyRates, кеш 24ч). В браузере НЕ запрашивать. */
+  /** Курс KRW→USD с сервера (getFx("market"), кеш 24ч). В браузере НЕ запрашивать. */
   krwToUsd: number;
 }
 

@@ -496,7 +496,7 @@ export default async function CatalogView({
   }
   const pageRaw = Number(first(sp.page) || 1);
   const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
-  // Курс читается из кеша данных (fetch с revalidate в kbFx.ts), а не из сети на запрос.
+  // Курс читается из кеша данных (fetch с revalidate в lib/fx/sources/kb.ts), а не из сети на запрос.
   const [found, rates] = await Promise.all([(cached ? searchCatalogCached : searchCatalog)(filter, page), getFx("car")]);
   // ⚠️ Цены вычищаются из строк ДО отрисовки: всё, что дальше уходит в
   // клиентские компоненты (♥ со снимком лота, таймер), сериализуется в

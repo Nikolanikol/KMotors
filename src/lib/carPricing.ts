@@ -1,7 +1,7 @@
 // Ценообразование АВТО. Единственный источник — как pricing.ts у запчастей.
 //
 //   цена_для_клиента_KRW = цена_Encar_KRW + стояночный сбор
-//   цена_₽/$             = цена_для_клиента_KRW × курс KB (см. kbFx.ts)
+//   цена_₽/$             = цена_для_клиента_KRW × курс KB (см. lib/fx/sources/kb.ts)
 //
 // Сбор входит в цену НА ВСЕХ УРОВНЯХ, включая главную цену в вонах (решение
 // владельца 27.08.2026). То есть воны на карточке — это уже НЕ цена объявления
@@ -68,7 +68,7 @@ export function formatCarKrw(raw: string | number | null | undefined): string {
   return carPriceKrw(raw).toLocaleString("ru-RU");
 }
 
-/** Курс, который нужен для показа цены. Приходит с сервера, см. kbFx.ts. */
+/** Курс, который нужен для показа цены. Приходит с сервера, см. lib/fx/sources/kb.ts. */
 export interface CarDisplayRates {
   krwToRub?: number;
   krwToUsd?: number;

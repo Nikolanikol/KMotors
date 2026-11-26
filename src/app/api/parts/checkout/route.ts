@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (!phone || phone.length < 6) errors.push("phone");
     if (!city || city.length < 2) errors.push("city");
     if (!address || address.length < 3) errors.push("address");
-    // Курс наш, но подстраховка остаётся: getCurrencyRates может уйти на фолбэк,
+    // Курс наш, но подстраховка остаётся: getFx("market") может уйти на фолбэк,
     // а считать деньги по мусорному числу нельзя ни при каком источнике.
     if (typeof krwToUsd !== "number" || !(krwToUsd > 0) || krwToUsd > 0.01) errors.push("exchange_rate");
     if (notes && typeof notes === "string" && notes.length > 2000) errors.push("notes_too_long");

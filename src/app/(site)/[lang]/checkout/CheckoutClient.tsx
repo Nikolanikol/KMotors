@@ -53,7 +53,7 @@ interface Props {
     address?: string | null;
     zip?: string | null;
   };
-  /** Курс KRW→USD с сервера (getCurrencyRates, кеш 24ч). НЕ запрашивать в браузере. */
+  /** Курс KRW→USD с сервера (getFx("market"), кеш 24ч). НЕ запрашивать в браузере. */
   krwToUsd: number;
 }
 
