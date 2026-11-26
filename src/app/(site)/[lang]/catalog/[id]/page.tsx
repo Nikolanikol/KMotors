@@ -240,9 +240,9 @@ export async function generateMetadata({
   // Sort photos same way as Carousel (OUTER first) and get direct encar URL
   // WhatsApp fetches this directly — no latency from our server
   const TYPE_ORDER: Record<string, number> = { OUTER: 0, OPTION: 1, INNER: 2 };
-  const sortedPhotos = [...(data?.photos || [])].sort((a: any, b: any) => {
-    const typeA = TYPE_ORDER[a.type] ?? 1;
-    const typeB = TYPE_ORDER[b.type] ?? 1;
+  const sortedPhotos = [...(data?.photos || [])].sort((a: { type?: string; code?: string }, b: { type?: string; code?: string }) => {
+    const typeA = TYPE_ORDER[a.type ?? ""] ?? 1;
+    const typeB = TYPE_ORDER[b.type ?? ""] ?? 1;
     if (typeA !== typeB) return typeA - typeB;
     return (a.code || "").localeCompare(b.code || "", undefined, {
       numeric: true,
@@ -596,9 +596,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
 
   // Sort: OUTER → OPTION → INNER, within each group sort by code ascending
   const TYPE_ORDER: Record<string, number> = { OUTER: 0, OPTION: 1, INNER: 2 };
-  const sortedPhotos = [...(data.photos || [])].sort((a: any, b: any) => {
-    const typeA = TYPE_ORDER[a.type] ?? 1;
-    const typeB = TYPE_ORDER[b.type] ?? 1;
+  const sortedPhotos = [...(data.photos || [])].sort((a: { type?: string; code?: string }, b: { type?: string; code?: string }) => {
+    const typeA = TYPE_ORDER[a.type ?? ""] ?? 1;
+    const typeB = TYPE_ORDER[b.type ?? ""] ?? 1;
     if (typeA !== typeB) return typeA - typeB;
     return (a.code || "").localeCompare(b.code || "", undefined, {
       numeric: true,

@@ -35,20 +35,10 @@ export default async function Image({ params }: { params: Promise<{ lang: string
   const { id } = await params;
   const data = await fetchCarData(id);
 
-  const carName = data
-    ? [
-        data.category?.manufacturerEnglishName,
-        data.category?.modelGroupEnglishName,
-        data.category?.gradeEnglishName,
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : "K-Axis";
-
   // Sort photos same way as Carousel on the page (OUTER first)
-  const sortedPhotos = [...(data?.photos || [])].sort((a: any, b: any) => {
-    const typeA = TYPE_ORDER[a.type] ?? 1;
-    const typeB = TYPE_ORDER[b.type] ?? 1;
+  const sortedPhotos = [...(data?.photos || [])].sort((a: { type?: string; code?: string }, b: { type?: string; code?: string }) => {
+    const typeA = TYPE_ORDER[a.type ?? ""] ?? 1;
+    const typeB = TYPE_ORDER[b.type ?? ""] ?? 1;
     if (typeA !== typeB) return typeA - typeB;
     return (a.code || "").localeCompare(b.code || "", undefined, { numeric: true });
   });

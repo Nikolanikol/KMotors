@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { User, ShoppingCart, Package, ChevronRight, Home } from "lucide-react";
+import { User, ShoppingCart, Package, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import ProfileForm from "./ProfileForm";
 import CartTab from "./CartTab";

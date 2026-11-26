@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Loader2, Ship, Plane } from "lucide-react";
+import { CheckCircle2, Loader2, Ship, Plane } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const PayPalCheckout = dynamic(() => import("@/components/PayPalCheckout"), {
@@ -321,7 +321,7 @@ const usdFmt = new Intl.NumberFormat("en-US");
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CheckoutClient({ lang, userId, items, profile, krwToUsd }: Props) {
+export default function CheckoutClient({ lang, items, profile, krwToUsd }: Props) {
   const l = L[lang] ?? L.ru;
   const isRTL = false; // RTL-переворот отключён — макет всегда LTR (см. layout.tsx)
 

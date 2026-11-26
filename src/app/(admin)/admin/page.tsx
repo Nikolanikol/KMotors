@@ -146,20 +146,6 @@ const LEAD_SOURCE_LABELS: Record<string, string> = {
 
 const TZ = "Asia/Seoul";
 
-function fmtDate(str: string): string {
-  return new Date(str).toLocaleString("ru-RU", {
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-    timeZone: TZ,
-  });
-}
-
-function fmtShortDate(str: string): string {
-  return new Date(str).toLocaleDateString("ru-RU", {
-    day: "numeric", month: "short",
-    timeZone: TZ,
-  });
-}
-
 // ─── Страница ────────────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
@@ -177,7 +163,6 @@ export default async function AdminPage() {
   const days30ago  = new Date(now.getTime() - 30 * 86400000).toISOString();
   // Предыдущие периоды для сравнения (WoW / MoM)
   const days7to14ago  = new Date(now.getTime() - 14 * 86400000).toISOString();
-  const days14to21ago = new Date(now.getTime() - 21 * 86400000).toISOString();  // не используется
   const days30to60ago = new Date(now.getTime() - 60 * 86400000).toISOString();
 
   // ── Все запросы параллельно ──────────────────────────────────────────────
@@ -275,7 +260,6 @@ export default async function AdminPage() {
     const h = new Date(r.created_at).getHours();
     hourMap[h] = (hourMap[h] || 0) + 1;
   });
-  const maxHour = Math.max(...Object.values(hourMap), 1);
 
   // График по дням — RPC возвращает уже агрегированные {day, views}, заполняем пропуски нулями
   const toSeoulDate = (d: Date) =>
@@ -290,7 +274,6 @@ export default async function AdminPage() {
     if (key in dayMap) dayMap[key] = Number(r.views);
   });
   const dayStats = Object.entries(dayMap);
-  const maxDay = Math.max(...dayStats.map((d) => d[1]), 1);
 
   // Топ страниц — с именами машин из JOIN
   const topPagesList = (topPages || []).map((r: { path: string; car_name: string | null; count: number }) => ({
@@ -337,6 +320,8 @@ export default async function AdminPage() {
           <div className="text-lg font-bold">KMotors Admin</div>
           <div className="text-xs text-blue-200">Панель аналитики</div>
         </div>
+        {/* Полная загрузка нужна: админка и сайт — разные корневые layout, <Link> между ними не годится. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="text-xs text-blue-200 hover:text-white transition-colors">← На сайт</a>
       </header>
 

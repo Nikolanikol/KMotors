@@ -2,6 +2,7 @@
 import { Copy, Gauge, FileText, Hash } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { LucideIcon } from "lucide-react";
 
 // Encar не гарантирует ни vin, ни spec.mileage — рендер уже это переживает
 // (value || notSpecified, mileage?.toLocaleString), типы приводим к реальности.
@@ -22,7 +23,7 @@ function VinMileageSection({ vin, vehicleNo, mileage }: VinMileageSectionProps) 
     else { setCopiedNo(true); setTimeout(() => setCopiedNo(false), 2000); }
   };
 
-  const Card = ({ icon: Icon, label, value, onCopy, copied }: { icon: any; label: string; value?: string; onCopy?: () => void; copied?: boolean }) => (
+  const Card = ({ icon: Icon, label, value, onCopy, copied }: { icon: LucideIcon; label: string; value?: string; onCopy?: () => void; copied?: boolean }) => (
     <div className="rounded-xl p-4 group" style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}>
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(182,119,73,0.1)", color: "var(--axis-orange)" }}>

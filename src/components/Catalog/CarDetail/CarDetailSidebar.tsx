@@ -4,9 +4,10 @@ import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import { Phone, MapPin, User, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CarRequestForm from "./CarRequestForm";
+import type { EncarRaw } from "@/lib/vehicle";
 
 interface Props {
-  data: any;
+  data: EncarRaw;
   id: string;
   carName: string;
   krwToRub?: number;

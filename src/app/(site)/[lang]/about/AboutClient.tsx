@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   Shield,
   Truck,
-  Award,
   Search,
   Globe,
   HeadphonesIcon,
@@ -16,8 +15,7 @@ import {
   Send,
   Car,
   ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+  ChevronRight } from "lucide-react";
 
 interface Props {
   lang: string;

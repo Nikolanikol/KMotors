@@ -6,7 +6,6 @@ import { createServerClient } from "@/lib/supabase";
 import { withCleanImage } from "@/lib/partImage";
 import { getFx } from "@/lib/fx";
 import { makeAlternates } from "@/lib/seo";
-import { generatePartSlug } from "@/utils/partSlug";
 import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";

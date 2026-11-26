@@ -473,12 +473,6 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
     priceMin !== undefined || priceMax !== undefined || searchQ
   );
 
-  const scrollToContact = (name: string, partNumber: string) => {
-    sessionStorage.setItem("prefillMessage", `${name} (${partNumber})`);
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-    clarityEvent("parts_order_click");
-  };
-
   // Active filter tag data
   const activeTags = useMemo(() => {
     const tags: { label: string; onRemove: () => void }[] = [];

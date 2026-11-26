@@ -114,5 +114,6 @@ module.exports = {
       },
     },
   },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS-конфиг tailwind
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 };

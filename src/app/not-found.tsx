@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertCircle, Home, Search, MessageCircle } from "lucide-react";
 import { langOrDefault } from "@/lib/lang";
+import type { LucideIcon } from "lucide-react";
 
 const T = {
   ru: {
@@ -63,7 +64,7 @@ const T = {
   },
 };
 
-const CardLink = ({ href, icon: Icon, title, desc }: { href: string; icon: any; title: string; desc: string }) => (
+const CardLink = ({ href, icon: Icon, title, desc }: { href: string; icon: LucideIcon; title: string; desc: string }) => (
   <Link href={href}>
     <div
       className="rounded-2xl p-6 cursor-pointer transition-all duration-200"

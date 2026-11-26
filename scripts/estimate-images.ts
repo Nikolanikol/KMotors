@@ -33,7 +33,7 @@ async function main() {
       const r = await fetch(url, { method: "HEAD" });
       const size = r.headers.get("content-length");
       if (size) { totalBytes += parseInt(size); count++; console.log(`  ${url.split("/").pop()} → ${(parseInt(size)/1024).toFixed(0)} KB`); }
-    } catch (e) { console.log(`  ${url} → ERROR`); }
+    } catch { console.log(`  ${url} → ERROR`); }
   }
   if (count > 0) {
     const avgKB = totalBytes / count / 1024;

@@ -11,12 +11,12 @@ import { convertNumberKm } from "@/utils/splitNumber";
 import { formatCarKrw } from "@/lib/carPricing";
 import { translateGenerationRow } from "@/utils/translateGenerationRow";
 import { langOrDefault } from "@/lib/lang";
+import type { TFunction } from "i18next";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = {
   label: string;
   key: keyof FavoriteCar;
-  format?: (val: string, t: any) => string;
+  format?: (val: string, t: TFunction) => string;
   best?: "min" | "max";
 };
 

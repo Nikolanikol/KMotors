@@ -54,7 +54,8 @@ export default function EditPostClient({ id }: Props) {
     input.split(",").map((t) => t.trim()).filter(Boolean);
 
   const save = async (publish = false) => {
-    publish ? setPublishing(true) : setSaving(true);
+    if (publish) setPublishing(true);
+    else setSaving(true);
     setStatus("idle");
 
     try {

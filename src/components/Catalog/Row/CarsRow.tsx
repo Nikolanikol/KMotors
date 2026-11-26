@@ -5,7 +5,6 @@ import { CarSearchParams } from "./utils/Types";
 import FunnelTracker from "@/components/analytics/FunnelTracker";
 
 import CarCard from "./CarCard";
-import { Suspense } from "react";
 import { headers } from "next/headers";
 import { getFx } from "@/lib/fx";
 import { catalogPageSize } from "@/utils/device";

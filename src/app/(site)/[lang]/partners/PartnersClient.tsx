@@ -11,13 +11,11 @@ import {
   Truck,
   Shield,
   HeadphonesIcon,
-  Clock,
   Package,
   Send,
   Wrench,
   Store,
-  CarFront,
-} from "lucide-react";
+  CarFront } from "lucide-react";
 
 interface Props {
   lang: string;

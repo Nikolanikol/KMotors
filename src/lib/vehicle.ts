@@ -25,7 +25,15 @@ function isEncarBlockPage(res: Response, body: string): boolean {
   return body.includes("has_been_cr_blocked") || type.includes("text/html");
 }
 
-export async function fetchVehicleData(id: string): Promise<any> {
+/**
+ * Сырой JSON объявления Encar. Схему задаёт внешний API и она не гарантирована
+ * (см. CLAUDE.md: «Фото — только Photos?.[0]?.location», vin и пробег бывают пустыми),
+ * поэтому тип намеренно свободный — единственное разрешённое `any` на весь разбор Encar.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type EncarRaw = Record<string, any>;
+
+export async function fetchVehicleData(id: string): Promise<EncarRaw | null> {
   // Основной источник — прямой Encar API, кэш 1 час
   try {
     const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {

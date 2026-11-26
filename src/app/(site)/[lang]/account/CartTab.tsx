@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Trash2, ShoppingCart, ArrowRight, Loader2, Minus, Plus, Plane, Ship } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowRight, Loader2, Plane, Ship } from "lucide-react";
 import { notifyCartUpdate } from "@/hooks/useCartCount";
 import Image from "next/image";
 import Link from "next/link";

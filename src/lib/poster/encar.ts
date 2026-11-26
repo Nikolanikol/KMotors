@@ -3,6 +3,7 @@
 import { fetchVehicleData } from '@/lib/vehicle';
 import { SITE_URL } from '@/lib/site';
 import type { Preset } from './config';
+import type { EncarRaw } from '@/lib/vehicle';
 
 const SEARCH = 'https://api.encar.com/search/car/list/premium';
 const DETAIL = 'https://api.encar.com/v1/readside';
@@ -57,7 +58,7 @@ export async function searchListings(p: Preset, limit: number): Promise<Listing[
   const data = await res.json();
 
   return (data.SearchResults ?? []).map(
-    (r: any): Listing => ({
+    (r: EncarRaw): Listing => ({
       id: String(r.Id),
       manufacturerKo: r.Manufacturer ?? '',
       modelKo: r.Model ?? '',
@@ -93,15 +94,15 @@ export interface EncarDetail {
   inspection: Inspection | null;
 }
 
-function extractOptionCodes(vehicle: any): string[] {
+function extractOptionCodes(vehicle: EncarRaw): string[] {
   const o = vehicle?.options ?? {};
   const codes = [...(o.standard ?? []), ...(o.choice ?? [])].map(String);
   return [...new Set(codes)];
 }
 
-function extractPhotos(vehicle: any, limit: number): string[] {
+function extractPhotos(vehicle: EncarRaw, limit: number): string[] {
   const raw: string[] = (vehicle?.photos ?? [])
-    .map((p: any) => (typeof p === 'string' ? p : p?.path ?? p?.location ?? ''))
+    .map((p: string | { path?: string; location?: string }) => (typeof p === 'string' ? p : p?.path ?? p?.location ?? ''))
     .filter(Boolean);
   const frameNo = (path: string) => {
     const m = path.match(/_(\d+)\.jpg/i);
@@ -141,7 +142,7 @@ async function fetchInspection(id: string): Promise<Inspection | null> {
     // master.accdient (sic — опечатка в API Encar) присутствует даже когда
     // master.detail пустой, поэтому это наш основной флаг ДТП.
     const detail = master.detail ?? {};
-    const hasSeriousDamage = (d.outers ?? []).some((o: any) =>
+    const hasSeriousDamage = (d.outers ?? []).some((o: { attributes?: string[] }) =>
       (o.attributes ?? []).includes('RANK_ONE'),
     );
     return {

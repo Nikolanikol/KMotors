@@ -9,21 +9,17 @@ import {
 // Lucide — только то чего нет в Tabler
 import {
   Shield, Sofa, Smartphone, Music, LayoutGrid,
-  Package, DoorClosed, MoveHorizontal, Gamepad2, Moon,
-  Lock, ArrowUpDown, Wifi, Users, UserRound, ShieldCheck,
-  Car, Zap, Camera, Wind, AlignCenter, Armchair,
-  Waves, BookMarked, MapPin, Monitor, Headphones, Eye,
-  HandMetal, CloudRain, ScanEye, Bluetooth,
-} from "lucide-react";
+  Package, DoorClosed, MoveHorizontal, Moon,
+  Zap, AlignCenter, Armchair,
+  Monitor, ScanEye } from "lucide-react";
 // Tabler — точные автомобильные иконки
 import {
   TbSteeringWheel, TbSteeringWheelFilled,
   TbAirConditioning,
-  TbCarFan, TbCarFan1, TbCarFan2,
-  TbWiper, TbWiperWash,
+  TbCarFan1, TbCarFan2,
+  TbWiperWash,
   TbRadar, TbRadar2,
-  TbNfc, TbCreditCard,
-  TbBulb, TbBulbFilled,
+  TbNfc, TbBulb, TbBulbFilled,
   TbMassage,
   TbUsb,
   TbWheel,
@@ -41,18 +37,13 @@ import {
   TbActivity,
   TbAlertTriangle,
   TbFlame,
-  TbSun, TbSunHigh,
+  TbSunHigh,
   TbBookmark,
   TbSofa,
   TbParking,
-  TbMapPin,
-  TbPlug,
   TbEye,
   TbScan,
-  TbScreenShare,
-  TbCar,
-  TbEngine,
-} from "react-icons/tb";
+  TbScreenShare } from "react-icons/tb";
 import { catalog, OPTION_EN } from "./data";
 
 interface OptionsRowProps {
@@ -138,6 +129,8 @@ const OPTION_ICONS: Record<string, React.ReactNode> = {
   "074": <TbNfc            className={S} />, // Hi-Pass (оплата проезда)
 };
 
+type OptionItem = { code: string; value: string; translatedValue: string };
+
 const FALLBACK_ICON = <LayoutGrid className="w-4 h-4" />;
 
 // Иконки категорий
@@ -164,14 +157,14 @@ export default function OptionsRow({ data }: OptionsRowProps) {
         const catalogItem = catalog.find((i) => i.code === code);
         return catalogItem ? { ...catalogItem, code } : null;
       })
-      .filter(Boolean);
+      .filter((o): o is OptionItem => o !== null);
   };
 
   const standardOptions = getOptionsWithDetails(data.standard);
   const choiceOptions   = getOptionsWithDetails(data.choice || []);
 
-  const groupOptions = (options: any[]) => {
-    const groups: Record<string, any[]> = {
+  const groupOptions = (options: OptionItem[]) => {
+    const groups: Record<string, OptionItem[]> = {
       comfort: [], safety: [], entertainment: [], technology: [], other: [],
     };
     options.forEach((option) => {
@@ -227,7 +220,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
     border: "1px solid rgba(74,74,74,0.3)",
   };
 
-  const renderGroups = (groups: [string, any[]][], accentColor: string) => (
+  const renderGroups = (groups: [string, OptionItem[]][], accentColor: string) => (
     <div className="divide-y" style={{ borderColor: "rgba(74,74,74,0.15)" }}>
       {groups.map(([category, options]) => (
         <Accordion key={category} type="single" collapsible>
@@ -256,7 +249,7 @@ export default function OptionsRow({ data }: OptionsRowProps) {
                 поведение аккордеона не меняются. Цена — ~3,7 КБ сжатого HTML. */}
             <AccordionContent className="px-5 pb-4" forceMount>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
-                {options.map((option: any) => (
+                {options.map((option) => (
                   <div
                     key={option.code}
                     className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"

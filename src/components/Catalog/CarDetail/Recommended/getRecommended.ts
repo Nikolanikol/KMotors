@@ -4,6 +4,7 @@
 // Всё server-side, кэш 1 час. Любой сбой → пустой массив (блок просто не покажется).
 
 import { encarToKrw } from "@/lib/carPricing";
+import type { EncarRaw } from "@/lib/vehicle";
 
 const ENCAR = "https://api.encar.com";
 const MOBILE_UA =
@@ -24,7 +25,7 @@ export interface RecommendedCar {
 // Порядок типов фото: OUTER (экстерьер) первым — как на детали и в каталоге.
 const PHOTO_TYPE_ORDER: Record<string, number> = { OUTER: 0, OPTION: 1, INNER: 2 };
 
-function toCard(d: any): RecommendedCar | null {
+function toCard(d: EncarRaw): RecommendedCar | null {
   const cat = d?.category;
   const spec = d?.spec;
   const adv = d?.advertisement;
@@ -34,12 +35,12 @@ function toCard(d: any): RecommendedCar | null {
   const year = ym.length >= 6 ? `${ym.slice(0, 4)}.${ym.slice(4, 6)}` : ym;
   // Обложка: приоритет фото type=DIAG* (главный ракурс encar, = обложке каталога, path _027).
   // Если DIAG нет (бывает) — фолбэк на первое внешнее (OUTER) по алгоритму детали.
-  const diag = photos.find((p: any) => String(p?.type || "").startsWith("DIAG"));
+  const diag = photos.find((p: { type?: string }) => String(p?.type || "").startsWith("DIAG"));
   const cover =
     diag ??
-    [...photos].sort((a: any, b: any) => {
-      const ta = PHOTO_TYPE_ORDER[a?.type] ?? 1;
-      const tb = PHOTO_TYPE_ORDER[b?.type] ?? 1;
+    [...photos].sort((a: { type?: string; code?: string }, b: { type?: string; code?: string }) => {
+      const ta = PHOTO_TYPE_ORDER[a?.type ?? ""] ?? 1;
+      const tb = PHOTO_TYPE_ORDER[b?.type ?? ""] ?? 1;
       if (ta !== tb) return ta - tb;
       return String(a?.code || "").localeCompare(String(b?.code || ""), undefined, {
         numeric: true,

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
-import { Loader2, AlertCircle, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Loader2, AlertCircle, ShieldCheck } from "lucide-react";
 
 interface Props {
   orderId: string;        // our Supabase order UUID

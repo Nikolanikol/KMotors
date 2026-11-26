@@ -3,7 +3,6 @@
 import { langOrDefault } from "@/lib/lang";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
 import { useCountry } from "@/hooks/useCountry";
 
@@ -67,7 +66,6 @@ const FALLBACK: Record<string, { title: string; desc: string }[]> = {
 };
 
 export default function NavCards() {
-  const { t } = useTranslation();
   const pathname = usePathname();
   const segments = pathname.split("/");
   const lang = langOrDefault(segments[1]);
