@@ -11,11 +11,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { fetchPageStats, daysAgo } from "@/lib/gsc";
 import { parsePartSlug } from "@/utils/partSlug";
+import { isLang } from "@/lib/lang";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // сбор может быть долгим на больших сайтах
 
-const LANGS = new Set(["ru", "en", "ka", "ar", "ko"]);
 const UPSERT_CHUNK = 1_000;
 const LOOKUP_CHUNK = 500;
 const RETENTION_DAYS = 14; // сколько дней снапшотов держим в seo_page_stats
@@ -51,7 +51,7 @@ function parseUrl(rawUrl: string): {
   }
 
   const seg = path.split("/").filter(Boolean); // ["ru","parts","51712-B4000"]
-  const lang = seg[0] && LANGS.has(seg[0]) ? seg[0] : null;
+  const lang = seg[0] && isLang(seg[0]) ? seg[0] : null;
   const rest = lang ? seg.slice(1) : seg;
   const section = rest[0] ?? "(home)";
 
