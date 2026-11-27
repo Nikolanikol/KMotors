@@ -39,7 +39,7 @@ GA4: `G-ZMRTQCD8SF` (подключён в `src/app/RootShell.tsx`). Все со
 | 6. начал заявку | `form_start` | `source`, `car_id` |
 | ✗ сорвалось | `form_invalid` (`missing` name/phone), `form_error` (`status`) | |
 | 7. **заявка** | `generate_lead` | `source`: `car_detail`, `car_detail_mobile`… |
-| 7'. **написал** | `contact` | `method`: whatsapp/telegram/…_sticky |
+| 7'. **написал** | `contact` | `method`: `whatsapp_sticky` / `telegram_sticky` (моб. плашка), `whatsapp_sidebar` / `telegram_sidebar` (десктоп, под формой; ссылки с привязкой к машине — `src/lib/carContactLinks.ts`), `form_sticky` (открыл мобильную форму), `*_card` (каталог) |
 
 ⚠️ `form_invalid` — главный подозреваемый в «нет заявок»: поле телефона принимает
 неполный номер, и форма молча ничего не отправляла. Теперь это видно.

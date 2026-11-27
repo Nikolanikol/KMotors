@@ -1,10 +1,15 @@
 "use client";
 
 import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
-import { Phone, MapPin, User, ExternalLink } from "lucide-react";
+import { Phone, MapPin, User, ExternalLink, MessageCircle, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import CarRequestForm from "./CarRequestForm";
+import { carContactLinks } from "@/lib/carContactLinks";
+import { trackEvent } from "@/utils/gtag";
 import type { EncarRaw } from "@/lib/vehicle";
+
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]";
 
 interface Props {
   data: EncarRaw;
@@ -23,6 +28,8 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
     krwToUsd,
   });
 
+  const { waUrl, tgUrl } = carContactLinks(lang, id, carName);
+
   return (
     <div className="space-y-4">
       {/* Price — только десктоп, на мобиле показывается над фото */}
@@ -40,6 +47,17 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
         <p className="text-[11px] leading-tight mt-1.5" style={{ color: "var(--axis-gray)" }}>
           {t("common:car.storageFeeIncluded")}
         </p>
+        {/* Метка «Цена покупки» читается как итог — подпись снимает это ожидание. */}
+        <p className="text-[11px] leading-tight mt-1" style={{ color: "var(--axis-gray)" }}>
+          {t("common:car.priceScope")}
+        </p>
+        {/* Якорь на калькулятор растаможки этой же карточки (id в page.tsx) */}
+        <a
+          href="#customs-calculator"
+          className={`inline-block mt-2 text-sm font-semibold rounded px-1 -mx-1 transition-colors text-[var(--axis-bronze)] hover:bg-white/[0.06] hover:text-[var(--axis-white)] ${FOCUS_RING}`}
+        >
+          {t("common:car.calcTurnkey")}
+        </a>
       </div>
 
       {/* Request form */}
@@ -64,6 +82,35 @@ export default function CarDetailSidebar({ data, id, carName, krwToRub, krwToUsd
           </div>
           <p className="text-xs mb-4" style={{ color: "var(--axis-gray)" }}>{t("common:car.managerContact")}</p>
           <CarRequestForm carId={id} carName={carName} />
+
+          {/* Те же ссылки, что в мобильной плашке: менеджер получает id и адрес машины */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-xs mb-2" style={{ color: "var(--axis-gray)" }}>{t("common:car.orWrite")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent("contact", { method: "whatsapp_sidebar", car_id: id })}
+                className={`flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold transition-all hover:brightness-125 hover:-translate-y-0.5 ${FOCUS_RING}`}
+                style={{ backgroundColor: "rgba(37,211,102,0.15)", color: "#25D366" }}
+              >
+                <MessageCircle className="w-4 h-4" aria-hidden="true" />
+                WhatsApp
+              </a>
+              <a
+                href={tgUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent("contact", { method: "telegram_sidebar", car_id: id })}
+                className={`flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold transition-all hover:brightness-125 hover:-translate-y-0.5 ${FOCUS_RING}`}
+                style={{ backgroundColor: "rgba(34,158,217,0.15)", color: "#229ED9" }}
+              >
+                <Send className="w-4 h-4" aria-hidden="true" />
+                Telegram
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -738,6 +738,11 @@ select.PhoneInputCountrySelect {
   body[data-sticky-cta] .messenger-fab {
     bottom: 5.5rem;
   }
+  /* Мобильная модалка заявки на карточке Encar (StickyMobileCTA): кнопка
+     рисуется позже страницы и лежала бы поверх формы. */
+  body[data-sticky-cta="modal"] .messenger-fab {
+    display: none;
+  }
 }
 
 /* ── Индикатор перехода (src/components/NavigationStatus.tsx) ─────────────

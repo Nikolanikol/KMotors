@@ -21,6 +21,12 @@ interface MessengerSelectorProps {
   onTgUsernameChange: (value: string) => void;
   label: string;
   usernamePlaceholder?: string;
+  /**
+   * Фон, на котором стоит блок. `light` — белая карточка (запчасти, контакты):
+   * прежний вид. `dark` — тёмные модалки и сайдбар карточки авто: подпись и
+   * неактивная кнопка читаются на --axis-charcoal, а не серым под светлую тему.
+   */
+  tone?: "light" | "dark";
 }
 
 export function MessengerSelector({
@@ -30,35 +36,49 @@ export function MessengerSelector({
   onTgUsernameChange,
   label,
   usernamePlaceholder = "@username",
+  tone = "light",
 }: MessengerSelectorProps) {
+  const dark = tone === "dark";
+  const idle = dark
+    ? { borderColor: "rgba(255,255,255,0.14)", color: "var(--axis-silver)" }
+    : { borderColor: "#e5e7eb", color: "#6b7280" };
+  const idleIcon = dark ? "var(--axis-silver)" : "#9ca3af";
+  const btnBase =
+    "flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border-2 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] " +
+    (dark ? "hover:bg-white/[0.06]" : "hover:bg-gray-50");
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-gray-700">{label}</p>
+      <p
+        className={dark ? "text-sm font-medium" : "text-sm font-medium text-gray-700"}
+        style={dark ? { color: "var(--axis-silver)" } : undefined}
+      >
+        {label}
+      </p>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onMessengerChange("whatsapp")}
-          className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border-2 text-xs font-medium transition-all"
+          className={btnBase}
           style={
             messenger === "whatsapp"
               ? { borderColor: "#25D366", color: "#25D366", backgroundColor: "#25D36612" }
-              : { borderColor: "#e5e7eb", color: "#6b7280" }
+              : idle
           }
         >
-          <span style={{ color: messenger === "whatsapp" ? "#25D366" : "#9ca3af" }}>{WA_ICON}</span>
+          <span style={{ color: messenger === "whatsapp" ? "#25D366" : idleIcon }}>{WA_ICON}</span>
           WhatsApp
         </button>
         <button
           type="button"
           onClick={() => onMessengerChange("telegram")}
-          className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border-2 text-xs font-medium transition-all"
+          className={btnBase}
           style={
             messenger === "telegram"
               ? { borderColor: "#229ED9", color: "#229ED9", backgroundColor: "#229ED912" }
-              : { borderColor: "#e5e7eb", color: "#6b7280" }
+              : idle
           }
         >
-          <span style={{ color: messenger === "telegram" ? "#229ED9" : "#9ca3af" }}>{TG_ICON}</span>
+          <span style={{ color: messenger === "telegram" ? "#229ED9" : idleIcon }}>{TG_ICON}</span>
           Telegram
         </button>
       </div>
@@ -67,7 +87,11 @@ export function MessengerSelector({
           value={tgUsername}
           onChange={(e) => onTgUsernameChange(e.target.value)}
           placeholder={usernamePlaceholder}
-          className="text-sm text-gray-900 placeholder:text-gray-400"
+          className={
+            dark
+              ? "text-sm text-[var(--axis-white)] placeholder:text-[var(--axis-gray)] [color-scheme:dark]"
+              : "text-sm text-gray-900 placeholder:text-gray-400"
+          }
           required
         />
       )}
