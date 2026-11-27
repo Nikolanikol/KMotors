@@ -4,11 +4,12 @@ import { createServerClient } from "@/lib/supabase";
 import {
   CATALOG_SITEMAP_PAGE_SIZE,
   CATALOG_SITEMAP_MAX,
-  countSitemapCars,
-} from "@/lib/carsSeen";
+  sitemapFileCount,
+} from "@/lib/catalogSitemap";
+import { countSitemapCars } from "@/lib/catalogSitemapDb";
 import { SITE_URL } from "@/lib/site";
 
-// Размер файла и потолок каталога живут В ОДНОМ месте — src/lib/carsSeen.ts, —
+// Размер файла и потолок каталога живут В ОДНОМ месте — src/lib/catalogSitemap.ts, —
 // и оттуда же их берёт sitemap-catalog/[page]. Раньше это были две копии чисел
 // в двух файлах с предупреждением «меняешь здесь — меняй и там»; теперь
 // рассинхронить их нечем.
@@ -35,14 +36,14 @@ export async function GET() {
   ]);
 
   // Число файлов каталога считается по РЕАЛЬНОМУ содержимому cars_seen, а не по
-  // потолку: сослаться на двадцать пять файлов, когда машин в таблице на три, —
-  // это двадцать два пустых ответа, которые Google будет исправно скачивать.
+  // потолку: сослаться на двадцать файлов, когда машин в таблице на три, —
+  // это девятнадцать пустых ответов, которые Google будет исправно скачивать.
   // Supabase не ответил (null) — тогда уж лучше потолок, чем ноль файлов: индекс
   // без каталога значит «этих URL у нас больше нет».
   const catalogPages =
     catalogCount === null
       ? CATALOG_SITEMAP_MAX / CATALOG_SITEMAP_PAGE_SIZE
-      : Math.ceil(catalogCount / CATALOG_SITEMAP_PAGE_SIZE);
+      : sitemapFileCount(catalogCount);
 
   const partsPages = Math.ceil(partsCount / PARTS_PAGE_SIZE) || 49;
 

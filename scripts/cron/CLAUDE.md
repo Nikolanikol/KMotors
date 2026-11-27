@@ -45,7 +45,7 @@
 
 | Задание | Аргумент раннера | Эндпоинт | Метод | Расписание | Где стоит |
 |---|---|---|---|---|---|
-| Снимки машин для сайтмапа | `cars` | `/api/cars/sync` | GET | `0 6 * * *` | Coolify |
+| Снимки машин для сайтмапа + проверка живости окна | `cars` | `/api/cars/sync` | GET | `0 6 * * *` | Coolify, timeout 600 (≲ 260 с; по умолчанию 300 — впритык) |
 | Лоты carnect по площадкам | `carnect-lotte` / `-sk` / `-glovis` / `-kcar` / `-autohub` | `/api/carnect/sync?feed=…` | GET | `5,12,17,22,26 5,20 * * *` | Coolify, timeout 600 |
 | HeyDealer через carnect | `carnect-hey-instant` / `-self` / `-zero` | `/api/carnect/sync?feed=hey-…` | GET | `35/45 5,20`, `10 6,21` | Coolify, timeout 1800 |
 | Автопостинг авто | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | crontab |

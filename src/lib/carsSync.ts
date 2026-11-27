@@ -37,7 +37,19 @@ const PROXY_PAGE = 20;
 // каждой двухсотой позиции: при limit=500 это 60 машин вместо 500, причём
 // `failedPages` оставался нулевым и в истории крона всё выглядело исправным.
 // Шаг по факту сам подстраивается и под 200 напрямую, и под 20 через прокси.
-const MAX_REQUESTS = 40;
+// Запросов хватает на limit через прокси (20 строк за раз) с запасом на сбои; потолок
+// запросов считается от limit, а не зашит: при 3 000 машин и прокси нужно 150 запросов,
+// а старые 40 молча обрезали бы обход на 800 строках.
+const requestCap = (limit: number) => Math.ceil(limit / PROXY_PAGE) + 10;
+/**
+ * Бюджет времени на листинг, мс. Задача `cars` в Coolify живёт по умолчанию 300 с, и ей
+ * ещё делить время с проверкой живости (carsLiveness.ts). Через прокси (~2 с на 20 строк)
+ * за бюджет набирается ~900 машин, напрямую (200 строк за ~0,2 с) — весь limit за секунды.
+ * Не уложились — запишем, что успели; остаток возьмёт следующий запуск.
+ */
+export const LISTING_BUDGET_MS = 90_000;
+/** Прямой Encar не ответил столько раз подряд — до конца запуска идём только через прокси. */
+const DIRECT_DEAD_AFTER = 2;
 // PostgREST на bulk-upsert'е требует одинакового набора ключей внутри запроса.
 // Строки здесь все из листинга, то есть набор уже однородный; чанк нужен лишь
 // чтобы не отправлять двухтысячный массив одним телом.
@@ -60,6 +72,13 @@ export interface CarsSyncResult {
   /** Строк записано в cars_seen. */
   written: number;
   dry: boolean;
+  /** Не дошли до limit из-за бюджета времени. */
+  stoppedByBudget: boolean;
+  /**
+   * Несколько id из САМОГО НАЧАЛА свежей выдачи — заведомо живые прямо сейчас.
+   * Проверка живости использует их как канарейку (carsLiveness.ts).
+   */
+  sampleIds: string[];
 }
 
 /**
@@ -69,22 +88,28 @@ export interface CarsSyncResult {
  */
 async function fetchPage(
   offset: number,
-  size: number
-): Promise<{ rows: unknown[]; failed: boolean }> {
+  size: number,
+  skipDirect = false
+): Promise<{ rows: unknown[]; failed: boolean; directFailed: boolean }> {
   const sr = `%7CModifiedDate%7C${offset}%7C${size}`;
   const q = encodeURIComponent(QUERY);
+  let directFailed = false;
   try {
+    if (skipDirect) throw new Error("прямой Encar пропущен: не отвечал в этом запуске");
     const res = await fetch(
       `https://api.encar.com/search/car/list/premium?count=true&q=${q}&sr=${sr}`,
       { headers: { "user-agent": ENCAR_UA }, signal: AbortSignal.timeout(15_000) }
     );
     if (!res.ok) throw new Error(`encar ${res.status}`);
     const json = await res.json();
-    return { rows: json?.SearchResults ?? [], failed: false };
+    return { rows: json?.SearchResults ?? [], failed: false, directFailed };
   } catch (e) {
-    console.warn(
-      `[carsSync] offset ${offset}: Encar не ответил (${(e as Error)?.message}), пробую прокси`
-    );
+    directFailed = !skipDirect;
+    if (!skipDirect) {
+      console.warn(
+        `[carsSync] offset ${offset}: Encar не ответил (${(e as Error)?.message}), пробую прокси`
+      );
+    }
     // try/catch ВОКРУГ ФОЛБЭКА ТОЖЕ — правило обращений к Encar.
     try {
       const res = await fetch(
@@ -93,12 +118,12 @@ async function fetchPage(
       );
       if (!res.ok) throw new Error(`proxy ${res.status}`);
       const json = await res.json();
-      return { rows: json?.SearchResults ?? [], failed: false };
+      return { rows: json?.SearchResults ?? [], failed: false, directFailed };
     } catch (e2) {
       console.error(
         `[carsSync] offset ${offset}: и прокси тоже (${(e2 as Error)?.message}) — пропускаю`
       );
-      return { rows: [], failed: true };
+      return { rows: [], failed: true, directFailed };
     }
   }
 }
@@ -112,10 +137,12 @@ export async function syncCarsFromListing({
   limit,
   delayMs = 300,
   dry = false,
+  budgetMs = LISTING_BUDGET_MS,
 }: {
   limit: number;
   delayMs?: number;
   dry?: boolean;
+  budgetMs?: number;
 }): Promise<CarsSyncResult> {
   // Порядок выдачи Encar нестабилен — сортировка по ModifiedDate пересобирается
   // при каждом переподнятии объявления, поэтому страницы частично
@@ -125,9 +152,25 @@ export async function syncCarsFromListing({
   let pages = 0;
   let failedPages = 0;
 
+  const started = Date.now();
+  const maxRequests = requestCap(limit);
+  let stoppedByBudget = false;
+  let directFails = 0;
+  let sampleIds: string[] = [];
+
   let offset = 0;
-  while (offset < limit && pages < MAX_REQUESTS) {
-    const { rows, failed } = await fetchPage(offset, Math.min(PAGE, limit - offset));
+  while (offset < limit && pages < maxRequests) {
+    if (Date.now() - started >= budgetMs) {
+      stoppedByBudget = true;
+      break;
+    }
+    const { rows, failed, directFailed } = await fetchPage(
+      offset,
+      Math.min(PAGE, limit - offset),
+      directFails >= DIRECT_DEAD_AFTER
+    );
+    if (directFailed) directFails += 1;
+    else if (!failed && directFails < DIRECT_DEAD_AFTER) directFails = 0;
     pages += 1;
     if (failed) failedPages += 1;
     fetched += rows.length;
@@ -135,6 +178,7 @@ export async function syncCarsFromListing({
       const snap = snapshotFromListing(row);
       if (snap) byId.set(snap.encar_id, snap);
     }
+    if (sampleIds.length === 0 && byId.size > 0) sampleIds = [...byId.keys()].slice(0, 3);
     // Пустая страница при живом апстриме — конец выдачи, дальше идти незачем.
     // Упавшую страницу за конец НЕ принимаем: это сбой, а не край пула, но и
     // продвинуться по ней нельзя — шагаем на PAGE, чтобы не топтаться на месте.
@@ -157,6 +201,8 @@ export async function syncCarsFromListing({
       unique: snapshots.length,
       written: 0,
       dry: true,
+      stoppedByBudget,
+      sampleIds,
     };
   }
 
@@ -176,5 +222,7 @@ export async function syncCarsFromListing({
     unique: snapshots.length,
     written,
     dry: false,
+    stoppedByBudget,
+    sampleIds,
   };
 }

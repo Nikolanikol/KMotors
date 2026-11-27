@@ -20,7 +20,7 @@ export class VehicleUpstreamError extends Error {
 }
 
 /** Страница блокировки Encar: HTML вместо JSON и ссылка на has_been_cr_blocked. */
-function isEncarBlockPage(res: Response, body: string): boolean {
+export function isEncarBlockPage(res: Response, body: string): boolean {
   const type = res.headers.get("content-type") ?? "";
   return body.includes("has_been_cr_blocked") || type.includes("text/html");
 }

@@ -1,38 +1,22 @@
 // app/sitemap-catalog/[page]/route.ts
 //
-// Источник — наша таблица cars_seen, а НЕ живая выдача Encar. Почему так и что
-// это починило — в шапке раздела «Сайтмап каталога» в src/lib/carsSeen.ts.
-// Коротко: offset по выдаче, отсортированной по ModifiedDate, ничего не
-// адресовал (объявления переподнимают постоянно), набор URL ротировался целиком
-// каждый час, и Google не обходил карточки авто вообще.
+// Источник — наша таблица cars_seen, а НЕ живая выдача Encar. Почему так и что это
+// починило — docs/core-seo.md, «Сайтмап каталога идёт из cars_seen». Какие машины и в
+// каком порядке — шапка src/lib/catalogSitemapDb.ts, сборка XML — catalogSitemap.ts.
+//
+// Файл — до 1 000 машин, по две записи <url> на каждую: /en/catalog/<id>, затем
+// /ru/catalog/<id>, у обеих полный набор hreflang и x-default = английский.
 
 import { NextResponse } from "next/server";
-import {
-  CATALOG_SITEMAP_PAGE_SIZE,
-  getSitemapCars,
-} from "@/lib/carsSeen";
-import { SITE_URL } from "@/lib/site";
-import { LANGS } from "@/lib/lang";
+import { buildCatalogSitemapXml } from "@/lib/catalogSitemap";
+import { getSitemapCars } from "@/lib/catalogSitemapDb";
 
 export const revalidate = 3600;
 
-function alternates(id: string) {
-  return [
-    ...LANGS.map(
-      (lang) =>
-        `    <xhtml:link rel="alternate" hreflang="${lang}" href="${SITE_URL}/${lang}/catalog/${id}"/>`
-    ),
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}/ru/catalog/${id}"/>`,
-  ].join("\n");
-}
-
-const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
-
-const empty = () =>
-  new NextResponse(EMPTY_XML, {
-    headers: { "Content-Type": "application/xml" },
-  });
+const XML_HEADERS = {
+  "Content-Type": "application/xml",
+  "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+};
 
 export async function GET(
   _req: Request,
@@ -40,39 +24,15 @@ export async function GET(
 ) {
   const { page: pageParam } = await params;
   const page = Math.max(1, Number(pageParam) || 1);
-  const offset = (page - 1) * CATALOG_SITEMAP_PAGE_SIZE;
 
-  const cars = await getSitemapCars(offset, CATALOG_SITEMAP_PAGE_SIZE);
-  if (cars.length === 0) return empty();
+  const cars = await getSitemapCars(page);
+  // Пустой файл (за концом набора или Supabase молчит) кеш не получает: иначе сбой
+  // базы на час закрепился бы в CDN как «карта пуста».
+  if (cars.length === 0) {
+    return new NextResponse(buildCatalogSitemapXml([]), {
+      headers: { "Content-Type": "application/xml" },
+    });
+  }
 
-  const urlBlocks = cars.map((car) => {
-    // <lastmod> — дата, когда машину впервые увидели МЫ, и она у машины больше
-    // не меняется: upsert не перезаписывает first_seen_at. Поэтому тег не просит
-    // переобход на ровном месте. Раньше здесь не было ни lastmod, ни changefreq —
-    // именно потому, что единственной доступной датой был ModifiedDate Encar,
-    // дата переподнятия объявления, и отдавать её значило каждый час объявлять
-    // изменённым весь каталог. С собственной датой этой проблемы нет.
-    const lastmod = String(car.first_seen_at).slice(0, 10);
-    // priority ниже запчастей (0.7) осознанно: машина живёт недели, карточка
-    // детали — годы. changefreq по-прежнему нет, он Google'ом игнорируется.
-    return `  <url>
-    <loc>${SITE_URL}/ru/catalog/${car.encar_id}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <priority>0.5</priority>
-${alternates(car.encar_id)}
-  </url>`;
-  });
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${urlBlocks.join("\n")}
-</urlset>`;
-
-  return new NextResponse(xml, {
-    headers: {
-      "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-    },
-  });
+  return new NextResponse(buildCatalogSitemapXml(cars), { headers: XML_HEADERS });
 }

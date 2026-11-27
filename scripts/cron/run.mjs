@@ -56,7 +56,7 @@ const JOBS = {
     secretEnv: "POSTER_CRON_SECRET",
     header: "x-poster-secret",
     schedule: "0 6 * * *",
-    about: "снимки машин Encar в cars_seen — источник сайтмапа каталога",
+    about: "снимки машин Encar в cars_seen (источник сайтмапа каталога) + проверка живости окна сайтмапа, ~4 минуты",
   },
   poster: {
     path: "/api/poster/run",
