@@ -210,6 +210,8 @@ npx tsc --noEmit
 
 - [docs/postmortems.md](docs/postmortems.md) — разборы инцидентов за правилами
 - [docs/open-questions.md](docs/open-questions.md) — отложенные решения и замеры
+- [docs/handoff-2026-11-27.md](docs/handoff-2026-11-27.md) — передача после уборки: что в проде,
+  теги отката, открытые решения, ручные дела владельца, безопасный локальный стенд
 - [docs/core-root-details.md](docs/core-root-details.md) — полный текст сжатых здесь разделов
 - [docs/seo-automation.md](docs/seo-automation.md) — устройство SEO-пайплайна
 - [docs/seo-indexing/](docs/seo-indexing/README.md) — ЖУРНАЛ индексации. ⚠️ Любой замер

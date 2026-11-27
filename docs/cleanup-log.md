@@ -322,6 +322,16 @@ cookie); высота скелетона и скорость главной на
 Проверка на integration после слияний: `tsc` 0, lint 0 ошибок и 0 предупреждений,
 vitest 627 прошло / 122 пропущено.
 
+**Вторая выкладка (27.11.2026).** `git push origin integration/cleanup:main` по явному «да»
+владельца: `db5419c` → `c07d823`, 11 коммитов (шаги 22–25 и журнал). Тег на прежний прод —
+`prod/before-cleanup2`. Новая сборка заработала за ~90 с (признак: удалённый
+`/api/showcase/sync` перешёл с 403 на 404). `/ru`, `/en`, `/ru/parts`, `/ru/calculator`,
+`/ru/blog`, `/ru/about`, `/sitemap.xml`, `/robots.txt`, `/api/telegram-webhook` — 200,
+несуществующая страница — 404, заголовки безопасности на месте.
+Владелец: строку `/api/poster/parts/run` в crontab на VPS снимает сам; решение по
+fail-open вебхуку бота отложено до реорганизации Telegram-группы; лоты аукциона — позже.
+Передача в новую сессию: [handoff-2026-11-27.md](handoff-2026-11-27.md).
+
 **Уборка git.** Удалены 25 worktree (все чистые, без force) и 102 ветки, полностью влитые в
 `integration/cleanup`. Остались `main` (сдвинут на `origin/main`), `integration/cleanup` и
 7 веток с уникальными коммитами, решение по ним за владельцем: `claude/msp-seo-skills-976b03`,
