@@ -51,8 +51,12 @@ const MyFilterPrice = ({
   const handlemaxPriceChange = (number: string) => {
     const newmaxPrice = Number(number);
     setMaxPrice(newmaxPrice);
+    // ⚠️ Верхнее значение списка = «без ограничения»: у селекта нет пункта «любой», и
+    // выбранный потолок раньше резал выдачу (цена выше 100 млн вон — 6 332 из 66 369
+    // импортных машин, ~9,5%).
+    const isTop = newmaxPrice === priceOptions[priceOptions.length - 1];
     setPrice((state) => {
-      return { ...state, maxPrice: newmaxPrice.toString() };
+      return { ...state, maxPrice: isTop ? "" : newmaxPrice.toString() };
     });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);

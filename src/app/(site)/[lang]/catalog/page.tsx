@@ -78,7 +78,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const descParts: string[] = [];
   if (manufacture) descParts.push(manufacture);
   if (yearMin && yearMax) descParts.push(`${yearMin}–${yearMax}`);
-  if (priceMax) descParts.push(`≤${Number(priceMax).toLocaleString()} KRW`);
+  if (priceMax && Number.isFinite(Number(priceMax))) descParts.push(`≤${Number(priceMax).toLocaleString("en-US")} KRW`);
 
   const description = descParts.length > 0
     ? `${meta.description} ${descParts.join(", ")}.`

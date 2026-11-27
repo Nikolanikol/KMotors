@@ -30,6 +30,7 @@ import MyFilterPrice from "./FilterComponents/MyFilterPrice";
 import MyFilterMileage from "./FilterComponents/MyFilterMileage";
 import MyFilterYear from "./FilterComponents/MyFilterYear";
 import { navStart } from "@/lib/navStatus";
+import { escapeEncarQuery } from "@/lib/encarQuery";
 
 /*************  ✨ Windsurf Command ⭐  *************/
 
@@ -145,7 +146,8 @@ const Filter = ({}) => {
     // без марки получалось `%null`, и заголовок страницы читался «Купить null из
     // Кореи» (с noindex). Ведущий «%» убран; page.tsx понимает и старые ссылки с ним.
     const brand = manufacture ? `&manufacture=${encodeURIComponent(manufacture)}` : "";
-    const href = `/${lang}/catalog?action=${value ?? ""}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}${brand}`;
+    // ⚠️ escapeEncarQuery: «+» гибридов иначе читался сервером как пробел.
+    const href = `/${lang}/catalog?action=${escapeEncarQuery(value ?? "")}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}${brand}`;
     navStart(href);
     startTransition(() => {
       router.push(href);

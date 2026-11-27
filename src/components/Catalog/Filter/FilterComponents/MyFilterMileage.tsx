@@ -51,8 +51,11 @@ const MyFilterMileage = ({
   const handlemaxPriceChange = (string: string) => {
     const newmaxPrice = Number(string);
     setMaxPrice(newmaxPrice);
+    // ⚠️ Верхнее значение списка (200 000 км) = «без ограничения»: пункта «любой» нет, и
+    // явный выбор потолка отрезал машины с большим пробегом (5 010 отечественных, ~3,6%).
+    const isTop = newmaxPrice === priceOptions[priceOptions.length - 1];
     setMileage((state) => {
-      return { ...state, maxMileage: newmaxPrice.toString() };
+      return { ...state, maxMileage: isTop ? "" : newmaxPrice.toString() };
     });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);

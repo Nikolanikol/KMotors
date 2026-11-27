@@ -54,8 +54,11 @@ const MyFilterYear = ({
   const handlemaxPriceChange = (number: string) => {
     const newmaxPrice = Number(number);
     setMaxPrice(newmaxPrice);
+    // ⚠️ Последний год списка = «без ограничения»: иначе явный выбор отрезал бы свежие
+    // машины следующего модельного года.
+    const isTop = newmaxPrice === priceOptions[priceOptions.length - 1];
     setYear((state) => {
-      return { ...state, maxYear: newmaxPrice.toString() };
+      return { ...state, maxYear: isTop ? "" : newmaxPrice.toString() };
     });
     if (newmaxPrice < minPrice) {
       setMinPrice(newmaxPrice);

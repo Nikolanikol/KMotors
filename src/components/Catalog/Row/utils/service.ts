@@ -1,5 +1,7 @@
 "use server";
 
+import { escapeEncarQuery } from "@/lib/encarQuery";
+
 const isCarNoQuery = (query: string) => query.includes("Simple.keyword");
 
 const ENCAR_UA =
@@ -63,7 +65,7 @@ export async function getCars(
   try {
     return normalize(
       await fetchJson(
-        `https://api.encar.com/search/car/list/premium?count=true&q=${query}&sr=${sr}`,
+        `https://api.encar.com/search/car/list/premium?count=true&q=${escapeEncarQuery(query)}&sr=${sr}`,
         { cache, timeoutMs: PRIMARY_TIMEOUT_MS, headers: { "user-agent": ENCAR_UA } }
       )
     );
@@ -75,7 +77,7 @@ export async function getCars(
     try {
       return normalize(
         await fetchJson(
-          `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${query}&sr=${sr}`,
+          `https://encar-proxy-main.onrender.com/api/catalog?count=true&q=${escapeEncarQuery(query)}&sr=${sr}`,
           { cache, timeoutMs: FALLBACK_TIMEOUT_MS }
         )
       );

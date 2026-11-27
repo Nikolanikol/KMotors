@@ -1,3 +1,5 @@
+import { escapeEncarQuery } from "@/lib/encarQuery";
+
 const ENCAR_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
 
@@ -72,7 +74,7 @@ function drill(payload: Node, depth: number): Node[] {
 const hasCars = (facet: Node) => facet?.Count !== 0;
 
 async function fetchNav(query: string, depth: number): Promise<Node[]> {
-  const path = `count=true&q=${query}&inav=%7CMetadata%7CSort`;
+  const path = `count=true&q=${escapeEncarQuery(query)}&inav=%7CMetadata%7CSort`;
 
   try {
     const res = await fetch(`https://api.encar.com/search/car/list/general?${path}`, {
