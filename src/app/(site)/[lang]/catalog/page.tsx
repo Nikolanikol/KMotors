@@ -10,6 +10,7 @@ import { makeAlternates } from "@/lib/seo";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { catalogPageSize } from "@/utils/device";
 import { SITE_URL } from "@/lib/site";
+import { catalogSeo, parseManufacture, resolvePage } from "@/lib/catalogPagination";
 
 export const revalidate = 300;
 
@@ -50,18 +51,6 @@ interface Props {
   searchParams: CarSearchParams;
 }
 
-/**
- * Бренд из `?manufacture=`. ⚠️ Раньше стояло `.slice(1)`: фильтр дописывал в начало
- * лишний «%» (`%Kia`), и срез его снимал, — но ссылки со страниц моделей и из
- * JSON-LD главной идут БЕЗ «%» (`?manufacture=Kia`), и срез съедал первую букву
- * («ia»). Теперь «%» снимается только если он есть; «null»/«undefined» — след
- * прежней сборки адреса без выбранной марки — считаем пустым значением.
- */
-function parseManufacture(raw: string | undefined): string {
-  const value = (raw ?? "").replace(/^%/, "").trim();
-  return value === "null" || value === "undefined" ? "" : value;
-}
-
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { lang } = await params;
   const sp = await searchParams;
@@ -84,19 +73,24 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     ? `${meta.description} ${descParts.join(", ")}.`
     : meta.description;
 
-  const hasFilters = !!(manufacture || yearMin || yearMax || priceMax || sp.page);
+  // Индексируется только голый /catalog. Страницы списка (?page=N) и любые фильтры —
+  // noindex,follow, canonical на САМУ страницу (не на /catalog: «noindex + canonical на
+  // другой адрес» противоречит себе и рискует заглушить сам /catalog). Правила и
+  // обоснование — catalogSeo в src/lib/catalogPagination.ts.
+  const pageSize = catalogPageSize((await headers()).get("user-agent"));
+  const seo = catalogSeo(sp, pageSize);
 
   return {
     title,
     description,
-    ...(hasFilters && { robots: { index: false, follow: true } }),
+    ...(!seo.index && { robots: { index: false, follow: true } }),
     openGraph: {
       title,
       description,
-      url: `${SITE_URL}/${lang}/catalog`,
+      url: `${SITE_URL}/${lang}${seo.path}`,
       // Картинку даёт catalog/opengraph-image.tsx — см. комментарий на главной.
     },
-    alternates: makeAlternates(lang, "/catalog"),
+    alternates: makeAlternates(lang, seo.path),
   };
 }
 
@@ -167,13 +161,15 @@ export default async function CatalogPage({ params, searchParams }: Props) {
 
   // ItemList schema — fetch deduplicated by Next.js cache (same call as CarsRow)
   let itemListSchema = null;
+  const pageSize = catalogPageSize((await headers()).get("user-agent"));
+  const { page, outOfRange } = resolvePage(sp.page, pageSize);
   try {
     const query = getString(sp);
     // Тот же размер страницы и тот же offset, что и в CarsRow: схема обязана совпадать
     // с видимым списком, а идентичный запрос дедуплицируется кешем Next (один поход в Encar).
-    const pageSize = catalogPageSize((await headers()).get("user-agent"));
-    const offset = String((Math.max(1, Number(sp.page || "1")) - 1) * pageSize);
-    const { data } = await getCars(query, offset, pageSize);
+    // Страница глубже потолка: CarsRow в Encar не ходит, и здесь тоже.
+    const offset = String((page - 1) * pageSize);
+    const { data } = outOfRange ? { data: null } : await getCars(query, offset, pageSize);
     if (data && data.length > 0) {
       itemListSchema = {
         "@context": "https://schema.org",
@@ -224,7 +220,7 @@ export default async function CatalogPage({ params, searchParams }: Props) {
             </div>
             <div className="col-span-1 lg:col-span-9">
               <Suspense
-                key={`${sp.page || "1"}-${sp.action || ""}-${sp.carNo || ""}`}
+                key={`${page}-${sp.action || ""}-${sp.carNo || ""}`}
                 fallback={
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 min-h-[80vh]">
                     {Array.from({ length: 6 }).map((_, i) => (
