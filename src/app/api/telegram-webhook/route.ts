@@ -4,14 +4,13 @@ import {
   approveBatch, rejectBatch, approveOne, rejectOne, sendItemMessages, sendSeoDigest,
 } from "@/lib/seo-telegram";
 import { publishApproved } from "@/lib/seo-publish";
-import { getCarSnapshot } from "@/lib/carsSeen";
-import { deactivateAllForChat, deactivateOwn, saveSubscription } from "@/lib/savedSearches";
-import { normalizeBrand } from "@/lib/carLabels";
-import { getFx } from "@/lib/fx";
-import { carPriceKrw } from "@/lib/carPricing";
+import { deactivateAllForChat, deactivateOwn } from "@/lib/savedSearches";
 import { SITE_URL } from "@/lib/site";
 import { sendTelegram, telegramRequest } from "@/lib/telegram";
 import { telegramChatId, telegramChatIds } from "@/lib/telegramChats";
+import { handleStart, handleClientMessage, handleClientCallback } from "@/lib/tgbot/flows";
+import { isInboxChat, handleInboxMessage, handleManagerCallback } from "@/lib/tgbot/inbox";
+import { getClient as getBotClient } from "@/lib/tgbot/store";
 
 // Все администраторы — могут получать уведомления и запускать команды
 function isAdmin(chatId: number) {
@@ -67,11 +66,34 @@ export async function POST(req: NextRequest) {
   const message = body?.message as
     | {
         text?: string;
-        chat?: { id: number };
+        chat?: { id: number; type?: string };
         message_id?: number;
-        from?: { id: number; first_name?: string; last_name?: string; username?: string };
+        message_thread_id?: number;
+        is_topic_message?: boolean;
+        from?: { id: number; is_bot?: boolean; first_name?: string; last_name?: string; username?: string; language_code?: string };
+        [k: string]: unknown;
       }
     | undefined;
+
+  // Группа менеджеров: сообщения в темах клиентов уходят клиентам.
+  if (message?.chat && isInboxChat(message.chat.id)) {
+    await handleInboxMessage(message as Parameters<typeof handleInboxMessage>[0]);
+    return ok();
+  }
+
+  // Личка с ботом, не команда (текст, фото, файл, голосовое) — это клиент.
+  // Раньше такие сообщения молча отбрасывались гейтом isAdmin ниже, хотя бот
+  // сам писал «просто напишите в этот чат». Команды админов начинаются с «/».
+  if (
+    message?.chat?.type === "private" &&
+    message.message_id &&
+    message.from &&
+    !message.from.is_bot &&
+    !(message.text ?? "").trim().startsWith("/")
+  ) {
+    await handleClientMessage(message as Parameters<typeof handleClientMessage>[0]);
+    return ok();
+  }
 
   // DEBUG: только для администраторов и без утечки sensitive данных
   if (message?.text?.startsWith("/debug")) {
@@ -109,104 +131,14 @@ export async function POST(req: NextRequest) {
       return ok();
     }
 
-    // Обработка /start от клиентов — ДО проверки на владельца
+    // /start от клиентов — ДО проверки на владельца. Диалог ведёт src/lib/tgbot:
+    // карточка машины с ценой, вопросы кнопками, тема клиента в группе менеджеров.
     if (message.text.startsWith("/start")) {
-      const param = message.text.slice("/start".length).trim(); // "car_41289593" или ""
-      const carId = param.startsWith("car_") ? param.slice(4) : null;
-      // sold_<id> — со страницы проданной машины: человек пришёл по ссылке из
-      // поиска, машины уже нет, и он просит подобрать похожую. Самый горячий
-      // вход из всех: он искал конкретную модель.
-      const soldId = param.startsWith("sold_") ? param.slice(5) : null;
-      const isWebsite = param === "website";
-
-      // По проданной машине подтягиваем снимок ДО ответа клиенту: у Encar её
-      // уже нет, и без cars_seen менеджер увидел бы голый id вместо
-      // «Palisade 2023 за 3500». От снимка же зависит, удастся ли оформить
-      // подписку, а значит и что мы обещаем человеку в ответе.
-      const soldSnapshot = soldId ? await getCarSnapshot(soldId) : null;
-
-      // Подписка «пришлём похожие». Текущие совпадения записываются как уже
-      // виденные — иначе первый прогон крона объявил бы новинками весь
-      // сегодняшний рынок и вывалил человеку пять случайных машин.
-      const subscribed = soldSnapshot
-        ? await saveSubscription({ chatId, snapshot: soldSnapshot })
-        : false;
-
-      // Ответ клиенту
-      const clientMsg = soldId
-        ? subscribed
-          ? `👋 Здравствуйте!\n\nТа машина уже продана. Подписал вас на похожие — как только появится подходящая, бот напишет сюда сам.\n\nЕсли хотите обсудить сейчас, просто напишите в этот чат: Николай отвечает в течение часа.\n\n<i>Отписаться — команда /stop</i>`
-          : `👋 Здравствуйте!\n\nТа машина уже продана, но мы подберём похожую и напишем вам, как только она появится.\n\n⏱ Первый ответ — в течение 1 часа`
-        : carId
-        ? `👋 Здравствуйте!\n\nВаш запрос по автомобилю принят. Николай свяжется с вами в ближайшее время.\n\n⏱ Время ответа: в течение 1 часа`
-        : `👋 Здравствуйте!\n\nДобро пожаловать в K-Axis — авто из Кореи напрямую!\n\nНапишите что вас интересует, и Николай лично ответит вам.\n\n⏱ Время ответа: в течение 1 часа`;
-
-      await sendMessage(chatId, clientMsg);
-
-      // Формируем инфо о пользователе
-      const from = message.from;
-      const fullName = [from?.first_name, from?.last_name].filter(Boolean).join(" ") || "Неизвестно";
-      const username = from?.username ? `@${from.username}` : "нет username";
-      const replyLink = `tg://user?id=${chatId}`;
-      const soldName = soldSnapshot
-        ? [
-            // Encar отдаёт марку слипшейся (ChevroletGMDaewoo) — в сообщение
-            // она должна попадать только через normalizeBrand, как и в H1.
-            normalizeBrand(soldSnapshot.manufacturer_en),
-            soldSnapshot.model_group_en,
-            soldSnapshot.grade_en,
-            soldSnapshot.year ? String(soldSnapshot.year) : null,
-          ]
-            .filter(Boolean)
-            .join(" ")
-        : "";
-
-      // Цену показываем в вонах и долларах: 만원 (десятки тысяч вон) — внутренняя
-      // единица Encar, читать её в чате невозможно.
-      //
-      // Доллары, а не рубли: сообщение уходит владельцу как сводка по лиду,
-      // и одной валюты тут достаточно. Цена — через carPriceKrw, со стояночным
-      // сбором, чтобы совпадала с тем, что человек видел на сайте.
-      let soldPriceLine = "";
-      if (soldSnapshot?.price_manwon) {
-        const krw = carPriceKrw(soldSnapshot.price_manwon);
-        const { krwToUsd } = await getFx("car");
-        soldPriceLine =
-          ` — было ${krw.toLocaleString("ru-RU")} ₩` +
-          ` (≈ $${Math.round(krw * krwToUsd).toLocaleString("en-US")})`;
-      }
-
-      // Уведомление на личный и рабочий чаты
-      const ownerMsg = soldId
-        ? `🔔 <b>Хочет похожую на проданную</b>\n\n` +
-          `👤 Имя: ${fullName}\n` +
-          `✈️ Telegram: ${username}\n` +
-          `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
-          `🚗 Смотрел: ${soldName || `id ${soldId}`}` +
-          soldPriceLine +
-          (subscribed
-            ? `\n🔁 Подписан на похожие — бот напишет сам`
-            : `\n⚠️ Подписку оформить не удалось (нет снимка) — только ручной ответ`) +
-          `\n🔗 <a href="${SITE_URL}/ru/catalog/${soldId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=sold">Открыть страницу</a>`
-        : carId
-        ? `🚗 <b>Новый лид из карточки авто</b>\n\n` +
-          `👤 Имя: ${fullName}\n` +
-          `✈️ Telegram: ${username}\n` +
-          `💬 <a href="${replyLink}">Написать напрямую</a>\n\n` +
-          `🔗 <a href="https://fem.encar.com/cars/detail/${carId}?carid=${carId}">Открыть на Encar</a>\n` +
-          `🔗 <a href="${SITE_URL}/ru/catalog/${carId}?utm_source=telegram_bot&utm_medium=bot&utm_campaign=lead">Открыть на K-Axis</a>`
-        : `💬 <b>Новый лид с сайта</b>${isWebsite ? " (плавающая кнопка)" : ""}\n\n` +
-          `👤 Имя: ${fullName}\n` +
-          `✈️ Telegram: ${username}\n` +
-          `💬 <a href="${replyLink}">Написать напрямую</a>`;
-
-      const notifyTargets = telegramChatIds("admins");
-      await Promise.all(
-        notifyTargets.map(id => sendMessage(Number(id), ownerMsg))
-      );
-
+      const param = message.text.slice("/start".length).trim(); // "car_41289593", "sold_…", "part_…", "website" или ""
+      if (message.from) await handleStart(message.from, param);
       return ok();
     }
+
 
     // Защита — только для администраторов
     if (telegramChatIds("admins").length > 0 && !isAdmin(chatId)) {
@@ -254,10 +186,32 @@ export async function POST(req: NextRequest) {
 
   // Обработка нажатий кнопок (publish / delete)
   const callbackQuery = body?.callback_query as
-    | { id: string; data: string; message?: { message_id: number; chat?: { id: number } } }
+    | {
+        id: string;
+        data: string;
+        from?: { id: number; first_name?: string; last_name?: string; username?: string; language_code?: string };
+        message?: { message_id: number; chat?: { id: number } };
+      }
     | undefined;
 
   if (!callbackQuery) return ok();
+
+  // Кнопки клиента в боте («b:…») — до гейта isAdmin.
+  if (callbackQuery.data?.startsWith("b:") && callbackQuery.from) {
+    await handleClientCallback({ ...callbackQuery, from: callbackQuery.from });
+    return ok();
+  }
+
+  // Кнопки статуса в шапке темы («m:…») — только из группы менеджеров.
+  if (callbackQuery.data?.startsWith("m:")) {
+    if (!isInboxChat(callbackQuery.message?.chat?.id)) {
+      await telegramRequest("answerCallbackQuery", { callback_query_id: callbackQuery.id, text: "⛔ Нет доступа" });
+      return ok();
+    }
+    const note = await handleManagerCallback(callbackQuery.data, callbackQuery.from, getBotClient);
+    await telegramRequest("answerCallbackQuery", { callback_query_id: callbackQuery.id, text: note });
+    return ok();
+  }
 
   const callbackId = callbackQuery.id;
   const data = callbackQuery.data || "";

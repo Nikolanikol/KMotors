@@ -126,6 +126,23 @@ describe("ops: только WORK_CHAT_ID", () => {
   });
 });
 
+describe("inbox: только INBOX_CHAT_ID, ни на какой другой чат не падает", () => {
+  it("INBOX задан — он", () => {
+    setEnv("100", "200");
+    vi.stubEnv("TELEGRAM_INBOX_CHAT_ID", "-1009");
+    expect(telegramChatId("inbox")).toBe("-1009");
+    expect(telegramChatIds("inbox")).toEqual(["-1009"]);
+  });
+
+  it("нет INBOX — null, даже если CHAT, WORK и GROUP заданы", () => {
+    setEnv("100", "200");
+    vi.stubEnv("TELEGRAM_GROUP_ID", "-1003");
+    vi.stubEnv("TELEGRAM_INBOX_CHAT_ID", "");
+    expect(telegramChatId("inbox")).toBeNull();
+    expect(telegramChatIds("inbox")).toEqual([]);
+  });
+});
+
 describe("чтение в момент вызова, не при загрузке модуля", () => {
   it("смена окружения между вызовами видна сразу", () => {
     setEnv("100", undefined);
