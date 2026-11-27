@@ -53,9 +53,6 @@ kaxix-firebase-*.json
 
 # Parts-image pipeline runtime artifacts
 scripts/.*.log
-scripts/lib/__pycache__/
-_debrand_preview/
-_holefix_preview/
 .serena
 
 # Промежуточные выгрузки скриптов классификации/аудита запчастей — сотни МБ,
