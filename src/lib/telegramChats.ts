@@ -23,8 +23,13 @@
 //   blog       | /api/blog-generate, /api/rss-sync              | CHAT_ID
 //   ops        | carnect/notify, /api/subscriptions/run         | WORK_CHAT_ID
 //   poster     | poster/run, poster/parts — см. posterTarget    | GROUP_ID (+ тема), с дефолтами
+//   inbox      | src/lib/tgbot (диалоги клиентов бота по темам) | INBOX_CHAT_ID
+//
+// inbox — ЗАКРЫТАЯ форум-группа менеджеров: на каждого клиента бота своя тема.
+// Не путать с GROUP_ID постера: та группа публичная, переписка клиентов туда
+// попадать не должна. Не задан — бот работает по-старому (уведомления в admins).
 
-export type TelegramPurpose = "leads" | "admins" | "orders" | "seo" | "blog" | "ops";
+export type TelegramPurpose = "leads" | "admins" | "orders" | "seo" | "blog" | "ops" | "inbox";
 
 function env(name: string): string | undefined {
   const v = process.env[name];
@@ -47,6 +52,8 @@ export function telegramChatIds(purpose: TelegramPurpose): string[] {
       return [env("TELEGRAM_CHAT_ID")].filter(Boolean) as string[];
     case "ops":
       return [env("TELEGRAM_WORK_CHAT_ID")].filter(Boolean) as string[];
+    case "inbox":
+      return [env("TELEGRAM_INBOX_CHAT_ID")].filter(Boolean) as string[];
   }
 }
 

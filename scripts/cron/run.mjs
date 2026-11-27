@@ -113,6 +113,14 @@ const JOBS = {
     schedule: "0 11 * * *",
     about: "рассылка подписок «пришлём похожие»",
   },
+  "bot-reminders": {
+    path: "/api/bot/reminders",
+    method: "GET",
+    secretEnv: "POSTER_CRON_SECRET",
+    header: "x-poster-secret",
+    schedule: "*/10 * * * *",
+    about: "бот заявок: напомнить менеджеру о клиенте без ответа, один «дожим» клиенту через сутки",
+  },
   // ─── carnect.biz → carnect_lots ───
   // Каждая площадка — своё задание (решение владельца 02.10.2026): партии
   // выкладываются в разные дни, за ~2 дня до торгов, у Autohub — сильно

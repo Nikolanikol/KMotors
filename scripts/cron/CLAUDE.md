@@ -54,6 +54,7 @@
 | Сбор статистики GSC | `seo-collect` | `/api/seo/collect` | POST | `35 4 * * *` | crontab |
 | Черновики SEO | `seo-generate` | `/api/seo/generate?limit=15` | POST | `0 5 * * *` | crontab |
 | Рассылка подписок «похожие» | `subscriptions` | `/api/subscriptions/run` | GET | `0 11 * * *` | crontab |
+| Бот заявок: напоминания и «дожим» | `bot-reminders` | `/api/bot/reminders` | GET | `*/10 * * * *` | Coolify (завести вручную) |
 | Бэкап Supabase | — | `/opt/backups/supabase/backup.sh` | — | `0 3 * * *` | только crontab |
 
 Бэкап в Coolify не переносится: он вызывает скрипт на ХОСТЕ, вне репозитория и вне

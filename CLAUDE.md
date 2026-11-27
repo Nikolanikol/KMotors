@@ -33,6 +33,7 @@ SEO-пайплайн, операции через Telegram. Оплаты на с
 | Трогаешь | Открой |
 |---|---|
 | каталог Encar: листинг, фильтр, карточка, проданная машина, цена авто и курс KB, модельные страницы, замеры Encar API | [src/app/(site)/[lang]/catalog/CLAUDE.md](src/app/(site)/[lang]/catalog/CLAUDE.md) |
+| главная `/[lang]`: шапка, плитки, бренды, «Популярные модели» (цены под ключ), форма внизу, JSON-LD, сгенерированные картинки | [docs/core-home.md](docs/core-home.md) |
 | `cars_seen`, подписки «пришлём похожие» | [docs/core-cars-data.md](docs/core-cars-data.md) |
 | публичный аукцион `/auction` (carnect, HeyDealer), цены за входом, регистрация = лид | [src/lib/carnect/CLAUDE.md](src/lib/carnect/CLAUDE.md) |
 | служебный `/admin/auction`, `auction_results`, прогноз молотка K Car | [src/app/(admin)/admin/auction/CLAUDE.md](src/app/(admin)/admin/auction/CLAUDE.md) |
