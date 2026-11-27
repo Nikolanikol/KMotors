@@ -21,7 +21,9 @@ import CustomsDictionary from "@/components/I18nProvider/CustomsDictionary";
 import { makeAlternates } from "@/lib/seo";
 import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
-import { buildSpecBits, loadCarsDict, normalizeBrand } from "@/lib/carLabels";
+import { buildSpecBits, loadCarsDict, localizeSpec, normalizeBrand } from "@/lib/carLabels";
+import { buildCarDescription, buildCarJsonLd, localizeColor } from "@/lib/carContent";
+import { photoTypeLabels, pickSchemaImages } from "@/lib/carPhotos";
 import { getCarSnapshot, markCarSold, recordCarSeen } from "@/lib/carsSeen";
 import { getSimilarCars } from "@/lib/similarCars";
 import SoldCar from "@/components/Catalog/CarDetail/SoldCar/SoldCar";
@@ -272,7 +274,9 @@ export async function generateMetadata({
       title,
       description,
     },
-    alternates: makeAlternates(lang, `/catalog/${id}`),
+    // x-default = en: упор на английские адреса (решение владельца 27.11.2026).
+    // Карта сайта выводит тот же `/en/catalog/<id>`.
+    alternates: makeAlternates(lang, `/catalog/${id}`, { xDefault: "en" }),
   };
 }
 
@@ -365,10 +369,6 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     getFx("car"),
     getFx("customs"),
   ]);
-  const mainPhoto = data?.photos?.[0]?.path
-    ? `https://ci.encar.com${data.photos[0].path}`
-    : null;
-
   const CATALOG_LABEL: Record<string, string> = {
     ru: "Каталог",
     en: "Catalog",
@@ -482,113 +482,49 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     ],
   };
 
-  // Map Korean fuel names → schema.org vocabulary
-  const fuelMap: Record<string, string> = {
-    가솔린: "https://schema.org/Gasoline",
-    디젤: "https://schema.org/Diesel",
-    전기: "https://schema.org/Electric",
-    LPG: "https://schema.org/LPG",
-    lpg: "https://schema.org/LPG",
-    하이브리드: "https://schema.org/Hybrid",
-    플러그인하이브리드: "https://schema.org/Hybrid",
-    수소: "https://schema.org/Hydrogen",
-  };
-  const rawFuel: string = data?.spec?.fuelName ?? "";
-  const schemaFuel = Object.entries(fuelMap).find(([k]) =>
-    rawFuel.includes(k),
-  )?.[1];
-
-  // vehicleModelDate: "YYYY-MM" from yearMonth "YYYYMM"
-  const ym: string = data?.category?.yearMonth ?? "";
-  const vehicleModelDate =
-    ym.length >= 6 ? `${ym.slice(0, 4)}-${ym.slice(4, 6)}` : undefined;
-
-  const jsonLd: Record<string, unknown> = {
-    "@context": "https://schema.org/",
-    "@type": "Car",
-    name: carName,
-    image: [mainPhoto],
-    description: `${carName} ${carData} — ${data?.spec?.mileage?.toLocaleString("en-US")} km. South Korean car on K-Axis.`,
-    brand: {
-      "@type": "Brand",
-      name: normalizeBrand(data.category.manufacturerEnglishName) || "Unknown",
+  // Описание в разметке — на языке страницы и из данных машины (год и месяц,
+  // пробег, двигатель, КПП, кузов, цвет, места). История и осмотр в сводку не
+  // входят: они в видимом блоке «О модели», а разметке хватает паспорта авто.
+  const ldDescription = buildCarDescription(
+    {
+      lang,
+      brand: normalizeBrand(data.category.manufacturerEnglishName),
+      model: data.category.modelGroupEnglishName ?? "",
+      yearMonth: data?.category?.yearMonth,
+      mileage: data?.spec?.mileage,
+      displacement: data?.spec?.displacement,
+      fuelRaw: data?.spec?.fuelName,
+      transmissionRaw: data?.spec?.transmissionName,
+      bodyRaw: data?.spec?.bodyName,
+      colorRaw: data?.spec?.colorName,
+      seats: data?.spec?.seatCount,
     },
-    ...(data?.vin && { vehicleIdentificationNumber: data.vin }),
-    ...(vehicleModelDate && { vehicleModelDate }),
-    ...(data?.spec?.mileage && {
-      mileageFromOdometer: {
-        "@type": "QuantitativeValue",
-        value: data.spec.mileage,
-        unitCode: "KMT",
-      },
-    }),
-    ...(data?.spec?.displacement && {
-      vehicleEngine: {
-        "@type": "EngineSpecification",
-        engineDisplacement: {
-          "@type": "QuantitativeValue",
-          value: data.spec.displacement,
-          unitCode: "CMQ",
-        },
-        ...(schemaFuel && { fuelType: schemaFuel }),
-      },
-    }),
-    offers: {
-      "@type": "Offer",
-      url: `${SITE_URL}/${lang}/catalog/${data?.vehicleId}`,
-      // KRW намеренно: главная цена в карточке (CarDetailSidebar) — воны,
-      // конвертация в ₽/$ идёт ниже как справочная. Валюта в разметке обязана
-      // совпадать с видимой ценой, иначе Google бракует Offer.
-      priceCurrency: "KRW",
-      // Через carPriceKrw, а не сырое ×10000: в цене на странице сидит
-      // стояночный сбор, и Offer обязан нести ту же сумму.
-      price: carPriceKrw(data?.advertisement?.price),
-      availability: "https://schema.org/InStock",
-      itemCondition: "https://schema.org/UsedCondition",
-      seller: {
-        "@type": "Organization",
-        name: "K-Axis",
-        url: `${SITE_URL}`,
-      },
-      // Ставка указана только для того направления, где она действительно
-      // фиксирована: морской фрахт до Владивостока. По остальным странам цена
-      // считается по запросу, и выдумывать её в разметке нельзя — неверная
-      // стоимость доставки хуже, чем её отсутствие. Растаможка сюда не входит:
-      // она считается отдельно (CustomsCalculator).
-      shippingDetails: {
-        "@type": "OfferShippingDetails",
-        shippingRate: {
-          "@type": "MonetaryAmount",
-          currency: "USD",
-          value: "600",
-        },
-        shippingDestination: {
-          "@type": "DefinedRegion",
-          addressCountry: "RU",
-        },
-        deliveryTime: {
-          "@type": "ShippingDeliveryTime",
-          handlingTime: {
-            "@type": "QuantitativeValue",
-            minValue: 7,
-            maxValue: 14,
-            unitCode: "DAY",
-          },
-          transitTime: {
-            "@type": "QuantitativeValue",
-            minValue: 14,
-            maxValue: 30,
-            unitCode: "DAY",
-          },
-        },
-      },
-      hasMerchantReturnPolicy: {
-        "@type": "MerchantReturnPolicy",
-        applicableCountry: "RU",
-        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
-      },
-    },
-  };
+    h1Dict,
+  ).summary;
+
+  // Offer.url — адрес САМОЙ страницы (как canonical), а не data.vehicleId:
+  // у дублей Encar они расходятся.
+  const pageUrl = makeAlternates(lang, `/catalog/${id}`, { xDefault: "en" }).canonical;
+
+  const jsonLd = buildCarJsonLd({
+    pageUrl,
+    carName,
+    year: carYear || null,
+    brand: normalizeBrand(data.category.manufacturerEnglishName),
+    description: ldDescription,
+    images: pickSchemaImages(data?.photos),
+    vin: data?.vin,
+    yearMonth: data?.category?.yearMonth,
+    formYear: data?.category?.formYear,
+    mileage: data?.spec?.mileage,
+    displacement: data?.spec?.displacement,
+    fuelRaw: data?.spec?.fuelName,
+    bodyType: localizeSpec(data?.spec?.bodyName, h1Dict),
+    color: localizeColor(data?.spec?.colorName, lang),
+    transmission: localizeSpec(data?.spec?.transmissionName, h1Dict),
+    seats: data?.spec?.seatCount,
+    priceKrw: carPriceKrw(data?.advertisement?.price),
+  });
 
   const fullCarName = `${carName} ${carData}`;
   const krwPrice = carPriceKrw(data?.advertisement?.price) || null;
@@ -698,6 +634,9 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                     className="block mt-1 text-base lg:text-lg font-medium"
                     style={{ color: "var(--axis-gray)" }}
                   >
+                    {/* Скрытый разделитель: в тексте H1 (поисковик, скринридер)
+                        хвост иначе слипался с «из Кореи» — «из Кореи15 624 км». */}
+                    <span className="sr-only">{" — "}</span>
                     {h1Tail}
                   </span>
                 )}
@@ -736,8 +675,11 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
             <div data-track-block="gallery">
               <CarouselLight
                 photos={sortedPhotos}
-                carName={fullCarName}
+                // В alt — год, а не «24.10» из fullCarName; тип кадра из Encar
+                // (экстерьер / салон / детали) — на языке страницы.
+                carName={[carName, carYear].filter(Boolean).join(" ")}
                 photoLabel={photoLabel}
+                typeLabels={photoTypeLabels(lang)}
               />
             </div>
 
@@ -840,16 +782,29 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       </div>
       {/* Блок описания модели — виден пользователям и индексируется Google */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
-        <CarDescription
-          lang={lang}
-          manufacturer={normalizeBrand(data.category.manufacturerEnglishName)}
-          model={data.category.modelGroupEnglishName ?? ""}
-          yearMonth={data?.category?.yearMonth ?? ""}
-          mileage={data.spec?.mileage ?? 0}
-          displacement={data.spec?.displacement ?? 0}
-          fuelName={data.spec?.fuelName ?? ""}
-          catalogFilter={catalogFilter}
-        />
+        {/* Текст из данных машины + история и осмотр Encar — за Suspense, как
+            FAQ ниже: HTML карточки уходит сразу, блок дописывается в тот же ответ. */}
+        <Suspense fallback={null}>
+          <CarDescription
+            lang={lang}
+            manufacturer={normalizeBrand(data.category.manufacturerEnglishName)}
+            model={data.category.modelGroupEnglishName ?? ""}
+            yearMonth={data?.category?.yearMonth ?? ""}
+            mileage={data.spec?.mileage ?? 0}
+            displacement={data.spec?.displacement ?? 0}
+            fuelName={data.spec?.fuelName ?? ""}
+            transmissionName={data.spec?.transmissionName}
+            bodyName={data.spec?.bodyName}
+            colorName={data.spec?.colorName}
+            seatCount={data.spec?.seatCount}
+            address={data.contact?.address}
+            standardOptions={data.options?.standard}
+            choiceOptions={data.options?.choice}
+            vehicleId={data?.vehicleId}
+            vehicleNo={data?.vehicleNo}
+            catalogFilter={catalogFilter}
+          />
+        </Suspense>
       </div>
 
       {/* FAQ — уникальный для каждой машины (история, растаможка) + FAQPage.

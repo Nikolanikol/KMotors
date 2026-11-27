@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { encarLoader, encarThumbLoader } from "@/utils/encarLoader";
 import { trackOnce } from "@/utils/gtag";
 import { isHeavyImage } from "@/lib/remoteImage";
+import { photoAlt } from "@/lib/carPhotos";
 
 // Лайтбокс (вместе с плагинами и их CSS) грузим только когда пользователь
 // кликнул на фото. Монтируем по клику ещё и потому, что ssr:false-компонент,
@@ -31,6 +32,11 @@ interface Props {
   mode?: string;
   carName?: string;
   photoLabel?: string;
+  /**
+   * Подписи типов фото Encar (OUTER → «экстерьер» …) на языке страницы. Идут в
+   * alt: «{авто} — фото N, экстерьер». Не передан — alt без типа, как раньше.
+   */
+  typeLabels?: Record<string, string>;
   /**
    * Откуда картинки: "encar" (по умолчанию) или "raw" — отдать адрес как есть.
    *
@@ -78,6 +84,7 @@ const CarouselLight = ({
   mode,
   carName,
   photoLabel = "фото",
+  typeLabels,
   imageSource = "encar",
   labels,
 }: Props) => {
@@ -113,6 +120,17 @@ const CarouselLight = ({
   const swiped = useRef(false);
 
   const total = photos?.length || 0;
+
+  // alt кадра: «{авто} — фото N, экстерьер». Тип известен только у фото Encar
+  // (объекты); у строк (чужие источники) подписи типа нет.
+  const altFor = (photo: Photo | string, i: number) =>
+    photoAlt({
+      carName,
+      photoLabel,
+      index: i,
+      type: typeof photo === "string" ? undefined : photo.type,
+      typeLabels,
+    });
 
   const getUrl = useCallback(
     (photo: Photo | string) => {
@@ -159,9 +177,13 @@ const CarouselLight = ({
     () =>
       (photos || []).map((photo, i) => {
         const base = getUrl(photo);
-        const alt = carName
-          ? `${carName} — ${photoLabel} ${i + 1}`
-          : `photo ${i + 1}`;
+        const alt = photoAlt({
+          carName,
+          photoLabel,
+          index: i,
+          type: typeof photo === "string" ? undefined : photo.type,
+          typeLabels,
+        });
         // Не-encar источники (static/строки) отдаём как есть, без параметров.
         if (!base.startsWith(ENCAR_CDN)) {
           return { src: base, alt, width: 1920, height: 1080 };
@@ -178,7 +200,7 @@ const CarouselLight = ({
           })),
         };
       }),
-    [photos, getUrl, carName, photoLabel],
+    [photos, getUrl, carName, photoLabel, typeLabels],
   );
 
   // Окно предзагрузки: назад 1, вперёд 2. Соседние фото уже смонтированы и
@@ -280,11 +302,7 @@ const CarouselLight = ({
             key={i}
             {...imageProps(getUrl(photos[i]))}
             src={getUrl(photos[i])}
-            alt={
-              carName
-                ? `${carName} — ${photoLabel} ${i + 1}`
-                : `photo ${i + 1}`
-            }
+            alt={altFor(photos[i], i)}
             fill
             className="object-cover transition-opacity duration-300 pointer-events-none"
             style={{ opacity: i === index ? 1 : 0 }}
@@ -400,7 +418,7 @@ const CarouselLight = ({
               <Image
                 {...thumbProps(getUrl(photo))}
                 src={getUrl(photo)}
-                alt=""
+                alt={carName ? altFor(photo, i) : ""}
                 fill
                 className="object-cover"
                 sizes="90px"
