@@ -193,7 +193,8 @@ Calculates import duties based on vehicle age, engine displacement (cc), and pri
 
 Deployed on **Coolify on the VPS** — every push to `main` triggers a production redeploy.
 
-`vercel.json` is kept for headers only. It used to declare `crons`, but Vercel cron
+Security headers live in `next.config.ts` (`vercel.json` and `netlify.toml` were removed). Schedules once
+lived in `vercel.json` `crons`, but Vercel cron
 is executed by Vercel and nothing else — on the VPS those entries were inert, and the
 blog quietly stopped publishing (2 posts/month instead of ~10). **Do not put schedules
 there.**

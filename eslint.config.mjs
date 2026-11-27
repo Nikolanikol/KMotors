@@ -24,9 +24,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
-      // служебные каталоги: worktrees Claude, отдельный Vite-проект, разовые раннеры, данные
+      // служебные каталоги: worktrees Claude, разовые раннеры, данные
       ".claude/**",
-      "design-reference/**",
       "sql/**",
       "blog-drafts/**",
       "data/**",
