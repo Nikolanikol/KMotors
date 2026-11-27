@@ -37,6 +37,11 @@ const warmCart = () => void loadCartDrawer();
 const warmFavorites = () => void loadFavoritesDrawer();
 
 
+/** Кольцо фокуса с клавиатуры — общее для всех элементов шапки (чеклист UI в
+ *  src/components/CLAUDE.md). Полная строка классов, чтобы Tailwind её увидел. */
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]";
+
 /** Ссылка без хвоста igsh/utm — это одноразовый токен шаринга из QR-кода. */
 const INSTAGRAM_URL = "https://www.instagram.com/axiskoreancar";
 
@@ -52,7 +57,7 @@ const InstagramLink = ({ position }: { position: "desktop" | "mobile" }) => (
     rel="noopener noreferrer"
     aria-label="Instagram"
     onClick={() => trackEvent("contact", { method: "instagram_header", position })}
-    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${
+    className={`flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 ${FOCUS_RING} ${
       position === "mobile" ? "w-9 h-9" : "w-10 h-10"
     }`}
     style={{
@@ -141,7 +146,7 @@ function FavButton({
       aria-expanded={open}
       aria-controls="favorites-drawer"
       aria-label={label}
-      className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${
+      className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${FOCUS_RING} ${
         small ? "w-9 h-9" : "w-10 h-10 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)]"
       }`}
       style={{
@@ -285,7 +290,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href={`/${lang}`} className="flex shrink-0 items-center gap-2.5 group" aria-label="K-Axis">
+          <Link href={`/${lang}`} className={`flex shrink-0 items-center gap-2.5 rounded-lg group ${FOCUS_RING}`} aria-label="K-Axis">
             {/* < sm: знак + название текстом */}
             <BrandMark className="sm:hidden" />
             <BrandName className="text-xl sm:hidden" />
@@ -379,7 +384,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                   onTouchStart={warmCart}
                   aria-expanded={isCartOpen}
                   aria-controls="cart-drawer"
-                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)] cursor-pointer"
+                  className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 hover:scale-110 hover:shadow-[0_0_12px_rgba(182,119,73,0.4)] cursor-pointer ${FOCUS_RING}`}
                   style={{
                     backgroundColor: cartCount > 0 ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
                     color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
@@ -418,7 +423,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                   onTouchStart={warmCart}
                   aria-expanded={isCartOpen}
                   aria-controls="cart-drawer"
-                  className="relative flex items-center justify-center w-9 h-9 rounded-full cursor-pointer"
+                  className={`relative flex items-center justify-center w-9 h-9 rounded-full cursor-pointer ${FOCUS_RING}`}
                   style={{
                     backgroundColor: cartCount > 0 ? "rgba(182,119,73,0.18)" : "rgba(255,255,255,0.08)",
                     color: cartCount > 0 ? "var(--axis-orange)" : "var(--axis-silver)",
@@ -439,7 +444,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2"
+              className={`rounded-lg p-2 transition-colors hover:bg-white/[0.06] ${FOCUS_RING}`}
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" style={{ color: "var(--axis-white)" }} />
@@ -460,11 +465,11 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
       >
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between">
-            <Link href={`/${lang}`} className="flex items-center gap-2.5 group" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link href={`/${lang}`} className={`flex items-center gap-2.5 rounded-lg group ${FOCUS_RING}`} onClick={() => setIsMobileMenuOpen(false)}>
               <BrandMark />
               <BrandName className="text-xl" />
             </Link>
-            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2" aria-label="Close menu">
+            <button onClick={() => setIsMobileMenuOpen(false)} className={`rounded-lg p-2 transition-colors hover:bg-white/[0.06] ${FOCUS_RING}`} aria-label="Close menu">
               <X className="w-6 h-6" style={{ color: "var(--axis-white)" }} />
             </button>
           </div>
@@ -483,7 +488,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                   <Link
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-2xl font-heading transition-colors"
+                    className={`rounded-lg text-2xl font-heading transition-colors ${FOCUS_RING}`}
                     style={{ color: isActive(link.href) ? "var(--axis-orange)" : "var(--axis-white)" }}
                   >
                     {t(link.labelKey)}
@@ -496,7 +501,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
                       key={child.href}
                       href={child.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-base transition-colors"
+                      className={`rounded-lg text-base transition-colors ${FOCUS_RING}`}
                       style={{ color: isActive(child.href) ? "var(--axis-orange)" : "var(--axis-gray)" }}
                     >
                       {t(child.labelKey)}
@@ -513,7 +518,7 @@ export default function Header({ krwToUsd }: { krwToUsd: number }) {
             </div>
             <a
               href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-              className="text-sm"
+              className={`rounded-lg text-sm ${FOCUS_RING}`}
               style={{ color: "var(--axis-gray)" }}
               onClick={() => trackEvent("contact", { method: "phone_header", position: "mobile" })}
             >

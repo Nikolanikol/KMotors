@@ -87,7 +87,7 @@ export default function LanguageSwitcher() {
   if (!mounted) {
     return (
       <div className="relative">
-        <button className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors" style={{ borderColor: "var(--axis-gray-dim)", backgroundColor: "transparent", color: "var(--axis-gray)" }}>
+        <button className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]" style={{ borderColor: "var(--axis-gray-dim)", backgroundColor: "transparent", color: "var(--axis-gray)" }}>
           <Globe className="w-4 h-4" />
           <span className="text-sm font-medium">RU</span>
         </button>
@@ -100,7 +100,7 @@ export default function LanguageSwitcher() {
       <button
         ref={buttonRef}
         onClick={handleOpen}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors focus:outline-none"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         style={{ borderColor: "var(--axis-gray-dim)", backgroundColor: "transparent", color: "var(--axis-gray)" }}
         aria-label="Выбрать язык"
       >
@@ -139,7 +139,7 @@ export default function LanguageSwitcher() {
               <button
                 key={lang.code}
                 onClick={() => changeLanguage(lang.code)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:bg-white/[0.07]"
                 style={{
                   backgroundColor: currentLanguage.code === lang.code ? "rgba(182,119,73,0.12)" : "transparent",
                   color: currentLanguage.code === lang.code ? "var(--axis-orange)" : "var(--axis-gray)",

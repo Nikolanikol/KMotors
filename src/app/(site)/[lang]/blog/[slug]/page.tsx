@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { notFound } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
 import BlogPostClient from "@/app/(root)/blog/[slug]/BlogPostClient";
 import { BlogPost } from "@/types/blog";
@@ -32,17 +33,29 @@ interface PageProps {
   params: Promise<{ lang: string; slug: string }>;
 }
 
-async function fetchPost(slug: string, lang: string): Promise<BlogPost | null> {
+// ⚠️ «Поста нет» ≠ «база не ответила» (инвариант CLAUDE.md). Первое — настоящий
+// 404 (иначе заглушка клиента отдаёт 200 и поисковик копит мягкие 404), второе —
+// прежний фолбэк: страница рендерится без поста, клиент догружает его сам.
+type PostLookup =
+  | { state: "found"; post: BlogPost }
+  | { state: "missing" }
+  | { state: "failed" };
+
+async function fetchPost(slug: string, lang: string): Promise<PostLookup> {
   try {
     const supabase = createServerClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("blog_posts")
       .select("*")
       .eq("slug", slug)
       .eq("published", true)
-      .single();
-    if (!data) return null;
-    return {
+      .maybeSingle();
+    if (error) {
+      console.error(`[blog] не удалось прочитать пост ${slug}:`, error.message);
+      return { state: "failed" };
+    }
+    if (!data) return { state: "missing" };
+    const post: BlogPost = {
       id: data.id,
       slug: data.slug,
       category: data.category,
@@ -55,16 +68,21 @@ async function fetchPost(slug: string, lang: string): Promise<BlogPost | null> {
       excerpt: data[`excerpt_${lang}`] || data.excerpt_en || data.excerpt_ru || "",
       content: data[`content_${lang}`] || data.content_en || data.content_ru || "",
     };
-  } catch {
-    return null;
+    return { state: "found", post };
+  } catch (e) {
+    console.error(`[blog] не удалось прочитать пост ${slug}:`, e);
+    return { state: "failed" };
   }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { lang, slug } = await params;
-  const post = await fetchPost(slug, lang);
+  const lookup = await fetchPost(slug, lang);
 
-  if (!post) return { title: "Post not found" };
+  if (lookup.state !== "found") {
+    return { title: "Post not found", robots: { index: false, follow: false } };
+  }
+  const post = lookup.post;
 
   // Индексируем основные языки (ru, en). ka/ar/ko — noindex до наполнения
   // переводов (Фаза 4); каждый язык self-canonical + hreflang через makeAlternates.
@@ -103,7 +121,9 @@ const BLOG_LABEL: Record<string, string> = {
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { lang, slug } = await params;
-  const post = await fetchPost(slug, lang);
+  const lookup = await fetchPost(slug, lang);
+  if (lookup.state === "missing") notFound();
+  const post = lookup.state === "found" ? lookup.post : null;
 
   const breadcrumbSchema = post ? {
     "@context": "https://schema.org",

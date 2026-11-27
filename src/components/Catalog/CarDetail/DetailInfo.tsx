@@ -5,6 +5,11 @@ import React, { FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VehicleRecord } from "@/lib/vehicleRecord";
 
+// ⚠️ Локаль ЯВНАЯ: `toLocaleString()` без аргумента берёт локаль окружения — на
+// сервере одну, в браузере другую (`819 000` против `819,000`), и React ругается
+// на расхождение гидратации. Суммы страховых выплат — вон, формат один на всех.
+const fmtKrw = (v: number | null | undefined) => (v ?? 0).toLocaleString("en-US");
+
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h2 className="text-base font-semibold flex items-center gap-2 mb-4" style={{ color: "var(--axis-white)" }}>
     <span className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, var(--axis-orange), var(--axis-amber))", display: "inline-block" }} />
@@ -126,11 +131,11 @@ const DetailInfo: FC<DetailInfoProps> = ({ data }) => {
                   {accidents.map((acc, i) => (
                     <tr key={i} className="border-t" style={{ borderColor: "rgba(74,74,74,0.2)" }}>
                       <td className="px-3 py-2.5" style={{ color: "var(--axis-white)" }}>{acc.date}</td>
-                      <td className="px-3 py-2.5" style={{ color: "var(--axis-gray)" }}>{(acc.insuranceBenefit ?? 0).toLocaleString()}</td>
-                      <td className="px-3 py-2.5" style={{ color: "var(--axis-gray)" }}>{(acc.partCost ?? 0).toLocaleString()}</td>
-                      <td className="px-3 py-2.5" style={{ color: "var(--axis-gray)" }}>{(acc.laborCost ?? 0).toLocaleString()}</td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--axis-gray)" }}>{fmtKrw(acc.insuranceBenefit)}</td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--axis-gray)" }}>{fmtKrw(acc.partCost)}</td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--axis-gray)" }}>{fmtKrw(acc.laborCost)}</td>
                       <td className="px-3 py-2.5 font-semibold" style={{ color: (acc.paintingCost ?? 0) > 0 ? "var(--axis-orange)" : "var(--axis-gray)" }}>
-                        {(acc.paintingCost ?? 0).toLocaleString()}
+                        {fmtKrw(acc.paintingCost)}
                       </td>
                     </tr>
                   ))}
