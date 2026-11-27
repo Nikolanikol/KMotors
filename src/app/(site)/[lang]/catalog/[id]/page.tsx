@@ -20,6 +20,7 @@ import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import CustomsDictionary from "@/components/I18nProvider/CustomsDictionary";
 import { makeAlternates } from "@/lib/seo";
 import { fetchVehicleData as fetchData, VehicleUpstreamError } from "@/lib/vehicle";
+import { isRenderableVehicle } from "@/lib/vehicleStatus";
 import { fetchVehicleRecord } from "@/lib/vehicleRecord";
 import { buildSpecBits, loadCarsDict, localizeSpec, normalizeBrand } from "@/lib/carLabels";
 import { buildCarDescription, buildCarJsonLd, localizeColor } from "@/lib/carContent";
@@ -331,11 +332,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
 }) => {
   const { lang, id } = await params;
   const data = await fetchData(id);
-  if (
-    !data ||
-    !data.category?.manufacturerEnglishName ||
-    !data.advertisement?.price
-  ) {
+  if (!isRenderableVehicle(data)) {
     // Строгий null = 404 от Encar = машина продана. Авария апстрима сюда не
     // доходит: fetchData на ней бросает VehicleUpstreamError. Непустой, но
     // кривой ответ продажей не считаем — иначе сбой парсинга у Encar пометил бы
