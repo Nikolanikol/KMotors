@@ -34,10 +34,10 @@ import {
 //
 // 24 часа, а не false: цена в HTML считается от krwToUsd (getFx("market"),
 // кеш 24ч). При revalidate = false страница не перерендеривается никогда, и
-// этот кеш курса не может сработать — курс замерзает на момент первого визита,
-// а /api/parts/checkout (POST, не кешируется) считает по свежему. Витрина и
-// чекаут расходятся тем сильнее, чем дольше страница лежит. TTL совпадает с
-// кешем самого курса: чаще смысла нет, реже — снова копим расхождение.
+// этот кеш курса не может сработать — курс замерзает на момент первого визита, а
+// корзина и заявка считают по свежему курсу. Витрина и корзина расходятся тем
+// сильнее, чем дольше страница лежит. TTL совпадает с кешем самого курса: чаще
+// смысла нет, реже — снова копим расхождение.
 export const revalidate = 86400;
 export const dynamicParams = true;
 
@@ -72,6 +72,7 @@ const BRAND_ORDER: Record<string, number> = {
 interface ProductRow {
   id: number;
   part_number: string | null;
+  product_no: string | null;
   name_ru: string;
   name_en: string;
   name_ko: string | null;
@@ -93,7 +94,7 @@ interface ProductRow {
 }
 
 const PRODUCT_COLUMNS =
-  "id, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, image_storage_url, category_id, subcategory_id, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs";
+  "id, part_number, product_no, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, image_storage_url, category_id, subcategory_id, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs";
 
 type CategoryRow = { id: number; name_ru: string; name_en: string; slug: string; parent_id: number | null };
 
@@ -106,7 +107,8 @@ function dbFail(what: string, message: string): never {
 function toDetail(p: ProductRow): ProductDetail {
   return {
     id: p.id,
-    part_number: p.part_number ?? "",
+    // У 2107 строк (замер 27.11.2026) part_number пуст — показываем product_no, как до правки.
+    part_number: p.part_number || p.product_no || "",
     name_ru: p.name_ru,
     name_en: p.name_en,
     name_ko: p.name_ko,
