@@ -272,6 +272,64 @@ cookie); высота скелетона и скорость главной на
 Не проверено: заголовки на проде, hover-эффекты (панель браузера скрыта, глазами не смотрел), страницы запчастей и оплата
 (без серверных ключей каталог пуст), таймаут Supabase при реально медленной базе.
 
+### Выкладка в прод (27.11.2026)
+
+`git push origin integration/cleanup:main` по явному «да» владельца: `ceaec34` → `db5419c`,
+64 коммита, fast-forward. Теги отката: `prod/before-cleanup` (прежний прод) и
+`prod/after-cleanup`. Новая сборка заработала через ~2,5 минуты: заголовки безопасности
+на проде появились (раньше их не было), `/ru`, `/en`, `/ru/parts`, `/ru/calculator`,
+`/ru/blog`, `/ru/about`, `/sitemap.xml`, `/robots.txt` — 200, несуществующая страница — 404;
+`/ru/catalog` и `/ru/auction` с адреса автора дают 403 (блок Кореи, работающее правило).
+Владелец проверил прод сам: «всё хорошо».
+
+### 22–25 — после выкладки (27.11.2026)
+
+Работа раздана субагентам по независимым потокам (правило владельца), каждый в своём worktree
+и на своей ветке; приёмка — diff, `tsc`, lint, vitest, слияния `--no-ff`.
+
+- **25 — предупреждения линтера** (тег `cleanup/25-lint-warnings`). 4 → 0. `BlogSearch`:
+  таймер дебаунса и актуальный `onChange` в `useRef`, очистка при размонтировании.
+  `CartTab`, `CarViewTracker`: зависимости намеренно неполные (цикл / повторный `view_item`
+  в GA4) — точечный `eslint-disable` с пояснением. `RootShell`: пиксель Метрики в
+  `<noscript>`, `next/image` не применим.
+- **23 — фолбэк-снимки курсов** (тег `cleanup/23-fx-snapshots`). `src/lib/fx/snapshot.ts`
+  обновлён до 27.11.2026: таможенный блок (open.er-api.com; EUR +5,3 %, KRW за USD
+  1409,6 → 1343,8) и рыночный (ЦБ РФ, frankfurter; значения без грубого округления).
+  Порог остановки 15 % не сработал. У авто-вида своего снимка нет: при отказе
+  Кукмин-банка он берёт рыночный блок. Два теста читают значения из снимка, а не литералы.
+- **24 — единый выбор чата Telegram** (тег `cleanup/24-telegram-chats`).
+  `src/lib/telegramChats.ts`: назначения `leads`, `admins`, `orders`, `seo`, `blog`, `ops`
+  и `posterTarget`; фолбэки прежние, переменные читаются при вызове, 12 вызывающих
+  переведены, `CHANNEL_ID` удалён (ноль импортов). Тест — 31 случай. Сохранено как было и
+  отмечено: пустой `TELEGRAM_WORK_CHAT_ID` у заказов не уступает место `CHAT_ID` (`??`);
+  ⚠️ вебхук бота fail-open — без заданных `CHAT_ID`/`WORK_CHAT_ID` админские команды
+  доступны любому (на проде обе заданы). Решение владельца открыто.
+- **22 — мёртвый код** (тег `cleanup/22-dead-code`), −29 тыс. строк: `netlify.toml`,
+  `vercel.json`, `design-reference/`; стек dokanmazad (`src/lib/showcase`, `/api/showcase/sync`,
+  вкладки Lotte и SK в `/admin/auction` — теперь без табов, «Лоты аукциона K Car»);
+  84 разовых файла в `scripts/` и `sql/` (миграции фото, DeepL, проверки Storage, `run_*`,
+  отработавшие UPDATE/INSERT; вся схема и представления в `sql/` оставлены); строка
+  `/api/poster/parts/run` снята из README и `scripts/cron/CLAUDE.md`. Тестов −3
+  (пути `/api/showcase` в списках 403 из Кореи). Откат: `git checkout prod/before-cleanup -- <путь>`.
+  Пакеты `better-sqlite3`, `pg`, `ts-node` после этого никем не используются; `dotenv` нужен
+  только `translate-parts-ko-ru.ts` — решение за владельцем (шаг 21 оставлял их ради этих скриптов).
+  Оставлено как сомнительное: K Car-страница лотов (`auction_lots` с 02.10 никто не
+  обновляет), `kcar/detail.ts` и `?enrich=1`, хвосты Lotte/SK в живом коде,
+  `remotePatterns` Lotte/SK, `migrate-images-to-storage-v2.ts`, `translate-parts-ko-ru.ts`.
+  Вручную: снять строку `/api/poster/parts/run` в crontab на VPS; удалить задачу `showcase`
+  в Coolify (раннер на неё теперь отвечает ошибкой).
+
+Проверка на integration после слияний: `tsc` 0, lint 0 ошибок и 0 предупреждений,
+vitest 627 прошло / 122 пропущено.
+
+**Уборка git.** Удалены 25 worktree (все чистые, без force) и 102 ветки, полностью влитые в
+`integration/cleanup`. Остались `main` (сдвинут на `origin/main`), `integration/cleanup` и
+7 веток с уникальными коммитами, решение по ним за владельцем: `claude/msp-seo-skills-976b03`,
+`docs/auction-content-pipeline`, `docs/indexation-log`, `docs/session-report`,
+`feat/naver-store-parser`, `feat/parts-image-debranding`, `feat/parts-page-weight`.
+Откат до уборки: 43 тега (`cleanup/*`, `prod/before-cleanup`, `prod/after-cleanup`) держат
+все коммиты. Ветки на `origin` не трогались.
+
 ## Замеры
 
 ### Стартовый контекст сессии, A/B от 26.11.2026
