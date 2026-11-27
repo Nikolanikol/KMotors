@@ -743,6 +743,22 @@ select.PhoneInputCountrySelect {
   body[data-sticky-cta="modal"] .messenger-fab {
     display: none;
   }
+
+  /* Баннер cookie (CookieBanner, fixed bottom-0, z-100) лежал поверх мобильной плашки
+     заявки на карточке машины и закрывал главную кнопку, пока посетитель его не примет.
+     Теперь над плашкой (её высота ~73px); при открытой форме баннер прячется, чтобы
+     не закрывать «Отправить». Кнопку чата на это время убираем: баннер встал бы на её
+     место, а те же Telegram и WhatsApp есть в самой плашке. */
+  body[data-sticky-cta="1"] .cookie-banner {
+    bottom: 4.75rem;
+    border-radius: 12px 12px 0 0;
+  }
+  body[data-sticky-cta="modal"] .cookie-banner {
+    display: none;
+  }
+  body[data-sticky-cta][data-cookie-banner] .messenger-fab {
+    display: none;
+  }
 }
 
 /* ── Индикатор перехода (src/components/NavigationStatus.tsx) ─────────────

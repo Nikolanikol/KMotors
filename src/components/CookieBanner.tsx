@@ -50,6 +50,16 @@ export default function CookieBanner() {
     }
   }, []);
 
+  // Пока баннер виден, <body data-cookie-banner> — крючок для globals.css: на карточке
+  // машины с мобильной плашкой заявки баннер встаёт НАД плашкой, а не закрывает её.
+  useEffect(() => {
+    if (!visible) return;
+    document.body.dataset.cookieBanner = "1";
+    return () => {
+      delete document.body.dataset.cookieBanner;
+    };
+  }, [visible]);
+
   function accept() {
     localStorage.setItem(STORAGE_KEY, "accepted");
     setVisible(false);
@@ -59,14 +69,17 @@ export default function CookieBanner() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[100] px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-5"
+      // cookie-banner — крючок для globals.css (положение над мобильной плашкой заявки).
+      // На телефоне баннер в ОДНУ строку: двухстрочный (текст + кнопка) занимал ~120px и
+      // целиком закрывал нижнюю кнопку «Хочу эту машину» и кнопку чата.
+      className="cookie-banner fixed bottom-0 left-0 right-0 z-[100] px-4 sm:px-6 py-2.5 sm:py-3 flex flex-row items-center gap-3 sm:gap-5"
       style={{
         backgroundColor: "var(--axis-charcoal)",
         borderTop: "1px solid rgba(182,119,73,0.2)",
         boxShadow: "0 -4px 24px rgba(0,0,0,0.4)",
       }}
     >
-      <p className="text-sm flex-1 text-center sm:text-left" style={{ color: "var(--axis-gray)" }}>
+      <p className="text-xs sm:text-sm flex-1 text-left leading-snug" style={{ color: "var(--axis-gray)" }}>
         {t.message}{" "}
         <Link
           href={`/${lang}/privacy`}
@@ -81,7 +94,7 @@ export default function CookieBanner() {
       </p>
       <button
         onClick={accept}
-        className="px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-all duration-200"
+        className="px-4 sm:px-6 py-2 rounded-full text-sm font-semibold whitespace-nowrap flex-shrink-0 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
