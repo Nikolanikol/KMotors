@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { convertedCarPrice, formatCarKrw } from "@/lib/carPricing";
 import type { RecommendedCar } from "./getRecommended";
 
 // Размерный URL encar напрямую. Запрашиваем 2x для ретины: карточка 240px → 480px, 16:10.
@@ -18,7 +19,7 @@ const TITLE: Record<string, string> = {
   ar: "سيارات موصى بها",
 };
 const KM: Record<string, string> = { ru: "км", en: "km", ka: "კმ", ar: "كم" };
-const WON: Record<string, string> = { ru: "₩", en: "₩", ka: "₩", ar: "₩" };
+const WON: Record<string, string> = { ru: "вон", en: "won", ka: "ვონი", ar: "وون" };
 
 // Ленивый блок: данные грузятся не при загрузке страницы, а когда пользователь
 // долистывает до него (IntersectionObserver + fetch на /api/recommended).
@@ -26,9 +27,14 @@ const WON: Record<string, string> = { ru: "₩", en: "₩", ka: "₩", ar: "₩"
 export default function RecommendedCars({
   id,
   lang,
+  krwToRub,
+  krwToUsd,
 }: {
   id: string;
   lang: string;
+  /** Курс авто (KB) приходит с сервера пропсом, как у CarCard; клиент его не запрашивает. */
+  krwToRub?: number;
+  krwToUsd?: number;
 }) {
   const ref = useRef<HTMLElement>(null);
   const started = useRef(false);
@@ -107,11 +113,18 @@ export default function RecommendedCars({
                 </div>
               </div>
             ))
-          : cars!.map((car) => (
+          : cars!.map((car) => {
+              // Цена — как в каталоге (CarCard): воны с сбором + «≈ ₽/$» по курсу KB.
+              // `price` нет у ответа, закешированного до выкладки, — тогда без цены.
+              const hasPrice = Number.isFinite(car.price) && car.price > 0;
+              const converted = hasPrice
+                ? convertedCarPrice(car.price, lang, { krwToRub, krwToUsd })
+                : null;
+              return (
               <Link
                 key={car.id}
                 href={`/${lang}/catalog/${car.id}`}
-                className="snap-start flex-shrink-0 w-[240px] rounded-2xl overflow-hidden group"
+                className="snap-start flex-shrink-0 w-[240px] rounded-2xl overflow-hidden group transition-shadow hover:shadow-[0_12px_32px_rgba(182,119,73,0.15)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
                 style={{
                   backgroundColor: "var(--axis-charcoal)",
                   border: "1px solid rgba(74,74,74,0.25)",
@@ -154,15 +167,34 @@ export default function RecommendedCars({
                       {car.mileage.toLocaleString("ru-RU")} {km}
                     </span>
                   </div>
-                  <p
-                    className="text-base font-bold pt-1"
-                    style={{ color: "var(--axis-orange)" }}
-                  >
-                    {car.priceKRW.toLocaleString("ru-RU")} {won}
-                  </p>
+                  {hasPrice && (
+                    <div className="pt-1">
+                      <p
+                        className="text-base font-bold"
+                        style={{ color: "var(--axis-orange)" }}
+                      >
+                        {formatCarKrw(car.price)}{" "}
+                        <span
+                          className="text-xs font-normal"
+                          style={{ color: "var(--axis-gray)" }}
+                        >
+                          {won}
+                        </span>
+                      </p>
+                      {converted && (
+                        <p
+                          className="text-xs mt-0.5"
+                          style={{ color: "var(--axis-silver)" }}
+                        >
+                          ≈ {converted.value} {converted.symbol}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Link>
-            ))}
+              );
+            })}
       </div>
     </section>
   );

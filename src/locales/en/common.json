@@ -124,7 +124,14 @@
       "prev": "Previous photo",
       "next": "Next photo",
       "close": "Close gallery"
-    }
+    },
+    "priceScope": "Price in Korea, excluding shipping and customs",
+    "calcTurnkey": "Calculate turnkey price ↓",
+    "close": "Close",
+    "orWrite": "Or message us about this car",
+    "formHintName": "Enter your name to send the request",
+    "formHintPhone": "Enter your phone number to send the request",
+    "formHintBoth": "Enter your name and phone to send the request"
   },
   "filter": {
     "all": "All",

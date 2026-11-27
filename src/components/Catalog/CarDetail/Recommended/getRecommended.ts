@@ -3,7 +3,6 @@
 // /v1/readside/vehicles?vehicleIds=... (все машины сразу).
 // Всё server-side, кэш 1 час. Любой сбой → пустой массив (блок просто не покажется).
 
-import { encarToKrw } from "@/lib/carPricing";
 import type { EncarRaw } from "@/lib/vehicle";
 
 const ENCAR = "https://api.encar.com";
@@ -19,7 +18,13 @@ export interface RecommendedCar {
   year: string; // "2023.06"
   mileage: number;
   fuel: string;
-  priceKRW: number; // уже × 10000
+  /**
+   * Цена Encar КАК ОТДАЁТ API (만원). Не воны: клиент считает цену ровно как
+   * карточка каталога — `formatCarKrw` / `convertedCarPrice` из carPricing,
+   * то есть с учётом стояночного сбора. Раньше здесь стояло `encarToKrw`, и
+   * рекомендация была дешевле той же машины в каталоге на сумму сбора.
+   */
+  price: number;
 }
 
 // Порядок типов фото: OUTER (экстерьер) первым — как на детали и в каталоге.
@@ -55,7 +60,7 @@ function toCard(d: EncarRaw): RecommendedCar | null {
     year,
     mileage: Number(spec?.mileage ?? 0),
     fuel: spec?.fuelName ?? "",
-    priceKRW: encarToKrw(adv.price),
+    price: Number(adv.price),
   };
 }
 

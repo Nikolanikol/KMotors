@@ -437,6 +437,24 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
     ar: "السعر يشمل رسوم إيقاف السيارة لدى الوكيل",
   };
 
+  // Дубли ключей common:car.priceScope / car.calcTurnkey — по той же причине
+  // (серверный блок без i18next). Метка «Цена покупки» читается как итог, а это
+  // цена в Корее: подпись и якорь на калькулятор растаможки этой же карточки.
+  const PRICE_SCOPE_LABEL: Record<string, string> = {
+    ru: "Цена в Корее, без доставки и растаможки",
+    en: "Price in Korea, excluding shipping and customs",
+    ko: "한국 현지 가격, 운송·통관 제외",
+    ka: "ფასი კორეაში, მიტანისა და განბაჟების გარეშე",
+    ar: "السعر في كوريا، بدون الشحن والتخليص الجمركي",
+  };
+  const CALC_TURNKEY_LABEL: Record<string, string> = {
+    ru: "Рассчитать под ключ ↓",
+    en: "Calculate turnkey price ↓",
+    ko: "총 비용 계산하기 ↓",
+    ka: "გამოთვალეთ საბოლოო ფასი ↓",
+    ar: "احسب السعر النهائي ↓",
+  };
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -750,6 +768,16 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                   <p className="text-white/70 text-[10px] leading-tight mt-1">
                     {STORAGE_FEE_LABEL[lang] ?? STORAGE_FEE_LABEL.ru}
                   </p>
+                  <p className="text-white/80 text-[10px] leading-tight mt-0.5">
+                    {PRICE_SCOPE_LABEL[lang] ?? PRICE_SCOPE_LABEL.ru}
+                  </p>
+                  {/* Кольцо фокуса белое: бронзовое на бронзовой плашке не видно */}
+                  <a
+                    href="#customs-calculator"
+                    className="mt-1.5 inline-block rounded px-1 -mx-1 text-sm font-semibold text-white underline underline-offset-2 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  >
+                    {CALC_TURNKEY_LABEL[lang] ?? CALC_TURNKEY_LABEL.ru}
+                  </a>
                 </div>
               </div>
             )}
@@ -791,7 +819,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
 
       {/* Рекомендуемые авто */}
       <div data-track-block="recommended">
-        <RecommendedCars id={data?.vehicleId} lang={lang} />
+        <RecommendedCars
+          id={data?.vehicleId}
+          lang={lang}
+          krwToRub={rates.krwToRub}
+          krwToUsd={rates.krwToUsd}
+        />
       </div>
       {/* Блок описания модели — виден пользователям и индексируется Google */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
