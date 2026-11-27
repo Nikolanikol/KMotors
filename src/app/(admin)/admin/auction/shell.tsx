@@ -1,25 +1,57 @@
-// Общая обвязка служебных вкладок аукциона.
+// Обвязка служебной страницы лотов K Car (/admin/auction).
 //
-// Служебная витрина отличается от публичной тремя вещами и только ими:
-// cookie-гейт, русские подписи вместо словаря (инстанса i18next под /admin
-// нет) и сырые данные без оговорок для клиента. Всё остальное — та же сетка,
-// поэтому берётся тот же PlatformCatalog.
+// Отличается от прежней публичной витрины тремя вещами: cookie-гейт, русские
+// подписи вместо словаря (инстанса i18next под /admin нет) и сырые данные без
+// оговорок для клиента. Вкладки Lotte и SK (витрина dokanmazad) удалены
+// 27.11.2026 вместе с остальным стеком витрины.
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
-import AuctionTabs, { type AuctionSourceTab } from "@/components/Auction/AuctionTabs";
 import { RU_LOT_LABELS } from "@/components/Auction/LotCard";
 import { RU_FILTER_LABELS } from "@/components/Auction/LotFilters";
 import PlatformCatalog from "@/components/Auction/PlatformCatalog";
-import { getLots, getPremiumIndex, getSourceCounts } from "@/lib/kcar/query";
-// ⚠️ Разбор адреса берётся у публичной витрины, а не копируется сюда. Раньше
-// обе страницы читали searchParams своими руками, и любой новый фильтр
-// пришлось бы заводить дважды — то есть однажды забыть. Фильтры у витрин
-// одинаковые по замыслу: служебная отличается только гейтом, подписями и
-// отсутствием оговорок для клиента.
-import { hasFilters, readParams } from "@/app/(site)/[lang]/auction/shell";
+import { getLots, getPremiumIndex, type LotSort } from "@/lib/kcar/query";
+
+const SORTS = new Set<LotSort>(["lot", "price_asc", "price_desc", "year_desc", "mileage_asc"]);
+
+/** Параметры выдачи из адреса. */
+function readParams(sp: Record<string, string | string[] | undefined>) {
+  const one = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k]) ?? null;
+  const sortRaw = one("sort");
+  /**
+   * ⚠️ Числа из адреса проверяются, а не просто приводятся. В ?priceMax
+   * прилетает что угодно — от мусора сканеров до ручной правки, — а
+   * Number("abc") это NaN, и NaN в .lte() уходит в PostgREST строкой "NaN":
+   * запрос отвечает 400, и getLots отдаёт «временно недоступно» вместо лотов.
+   * Отрицательные значения отсекаются по той же причине, что и NaN: они дают
+   * заведомо пустую выдачу, неотличимую для человека от поломки.
+   */
+  const num = (k: string) => {
+    const v = Number(one(k));
+    return Number.isFinite(v) && v > 0 ? Math.floor(v) : null;
+  };
+  return {
+    maker: one("maker"),
+    model: one("model"),
+    priceMax: num("priceMax"),
+    yearMin: num("yearMin"),
+    mileageMax: num("mileageMax"),
+    q: one("q"),
+    sort: (sortRaw && SORTS.has(sortRaw as LotSort) ? sortRaw : "lot") as LotSort,
+    page: Math.max(1, Number(one("page") ?? "1") || 1),
+  };
+}
+
+/**
+ * Применён ли хоть один фильтр. Нужно, чтобы отличить «под фильтр ничего не
+ * подошло» от «торги уже прошли»: снаружи оба состояния — пустая сетка, а
+ * значат прямо противоположное.
+ */
+function hasFilters(p: ReturnType<typeof readParams>): boolean {
+  return Boolean(p.maker || p.model || p.q || p.priceMax || p.yearMin || p.mileageMax);
+}
 
 /** Служебные подписи сетки: русские, словарь здесь не подключить. */
 const RU_GRID_LABELS = {
@@ -38,24 +70,20 @@ export async function AdminPlatformPage({
   searchParams,
   source,
   withForecast = false,
-  note,
   children,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
-  source: AuctionSourceTab;
+  source: "kcar";
   withForecast?: boolean;
-  /** Оговорка про источник конкретной площадки, если она нужна. */
-  note?: string;
-  /** Блок сводки над сеткой — он есть только у K Car. */
+  /** Блок сводки над сеткой. */
   children?: ReactNode;
 }) {
   await requireAdmin();
 
   const query = readParams(searchParams);
 
-  const [lots, counts, premiumIndex] = await Promise.all([
+  const [lots, premiumIndex] = await Promise.all([
     getLots({ ...query, source }),
-    getSourceCounts(),
     withForecast ? getPremiumIndex() : Promise.resolve(undefined),
   ]);
 
@@ -64,19 +92,12 @@ export async function AdminPlatformPage({
       <div className="mx-auto max-w-7xl">
         <header className="mb-4">
           <h1 className="text-xl font-semibold" style={{ color: "var(--axis-cream, #F5F0EB)" }}>
-            Лоты автоаукционов
+            Лоты аукциона K Car
           </h1>
-          <p className="mb-4 mt-1 text-xs" style={{ color: "var(--axis-gray)" }}>
+          <p className="mt-1 text-xs" style={{ color: "var(--axis-gray)" }}>
             Служебная страница: цены сырые, переводов нет, в индекс не идёт.
           </p>
-          <AuctionTabs active={source} counts={counts} />
         </header>
-
-        {note && (
-          <p className="mb-4 text-xs" style={{ color: "var(--axis-gray)" }}>
-            {note}
-          </p>
-        )}
 
         {children}
 

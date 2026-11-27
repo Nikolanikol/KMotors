@@ -35,7 +35,7 @@ SEO-пайплайн, оплата через PayPal, операции чере�
 | `cars_seen`, подписки «пришлём похожие» | [docs/core-cars-data.md](docs/core-cars-data.md) |
 | публичный аукцион `/auction` (carnect, HeyDealer), цены за входом, регистрация = лид | [src/lib/carnect/CLAUDE.md](src/lib/carnect/CLAUDE.md) |
 | служебный `/admin/auction`, `auction_results`, прогноз молотка K Car | [src/app/(admin)/admin/auction/CLAUDE.md](src/app/(admin)/admin/auction/CLAUDE.md) |
-| мёртвая витрина dokanmazad (архив, не грузится) | [docs/archive/auction-dokanmazad.md](docs/archive/auction-dokanmazad.md) |
+| мёртвая витрина dokanmazad (архив, не грузится; код удалён 27.11.2026) | [docs/archive/auction-dokanmazad.md](docs/archive/auction-dokanmazad.md) |
 | запчасти: цена, каталог, корзина, поиск, кеш/ISR | [src/app/parts/CLAUDE.md](src/app/parts/CLAUDE.md) |
 | калькулятор растаможки | [src/lib/customs/CLAUDE.md](src/lib/customs/CLAUDE.md) |
 | отслеживание EMS | [src/app/tracking/CLAUDE.md](src/app/tracking/CLAUDE.md) |

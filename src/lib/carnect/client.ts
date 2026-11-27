@@ -27,7 +27,7 @@ import { isNotFound } from "./rsc";
 
 export const CARNECT_ORIGIN = process.env.CARNECT_ORIGIN ?? "https://carnect.biz";
 
-// Тот же браузерный UA, что у витрины dokanmazad (showcase/scrape.ts): за
+// Тот же браузерный UA, что у прежней витрины dokanmazad (её код удалён 27.11.2026): за
 // Cloudflare у carnect голый UA node/undici рискует получить проверку на
 // бота. UA ОДИН и не меняется между запросами — см. правило 4 выше.
 const UA =

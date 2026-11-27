@@ -4,7 +4,7 @@
 // ожидание в routes.spec.ts, а не эту копию.
 
 export const KR_BLOCKED_PAGE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?(?:catalog|auction|favorites|compare)(?:\/|$)/;
-export const KR_BLOCKED_API = /^\/api\/(?:recommended|vehicle|carnect|cars|kcar|showcase)(?:\/|$)/;
+export const KR_BLOCKED_API = /^\/api\/(?:recommended|vehicle|carnect|cars|kcar)(?:\/|$)/;
 export const AUCTION_SHOWCASE = /^\/(?:(?:ru|en|ka|ar|ko)\/)?auction\/?$/;
 export const LINK_PREVIEW_BOT =
   /TelegramBot|WhatsApp|facebookexternalhit|Facebot|Twitterbot|Slackbot|Discordbot|LinkedInBot|vkShare|Viber|SkypeUriPreview/i;

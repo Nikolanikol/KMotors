@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Единая точка входа для планировщика Coolify.
 //
-//   node ./scripts/cron/run.mjs showcase
-//   node ./scripts/cron/run.mjs showcase --dry
+//   node ./scripts/cron/run.mjs carnect-lotte
+//   node ./scripts/cron/run.mjs carnect-lotte --dry
 //   node ./scripts/cron/run.mjs --list
 //
 // ─── Почему это файл в образе, а не строка curl в crontab ────────────────
@@ -57,14 +57,6 @@ const JOBS = {
     header: "x-poster-secret",
     schedule: "0 6 * * *",
     about: "снимки машин Encar в cars_seen — источник сайтмапа каталога",
-  },
-  showcase: {
-    path: "/api/showcase/sync",
-    method: "GET",
-    secretEnv: "POSTER_CRON_SECRET",
-    header: "x-poster-secret",
-    schedule: "0 */4 * * *",
-    about: "лоты автоаукционов с витрины-посредника, ~6 минут",
   },
   poster: {
     path: "/api/poster/run",

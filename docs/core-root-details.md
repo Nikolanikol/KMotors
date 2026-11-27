@@ -177,7 +177,7 @@ tsx, не curl к PostgREST с подстановкой ключей из `.env`
 - **Слой 3, запрет на origin (05.10.2026)** — `isKoreaBlockedPath` в `src/lib/routes/index.ts` (списки — манифесты `src/lib/routes/*.ts`, вызывает `src/middleware.ts`):
   на каноническом хосте при `cf-ipcountry = KR` отдаётся 403 на каталог Encar, аукцион,
   избранное, сравнение (`KR_BLOCKED_PAGE`) и на ВСЕ API с данными машин
-  (`KR_BLOCKED_API`: recommended, vehicle, carnect, cars, kcar, showcase). Решение
+  (`KR_BLOCKED_API`: recommended, vehicle, carnect, cars, kcar; `showcase` убран 27.11.2026 вместе с маршрутом). Решение
   владельца: «всё с аукционов и Encar и вниз по дереву закрываем полностью» — WAF
   закрывал только часть путей, и страница лота аукциона из Кореи открывалась.
   ⚠️ Новый маршрут или API с данными машин — добавить в эти регулярки. ⚠️ Ответ
