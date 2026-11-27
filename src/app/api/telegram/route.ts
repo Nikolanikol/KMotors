@@ -34,6 +34,7 @@ const MAX_VIN = 17;
 const MAX_CAR_ID = 40;
 const MAX_CAR_NAME = 200;
 const MAX_SOURCE = 40;
+const SOURCE_ID_RE = /^[a-z0-9_]{1,40}$/;
 const MAX_MESSENGER = 20;
 /** В Telegram уходит не больше; в `leads` лежит полный текст (до MAX_MESSAGE_STORED). */
 const MAX_MESSAGE_TELEGRAM = 3000;
@@ -67,7 +68,8 @@ function isRateLimited(ip: string, now: number): boolean {
   return entry.count > RATE_LIMIT;
 }
 
-// ── Подписи источников. Всё, чего нет в списке, сохраняется как "unknown". ──
+// ── Подписи источников для сообщения менеджеру. Источника нет в списке — в сообщении будет
+//    сам идентификатор; мусорный (не [a-z0-9_]) сохраняется как "unknown". ──
 const sourceLabel: Record<string, string> = {
   header: "Шапка сайта",
   contact: "Страница /contact",
@@ -161,8 +163,14 @@ export async function POST(req: NextRequest) {
     const tg_username = TG_USERNAME_RE.test(tgClean) ? tgClean : undefined;
 
     const sourceIn = ((sourceRaw as string | undefined) ?? "").trim().slice(0, MAX_SOURCE);
-    const source = sourceIn && Object.hasOwn(sourceLabel, sourceIn) ? sourceIn : sourceIn ? "unknown" : undefined;
-    const sourceText = source && source !== "unknown" ? sourceLabel[source] : "Сайт";
+    // В leads.source_page пишется сам идентификатор, если он «чистый» (латиница, цифры, _):
+    // по нему считают воронки, и источников у форм больше, чем подписей (auth_page, cta_main,
+    // header_modal, parts_price_request…). Подпись берётся из sourceLabel, иначе сам идентификатор.
+    const source = SOURCE_ID_RE.test(sourceIn) ? sourceIn : sourceIn ? "unknown" : undefined;
+    const sourceText =
+      source && source !== "unknown"
+        ? (Object.hasOwn(sourceLabel, source) ? sourceLabel[source] : source)
+        : "Сайт";
 
     // ── 1. Сохраняем лид ПЕРВЫМ ───────────────────────────────────────────────
     let saved = false;

@@ -88,13 +88,19 @@ describe("POST /api/telegram", () => {
     expect(text.length).toBeLessThanOrEqual(4000);
   });
 
-  it("tg_username проверяется по маске, неизвестный source уходит в unknown", async () => {
+  it("tg_username проверяется по маске, мусорный source уходит в unknown", async () => {
     await post({ ...ok, source: "что-то левое", messenger: "telegram", tg_username: "bad name!" });
     const row = insert.mock.calls[0][0] as { tg_username: unknown; source_page: string };
     expect(row.tg_username).toBeNull();
     expect(row.source_page).toBe("unknown");
     await post({ ...ok, messenger: "telegram", tg_username: "@good_name" });
     expect((insert.mock.calls[1][0] as { tg_username: string }).tg_username).toBe("good_name");
+  });
+
+  it("источник без подписи сохраняется как есть (по нему считают воронки)", async () => {
+    await post({ ...ok, source: "parts_price_request" });
+    expect((insert.mock.calls[0][0] as { source_page: string }).source_page).toBe("parts_price_request");
+    expect(String((sendTelegram.mock.calls[0][0] as { text: string }).text)).toContain("parts_price_request");
   });
 
   it("слишком большое тело — 413", async () => {
