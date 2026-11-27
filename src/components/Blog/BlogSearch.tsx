@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, X } from "lucide-react";
 
@@ -13,16 +13,19 @@ export default function BlogSearch({ value, onChange }: BlogSearchProps) {
   const { t } = useTranslation();
   const [local, setLocal] = useState(value);
 
-  const debounced = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>;
-      return (v: string) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => onChange(v), 300);
-      };
-    })(),
-    [onChange]
-  );
+  // Таймер и актуальный onChange лежат в ref: перерисовка родителя (он отдаёт
+  // onChange без useCallback) не сбрасывает дебаунс и не оставляет «осиротевший» таймер.
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const debounced = useCallback((v: string) => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChangeRef.current(v), 300);
+  }, []);
 
   useEffect(() => {
     setLocal(value);

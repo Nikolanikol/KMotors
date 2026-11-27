@@ -43,6 +43,9 @@ export default function CarViewTracker({ carId, carName, price }: CarViewTracker
       }),
       keepalive: true,
     }).catch(() => {});
+    // price намеренно вне зависимостей: иначе событие view_item в GA4 уходило бы
+    // повторно при каждом пересчёте цены. Один просмотр на машину.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carId, carName]);
 
   // Шаги страницы машины: какие блоки увидел, что нажимал (FunnelTracker).

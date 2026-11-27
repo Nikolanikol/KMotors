@@ -162,6 +162,8 @@ export default function RootShell({
               `}
             </Script>
             <noscript>
+              {/* Пиксель Метрики для браузеров без JS: next/image тут не работает и не нужен. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <div><img src="https://mc.yandex.ru/watch/109267986" style={{position:"absolute",left:"-9999px"}} alt="" /></div>
             </noscript>
           </>
