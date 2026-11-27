@@ -66,7 +66,7 @@ const DetailInfo: FC<DetailInfoProps> = ({ data }) => {
             <Row label={t("car.fuel")} value={translateGenerationRow(data.fuel ?? "", t) || "—"} />
             <Row label={t("car.engineVolume")} value={data.displacement ? `${data.displacement} cc` : "—"} />
             <Row label={t("car.transmission")} value={translateGenerationRow(data.transmission ?? "", t) || t("common.notSpecified")} />
-            <Row label={t("car.registrationDate")} value={data.regDate?.slice(0, 10) ?? "—"} />
+            <Row label={t("car.registrationDate")} value={data.firstDate?.slice(0, 10) ?? "—"} />
           </div>
         )}
       </div>
