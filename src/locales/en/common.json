@@ -508,6 +508,8 @@
       "preOrderBtn": "Pre-order",
       "noResults": "No parts found",
       "noResultsHint": "Try changing or resetting the filters",
+      "loadError": "Couldn't load the catalog. Check your connection and try again.",
+      "retry": "Retry",
       "miss": {
         "queryLabel": "Your search",
         "title": "Not in the catalogue? We'll source it",
@@ -718,7 +720,8 @@
       "sending": "Sending…",
       "successTitle": "Request received!",
       "successDesc": "We will contact you shortly.",
-      "closeBtn": "Close"
+      "closeBtn": "Close",
+      "errorMsg": "We couldn't send your request. Please try again or contact us directly:"
     }
   },
   "favorites": {
