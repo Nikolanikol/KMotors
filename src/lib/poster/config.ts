@@ -2,12 +2,9 @@
 
 // ─── Telegram ────────────────────────────────────────────────────────────────
 // Постит тот же бот, что и лид-формы (@KMOTORS_form_bot) — реюз TELEGRAM_BOT_TOKEN.
-// Новый env только под ID публичного канала «Авто из Кореи | Николай».
-// Авто постим в тему «Автомобили» форум-супергруппы «Авто из Кореи | Mobis | OEM».
-export const GROUP_ID = process.env.TELEGRAM_GROUP_ID || '-1003659575794';
-export const CARS_TOPIC_ID = Number(process.env.TELEGRAM_CARS_TOPIC_ID || '150');
-// Запчасти постим в тему «Запчасти» той же группы.
-export const PARTS_TOPIC_ID = Number(process.env.TELEGRAM_PARTS_TOPIC_ID || '151');
+// Группа и темы (авто — 150, запчасти — 151) выбираются в src/lib/telegramChats.ts
+// (posterTarget), там же переменные TELEGRAM_GROUP_ID / _CARS_TOPIC_ID / _PARTS_TOPIC_ID.
+// Старая константа CHANNEL_ID (TELEGRAM_CHANNEL_ID) удалена 27.11.2026: её не импортировал никто.
 
 // ─── Правила постинга запчастей ──────────────────────────────────────────────
 export const PARTS_CONFIG = {
@@ -17,8 +14,6 @@ export const PARTS_CONFIG = {
   minPriceKrw: 20000,     // не постить дешёвые (< 20 000 вон) — отсекаем «копейки»
   contactUsername: 'caparts',
 };
-// Старый канал — больше не используется для автопостинга (оставлен для совместимости).
-export const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID || '-1003889045726';
 
 // ─── Пресеты выборки ─────────────────────────────────────────────────────────
 // Марка/модель — корейскими названиями (как требует поиск Encar).

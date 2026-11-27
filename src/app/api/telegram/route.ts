@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { sendTelegram } from "@/lib/telegram";
+import { telegramChatId, telegramChatIds } from "@/lib/telegramChats";
 
 interface ContactPayload {
   name: string;
@@ -32,15 +33,14 @@ export async function POST(req: NextRequest) {
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-    const workChatId = process.env.TELEGRAM_WORK_CHAT_ID;
+    const chatId = telegramChatId("leads");
 
     if (!botToken || !chatId) {
       console.error("Missing env vars. BOT_TOKEN exists:", !!botToken, "CHAT_ID exists:", !!chatId);
       return NextResponse.json({ error: "Ошибка конфигурации сервера" }, { status: 500 });
     }
 
-    const notifyTargets = [chatId, workChatId].filter(Boolean) as string[];
+    const notifyTargets = telegramChatIds("leads");
 
     const sourceLabel: Record<string, string> = {
       header: "Шапка сайта",

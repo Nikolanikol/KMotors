@@ -11,14 +11,11 @@ import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
 import { SITE_URL } from "@/lib/site";
 import { sendTelegram, telegramRequest } from "@/lib/telegram";
-
-const ALLOWED_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
+import { telegramChatId, telegramChatIds } from "@/lib/telegramChats";
 
 // Все администраторы — могут получать уведомления и запускать команды
-const ADMIN_IDS = [ALLOWED_CHAT_ID, WORK_CHAT_ID].filter(Boolean) as string[];
 function isAdmin(chatId: number) {
-  return ADMIN_IDS.some(id => String(chatId) === String(id));
+  return telegramChatIds("admins").some(id => String(chatId) === String(id));
 }
 
 function ok() {
@@ -41,7 +38,7 @@ export async function GET() {
     ok: true,
     env: {
       hasToken:   !!process.env.TELEGRAM_BOT_TOKEN,
-      hasChatId:  !!process.env.TELEGRAM_CHAT_ID,
+      hasChatId:  telegramChatId("admins") !== null,
       hasSecret:  !!process.env.TELEGRAM_WEBHOOK_SECRET,
       hasSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
     },
@@ -203,7 +200,7 @@ export async function POST(req: NextRequest) {
           `✈️ Telegram: ${username}\n` +
           `💬 <a href="${replyLink}">Написать напрямую</a>`;
 
-      const notifyTargets = [ALLOWED_CHAT_ID, WORK_CHAT_ID].filter(Boolean);
+      const notifyTargets = telegramChatIds("admins");
       await Promise.all(
         notifyTargets.map(id => sendMessage(Number(id), ownerMsg))
       );
@@ -212,7 +209,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Защита — только для администраторов
-    if (ADMIN_IDS.length > 0 && !isAdmin(chatId)) {
+    if (telegramChatIds("admins").length > 0 && !isAdmin(chatId)) {
       return ok();
     }
 

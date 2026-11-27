@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase";
 import { sendTelegram } from "@/lib/telegram";
+import { telegramChatId } from "@/lib/telegramChats";
 
 // ── PayPal access token ─────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ async function getPayPalAccessToken(): Promise<string> {
 
 async function sendTelegramNotification(text: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_WORK_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+  const chatId = telegramChatId("orders");
   if (!token || !chatId) return;
 
   await sendTelegram({ text, chatId, token, parseMode: "HTML", onError: "swallow" });

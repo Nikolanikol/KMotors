@@ -2,7 +2,8 @@
 import { createServerClient } from '@/lib/supabase';
 import { getFx } from '@/lib/fx';
 import { telegramRequest } from '@/lib/telegram';
-import { GROUP_ID, PARTS_TOPIC_ID, PARTS_CONFIG } from './config';
+import { posterTarget } from '@/lib/telegramChats';
+import { PARTS_CONFIG } from './config';
 
 export interface Part {
   id: number;
@@ -134,7 +135,8 @@ async function sendPart(image: string | null, caption: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) throw new Error('TELEGRAM_BOT_TOKEN не задан');
 
-  const common = { chat_id: GROUP_ID, message_thread_id: PARTS_TOPIC_ID, parse_mode: 'HTML' };
+  const { chatId, threadId } = posterTarget('parts');
+  const common = { chat_id: chatId, message_thread_id: threadId, parse_mode: 'HTML' };
   const [method, body] = image
     ? ['sendPhoto', { ...common, photo: image, caption }]
     : ['sendMessage', { ...common, text: caption }];

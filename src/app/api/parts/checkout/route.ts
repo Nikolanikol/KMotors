@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase";
 import { krwToDisplayUsd } from "@/lib/pricing";
 import { getFx } from "@/lib/fx";
 import { sendTelegram } from "@/lib/telegram";
+import { telegramChatId } from "@/lib/telegramChats";
 
 interface ShippingAddress {
   name: string;
@@ -33,7 +34,7 @@ function generateOrderNumber(): string {
 
 async function sendTelegramNotification(text: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_WORK_CHAT_ID ?? process.env.TELEGRAM_CHAT_ID;
+  const chatId = telegramChatId("orders");
   if (!token || !chatId) return;
 
   await sendTelegram({ text, chatId, token, parseMode: "HTML", onError: "swallow" });
