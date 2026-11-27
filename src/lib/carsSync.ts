@@ -25,7 +25,38 @@ import {
 import { fetchWithBackoff } from "@/lib/encarBackoff";
 
 /** Тот же запрос, что у сайтмапа: синхронизируем ровно то, что индексируем. */
-const QUERY = "(And.Hidden.N._.CarType.Y.)";
+const BASE_CONDITIONS = "And.Hidden.N._.CarType.Y.";
+/**
+ * ⚠️ Выборка нарезана по ГОДУ выпуска на непересекающиеся куски, обход идёт по кругу
+ * (страница №1 каждого куска, потом №2 каждого…). Зачем: Encar сортирует по `ModifiedDate`
+ * с точностью до секунды, дилеры обновляют объявления пачками по сотне штук за одну секунду, а
+ * порядок внутри пачки зависит от окна запроса — соседние страницы по 20 строк (прокси
+ * Render режет выдачу до 20) пересекаются. Замер 27.11.2026: сплошной обход — 1 640 строк,
+ * 812 уникальных (50%); нарезка на 13 кусков по 6 страниц — 1 560 строк, 1 398 уникальных (90%).
+ * Куски в сумме дают весь пул (140 309 против 140 278 в сплошном запросе — разница от
+ * обновлений за минуту замера). Цена-в-куске не годится: годы × две цены дали 76%.
+ * Свежие годы идут первыми — первая страница обхода (канарейка проверки живости) из них.
+ * Границы — YYYYMM, как в фильтре каталога.
+ */
+export const LISTING_SLICES: readonly string[] = [
+  "Year.range(202600..)",
+  "Year.range(202500..202599)",
+  "Year.range(202400..202499)",
+  "Year.range(202300..202399)",
+  "Year.range(202200..202299)",
+  "Year.range(202100..202199)",
+  "Year.range(202000..202099)",
+  "Year.range(201900..201999)",
+  "Year.range(201800..201899)",
+  "Year.range(201600..201799)",
+  "Year.range(201400..201599)",
+  "Year.range(201100..201399)",
+  "Year.range(..201099)",
+];
+/** Запрос одного куска; без куска — вся выборка (так спрашивает сайтмап). */
+export function sliceQuery(slice?: string): string {
+  return slice ? `(${BASE_CONDITIONS}_.${slice}.)` : `(${BASE_CONDITIONS})`;
+}
 // Encar отдаёт до 200 записей за запрос (замер 29.07.2026, curl с сервера).
 // Прокси на Render режет выдачу до 20 независимо от запрошенного — отсюда
 // 10 запросов напрямую против 100 через прокси на том же объёме.
@@ -101,12 +132,13 @@ export interface CarsSyncResult {
  * 2→4→8 с) и повторяем ТУ ЖЕ страницу, прежде чем объявить её упавшей.
  */
 async function fetchPage(
+  query: string,
   offset: number,
   size: number,
   skipDirect = false
 ): Promise<{ rows: unknown[]; failed: boolean; directFailed: boolean; retries: number }> {
   const sr = `%7CModifiedDate%7C${offset}%7C${size}`;
-  const q = encodeURIComponent(QUERY);
+  const q = encodeURIComponent(query);
   let directFailed = false;
   let retries = 0;
   try {
@@ -185,44 +217,52 @@ export async function syncCarsFromListing({
   let directFails = 0;
   let sampleIds: string[] = [];
 
-  let offset = 0;
-  while (offset < limit && pages < maxRequests) {
-    if (Date.now() - started >= budgetMs) {
-      stoppedByBudget = true;
-      break;
+  // Состояние каждого куска: свой offset и признак «кончился». Обход идёт ПО КРУГУ:
+  // раунд = по одной странице из каждого живого куска. Бюджет времени обрывает обход на
+  // любом месте, и все куски к этому моменту продвинуты одинаково глубоко.
+  const slices = LISTING_SLICES.map((cond) => ({ query: sliceQuery(cond), offset: 0, done: false }));
+
+  roundLoop: while (fetched < limit && pages < maxRequests && slices.some((sl) => !sl.done)) {
+    for (const sl of slices) {
+      if (sl.done) continue;
+      if (fetched >= limit || pages >= maxRequests) break roundLoop;
+      if (Date.now() - started >= budgetMs) {
+        stoppedByBudget = true;
+        break roundLoop;
+      }
+      // Прямой путь признан мёртвым — идём прокси, но раз в DIRECT_RETRY_EVERY запросов
+      // пробуем прямой снова (одна неудача не должна отключать его до конца запуска).
+      const directDead = directFails >= DIRECT_DEAD_AFTER && pages % DIRECT_RETRY_EVERY !== 0;
+      const { rows, failed, directFailed, retries: pageRetries } = await fetchPage(
+        sl.query,
+        sl.offset,
+        PAGE,
+        directDead
+      );
+      retries += pageRetries;
+      if (directFailed) directFails += 1;
+      else if (!failed && !directDead) directFails = 0;
+      pages += 1;
+      if (failed) failedPages += 1;
+      fetched += rows.length;
+      for (const row of rows) {
+        const snap = snapshotFromListing(row);
+        if (snap) byId.set(snap.encar_id, snap);
+      }
+      if (sampleIds.length === 0 && byId.size > 0) sampleIds = [...byId.keys()].slice(0, 3);
+      // Пустая страница при живом апстриме — конец ЭТОГО куска. Упавшую страницу за конец НЕ
+      // принимаем: это сбой, а не край пула, но и продвинуться по ней нельзя — шагаем на
+      // размер страницы того пути, которым шли (через прокси 20, а не 200: прежний `+= PAGE`
+      // терял 180 записей на каждой упавшей прокси-странице).
+      if (rows.length === 0) {
+        if (!failed) sl.done = true;
+        else sl.offset += directDead || directFailed ? PROXY_PAGE : PAGE;
+      } else {
+        sl.offset += rows.length;
+      }
+      // Через прокси темп ниже: он ограничивает частоту (PROXY_DELAY_MS).
+      await sleep(directDead || directFailed ? Math.max(delayMs, PROXY_DELAY_MS) : delayMs);
     }
-    // Прямой путь признан мёртвым — идём прокси, но раз в DIRECT_RETRY_EVERY запросов
-    // пробуем прямой снова (одна неудача не должна отключать его до конца запуска).
-    const directDead = directFails >= DIRECT_DEAD_AFTER && pages % DIRECT_RETRY_EVERY !== 0;
-    const { rows, failed, directFailed, retries: pageRetries } = await fetchPage(
-      offset,
-      Math.min(PAGE, limit - offset),
-      directDead
-    );
-    retries += pageRetries;
-    if (directFailed) directFails += 1;
-    else if (!failed && !directDead) directFails = 0;
-    pages += 1;
-    if (failed) failedPages += 1;
-    fetched += rows.length;
-    for (const row of rows) {
-      const snap = snapshotFromListing(row);
-      if (snap) byId.set(snap.encar_id, snap);
-    }
-    if (sampleIds.length === 0 && byId.size > 0) sampleIds = [...byId.keys()].slice(0, 3);
-    // Пустая страница при живом апстриме — конец выдачи, дальше идти незачем.
-    // Упавшую страницу за конец НЕ принимаем: это сбой, а не край пула, но и
-    // продвинуться по ней нельзя — шагаем на PAGE, чтобы не топтаться на месте.
-    // Шаг при сбое — размер страницы ТОГО пути, которым шли: через прокси это 20, а не 200.
-    // Прежний `+= PAGE` терял 180 записей на каждой упавшей прокси-странице.
-    if (rows.length === 0) {
-      if (!failed) break;
-      offset += directDead || directFailed ? PROXY_PAGE : PAGE;
-    } else {
-      offset += rows.length;
-    }
-    // Через прокси темп ниже: он ограничивает частоту (PROXY_DELAY_MS).
-    if (offset < limit) await sleep(directDead || directFailed ? Math.max(delayMs, PROXY_DELAY_MS) : delayMs);
   }
 
   const snapshots = [...byId.values()];
