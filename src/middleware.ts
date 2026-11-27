@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isbot } from "isbot";
 import { isLang, resolveLang } from "@/lib/lang";
+import { probeVehicle } from "@/lib/vehicleProbe";
+import { carPageTarget, verdictHttpStatus } from "@/lib/vehicleStatus";
 import {
   ADMIN_LOGIN_PATH,
   classifyRequest,
@@ -62,6 +64,20 @@ function shouldTrack(request: NextRequest): boolean {
     } catch {}
   }
 
+  return true;
+}
+
+// Запрос самой страницы (HTML), а не подгрузки при клиентской навигации. Статус
+// RSC-ответа никто не читает, а проба Encar на каждый переход лишняя.
+// ⚠️ Next вырезает из запроса, который видит middleware, заголовки RSC /
+// Next-Router-* и параметр `_rsc` (проверено на сборке 27.11.2026) — по ним
+// клиентскую навигацию не распознать. Остаются `Accept: text/x-component` и `Next-Url`,
+// их и проверяем. Промах не страшен: RSC-ответ с кодом 410 клиентский роутер Next
+// не принимает и перезагружает страницу целиком — получается тот же результат.
+function isDocumentRequest(request: NextRequest): boolean {
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+  if ((request.headers.get("accept") || "").includes("text/x-component")) return false;
+  if (request.headers.get("next-url")) return false;
   return true;
 }
 
@@ -217,8 +233,29 @@ async function handle(request: NextRequest, event: NextFetchEvent) {
       break;
   }
 
+  // --- Карточка авто: честный HTTP-статус проданной (410) и битой (404) ---
+  // Статус нельзя отдать из страницы: loading.tsx уже отправил оболочку с 200 (см.
+  // src/lib/vehicleStatus.ts). Поэтому на ЗАПРОСЕ ДОКУМЕНТА (не RSC, не prefetch)
+  // спрашиваем Encar здесь и подменяем статус у rewrite на тот же адрес — страница
+  // рендерится как раньше (снимок проданной, подписка, похожие), меняется только код.
+  // Авария Encar / блокировка / таймаут → вердикт unknown → статус как раньше (200).
+  let carVerdictStatus: 410 | 404 | null = null;
+  let carVerdict: string | null = null;
+  const carTarget = isDocumentRequest(request) ? carPageTarget(path) : null;
+  if (carTarget) {
+    const verdict = await probeVehicle(carTarget.id);
+    carVerdictStatus = verdictHttpStatus(verdict);
+    carVerdict = verdict;
+  }
+
   // --- Supabase: refresh сессии (с таймаутом, без сессии — без вызова) ---
-  const response = NextResponse.next({ request });
+  const response = carVerdictStatus
+    ? NextResponse.rewrite(request.nextUrl.clone(), { request, status: carVerdictStatus })
+    : NextResponse.next({ request });
+  if (carVerdictStatus && carVerdict) {
+    response.headers.set("X-Car-Verdict", carVerdict);
+    if (carVerdict === "sold") response.headers.set("X-Robots-Tag", "noindex, follow");
+  }
   await refreshSupabaseSession(request, response);
 
 // --- Определяем lang из URL ---

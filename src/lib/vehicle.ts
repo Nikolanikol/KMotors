@@ -1,6 +1,17 @@
 // Единый фетчер данных авто по id: прямой Encar API + фолбэк на прокси, кэш 1 час.
 // Используется и на странице детали, и в блоке «Рекомендуемые авто».
 
+import { isEncarBlockBody } from "@/lib/vehicleStatus";
+
+/**
+ * ⚠️ Мобильный User-Agent обязателен: Encar отдаёт 404 с HTML-блокировкой на UA серверного
+ * fetch (`node`) — для ЛЮБОГО id, и живого тоже (замер 27.11.2026, как и у vehicleRecord.ts).
+ * Без него основной путь всегда уходил в `isEncarBlockPage` и каждая карточка ходила через
+ * прокси на Render (холодный старт — десятки секунд).
+ */
+const ENCAR_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
+
 // Без таймаута зависший апстрим держит рендер карточки до упора.
 const PRIMARY_TIMEOUT_MS = 8000;
 // Прокси на free-tier Render: холодный старт занимает десятки секунд.
@@ -21,8 +32,7 @@ export class VehicleUpstreamError extends Error {
 
 /** Страница блокировки Encar: HTML вместо JSON и ссылка на has_been_cr_blocked. */
 function isEncarBlockPage(res: Response, body: string): boolean {
-  const type = res.headers.get("content-type") ?? "";
-  return body.includes("has_been_cr_blocked") || type.includes("text/html");
+  return isEncarBlockBody(res.headers.get("content-type"), body);
 }
 
 /**
@@ -37,6 +47,7 @@ export async function fetchVehicleData(id: string): Promise<EncarRaw | null> {
   // Основной источник — прямой Encar API, кэш 1 час
   try {
     const res = await fetch(`https://api.encar.com/v1/readside/vehicle/${id}`, {
+      headers: { "user-agent": ENCAR_UA },
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(PRIMARY_TIMEOUT_MS),
     });

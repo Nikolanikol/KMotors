@@ -241,7 +241,9 @@
 прокси (13.11 блокировка сутки метила живые машины проданными — [постмортем](docs/postmortems.md)).
 
 `fetchVehicleData` отличает «продана» (Encar 404 → `null`) от «апстрим лежит» (бросает
-`VehicleUpstreamError`). `generateMetadata` ставит `noindex` ТОЛЬКО для случая продажи.
+`VehicleUpstreamError`). `generateMetadata` ставит `noindex` ТОЛЬКО для случая продажи. Основной запрос к
+Encar обязан идти с мобильным UA (`ENCAR_UA` в `vehicle.ts`): с UA серверного fetch Encar отдаёт 404+HTML
+блокировки на ЛЮБОЙ id, и карточка уходила в прокси на Render.
 Никогда не схлопывать эти две ветки в `catch(() => null)`
 ([постмортем](docs/postmortems.md)).
 
@@ -252,6 +254,17 @@
 машины (сотни URL в индексе) попадал в пустую заглушку — при том, что посетитель тут самый
 квалифицированный из возможных, он искал конкретную модель.
 
+- ⚠️ **HTTP-статус проданной — 410, и отдаёт его middleware, а не страница** (27.11.2026; раньше было
+  200 + noindex). У `catalog/` и `catalog/[id]/` есть `loading.tsx`: оболочка уходит клиенту ДО ответа
+  Encar, поэтому `notFound()`, `not-found.tsx` и любая ветка рендера статус уже не меняют (проверено
+  на `next start`; даже без `[id]/loading.tsx` статус держит `catalog/loading.tsx`). Применяется
+  `NextResponse.rewrite(тот же URL, { status })` из `src/middleware.ts`: `probeVehicle`
+  (`src/lib/vehicleProbe.ts`: один GET к Encar с мобильным UA, 1,5 с, вердикт в памяти на 30 мин, авария —
+  30 с) → `classifyVehicleResponse` (`vehicleStatus.ts`, тесты `tests/catalog/vehicleStatus.spec.ts`):
+  строгий 404 → 410, 200 без марки/цены → 404, ВСЁ остальное (5xx, таймаут, страница блокировки
+  404+HTML, не-JSON) → статус как раньше, без noindex. Тело страницы то же (снимок, подписка, похожие).
+  Статус цепляется к документу, RSC-запросы (`Accept: text/x-component`) пропускаются. Проверка на проде:
+  `curl -sI -A Googlebot https://www.kmotors.shop/en/catalog/<id проданной>` → `410` и `x-car-verdict: sold`.
 - ⚠️ `noindex` остаётся. Страница живёт ради людей, уже пришедших из индекса, а не ради
   ранжирования; вернём индексацию — вернутся сотни «дубликатов без канонического» в GSC.
   Выставляется независимо, в `generateMetadata`, и от рендера не зависит.
