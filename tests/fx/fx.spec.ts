@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getFx } from "@/lib/fx";
-import { FX_SNAPSHOT } from "@/lib/fx/snapshot";
+import { FX_SNAPSHOT, MARKET_SNAPSHOT } from "@/lib/fx/snapshot";
 import { CBR_URL } from "@/lib/fx/sources/cbr";
 import { ERAPI_URL } from "@/lib/fx/sources/erapi";
 import { FRANKFURTER_URL } from "@/lib/fx/sources/frankfurter";
@@ -82,8 +82,8 @@ describe("ЦБ РФ упал → снимок с логом", () => {
     const rates = await getFx("market");
 
     expect(rates.krwToUsd).toBe(0.00072);
-    expect(rates.krwToRub).toBe(0.0609);
-    expect(rates.rubToUsd).toBe(1 / 84.28);
+    expect(rates.krwToRub).toBe(MARKET_SNAPSHOT.krwToRub.value);
+    expect(rates.rubToUsd).toBe(MARKET_SNAPSHOT.rubToUsd.value);
     expect(rates.updatedAt).toBe("2026-08-26");
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
@@ -97,11 +97,11 @@ describe("ЦБ РФ упал → снимок с логом", () => {
     stubFetch({});
     const rates = await getFx("market");
     expect(rates.updatedAt).toBe("fallback");
-    // Рыночный блок снимка — прежние значения getCurrencyRates, не кросс таможенного.
+    // Рыночный блок снимка — свой, не кросс таможенного; значения берём из него же.
     expect(rates).toEqual({
-      krwToRub: 0.0609,
-      krwToUsd: 0.00072,
-      rubToUsd: 1 / 84.28,
+      krwToRub: MARKET_SNAPSHOT.krwToRub.value,
+      krwToUsd: MARKET_SNAPSHOT.krwToUsd.value,
+      rubToUsd: MARKET_SNAPSHOT.rubToUsd.value,
       updatedAt: "fallback",
     });
     expect(errorSpy).toHaveBeenCalledTimes(1);
