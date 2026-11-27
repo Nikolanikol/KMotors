@@ -33,7 +33,13 @@ async function main() {
   console.log(
     `Залив cars_seen: до ${LIMIT} машин${DRY_RUN ? " (СУХОЙ ПРОГОН)" : ""}`
   );
-  const r = await syncCarsFromListing({ limit: LIMIT, delayMs: DELAY_MS, dry: DRY_RUN });
+  const r = await syncCarsFromListing({
+    limit: LIMIT,
+    delayMs: DELAY_MS,
+    dry: DRY_RUN,
+    // Бюджет времени нужен ручке крона (таймаут задачи), а у ручного залива его нет.
+    budgetMs: Number.POSITIVE_INFINITY,
+  });
   console.log(
     `Запросов ${r.pages} (не отдалось ${r.failedPages}), строк ${r.fetched}, ` +
       `уникальных машин ${r.unique}, записано ${r.written}`
