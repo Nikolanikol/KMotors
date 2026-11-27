@@ -158,6 +158,10 @@ npx tsc --noEmit
   `parse_mode` и политику ошибок задаёт вызывающий, чаты РАЗНЫЕ (лиды — `CHAT_ID` и `WORK`, заказы —
   `WORK ?? CHAT`, SEO-гейт и блог — `CHAT_ID`, сбои синка и отчёт рассылки — `WORK`, постер — группа
   и темы) — не сливать их в один.
+  ⚠️ Выбор чата — ТОЛЬКО через `src/lib/telegramChats.ts` (`telegramChatId` / `telegramChatIds` по
+  назначению, `posterTarget` для постера); имя переменной окружения чата (`TELEGRAM_CHAT_ID`,
+  `TELEGRAM_WORK_CHAT_ID`, `TELEGRAM_GROUP_ID`, темы) в вызывающем коде не читать. Новое назначение — в
+  реестр и в `tests/telegram/telegramChats.spec.ts`. Токен (`TELEGRAM_BOT_TOKEN`) сюда не относится.
 - Гейты крон-роутов FAIL-CLOSED: `if (!secret || req.headers.get("x-poster-secret") !== secret) return 401`.
 - SEO-пайплайн никогда не трогает живые данные до гейта одобрения в Telegram
   ([docs/core-seo.md](docs/core-seo.md)).

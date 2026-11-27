@@ -21,8 +21,7 @@ import { getFx } from "@/lib/fx";
 import { carPriceKrw } from "@/lib/carPricing";
 import { SITE_URL } from "@/lib/site";
 import { sendTelegram } from "@/lib/telegram";
-
-const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
+import { telegramChatId } from "@/lib/telegramChats";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -104,11 +103,12 @@ interface SendResult {
  * должен ронять рассылку.
  */
 async function reportToWorkChat(lines: string[]): Promise<void> {
-  if (!WORK_CHAT_ID) return;
+  const chatId = telegramChatId("ops");
+  if (!chatId) return;
   try {
     await sendTelegram({
       text: lines.join("\n"),
-      chatId: WORK_CHAT_ID,
+      chatId,
       // Без parse_mode: текст служебный, разметки в нём нет, а любой случайный
       // спецсимвол в HTML-режиме уронил бы отправку целиком.
       disableWebPagePreview: true,

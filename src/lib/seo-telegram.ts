@@ -6,6 +6,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTelegram } from "@/lib/telegram";
+import { telegramChatId } from "@/lib/telegramChats";
 
 
 function esc(s: string | null | undefined): string {
@@ -119,7 +120,7 @@ export async function sendSeoDigest(
   supabase: SupabaseClient,
   batchId: string
 ): Promise<{ sent: boolean; count: number }> {
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const chatId = telegramChatId("seo");
   if (!chatId) return { sent: false, count: 0 };
 
   const d = await buildDigest(supabase, batchId);
@@ -131,7 +132,7 @@ export async function sendSeoDigest(
 
 /** Отправляет карточки батча по одной (drill-down). */
 export async function sendItemMessages(supabase: SupabaseClient, batchId: string): Promise<number> {
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const chatId = telegramChatId("seo");
   if (!chatId) return 0;
   const items = await buildItemMessages(supabase, batchId);
   for (const it of items) await tgSend(chatId, it.text, it.reply_markup);

@@ -5,8 +5,7 @@ import { buildEncarGrounding } from "@/lib/encarModelPrices";
 import { getFx } from "@/lib/fx";
 import { SITE_URL } from "@/lib/site";
 import { telegramRequest } from "@/lib/telegram";
-
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+import { telegramChatId } from "@/lib/telegramChats";
 
 // Порог «тем осталось мало» — при таком остатке pending шлём предупреждение.
 // Крон ходит раз в 3 дня, значит 3 темы это примерно неделя запаса.
@@ -17,9 +16,10 @@ const PRIORITY_PENALTY = 3;
 
 /** Служебное сообщение владельцу. Никогда не роняет генерацию. */
 async function notify(text: string): Promise<void> {
-  if (!CHAT_ID) return;
+  const chatId = telegramChatId("blog");
+  if (!chatId) return;
   try {
-    await telegramRequest("sendMessage", { chat_id: CHAT_ID, text, parse_mode: "HTML" });
+    await telegramRequest("sendMessage", { chat_id: chatId, text, parse_mode: "HTML" });
   } catch {
     /* уведомление — не критичный путь */
   }
@@ -423,7 +423,8 @@ async function handleGenerate(req: NextRequest) {
   const postId = inserted?.id;
 
   // Уведомление в Telegram
-  if (CHAT_ID && postId) {
+  const chatId = telegramChatId("blog");
+  if (chatId && postId) {
     const typeEmoji: Record<string, string> = {
       comparison: "⚖️",
       review: "🔍",
@@ -452,7 +453,7 @@ async function handleGenerate(req: NextRequest) {
     };
 
     await telegramRequest("sendMessage", {
-      chat_id: CHAT_ID,
+      chat_id: chatId,
       text: caption,
       parse_mode: "HTML",
       reply_markup: keyboard,

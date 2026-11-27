@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { fetchRssFeed, parseRssItems, slugFromUrl, escapeHtml } from "@/lib/rss";
 import { telegramRequest } from "@/lib/telegram";
+import { telegramChatId } from "@/lib/telegramChats";
 
 const RSS_FEEDS = [
 
@@ -17,8 +18,6 @@ const MAX_NEW_PER_RUN = 5;
 
 // Only accept articles published within the last N days
 const MAX_AGE_DAYS = 100;
-
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 export async function GET(req: NextRequest) {
   // Тот же гейт, что у /api/poster/run и /api/blog-generate: x-poster-secret.
@@ -115,7 +114,8 @@ export async function GET(req: NextRequest) {
           existingSlugs.add(slug); // prevent duplicate in same run
 
           // Send Telegram notification
-          if (CHAT_ID && postId) {
+          const chatId = telegramChatId("blog");
+          if (chatId && postId) {
             const descText = item.description?.slice(0, 250) || "";
             const ellipsis = (item.description?.length || 0) > 250 ? "..." : "";
 
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
             if (item.imageUrl) {
               // Send as photo with caption — shows image preview
               await telegramRequest("sendPhoto", {
-                chat_id: CHAT_ID,
+                chat_id: chatId,
                 photo: item.imageUrl,
                 caption,
                 parse_mode: "HTML",
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
             } else {
               // Fallback: text message
               await telegramRequest("sendMessage", {
-                chat_id: CHAT_ID,
+                chat_id: chatId,
                 text: caption,
                 parse_mode: "HTML",
                 reply_markup: keyboard,

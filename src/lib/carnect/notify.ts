@@ -14,21 +14,22 @@
 // Не бросает никогда: уведомление вторично, синк важнее.
 
 import { sendTelegram } from "@/lib/telegram";
+import { telegramChatId } from "@/lib/telegramChats";
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WORK_CHAT_ID = process.env.TELEGRAM_WORK_CHAT_ID;
 
 /** Telegram режет сообщение длиннее 4096 символов — оставляем запас. */
 const MAX_LEN = 3800;
 
 export async function notifyWorkChat(lines: string[]): Promise<void> {
-  if (!TOKEN || !WORK_CHAT_ID) return;
+  const chatId = telegramChatId("ops");
+  if (!TOKEN || !chatId) return;
   let text = lines.join("\n");
   if (text.length > MAX_LEN) text = `${text.slice(0, MAX_LEN)}\n…`;
   try {
     await sendTelegram({
       text,
-      chatId: WORK_CHAT_ID,
+      chatId,
       token: TOKEN,
       // Без parse_mode: в тексте названия машин и ошибки от чужого сайта,
       // любой случайный «<» в HTML-режиме уронил бы отправку целиком.
