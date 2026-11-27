@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { User, ShoppingCart, Package, ChevronRight } from "lucide-react";
+import { User, Package, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import ProfileForm from "./ProfileForm";
-import CartTab from "./CartTab";
 import OrdersTab from "./OrdersTab";
 
 interface Profile {
@@ -22,18 +21,16 @@ interface Props {
   lang: string;
   user: { id: string; email: string };
   profile: Profile | null;
-  /** Курс KRW→USD с сервера (getFx("market"), кеш 24ч). В браузере НЕ запрашивать. */
-  krwToUsd: number;
 }
 
-type Tab = "profile" | "cart" | "orders";
+type Tab = "profile" | "orders";
 
-const TABS: Record<string, { profile: string; cart: string; orders: string }> = {
-  ru: { profile: "Профиль", cart: "Корзина", orders: "Заказы" },
-  en: { profile: "Profile", cart: "Cart", orders: "Orders" },
-  ko: { profile: "프로필", cart: "장바구니", orders: "주문" },
-  ka: { profile: "პროფილი", cart: "კალათა", orders: "შეკვეთები" },
-  ar: { profile: "الملف الشخصي", cart: "السلة", orders: "الطلبات" },
+const TABS: Record<string, { profile: string; orders: string }> = {
+  ru: { profile: "Профиль", orders: "Заказы" },
+  en: { profile: "Profile", orders: "Orders" },
+  ko: { profile: "프로필", orders: "주문" },
+  ka: { profile: "პროფილი", orders: "შეკვეთები" },
+  ar: { profile: "الملف الشخصي", orders: "الطلبات" },
 };
 
 const BREADCRUMB: Record<string, { home: string; account: string }> = {
@@ -44,13 +41,13 @@ const BREADCRUMB: Record<string, { home: string; account: string }> = {
   ar: { home: "الرئيسية", account: "حسابي" },
 };
 
-export default function AccountClient({ lang, user, profile, krwToUsd }: Props) {
+export default function AccountClient({ lang, user, profile }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const initialTab = (searchParams.get("tab") as Tab | null) ?? "profile";
   const [activeTab, setActiveTab] = useState<Tab>(
-    ["profile", "cart", "orders"].includes(initialTab) ? initialTab : "profile"
+    ["profile", "orders"].includes(initialTab) ? initialTab : "profile"
   );
   const labels = TABS[lang] ?? TABS.ru;
   const bc = BREADCRUMB[lang] ?? BREADCRUMB.ru;
@@ -62,7 +59,7 @@ export default function AccountClient({ lang, user, profile, krwToUsd }: Props) 
 
   useEffect(() => {
     const tab = searchParams.get("tab") as Tab | null;
-    if (tab && ["profile", "cart", "orders"].includes(tab)) {
+    if (tab && ["profile", "orders"].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -70,7 +67,6 @@ export default function AccountClient({ lang, user, profile, krwToUsd }: Props) 
 
   const tabs = [
     { id: "profile" as Tab, label: labels.profile, icon: User },
-    { id: "cart" as Tab, label: labels.cart, icon: ShoppingCart },
     { id: "orders" as Tab, label: labels.orders, icon: Package },
   ];
 
@@ -128,9 +124,6 @@ export default function AccountClient({ lang, user, profile, krwToUsd }: Props) 
         <div className="bg-[var(--axis-charcoal)] rounded-2xl border border-white/[0.06] p-6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.9)]">
           {activeTab === "profile" && (
             <ProfileForm lang={lang} user={user} profile={profile} />
-          )}
-          {activeTab === "cart" && (
-            <CartTab lang={lang} userId={user.id} profileCountry={profile?.country ?? null} krwToUsd={krwToUsd} />
           )}
           {activeTab === "orders" && (
             <OrdersTab lang={lang} userId={user.id} />

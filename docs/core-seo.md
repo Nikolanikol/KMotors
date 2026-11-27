@@ -20,6 +20,36 @@
   проверять запросом: `/en/models` попал туда по ошибке и давал 404, потому что
   страницы-списка моделей в проекте нет, есть только `/models/[slug]`.
 
+#### Запчасти: noindex, крошки, JSON-LD, 404 (27.11.2026)
+
+- ⚠️ `/[lang]/parts` получает `noindex` ТОЛЬКО при параметре фильтра из белого списка
+  `PARTS_FILTER_PARAMS` (`src/lib/partsSeo.ts`: q, cat, cats, sub, brand, brands, model, sort,
+  min, max, page). `utm_*`, `gclid`, `fbclid` его не дают: раньше любой параметр, включая
+  `utm_source=caranalizer` с партнёрской ссылки, давал `noindex` при canonical на чистый URL —
+  конфликтный сигнал. Список держать равным параметрам `PartsCatalogClient`.
+- Крошки: корень языка — `${SITE_URL}/${lang}` БЕЗ хвостового слэша (`"/"` даёт 308 и Google
+  отбрасывает `item`), название раздела из словаря (`getServerT`), а не «Запчасти/Parts» по
+  условию. Крошка категории ведёт на индексируемый `/${lang}/parts/category/<slug>`, не на
+  `/parts?cat=` (это noindex-фильтр).
+- JSON-LD всех страниц запчастей сериализуется через `jsonLd()`: `<` экранируется как `<`,
+  иначе `</script>` в названии из скрейпа ломает разметку. На `/parts` убран `Offer` без цены.
+- Страницы `category/[slug]` и `fitment/[brand]/[slug]` при `page > totalPages` отдают
+  `notFound()`: раньше `?page=9999` давал индексируемую пустую страницу (soft-404).
+- Карточка товара: если `price_krw <= 0` — без `offers` в JSON-LD, без цены в meta, `noindex`,
+  в UI «Цена по запросу» вместо корзины (`source=parts_price_request`). На 27.11.2026 таких
+  строк в базе 0. `InStock` для всех остальных НЕ менялся — решение владельца, поля наличия нет.
+- Название производителя в title/description и JSON-LD берётся из `product.manufacturer`;
+  без него — нейтральная формулировка без «Hyundai Mobis». На fitment-страницах «Mobis» только
+  для hyundai/kia/genesis.
+- Slug артикула нормализуется: не найден точно, но найден без учёта регистра и дефисов —
+  `permanentRedirect` на канонический. Поиск идёт через ILIKE только при промахе точного.
+- ⚠️ Несуществующий slug `/parts/<мусор>` по-прежнему отдаёт 200 с `noindex`, а не 404:
+  статус уходит вместе со скелетоном из `loading.tsx` ДО вызова `notFound()`. Варианты
+  (удалить `loading.tsx` или проверять существование в middleware, как `vehicleStatus.ts` для
+  `catalog/[id]`) отложены, см. docs/open-questions.md.
+- `sitemap-parts/[page]`: артикул проходит `encodeURIComponent` и XML-экранирование; при сбое БД
+  ответ 503 с `Retry-After`, а не пустой файл с 200.
+
 ### og-карточки соцсетей (сведено 12.08.2026)
 
 Карточки — ГОТОВЫЕ JPEG в `public/og/<раздел>-<язык>.jpg`, маршруты (`opengraph-image.tsx`)

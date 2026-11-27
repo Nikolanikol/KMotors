@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Wrench, ShoppingCart, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
@@ -26,10 +26,13 @@ export function QuickViewModal({
 }: QuickViewModalProps) {
   const { t } = useTranslation();
   const [qty, setQty] = useState(1);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setQty(1);
+      // Фокус в диалог: иначе клавиатурный пользователь остаётся «под» затемнением.
+      closeRef.current?.focus();
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -49,12 +52,14 @@ export function QuickViewModal({
 
   if (!product) return null;
 
+  // Имя — по тем же правилам, что в сетке (FitmentProductsGrid / каталог): для ka/ar
+  // это английское название, а не русское.
   const name =
-    lang === "ko" && product.name_ko
-      ? product.name_ko
-      : lang === "en"
-        ? product.name_en
-        : product.name_ru;
+    lang === "ru"
+      ? product.name_ru || product.name_en || product.part_number
+      : lang === "ko"
+        ? product.name_ko || product.name_en || product.name_ru || product.part_number
+        : product.name_en || product.name_ru || product.part_number;
 
   const price = formatUsd(product.price_krw, krwToUsd);
 
@@ -80,21 +85,29 @@ export function QuickViewModal({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
-        isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-[opacity,visibility] duration-300 ${
+        isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
       }`}
       onClick={onClose}
+      aria-hidden={!isOpen}
     >
       <div className="absolute inset-0 bg-black/70" />
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-view-title"
         className={`relative bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-xl shadow-2xl max-w-[700px] w-full max-h-[90vh] overflow-y-auto transition-transform duration-300 ${
           isOpen ? "scale-100" : "scale-95"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          ref={closeRef}
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center hover:bg-[var(--pn-border)] transition-colors z-10"
+          aria-label={t("parts.detail.close")}
+          title={t("parts.detail.close")}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--pn-surface-3)] flex items-center justify-center cursor-pointer hover:bg-[var(--pn-border)] transition-colors z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
         >
           <X className="w-4 h-4 text-[var(--pn-text-muted)]" />
         </button>
@@ -121,7 +134,7 @@ export function QuickViewModal({
             <div className="text-xs text-[var(--pn-orange-soft)] font-mono uppercase tracking-wider mb-1">
               {product.part_number}
             </div>
-            <h3 className="text-lg font-bold text-[var(--pn-deep-navy)] mb-4 leading-tight">
+            <h3 id="quick-view-title" className="text-lg font-bold text-[var(--pn-deep-navy)] mb-4 leading-tight">
               {name}
             </h3>
 
@@ -138,19 +151,23 @@ export function QuickViewModal({
             {/* Quantity */}
             <div className="flex items-center gap-3 mb-6">
               <span className="text-sm text-[var(--pn-dark-gray)]">
-                {t("parts.detail.priceLabel")}:
+                {t("parts.detail.quantity")}:
               </span>
               <div className="flex items-center border border-[var(--pn-medium-gray)] rounded-md">
                 <button
+                  type="button"
                   onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-8 h-8 flex items-center justify-center text-[var(--pn-dark-gray)] hover:bg-[var(--pn-light-gray)] rounded-l-md transition-colors"
+                  aria-label={t("parts.detail.decreaseQty")}
+                  className="w-8 h-8 flex items-center justify-center cursor-pointer text-[var(--pn-dark-gray)] hover:bg-[var(--pn-light-gray)] rounded-l-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
                 >
-                  —
+                  −
                 </button>
                 <span className="w-10 text-center text-sm font-medium">{qty}</span>
                 <button
+                  type="button"
                   onClick={() => setQty(qty + 1)}
-                  className="w-8 h-8 flex items-center justify-center text-[var(--pn-dark-gray)] hover:bg-[var(--pn-light-gray)] rounded-r-md transition-colors"
+                  aria-label={t("parts.detail.increaseQty")}
+                  className="w-8 h-8 flex items-center justify-center cursor-pointer text-[var(--pn-dark-gray)] hover:bg-[var(--pn-light-gray)] rounded-r-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
                 >
                   +
                 </button>
@@ -159,9 +176,10 @@ export function QuickViewModal({
 
             {inCart ? (
               <button
+                type="button"
                 onClick={handleCart}
                 title={t("parts.detail.removeFromCart")}
-                className="group/cart w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold bg-[var(--pn-success)] hover:bg-[var(--pn-error)] text-white transition-colors"
+                className="group/cart w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold cursor-pointer bg-[var(--pn-success)] hover:bg-[var(--pn-error)] text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
               >
                 <Check className="w-4 h-4 group-hover/cart:hidden" />
                 <X className="w-4 h-4 hidden group-hover/cart:block" />
@@ -170,8 +188,9 @@ export function QuickViewModal({
               </button>
             ) : (
               <button
+                type="button"
                 onClick={handleCart}
-                className="w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold pn-btn-primary transition-all"
+                className="w-full text-center text-sm mb-3 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold cursor-pointer pn-btn-primary transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
               >
                 <ShoppingCart className="w-4 h-4" />
                 {t("parts.detail.addToCart")}

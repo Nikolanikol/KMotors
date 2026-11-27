@@ -496,6 +496,8 @@
       "preOrderBtn": "طلب مسبق",
       "noResults": "لم يتم العثور على قطع",
       "noResultsHint": "حاول تغيير الفلاتر أو إعادة تعيينها",
+      "loadError": "تعذّر تحميل الكتالوج. تحقق من الاتصال وحاول مرة أخرى.",
+      "retry": "إعادة المحاولة",
       "miss": {
         "queryLabel": "طلب البحث",
         "title": "لم تجدها في الكتالوج؟ سنوفّرها لك",
@@ -680,6 +682,16 @@
       "copySuccess": "تم النسخ!",
       "viewAll": "عرض الكل",
       "similarTitle": "قطع غيار لهذا الموديل",
+      "quickView": "نظرة سريعة",
+      "quantity": "الكمية",
+      "decreaseQty": "تقليل الكمية",
+      "increaseQty": "زيادة الكمية",
+      "close": "إغلاق",
+      "copyPartNumber": "نسخ رقم القطعة",
+      "crossRefsTitle": "الأرقام المرجعية (البدائل)",
+      "priceOnRequest": "السعر عند الطلب",
+      "requestPrice": "اطلب السعر",
+      "requestPriceText": "اترك طلبًا — سيؤكد المدير توفر هذه القطعة وسعرها.",
       "shippingCalcTitle": "تكلفة الشحن EMS Korea",
       "shippingCalcSelect": "اختر الدولة",
       "shippingCalcResult": "حوالي {price} USD",
@@ -706,7 +718,8 @@
       "sending": "جارٍ الإرسال…",
       "successTitle": "تم استلام الطلب!",
       "successDesc": "سنتواصل معك قريبًا.",
-      "closeBtn": "إغلاق"
+      "closeBtn": "إغلاق",
+      "errorMsg": "تعذّر إرسال طلبك. حاول مرة أخرى أو تواصل معنا مباشرة:"
     }
   },
   "favorites": {

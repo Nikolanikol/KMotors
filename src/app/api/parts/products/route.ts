@@ -9,11 +9,15 @@ const PAGE_SIZE = 24;
 type AnyQuery = any;
 
 // ── Cached slug lookups (revalidate every hour) ───────────────────────────────
+// ⚠️ При ошибке БРОСАЕМ, а не отдаём `data ?? []`: unstable_cache закеширует любое
+// возвращённое значение на час, и один сбой базы превратился бы в час «нет брендов».
+// Брошенное исключение не кешируется.
 const getBrands = unstable_cache(
   async () => {
-    const { data } = await createServerClient()
+    const { data, error } = await createServerClient()
       .from("parts_brands")
       .select("id, slug");
+    if (error) throw new Error(`parts_brands: ${error.message}`);
     return data ?? [];
   },
   ["parts-brands"],
@@ -22,14 +26,46 @@ const getBrands = unstable_cache(
 
 const getCategories = unstable_cache(
   async () => {
-    const { data } = await createServerClient()
+    const { data, error } = await createServerClient()
       .from("parts_categories")
       .select("id, slug, parent_id");
+    if (error) throw new Error(`parts_categories: ${error.message}`);
     return data ?? [];
   },
   ["parts-categories"],
   { revalidate: 3600 }
 );
+
+/**
+ * Текст поиска → слова, безопасные для фильтра `.or()`. Запятая, скобки, кавычки,
+ * обратный слеш, `%`, `_`, `*`, `:` и управляющие символы ломают синтаксис PostgREST
+ * или работают как маска ilike — заменяем пробелом. Слов не больше 6, каждое до 40 знаков.
+ */
+function searchWords(q: string): string[] {
+  return q
+    .replace(/[,()"'\\%_*:\u0000-\u001f\u007f]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 6)
+    .map((w) => w.slice(0, 40));
+}
+
+/** Целое в [min, max] или fallback; нечисло и дроби в запрос не попадают. */
+function intParam(raw: string | null, min: number, max: number, fallback: number): number {
+  if (raw === null || raw.trim() === "") return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+/** Цена: конечное неотрицательное число, иначе null (фильтр не применяется). */
+function priceParam(raw: string | null): number | null {
+  if (raw === null || raw.trim() === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
+}
+
+const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 export async function GET(req: NextRequest) {
   try {
@@ -42,18 +78,19 @@ export async function GET(req: NextRequest) {
     const catsParam  = sp.get("cats")   ?? "";
     const subSlug    = sp.get("sub")    ?? "";
     const modelName  = sp.get("model")  ?? "";
-    const q          = (sp.get("q") ?? "").trim();
     // Part numbers are stored uppercase, without spaces or hyphens (e.g.
     // "2630035505"), but users type the catalog format "26300-35505".
-    // Strip spaces/hyphens for the part-number match; ilike handles case.
-    const qPart      = q.replace(/[\s-]+/g, "");
-    const minPrice   = sp.get("min") ? Number(sp.get("min")) : null;
-    const maxPrice   = sp.get("max") ? Number(sp.get("max")) : null;
+    // Ищем по словам: каждое слово — отдельное условие (название или артикул),
+    // слова связаны через AND. В артикульном сравнении дефисы убираем; ilike
+    // регистр сам не различает.
+    const words      = searchWords(sp.get("q") ?? "");
+    const minPrice   = priceParam(sp.get("min"));
+    const maxPrice   = priceParam(sp.get("max"));
     const sort       = sp.get("sort")   ?? "default";
-    const page       = Math.max(1, Number(sp.get("page") ?? "1"));
-    const limit      = Math.min(PAGE_SIZE, Math.max(1, Number(sp.get("limit") ?? String(PAGE_SIZE))));
+    const page       = intParam(sp.get("page"), 1, 1000, 1);
+    const limit      = intParam(sp.get("limit"), 1, PAGE_SIZE, PAGE_SIZE);
 
-    const hasSearch = !!(q || minPrice || maxPrice);
+    const hasSearch = !!(words.length || minPrice || maxPrice);
     const hasFilters = !!(brandSlug || brandsParam || catSlug || catsParam || subSlug || modelName || sort !== "default");
     const cacheHeader = hasSearch
       ? "no-store"
@@ -95,11 +132,12 @@ export async function GET(req: NextRequest) {
     let modelProductIds: number[] | null = null;
 
     if (modelName && brandIds.length === 1) {
-      const { data: modelRows } = await supabase
+      const { data: modelRows, error: modelErr } = await supabase
         .from("parts_vehicle_models")
         .select("id")
         .eq("name_en", modelName)
         .eq("brand_id", brandIds[0]);
+      if (modelErr) throw new Error(`parts_vehicle_models: ${modelErr.message}`);
 
       const modelIds = modelRows?.map((m) => m.id) ?? [];
 
@@ -107,10 +145,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ products: [], total: 0, catCounts: {}, subCounts: {}, brandCounts: {} });
       }
 
-      const { data: fitmentRows } = await supabase
+      const { data: fitmentRows, error: fitmentErr } = await supabase
         .from("parts_fitment")
         .select("product_id")
         .in("vehicle_model_id", modelIds);
+      if (fitmentErr) throw new Error(`parts_fitment: ${fitmentErr.message}`);
 
       modelProductIds = [...new Set(fitmentRows?.map((f) => f.product_id) ?? [])];
 
@@ -121,15 +160,24 @@ export async function GET(req: NextRequest) {
 
     // ── Filter builders ───────────────────────────────────────────────────────
     // "base" = brand + model + price + search (NO cat/sub)
+    // Поиск: по одному .or() на слово. postgrest-js для каждого вызова делает
+    // searchParams.append("or", …), а PostgREST склеивает все параметры через AND.
+    function withSearch(query: AnyQuery): AnyQuery {
+      for (const w of words) {
+        const wPart = w.replace(/-+/g, "");
+        query = query.or(
+          `part_number.ilike.%${wPart || w}%,name_ru.ilike.%${w}%,name_en.ilike.%${w}%`
+        );
+      }
+      return query;
+    }
+
     function withBaseFilters(query: AnyQuery): AnyQuery {
       if (brandIds.length > 0) query = query.in("brand_id", brandIds);
       if (modelProductIds)     query = query.in("id", modelProductIds);
       if (minPrice !== null)   query = query.gte("price_krw", minPrice);
       if (maxPrice !== null)   query = query.lte("price_krw", maxPrice);
-      if (q) query = query.or(
-        `part_number.ilike.%${qPart}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
-      );
-      return query;
+      return withSearch(query);
     }
 
     // "full" = base + cat + sub
@@ -145,9 +193,7 @@ export async function GET(req: NextRequest) {
       if (modelProductIds)   query = query.in("id", modelProductIds);
       if (minPrice !== null)  query = query.gte("price_krw", minPrice);
       if (maxPrice !== null)  query = query.lte("price_krw", maxPrice);
-      if (q) query = query.or(
-        `part_number.ilike.%${qPart}%,name_ru.ilike.%${q}%,name_en.ilike.%${q}%`
-      );
+      query = withSearch(query);
       if (catIds.length > 0) query = query.in("category_id", catIds);
       if (subId !== null)     query = query.eq("subcategory_id", subId);
       return query;
@@ -165,8 +211,12 @@ export async function GET(req: NextRequest) {
     switch (sort) {
       case "price_asc":  productQuery = productQuery.order("price_krw", { ascending: true });  break;
       case "price_desc": productQuery = productQuery.order("price_krw", { ascending: false }); break;
+      case "name_asc":   productQuery = productQuery.order("name_ru",   { ascending: true });  break;
       default:           productQuery = productQuery.order("name_ru",   { ascending: true });  break;
     }
+    // Второй ключ по уникальному id: без него строки с равным ключом сортировки
+    // «гуляют» между страницами .range() (пропуски и дубли).
+    productQuery = productQuery.order("id", { ascending: true });
     productQuery = productQuery.range(from, from + limit - 1);
 
     // Total count
@@ -186,9 +236,10 @@ export async function GET(req: NextRequest) {
         // brandCounts: one HEAD per brand, all filters EXCEPT brand
         Promise.all(
           brandsData.map(async (b) => {
-            const { count } = await withFiltersNoBrand(
+            const { count, error } = await withFiltersNoBrand(
               supabase.from("parts_products").select("*", { count: "exact", head: true })
             ).eq("brand_id", b.id);
+            if (error) console.error("[/api/parts/products] brandCount", b.id, error.message);
             return [b.id, count ?? 0] as const;
           })
         ),
@@ -196,9 +247,10 @@ export async function GET(req: NextRequest) {
         // catCounts: one HEAD per parent category, base filters (no cat/sub)
         Promise.all(
           catsData.filter((c) => c.parent_id === null).map(async (c) => {
-            const { count } = await withBaseFilters(
+            const { count, error } = await withBaseFilters(
               supabase.from("parts_products").select("*", { count: "exact", head: true })
             ).eq("category_id", c.id);
+            if (error) console.error("[/api/parts/products] catCount", c.id, error.message);
             return [c.id, count ?? 0] as const;
           })
         ),
@@ -207,14 +259,26 @@ export async function GET(req: NextRequest) {
         catIds.length === 1
           ? Promise.all(
               catsData.filter((c) => c.parent_id === catIds[0]).map(async (s) => {
-                const { count } = await withBaseFilters(
+                const { count, error } = await withBaseFilters(
                   supabase.from("parts_products").select("*", { count: "exact", head: true })
                 ).eq("subcategory_id", s.id);
+                if (error) console.error("[/api/parts/products] subCount", s.id, error.message);
                 return [s.id, count ?? 0] as const;
               })
             )
           : Promise.resolve([]),
       ]);
+
+    // Сбой основного запроса или счётчика — это сбой, а не «пусто»: пустой успех с
+    // кеш-заголовками закрепил бы ошибку в CDN, а клиент показал бы «ничего не найдено».
+    if (productsRes.error || countRes.error) {
+      console.error(
+        "[/api/parts/products] query failed:",
+        productsRes.error?.message,
+        countRes.error?.message
+      );
+      return NextResponse.json({ error: "Catalog temporarily unavailable" }, { status: 500, headers: NO_STORE });
+    }
 
     const brandCounts = Object.fromEntries(brandCountEntries) as Record<number, number>;
     const catCounts = Object.fromEntries(catCountEntries) as Record<number, number>;
@@ -230,6 +294,6 @@ export async function GET(req: NextRequest) {
     );
   } catch (err) {
     console.error("[/api/parts/products]", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500, headers: NO_STORE });
   }
 }

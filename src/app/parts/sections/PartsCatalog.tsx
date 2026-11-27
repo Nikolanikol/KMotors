@@ -10,8 +10,25 @@ import type { Brand, Category, VehicleModel, ModelChip, Product } from "./PartsC
 type Fitment = { product_id: number; vehicle_model_id: number };
 
 // ─── Parallel batch fetching ──────────────────────────────────────────────────
+type DbError = { message: string } | null;
+
+/**
+ * Результат запроса или исключение. fetchCatalogData живёт внутри unstable_cache, а тот
+ * кеширует любое возвращённое значение на час: `data ?? []` при сбое базы закрепил бы
+ * пустой каталог на час. Брошенное исключение не кешируется (ISR оставит прежнюю страницу).
+ */
+function must<T>(label: string, r: { data: T | null; error: DbError }): T {
+  if (r.error) throw new Error(`[PartsCatalog] ${label}: ${r.error.message}`);
+  return r.data ?? ([] as unknown as T);
+}
+
+function mustCount(label: string, r: { count: number | null; error: DbError }): number {
+  if (r.error) throw new Error(`[PartsCatalog] ${label}: ${r.error.message}`);
+  return r.count ?? 0;
+}
+
 async function fetchAllRows<T>(
-  queryFactory: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+  queryFactory: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: DbError }>,
   totalCount: number
 ): Promise<T[]> {
   if (totalCount === 0) return [];
@@ -22,7 +39,7 @@ async function fetchAllRows<T>(
       queryFactory(i * BATCH, (i + 1) * BATCH - 1)
     )
   );
-  return results.flatMap((r) => r.data ?? []);
+  return results.flatMap((r) => must("batch", r));
 }
 
 async function fetchCatalogData() {
@@ -30,26 +47,26 @@ async function fetchCatalogData() {
 
   // Step 1: small tables + model count + exchange rate + initial products — all in parallel
   const [brands, categories, fitment, modelCount, { krwToUsd }, initialProducts, initialTotal] = await Promise.all([
-    supabase.from("parts_brands").select("id, name, slug").order("name")
-      .then((r) => (r.data ?? []) as Brand[]),
+    supabase.from("parts_brands").select("id, name, slug").order("name").order("id")
+      .then((r) => must("parts_brands", r) as Brand[]),
 
     supabase
       .from("parts_categories")
       .select("id, name_ru, name_en, slug, parent_id")
       .order("sort_order", { nullsFirst: false })
       .order("id")
-      .then((r) => (r.data ?? []) as Category[]),
+      .then((r) => must("parts_categories", r) as Category[]),
 
     // 945 rows — fits in one request, no pagination needed
     supabase
       .from("parts_fitment")
       .select("product_id, vehicle_model_id")
-      .then((r) => (r.data ?? []) as Fitment[]),
+      .then((r) => must("parts_fitment", r) as Fitment[]),
 
     supabase
       .from("parts_vehicle_models")
       .select("*", { count: "exact", head: true })
-      .then((r) => r.count ?? 0),
+      .then((r) => mustCount("parts_vehicle_models count", r)),
 
     getFx("market"),
 
@@ -58,13 +75,14 @@ async function fetchCatalogData() {
       .from("parts_products")
       .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new")
       .order("name_ru", { ascending: true })
+      .order("id", { ascending: true })
       .range(0, 23)
-      .then((r) => (r.data ?? []).map(withCleanImage) as Product[]),
+      .then((r) => must("parts_products page 1", r).map(withCleanImage) as Product[]),
 
     supabase
       .from("parts_products")
       .select("*", { count: "exact", head: true })
-      .then((r) => r.count ?? 0),
+      .then((r) => mustCount("parts_products count", r)),
   ]);
 
   // Step 2: all vehicle models + brand_id for fitment-linked products only (~230 rows)
@@ -79,6 +97,7 @@ async function fetchCatalogData() {
           .from("parts_vehicle_models")
           .select("id, brand_id, name_en, name_ko")
           .order("name_en")
+          .order("id")
           .range(from, to),
       modelCount
     ),
@@ -88,28 +107,28 @@ async function fetchCatalogData() {
           .from("parts_products")
           .select("id, brand_id")
           .in("id", fitmentProductIds)
-          .then((r) => (r.data ?? []) as { id: number; brand_id: number | null }[])
+          .then((r) => must("fitment products", r) as { id: number; brand_id: number | null }[])
       : Promise.resolve([] as { id: number; brand_id: number | null }[]),
 
     // SSR: unfiltered brand counts for sidebar
     Promise.all(
       brands.map(async (b) => {
-        const { count } = await supabase
+        const r = await supabase
           .from("parts_products")
           .select("*", { count: "exact", head: true })
           .eq("brand_id", b.id);
-        return [b.id, count ?? 0] as const;
+        return [b.id, mustCount(`brand ${b.id} count`, r)] as const;
       })
     ),
 
     // SSR: unfiltered parent-category counts for sidebar
     Promise.all(
       categories.filter((c) => c.parent_id === null).map(async (c) => {
-        const { count } = await supabase
+        const r = await supabase
           .from("parts_products")
           .select("*", { count: "exact", head: true })
           .eq("category_id", c.id);
-        return [c.id, count ?? 0] as const;
+        return [c.id, mustCount(`category ${c.id} count`, r)] as const;
       })
     ),
   ]);
@@ -159,7 +178,8 @@ async function fetchCatalogData() {
   // Категории для облака в сайдбаре: ровно тот же список, что уходит в
   // sitemap, — иначе в навигации всплывали бы пустые ветки («Зеркала» под
   // «Кузов» с нулём товаров) и внутренние вёдра.
-  const indexableCategorySlugs = await getIndexableCategorySlugs().catch(() => [] as string[]);
+  // Без `.catch(() => [])`: пустой список при сбое попал бы в кеш на час вместе со всем остальным.
+  const indexableCategorySlugs = await getIndexableCategorySlugs();
 
   return { brands, categories, brandModelChipsMap, krwToUsd, initialProducts, initialTotal, initialBrandCounts, initialCatCounts, indexableCategorySlugs };
 }

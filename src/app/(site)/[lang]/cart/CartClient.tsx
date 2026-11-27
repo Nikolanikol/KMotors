@@ -21,6 +21,15 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
   const l = cartText(lang);
   const { items, count, clear } = usePartsCart();
   const [orderOpen, setOrderOpen] = useState(false);
+  // Снимок корзины на момент открытия формы: после успешной заявки корзина
+  // очищается, а окно успеха должно продолжать показывать то, что отправили.
+  const [orderSnap, setOrderSnap] = useState<{
+    productName: string;
+    summary: string;
+    itemsCount: number;
+    priceText: string;
+    messageLines: string[];
+  } | null>(null);
 
   // Возврат ровно туда, откуда ушли: фильтры каталога складывает карточка товара
   // и сетка (`parts:filters`). Без этого «назад» высаживало на первую страницу
@@ -102,6 +111,13 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
                 onClick={() => {
                   // Шаг «начал оформление»: дальше форма и generate_lead (parts_cart).
                   trackEvent("begin_checkout", { items: count, value: subtotal, currency: "USD" });
+                  setOrderSnap({
+                    productName: `${l.cartOf} · ${items.length} ${l.items}`,
+                    summary: `${items.length} ${l.items} · ${count} ${l.pcs}`,
+                    itemsCount: items.length,
+                    priceText: `$${usdFmt.format(subtotal)}`,
+                    messageLines,
+                  });
                   setOrderOpen(true);
                 }}
                 className="w-full mt-5 h-12 rounded-xl bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-semibold flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer"
@@ -116,19 +132,25 @@ export function CartClient({ lang, krwToUsd }: { lang: string; krwToUsd: number 
         )}
       </div>
 
-      <OrderModal
-        isOpen={orderOpen}
-        onClose={() => setOrderOpen(false)}
-        productName={`${l.cartOf} · ${items.length} ${l.items}`}
-        partNumber={`${count} ${l.pcs}`}
-        productUrl={`${SITE_URL}/${lang}/cart`}
-        priceText={`$${usdFmt.format(subtotal)}`}
-        source="parts_cart"
-        title={l.managerTitle}
-        subtitle={l.managerSub}
-        messageLines={messageLines}
-        requireCountry
-      />
+      {orderSnap && (
+        <OrderModal
+          isOpen={orderOpen}
+          onClose={() => setOrderOpen(false)}
+          productName={orderSnap.productName}
+          partNumber=""
+          cart={{ summary: orderSnap.summary, itemsCount: orderSnap.itemsCount }}
+          productUrl={`${SITE_URL}/${lang}/cart`}
+          priceText={orderSnap.priceText}
+          source="parts_cart"
+          title={l.managerTitle}
+          subtitle={l.managerSub}
+          messageLines={orderSnap.messageLines}
+          requireCountry
+          // Корзина очищается только после того, как сервер принял заявку:
+          // OrderModal зовёт onSuccess уже после успешного ответа и показа успеха.
+          onSuccess={clear}
+        />
+      )}
     </div>
   );
 }

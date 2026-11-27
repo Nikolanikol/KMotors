@@ -508,6 +508,8 @@
       "preOrderBtn": "Pre-order",
       "noResults": "No parts found",
       "noResultsHint": "Try changing or resetting the filters",
+      "loadError": "Couldn't load the catalog. Check your connection and try again.",
+      "retry": "Retry",
       "miss": {
         "queryLabel": "Your search",
         "title": "Not in the catalogue? We'll source it",
@@ -696,7 +698,17 @@
       "shippingCalcResult": "Approx. {price} USD",
       "shippingCalcUnavailable": "EMS not available for this country",
       "shippingCalcNote": "* Shipping cost only. Final price may vary.",
-      "similarTitle": "Parts for this model"
+      "similarTitle": "Parts for this model",
+      "quickView": "Quick view",
+      "quantity": "Quantity",
+      "decreaseQty": "Decrease quantity",
+      "increaseQty": "Increase quantity",
+      "close": "Close",
+      "copyPartNumber": "Copy part number",
+      "crossRefsTitle": "Cross-reference numbers",
+      "priceOnRequest": "Price on request",
+      "requestPrice": "Request a price",
+      "requestPriceText": "Leave a request — a manager will confirm availability and the price of this part."
     },
     "order": {
       "partNumber": "Part number",
@@ -718,7 +730,8 @@
       "sending": "Sending…",
       "successTitle": "Request received!",
       "successDesc": "We will contact you shortly.",
-      "closeBtn": "Close"
+      "closeBtn": "Close",
+      "errorMsg": "We couldn't send your request. Please try again or contact us directly:"
     }
   },
   "favorites": {
