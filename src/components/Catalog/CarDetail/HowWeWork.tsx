@@ -6,8 +6,10 @@
 //     «Как купить» (/buy). Сумма живёт только внутри строки
 //     `buy.steps.step2.description` («2 000 000 вон»), отдельной константы в коде
 //     нет — поэтому строка выводится целиком, а не вырезается;
-//   • отзывы — скриншоты переписок из `src/data/reviews.ts` (тот же источник, что
-//     блок на главной). Текстовых отзывов в проекте нет, только картинки;
+//   • отзывов здесь НЕТ сознательно: в проекте есть только скриншоты переписок
+//     (`src/data/reviews.ts`), и первые три — про запчасти, а не про автомобили;
+//     на карточке машины они не по теме и нечитаемы на телефоне. Появятся отзывы
+//     именно по авто — вернуть сюда;
 //   • ссылки — /buy, /about, /terms.
 //
 // Блок серверный: `buy` — маршрутный раздел словаря (ROUTE_SECTIONS), а тащить его
@@ -18,19 +20,14 @@
 // НЕ вынесено сознательно: на карточке с ценой это юридическое утверждение, а не
 // описание процесса. Решение о нём за владельцем.
 
-import Image from "next/image";
 import Link from "next/link";
 import { getServerT } from "@/lib/serverT";
 import { langOrDefault } from "@/lib/lang";
-import { REVIEW_SHOTS, reviewLang } from "@/data/reviews";
 
 // Шаги — из восьми этапов /buy: задаток → проверка → оплата остатка → доставка.
 // Первый этап (выбор авто) посетитель уже проходит, последние (таможня, выдача)
 // есть на странице «Как купить» по ссылке.
 const STEP_NUMBERS = [2, 3, 4, 6] as const;
-
-// Три первых скриншота подписаны «Отзыв ·» во всех языках.
-const REVIEW_COUNT = 3;
 
 const LINK_CLASS =
   "inline-flex items-center px-4 py-2 rounded-full text-xs font-medium transition-colors duration-200 cursor-pointer hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]";
@@ -38,8 +35,6 @@ const LINK_CLASS =
 export default function HowWeWork({ lang: rawLang }: { lang: string }) {
   const lang = langOrDefault(rawLang);
   const t = getServerT(lang);
-  const rl = reviewLang(lang);
-  const shots = REVIEW_SHOTS.slice(0, REVIEW_COUNT);
 
   return (
     <section
@@ -97,41 +92,6 @@ export default function HowWeWork({ lang: rawLang }: { lang: string }) {
             {t("car.trust.depositTitle")}:{" "}
           </span>
           {t("buy.steps.step2.description")}
-        </div>
-
-        <div className="mt-6">
-          <h3 dir="auto" className="text-sm font-semibold" style={{ color: "var(--axis-white)" }}>
-            {t("car.trust.reviewsTitle")}
-          </h3>
-          <p dir="auto" className="text-xs mt-1 mb-3" style={{ color: "var(--axis-gray)" }}>
-            {t("car.trust.reviewsNote")}
-          </p>
-          <ul className="grid grid-cols-3 gap-3 sm:max-w-lg">
-            {shots.map((shot) => (
-              <li key={shot.src}>
-                <a
-                  href={shot.src}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`${t("car.trust.openReview")}: ${shot.caption[rl]}`}
-                  className="block rounded-xl overflow-hidden transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:border-[rgba(182,119,73,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
-                  style={{ border: "1px solid rgba(182,119,73,0.2)", backgroundColor: "var(--axis-graphite)" }}
-                >
-                  {/* Скрин обрезан по верху (начало переписки) до 3:4: целиком он
-                      вытянут 736×1600 и занял бы пол-экрана; полный размер — по клику. */}
-                  <Image
-                    src={shot.src}
-                    alt={shot.caption[rl]}
-                    width={shot.w}
-                    height={shot.h}
-                    sizes="(min-width: 640px) 160px, 30vw"
-                    loading="lazy"
-                    className="block w-full h-auto aspect-[3/4] object-cover object-top"
-                  />
-                </a>
-              </li>
-            ))}
-          </ul>
         </div>
 
         <nav className="mt-6 flex flex-wrap gap-2" aria-label={t("car.trust.title")}>
