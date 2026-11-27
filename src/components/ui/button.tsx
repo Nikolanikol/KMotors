@@ -72,7 +72,7 @@ const SlidingButton: React.FC<SlidingButtonProps> = ({
   return (
     <button
       className={clsx(
-        "relative cursor-pointer overflow-hidden group px-6 h-10 rounded-full text-white font-semibold text-sm transition-all duration-300",
+        "relative cursor-pointer overflow-hidden group px-6 h-10 rounded-full text-white font-semibold text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--axis-black)]",
         className
       )}
       style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}
