@@ -41,12 +41,15 @@ interface VehicleRow {
 const fetchPopular = unstable_cache(
   async (): Promise<VehicleRow[]> => {
     const supabase = createServerClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("vehicles")
       .select("id, brand, name_en, year_from, year_to, open_ended, parts_count, slug, model_ko")
       .gte("parts_count", MIN_PARTS)
       .order("parts_count", { ascending: false })
+      .order("id", { ascending: true })
       .limit(60);
+    // Бросаем, а не `data ?? []`: пустой список закрепился бы в кеше на сутки.
+    if (error) throw new Error(`vehicles popular: ${error.message}`);
 
     const rows = (data ?? []) as VehicleRow[];
     // Dedupe by model so the strip shows variety (not 3 Sonata generations in a row);
