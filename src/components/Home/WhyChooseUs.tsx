@@ -5,7 +5,7 @@ const T = {
   ru: {
     title: "Почему K-Axis",
     features: [
-      { title: "Проверка на аукционе", desc: "Каждый автомобиль проходит тщательную проверку на корейских аукционах Encar, KCar и Manheim." },
+      { title: "Проверка на аукционе", desc: "Каждый автомобиль проходит тщательную проверку на корейских площадках и аукционах: Encar, K Car, Lotte и Autobell." },
       { title: "Полная история", desc: "Отчёт о ДТП, количестве владельцев, пробеге и техническом состоянии каждого авто." },
       { title: "Доставка под ключ", desc: "От покупки на аукционе до доставки в ваш город — берём всё на себя." },
     ],
@@ -13,7 +13,7 @@ const T = {
   en: {
     title: "Why K-Axis",
     features: [
-      { title: "Auction Verification", desc: "Every car is thoroughly inspected at Korean auctions: Encar, KCar and Manheim." },
+      { title: "Auction Verification", desc: "Every car is thoroughly inspected on Korean marketplaces and auctions: Encar, K Car, Lotte and Autobell." },
       { title: "Full History", desc: "Accident report, number of owners, mileage and technical condition of every car." },
       { title: "Turnkey Delivery", desc: "From auction purchase to delivery in your city — we handle everything." },
     ],
@@ -21,7 +21,7 @@ const T = {
   ko: {
     title: "왜 K-Axis인가",
     features: [
-      { title: "경매 검증", desc: "모든 차량은 Encar, KCar, Manheim 등 한국 경매에서 철저히 검사됩니다." },
+      { title: "경매 검증", desc: "모든 차량은 Encar, K Car, Lotte, Autobell 등 한국 거래 플랫폼과 경매에서 철저히 검사됩니다." },
       { title: "전체 이력", desc: "사고 이력, 소유자 수, 주행거리 및 기술적 상태에 대한 보고서." },
       { title: "턴키 배송", desc: "경매 구매부터 귀하의 도시까지 배송까지 — 모든 것을 저희가 처리합니다." },
     ],
@@ -29,7 +29,7 @@ const T = {
   ka: {
     title: "რატომ K-Axis",
     features: [
-      { title: "აუქციონის შემოწმება", desc: "თითოეული მანქანა გადის საფუძვლიან შემოწმებას კორეულ აუქციონებზე: Encar, KCar და Manheim." },
+      { title: "აუქციონის შემოწმება", desc: "თითოეული მანქანა გადის საფუძვლიან შემოწმებას კორეულ პლატფორმებსა და აუქციონებზე: Encar, K Car, Lotte და Autobell." },
       { title: "სრული ისტორია", desc: "ავარიების, მფლობელების რაოდენობის, გარბენისა და ტექნიკური მდგომარეობის ანგარიში." },
       { title: "კომპლექსური მიწოდება", desc: "აუქციონზე შეძენიდან თქვენს ქალაქში მიწოდებამდე — ყველაფერს ჩვენ ვაგვარებთ." },
     ],
@@ -37,7 +37,7 @@ const T = {
   ar: {
     title: "لماذا K-Axis",
     features: [
-      { title: "التحقق من المزاد", desc: "تخضع كل سيارة لفحص دقيق في مزادات كوريا: Encar وKCar وManheim." },
+      { title: "التحقق من المزاد", desc: "تخضع كل سيارة لفحص دقيق في منصات ومزادات كوريا: Encar وK Car وLotte وAutobell." },
       { title: "السجل الكامل", desc: "تقرير عن الحوادث وعدد الملاك والمسافة المقطوعة والحالة الفنية لكل سيارة." },
       { title: "التسليم الكامل", desc: "من الشراء في المزاد حتى التسليم في مدينتك — نتولى كل شيء." },
     ],

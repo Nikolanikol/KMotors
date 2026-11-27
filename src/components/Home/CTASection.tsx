@@ -9,18 +9,31 @@ export default function CTASection() {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState("");
 
+  const [failed, setFailed] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone.trim() || loading) return;
     setLoading(true);
+    setFailed(false);
+    // ⚠️ Успех показываем ТОЛЬКО по ответу сервера. Раньше `catch {}` и безусловное «Спасибо»
+    // прятали сбой: заявка терялась, а клиент и GA4 видели успех (27.11.2026).
+    let ok = false;
     try {
-      await fetch("/api/telegram", {
+      const res = await fetch("/api/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "CTA форма", phone, source: "header" }),
+        body: JSON.stringify({ name: "CTA форма", phone, source: "home_cta" }),
       });
-    } catch {}
+      ok = res.ok;
+    } catch {
+      ok = false;
+    }
     setLoading(false);
+    if (!ok) {
+      setFailed(true);
+      return;
+    }
     setSubmitted(true);
     setPhone("");
     trackEvent("generate_lead", { source: "cta_main" });
@@ -62,14 +75,17 @@ export default function CTASection() {
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-4 font-semibold rounded-full transition-all duration-300 whitespace-nowrap flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-8 py-4 font-semibold rounded-full transition-all duration-300 whitespace-nowrap flex items-center gap-2 hover:brightness-115 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }}
-              onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange-bright)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)"; }}
             >
               {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
               {loading ? t("cta.submitting") : t("cta.submit")}
             </button>
+            {failed && (
+              <p role="alert" className="sm:basis-full text-sm text-red-300 text-center">
+                {t("contact.errorSend")}
+              </p>
+            )}
           </form>
         ) : (
           <div className="px-8 py-4 rounded-full font-semibold inline-block"

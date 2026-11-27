@@ -1,98 +1,12 @@
 "use client";
 
 import { isLang } from "@/lib/lang";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useCountry } from "@/hooks/useCountry";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination, Autoplay } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/pagination";
-
-const MODELS = [
-  {
-    slug: "kia-sorento",
-    brand: "KIA",
-    model: "Sorento",
-    image: "/models/kia-sorento/1.webp",
-    priceFrom: { ru: "от 2 200 000 ₽", en: "from $24,000" },
-    years: "2020–2024",
-    desc: { ru: "7-местный кроссовер", en: "7-seat crossover" },
-  },
-  {
-    slug: "kia-sportage",
-    brand: "KIA",
-    model: "Sportage",
-    image: "/models/sportage.jpg",
-    priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
-    years: "2019–2024",
-    desc: { ru: "Компактный кроссовер", en: "Compact crossover" },
-  },
-  {
-    slug: "kia-carnival",
-    brand: "KIA",
-    model: "Carnival",
-    image: "/models/carnival.jpg",
-    priceFrom: { ru: "от 3 000 000 ₽", en: "from $33,000" },
-    years: "2020–2024",
-    desc: { ru: "Премиальный минивэн 7–9 мест", en: "Premium 7–9 seat minivan" },
-  },
-  {
-    slug: "hyundai-tucson",
-    brand: "Hyundai",
-    model: "Tucson",
-    image: "/models/tucson.jpg",
-    priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
-    years: "2019–2024",
-    desc: { ru: "Лучшее соотношение цены и качества", en: "Best price-to-quality ratio" },
-  },
-  {
-    slug: "hyundai-palisade",
-    brand: "Hyundai",
-    model: "Palisade",
-    image: "/models/palisade.jpg",
-    priceFrom: { ru: "от 3 500 000 ₽", en: "from $38,000" },
-    years: "2019–2024",
-    desc: { ru: "Флагманский полноразмерный кроссовер", en: "Flagship full-size crossover" },
-  },
-  {
-    slug: "hyundai-santa-fe",
-    brand: "Hyundai",
-    model: "Santa Fe",
-    image: "/models/santafe.jpg",
-    priceFrom: { ru: "от 2 000 000 ₽", en: "from $22,000" },
-    years: "2019–2024",
-    desc: { ru: "Семейный 5–7-местный кроссовер", en: "Family 5–7 seat crossover" },
-  },
-  {
-    slug: "genesis-gv80",
-    brand: "Genesis",
-    model: "GV80",
-    image: "/models/genesis-gv80.jpg",
-    priceFrom: { ru: "от 4 500 000 ₽", en: "from $49,000" },
-    years: "2020–2024",
-    desc: { ru: "Люксовый кроссовер — конкурент BMW X5", en: "Luxury crossover — BMW X5 rival" },
-  },
-  {
-    slug: "kia-k5",
-    brand: "KIA",
-    model: "K5",
-    image: "/models/k5.jpg",
-    priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
-    years: "2019–2024",
-    desc: { ru: "Спортивный седан бизнес-класса", en: "Sporty business-class sedan" },
-  },
-  {
-    slug: "hyundai-sonata",
-    brand: "Hyundai",
-    model: "Sonata",
-    image: "/models/sonata.jpg",
-    priceFrom: { ru: "от 1 500 000 ₽", en: "from $16,000" },
-    years: "2019–2024",
-    desc: { ru: "Комфортный седан — простор и надёжность", en: "Comfort sedan — space and reliability" },
-  },
-];
+import { HOME_TOP_CARS, PRICES_AS_OF, PRICES_RATE_RU } from "@/data/home-top-cars";
 
 const TITLE: Record<string, string> = {
   ru: "Популярные модели из Кореи",
@@ -103,11 +17,11 @@ const TITLE: Record<string, string> = {
 };
 
 const SUBTITLE: Record<string, string> = {
-  ru: "Цены, характеристики и живые авто в наличии",
-  en: "Prices, specs and live cars in stock",
-  ko: "가격, 사양 및 재고 차량",
-  ka: "ფასები, სპეციფიკაციები და მარაგში მყოფი მანქანები",
-  ar: "الأسعار والمواصفات والسيارات المتوفرة",
+  ru: "Расчёт под ключ по реальным машинам с корейских площадок",
+  en: "All-in price calculated on real cars from Korean marketplaces",
+  ko: "한국 실제 매물 기준 총 비용 계산",
+  ka: "სრული ფასი კორეული ბაზრის რეალური მანქანების მიხედვით",
+  ar: "السعر الكامل محسوب على سيارات حقيقية من السوق الكوري",
 };
 
 const ALL_LINK: Record<string, string> = {
@@ -118,12 +32,13 @@ const ALL_LINK: Record<string, string> = {
   ar: "الكتالوج الكامل →",
 };
 
+// Цена посчитана до Владивостока (таможня РФ), поэтому подпись это говорит прямо.
 const PRICE_LABEL: Record<string, string> = {
-  ru: "Под ключ",
-  en: "All-in",
-  ko: "총 비용",
-  ka: "გასაღებამდე",
-  ar: "السعر الكامل",
+  ru: "Под ключ до Владивостока",
+  en: "All-in to Vladivostok",
+  ko: "블라디보스토크까지 총 비용",
+  ka: "ვლადივოსტოკამდე, გასაღებამდე",
+  ar: "السعر الكامل حتى فلاديفوستوك",
 };
 
 const DETAILS_LABEL: Record<string, string> = {
@@ -134,8 +49,21 @@ const DETAILS_LABEL: Record<string, string> = {
   ar: "المزيد →",
 };
 
+// Сноска повторяет оговорки роликов серии «Две цены»: цифра — не оферта.
+const FOOTNOTE: Record<string, (d: string) => string> = {
+  ru: (d) =>
+    `Расчёт на ${d} по реальным объявлениям в Корее, курс ${PRICES_RATE_RU}. Цена до Владивостока, без доставки до вашего города. Не является офертой — точный расчёт под ваш бюджет сделаем по запросу.`,
+  en: (d) =>
+    `Calculated on ${d} from real listings in Korea. Price to Vladivostok with Russian customs, excluding delivery to your city. Not an offer — we will calculate exactly for your budget on request.`,
+};
 
-export default function PopularModels() {
+function formatPrice(lang: string, rub: number, rubToUsd: number): string {
+  if (lang === "ru") return `≈ ${rub.toLocaleString("ru-RU").replace(/ /g, " ")} ₽`;
+  const usd = Math.round((rub * rubToUsd) / 100) * 100;
+  return `≈ $${usd.toLocaleString("en-US")}`;
+}
+
+export default function PopularModels({ rubToUsd }: { rubToUsd: number }) {
   const { i18n } = useTranslation();
   const pathname = usePathname();
   const { isCatalogBlocked } = useCountry();
@@ -143,6 +71,7 @@ export default function PopularModels() {
   const segments = pathname.split("/");
   const lang = isLang(segments[1]) ? segments[1] : i18n.language || "ru";
   const isRu = lang === "ru";
+  const footnote = (FOOTNOTE[lang] ?? FOOTNOTE.en)(PRICES_AS_OF);
 
   return (
     <section className="py-16" style={{ backgroundColor: "var(--axis-black)" }}>
@@ -160,64 +89,49 @@ export default function PopularModels() {
           {!isCatalogBlocked && (
             <Link
               href={`/${lang}/catalog`}
-              className="hidden sm:inline-flex text-sm font-semibold transition-colors whitespace-nowrap"
-              style={{ color: "var(--axis-gray)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--axis-gray)"; }}
+              className="hidden sm:inline-flex rounded text-sm font-semibold whitespace-nowrap text-[var(--axis-gray)] transition-colors hover:text-[var(--axis-orange)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
             >
               {ALL_LINK[lang] || ALL_LINK.ru}
             </Link>
           )}
         </div>
 
-        {/* Slider */}
-        <Swiper
-          modules={[Pagination, Autoplay]}
-          spaceBetween={20}
-          pagination={{ clickable: true }}
-          autoplay={{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }}
-          loop
-          breakpoints={{
-            320:  { slidesPerView: 1 },
-            640:  { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-          }}
-          className="popular-models-swiper !pb-10"
-        >
-          {MODELS.map((m) => (
-            <SwiperSlide key={m.slug} style={{ height: "auto" }}>
+        {/* Три карточки сеткой, без карусели: автопрокрутка на трёх каруселях подряд мешала читать. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {HOME_TOP_CARS.map((c) => {
+            const href = c.slug
+              ? `/${lang}/models/${c.slug}`
+              : isCatalogBlocked
+                ? `/${lang}/buy`
+                : `/${lang}/catalog`;
+            return (
               <Link
-                href={`/${lang}/models/${m.slug}`}
-                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300"
-                style={{
-                  height: "100%",
-                  backgroundColor: "var(--axis-charcoal)",
-                  border: "1px solid rgba(74,74,74,0.3)",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--axis-orange)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(74,74,74,0.3)"; }}
+                key={`${c.brand}-${c.model}`}
+                href={href}
+                className="group flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-[var(--axis-orange)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
+                style={{ backgroundColor: "var(--axis-charcoal)", border: "1px solid rgba(74,74,74,0.3)" }}
               >
-                {/* Photo */}
-                <div className="w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={m.image}
-                    alt={`${m.brand} ${m.model}`}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
-                    className="group-hover:scale-105 transition-transform duration-500"
+                <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                  <Image
+                    src={c.image}
+                    alt={`${c.brand} ${c.model}`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
 
-                {/* Content */}
                 <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "var(--axis-orange)" }}>
-                    {m.brand}
+                    {c.brand}
                   </p>
                   <p className="font-heading text-xl font-bold mb-1" style={{ color: "var(--axis-white)" }}>
-                    {m.model}
+                    {c.model} {c.engine}
                   </p>
                   <p className="text-sm mb-3" style={{ color: "var(--axis-gray)" }}>
-                    {isRu ? m.desc.ru : m.desc.en}
+                    {isRu
+                      ? `Реальная машина: ${c.year} г., ${Math.round(c.km / 1000)} тыс. км`
+                      : `Real car: ${c.year}, ${Math.round(c.km / 1000)}k km`}
                   </p>
 
                   <div className="mt-auto pt-3 flex items-end justify-between" style={{ borderTop: "1px solid rgba(74,74,74,0.3)" }}>
@@ -225,8 +139,8 @@ export default function PopularModels() {
                       <p className="text-xs mb-0.5" style={{ color: "var(--axis-gray)" }}>
                         {PRICE_LABEL[lang] || PRICE_LABEL.ru}
                       </p>
-                      <p className="text-sm font-bold" style={{ color: "var(--axis-white)" }}>
-                        {isRu ? m.priceFrom.ru : m.priceFrom.en}
+                      <p className="text-lg font-bold" style={{ color: "var(--axis-white)" }}>
+                        {formatPrice(lang, c.priceRub, rubToUsd)}
                       </p>
                     </div>
                     <p className="text-sm font-semibold group-hover:underline" style={{ color: "var(--axis-orange)" }}>
@@ -235,41 +149,26 @@ export default function PopularModels() {
                   </div>
                 </div>
               </Link>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+            );
+          })}
+        </div>
+
+        <p className="mt-6 text-xs leading-relaxed max-w-3xl" style={{ color: "var(--axis-gray)" }}>
+          {footnote}
+        </p>
 
         {/* Mobile catalog link */}
-        <div className="text-center mt-2 sm:hidden">
-          <Link
-            href={`/${lang}/catalog`}
-            className="text-sm font-semibold"
-            style={{ color: "var(--axis-gray)" }}
-          >
-            {ALL_LINK[lang] || ALL_LINK.ru}
-          </Link>
-        </div>
+        {!isCatalogBlocked && (
+          <div className="text-center mt-4 sm:hidden">
+            <Link
+              href={`/${lang}/catalog`}
+              className="rounded text-sm font-semibold text-[var(--axis-gray)] transition-colors hover:text-[var(--axis-orange)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
+            >
+              {ALL_LINK[lang] || ALL_LINK.ru}
+            </Link>
+          </div>
+        )}
       </div>
-
-      <style>{`
-        .popular-models-swiper {
-          overflow: hidden !important;
-        }
-        .popular-models-swiper .swiper-wrapper {
-          align-items: stretch;
-        }
-        .popular-models-swiper .swiper-slide {
-          height: auto !important;
-        }
-        .popular-models-swiper .swiper-pagination-bullet {
-          background: var(--axis-gray);
-          opacity: 0.4;
-        }
-        .popular-models-swiper .swiper-pagination-bullet-active {
-          background: var(--axis-orange);
-          opacity: 1;
-        }
-      `}</style>
     </section>
   );
 }

@@ -6,23 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 const PaintSplashCanvas = dynamic(() => import("@/components/ui/PaintSplashCanvas"), { ssr: false, loading: () => null });
-import { useCountAnimation } from "@/hooks/useScrollAnimation";
 import { useCountry } from "@/hooks/useCountry";
-
-
-function StatCounter({ end, suffix, label }: { end: number; suffix: string; label: string }) {
-  const ref = useCountAnimation(end, suffix);
-  return (
-    <div className="flex flex-col items-center">
-      <span ref={ref} className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
-        0{suffix}
-      </span>
-      <span className="text-xs tracking-widest uppercase mt-1" style={{ color: "var(--axis-gray)" }}>
-        {label}
-      </span>
-    </div>
-  );
-}
 
 const Main = () => {
   const { t } = useTranslation();
@@ -88,12 +72,10 @@ const Main = () => {
           </a>
         </div>
 
-        {/* Stats */}
+        {/* Stats. «1240+ авто» и «850+ клиентов» убраны 27.11.2026 по решению владельца:
+            цифры были зашиты константой и ничем не подтверждались. «12 лет» оставлено до
+            отдельного подтверждения. */}
         <div className="flex items-center justify-center gap-4 sm:gap-8 md:gap-16 mt-20 w-full">
-          <StatCounter end={1240} suffix="+" label={t("home.hero.statCars")} />
-          <div className="w-px h-10 opacity-30 shrink-0" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
-          <StatCounter end={850} suffix="+" label={t("home.hero.statClients")} />
-          <div className="w-px h-10 opacity-30 shrink-0" style={{ backgroundColor: "var(--axis-gray-dim)" }} />
           <div className="flex flex-col items-center shrink-0">
             <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
               {t("home.hero.statYears")}

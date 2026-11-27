@@ -19,6 +19,7 @@ import CarSlider from "@/components/Home/CarSlider/CarSlider";
 import CarSliderSkeleton from "@/components/Home/CarSlider/CarSliderSkeleton";
 import CarsDictionary from "@/components/I18nProvider/CarsDictionary";
 import { SITE_URL } from "@/lib/site";
+import { getFx } from "@/lib/fx";
 
 // Ниже fold — lazy load
 const Stage = dynamic(() => import("@/components/Home/Stage"));
@@ -92,6 +93,10 @@ export default async function Home({ params }: Props) {
   const cookieStore = await cookies();
   const isCatalogBlocked = cookieStore.get("x-user-country")?.value === "KR";
 
+  // ⚠️ AutoDealer/LocalBusiness отдаёт RootShell на КАЖДОЙ странице — второй такой объект
+  // здесь давал дубль с расходящимися logo/image/areaServed (убран 27.11.2026). Хлебные
+  // крошки из одного пункта ничего не дают, а SearchAction вёл на `catalog?manufacture=`,
+  // куда нельзя подставить поисковое слово, — оба убраны.
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -99,50 +104,17 @@ export default async function Home({ params }: Props) {
     url: `${SITE_URL}/`,
     description: meta.description,
     inLanguage: lang,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/${lang}/catalog?manufacture={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
   };
 
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
-    ],
-  };
-
-  const organizationSchema = {
-    "@context": "https://schema.org",
-    "@type": "AutoDealer",
-    name: "K-Axis",
-    url: `${SITE_URL}`,
-    logo: `${SITE_URL}/favicon_io/android-chrome-512x512.png`,
-    image: `${SITE_URL}/${lang}/opengraph-image`,
-    telephone: "+821058654344",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "권선로 308-5 103호 1층",
-      addressLocality: "수원시 권선구",
-      addressRegion: "경기도",
-      addressCountry: "KR",
-    },
-    areaServed: ["RU", "KZ", "UZ", "GE", "SA", "KR"],
-    sameAs: [],
-  };
+  // Цены «Популярных моделей» заданы в рублях; в долларах их показывает сервер по рыночному
+  // курсу (клиент за курсом не ходит). Запрос уже сидит в кеше данных — его делает layout.
+  const { rubToUsd } = await getFx("market");
 
   return (
     <>
       {/* CarSlider ниже переводит характеристики авто через словарь Encar */}
       <CarsDictionary lang={lang} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
     <div className="min-h-[70vh]">
       <Main />
       <NavCards />
@@ -163,7 +135,7 @@ export default async function Home({ params }: Props) {
         </div>
       )}
       <Brands />
-      <PopularModels />
+      <PopularModels rubToUsd={rubToUsd} />
       <WhyChooseUs />
       <Stage />
       <Testimonials />

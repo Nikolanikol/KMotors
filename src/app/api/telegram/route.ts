@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       auction_lot: "Лот аукциона",
       car_calculator: "Калькулятор таможни",
       blog: "Блог",
+      home_cta: "Главная — форма внизу страницы",
     };
 
     const sourceText = source ? (sourceLabel[source] ?? source) : "Сайт";

@@ -38,6 +38,9 @@ export default function ContactForm({ isVisible }: { isVisible: boolean }) {
     if (hasTriggeredRef.current || isVisible) return;
     if (pathname.startsWith("/admin")) return;
     if (pathname.match(/\/catalog\/\d+/)) return;
+    // Главная: окно через 30 с перебивало чтение страницы (аудит 27.11.2026). Там уже есть
+    // форма внизу и кнопка «Оставить заявку» в шапке. Адрес вида `/ru`, `/en`.
+    if (/^\/[a-z]{2}\/?$/.test(pathname)) return;
 
     try {
       const seen = localStorage.getItem("kmotors_modal_seen");

@@ -39,27 +39,27 @@ const CARDS = [
 
 const FALLBACK: Record<string, { title: string; desc: string }[]> = {
   ru: [
-    { title: "Каталог авто", desc: "1 200+ авто из Кореи" },
+    { title: "Каталог авто", desc: "Авто из Кореи под ключ" },
     { title: "Запчасти", desc: "Оригинальные запчасти" },
     { title: "Калькулятор", desc: "Растаможка онлайн" },
   ],
   en: [
-    { title: "Car Catalog", desc: "1 200+ cars from Korea" },
+    { title: "Car Catalog", desc: "Cars from Korea, all-in" },
     { title: "Parts", desc: "Original spare parts" },
     { title: "Calculator", desc: "Customs duty online" },
   ],
   ko: [
-    { title: "자동차 카탈로그", desc: "한국산 자동차 1,200+" },
+    { title: "자동차 카탈로그", desc: "한국산 자동차" },
     { title: "부품", desc: "정품 부품" },
     { title: "계산기", desc: "관세 계산" },
   ],
   ka: [
-    { title: "კატალოგი", desc: "1 200+ ავტო კორეიდან" },
+    { title: "კატალოგი", desc: "ავტო კორეიდან" },
     { title: "ნაწილები", desc: "ორიგინალი ნაწილები" },
     { title: "კალკულატორი", desc: "გაბაჟება ონლაინ" },
   ],
   ar: [
-    { title: "كتالوج السيارات", desc: "أكثر من 1200 سيارة" },
+    { title: "كتالوج السيارات", desc: "سيارات من كوريا" },
     { title: "قطع الغيار", desc: "قطع غيار أصلية" },
     { title: "الآلة الحاسبة", desc: "الجمارك أونلاين" },
   ],
