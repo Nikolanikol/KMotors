@@ -21,7 +21,6 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
-          NEXT_PUBLIC_PAYPAL_CLIENT_ID: placeholder
           NEXT_PUBLIC_SITE_URL: https://www.kmotors.shop
           NEXT_PUBLIC_NUMBER_PHONE: placeholder
           NEXT_PUBLIC_EMAIL: placeholder

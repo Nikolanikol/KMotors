@@ -72,11 +72,6 @@ export function clearPartsCart(): void {
   write([]);
 }
 
-/** Kept for backwards-compat with existing call sites; store already emits sync. */
-export function notifyCartUpdate(_quantityDelta?: number): void {
-  window.dispatchEvent(new Event(SYNC_EVENT));
-}
-
 // ── Reactive store ──────────────────────────────────────────────────────────
 
 function useCartStore(): CartItem[] {

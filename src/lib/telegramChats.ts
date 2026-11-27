@@ -18,7 +18,7 @@
 //   -----------|------------------------------------------------|--------------------------
 //   leads      | /api/telegram, signupNotify                    | CHAT_ID + WORK_CHAT_ID
 //   admins     | /api/telegram-webhook (доступ, уведомления)    | CHAT_ID + WORK_CHAT_ID
-//   orders     | /api/parts/checkout, /api/paypal/capture-order | WORK_CHAT_ID ?? CHAT_ID
+//   orders     | (никто: /api/parts/checkout и PayPal удалены)  | WORK_CHAT_ID ?? CHAT_ID
 //   seo        | seo-telegram (дайджест SEO-гейта)              | CHAT_ID
 //   blog       | /api/blog-generate, /api/rss-sync              | CHAT_ID
 //   ops        | carnect/notify, /api/subscriptions/run         | WORK_CHAT_ID
