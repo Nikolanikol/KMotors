@@ -141,6 +141,13 @@ function mergeUrlParam(multi: string, single: string): string[] {
   return arr;
 }
 
+/** Число из строки URL; пусто и нечисло → undefined (в запрос не попадает). */
+function finiteOrUndef(raw: string): number | undefined {
+  if (!raw) return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function ProductSkeleton() {
@@ -195,10 +202,12 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
   const subSlug     = searchParams.get("sub")    ?? "";
   const urlMinStr   = searchParams.get("min")    ?? "";
   const urlMaxStr   = searchParams.get("max")    ?? "";
-  const priceMin    = urlMinStr ? Number(urlMinStr) : undefined;
-  const priceMax    = urlMaxStr ? Number(urlMaxStr) : undefined;
+  // Мусор в ?min= / ?max= / ?page= (нечисло) не должен превращаться в "NaN" в запросе
+  const priceMin    = finiteOrUndef(urlMinStr);
+  const priceMax    = finiteOrUndef(urlMaxStr);
   const sort        = searchParams.get("sort")   ?? "default";
-  const apiPage     = Math.max(1, Number(searchParams.get("page") ?? "1"));
+  const pageNum     = Math.floor(Number(searchParams.get("page") ?? "1"));
+  const apiPage     = Number.isFinite(pageNum) ? Math.max(1, pageNum) : 1;
 
   const urlBrands = useMemo(() => mergeUrlParam(brandsParam, brandParam), [brandsParam, brandParam]);
   const urlCats   = useMemo(() => mergeUrlParam(catsParam, catParam), [catsParam, catParam]);
@@ -336,6 +345,10 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
   const [subCounts, setSubCounts]     = useState<Record<number, number>>({});
   const [brandCounts, setBrandCounts] = useState<Record<number, number>>(ssrReady ? initialBrandCounts : {});
   const [isLoading, setIsLoading]     = useState(!ssrReady);
+  // Сбой загрузки — отдельное состояние: НЕ «ничего не найдено» (иначе клиент видит оффер
+  // «привезём под заказ» и в метрику спроса падает search_no_results от упавшего API).
+  const [loadError, setLoadError]     = useState(false);
+  const [retryNonce, setRetryNonce]   = useState(0);
 
   type CacheEntry = {
     products: Product[];
@@ -390,11 +403,13 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
       setCatCounts(cached.catCounts);
       setSubCounts(cached.subCounts);
       setBrandCounts(cached.brandCounts);
+      setLoadError(false);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
+    setLoadError(false);
     fetch(`/api/parts/products?${params}`, { signal: controller.signal })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(({ products: p, total: t, catCounts: cc, subCounts: sc, brandCounts: bc }) => {
@@ -416,12 +431,13 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
       .catch((err) => {
         if (err.name !== "AbortError") {
           console.error("[PartsCatalog]", err);
+          setLoadError(true);
           setIsLoading(false);
         }
       });
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandsParam, brandParam, catsParam, catParam, subSlug, searchQ, priceMin, priceMax, sort, apiPage, pageSize]);
+  }, [brandsParam, brandParam, catsParam, catParam, subSlug, searchQ, priceMin, priceMax, sort, apiPage, pageSize, retryNonce]);
 
   // ── Scroll to product after auth redirect ─────────────────────────────────
   useEffect(() => {
@@ -691,6 +707,17 @@ export function PartsCatalogClient({ brands, categories, krwToUsd, initialProduc
               {isLoading ? (
                 <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                   {Array.from({ length: pageSize }).map((_, i) => <ProductSkeleton key={i} />)}
+                </div>
+              ) : loadError ? (
+                <div role="alert" className="py-14 text-center">
+                  <p className="text-[var(--pn-text-muted)] mb-4">{t("parts.catalog.loadError")}</p>
+                  <button
+                    type="button"
+                    onClick={() => setRetryNonce((n) => n + 1)}
+                    className="h-11 px-8 rounded-xl bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white font-semibold text-sm hover:brightness-110 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
+                  >
+                    {t("parts.catalog.retry")}
+                  </button>
                 </div>
               ) : products.length === 0 ? (
                 <NoResultsBanner query={searchQ} onReset={handleReset} />
