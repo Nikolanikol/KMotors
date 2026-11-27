@@ -37,6 +37,19 @@ export interface ModelData {
   };
 }
 
+/**
+ * Запрос Encar для ссылки «все такие машины в каталоге» с карточки авто.
+ *
+ * ⚠️ `catalogFilter` (".K5", ".Sorento") — НЕ запрос: getString режет последний символ
+ * и вклеивает диапазоны внутрь, получается невалидная грамматика, и каталог на всех
+ * девяти моделях показывал «временно недоступно». Запрос собираем из корейских полей
+ * в том же виде, в каком его строит сам фильтр каталога (марка → ModelGroup).
+ * Все девять моделей — отечественные (CarType.Y).
+ */
+export function modelCatalogAction(model: Pick<ModelData, "manufacturer" | "modelKo">): string {
+  return `(And.Hidden.N._.(C.CarType.Y._.(C.Manufacturer.${model.manufacturer}._.ModelGroup.${model.modelKo}.)))`;
+}
+
 export const MODEL_PAGES: ModelData[] = [
   {
     slug: "kia-sorento",

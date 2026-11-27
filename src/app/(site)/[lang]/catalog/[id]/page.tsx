@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { headers } from "next/headers";
 import dynamic from "next/dynamic";
-import { MODEL_PAGES } from "@/data/model-pages";
+import { MODEL_PAGES, modelCatalogAction } from "@/data/model-pages";
 import CarouselLight from "@/components/Catalog/CarDetail/Carousel/Carousel";
 import VinMileageSection from "@/components/Catalog/CarDetail/VinRow";
 import RecommendedCars from "@/components/Catalog/CarDetail/Recommended/RecommendedCars";
@@ -585,7 +585,7 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
       mfrLower.includes(m.manufacturerEn.toLowerCase()) &&
       mdlClean.includes(m.modelEn.toLowerCase()),
   );
-  const catalogFilter = matchedModel?.catalogFilter ?? "";
+  const catalogFilter = matchedModel ? modelCatalogAction(matchedModel) : "";
   const photoLabel =
     (
       { ru: "фото", en: "photo", ko: "사진", ka: "ფოტო", ar: "صورة" } as Record<
