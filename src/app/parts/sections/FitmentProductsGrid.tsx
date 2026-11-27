@@ -65,7 +65,6 @@ export function FitmentProductsGrid({
             href={href}
             onAddToCart={() => handleAddToCart(product)}
             onRemoveFromCart={() => removeFromPartsCart(product.id)}
-            onQuickView={() => {}}
             onNavigate={() => {}}
             lang={lang}
             t={t}

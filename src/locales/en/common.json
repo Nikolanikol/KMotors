@@ -696,7 +696,17 @@
       "shippingCalcResult": "Approx. {price} USD",
       "shippingCalcUnavailable": "EMS not available for this country",
       "shippingCalcNote": "* Shipping cost only. Final price may vary.",
-      "similarTitle": "Parts for this model"
+      "similarTitle": "Parts for this model",
+      "quickView": "Quick view",
+      "quantity": "Quantity",
+      "decreaseQty": "Decrease quantity",
+      "increaseQty": "Increase quantity",
+      "close": "Close",
+      "copyPartNumber": "Copy part number",
+      "crossRefsTitle": "Cross-reference numbers",
+      "priceOnRequest": "Price on request",
+      "requestPrice": "Request a price",
+      "requestPriceText": "Leave a request — a manager will confirm availability and the price of this part."
     },
     "order": {
       "partNumber": "Part number",

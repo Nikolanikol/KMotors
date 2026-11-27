@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,6 @@ import { trackEvent } from "@/utils/gtag";
 import { useScrollDepth } from "@/hooks/useScrollDepth";
 import { generatePartSlug } from "@/utils/partSlug";
 import { FitmentProductsGrid } from "./FitmentProductsGrid";
-import { OrderModal } from "./OrderModal";
 import type { Product } from "./PartsCatalogClient";
 import { useRouter } from "next/navigation";
 import { formatUsd } from "@/lib/pricing";
@@ -32,12 +32,26 @@ import { ShoppingCart, X } from "lucide-react";
 import { addToPartsCart, removeFromPartsCart, useCartProductIds } from "@/hooks/useCartCount";
 import { openCartDrawer } from "@/components/Cart/CartDrawer";
 import { SITE_URL } from "@/lib/site";
+import { hasPrice, manufacturerLabel } from "@/lib/partsSeo";
+
+// Форма заявки нужна только по клику («Не уверены в совместимости?» / «Запросить цену»),
+// поэтому её код (телефонный ввод, мессенджеры) не грузится вместе со страницей.
+const OrderModal = dynamic(() => import("./OrderModal").then((m) => ({ default: m.OrderModal })), {
+  ssr: false,
+});
+
+// Фокус с клавиатуры: кольцо бронзового токена на тёмном фоне карточки.
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pn-bg)]";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Узкий DTO: только то, что карточка рисует. Серверные поля (seo_*, detail_url, вес,
+ * логистика, product_no) в клиентский бандл не уходят — собирает toDetail() на странице.
+ */
 export type ProductDetail = {
   id: number;
-  product_no: string | null;
   part_number: string;
   name_ru: string;
   name_en: string;
@@ -47,33 +61,7 @@ export type ProductDetail = {
   price_krw: number;
   is_new: boolean;
   image_url: string | null;
-  detail_url: string | null;
-  category_id: number | null;
-  subcategory_id: number | null;
-  weight_kg: number | null;
-  // SEO-поля (заполняются автоматикой после апрува; могут быть null)
-  seo_title_ru: string | null;
-  seo_title_en: string | null;
-  seo_desc_ru: string | null;
-  seo_desc_en: string | null;
-  seo_body_ru: string | null;
-  seo_body_en: string | null;
   cross_refs: string[] | null;
-};
-
-export type ProductLogistics = {
-  weight_avg_kg: number | null;
-  packed_weight_kg: number | null;
-  vol_weight_kg: number | null;
-  billed_weight_kg: number | null;
-  ship_method: "EMS" | "EMS_PREMIUM" | "SEA" | null;
-  size_formula_cm: number | null;
-  logistics_notes: string | null;
-  // debug fields
-  length_cm: number | null;
-  width_cm: number | null;
-  height_cm: number | null;
-  name_ru: string | null;
 };
 
 export type CompatibleBrand = {
@@ -89,25 +77,10 @@ interface Props {
   subcategoryName: { ru: string; en: string; slug: string } | null;
   compatibleBrands: CompatibleBrand[];
   similarProducts?: Product[];
-  logistics: ProductLogistics | null;
   lang: string;
   krwToUsd: number;
   description?: string;
-  logisticsCatId?: number | null;
 }
-
-const MANUFACTURER_NAMES: Record<string, string> = {
-  "현대모비스": "Hyundai Mobis",
-  "기아모비스": "Kia Mobis",
-  "현대자동차": "Hyundai Motor",
-  "기아자동차": "Kia Motors",
-  "만도": "Mando",
-  "한온시스템": "Hanon Systems",
-  "현대위아": "Hyundai Wia",
-  "에스엘": "SL Corporation",
-  "현대트랜시스": "Hyundai Transys",
-  "현대케피코": "Hyundai Kefico",
-};
 
 type Lang = "ru" | "en" | "ko" | "ka" | "ar";
 const L = (m: Record<Lang, string>, lang: string) => m[(lang as Lang)] ?? m.en;
@@ -160,13 +133,24 @@ export function ProductDetailClient({
   const [backSearch, setBackSearch] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
+  // Модалка подгружается при первом открытии и дальше остаётся смонтированной.
+  const [orderMounted, setOrderMounted] = useState(false);
+  const openOrder = () => {
+    setOrderMounted(true);
+    setOrderOpen(true);
+  };
   const { isFavorite, toggleFavorite } = usePartsFavorites();
   const faved = isFavorite(product.id);
   useScrollDepth(`part_${product.part_number}`);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("parts:filters");
-    if (saved) setBackSearch(saved);
+    // sessionStorage бросает в приватном режиме и при заблокированных данных сайта.
+    try {
+      const saved = sessionStorage.getItem("parts:filters");
+      if (saved) setBackSearch(saved);
+    } catch {
+      /* без сохранённых фильтров «назад в каталог» ведёт на первую страницу */
+    }
     // Track product view
     trackEvent("view_item", {
       item_id: String(product.id),
@@ -184,7 +168,8 @@ export function ProductDetailClient({
       ? product.name_ko || product.name_en || product.name_ru
       : product.name_en || product.name_ru || product.name_ko;
 
-  const partNo = product.part_number || product.product_no || "";
+  const partNo = product.part_number || "";
+  const priced = hasPrice(product.price_krw);
 
   const catName = categoryName
     ? i18n.language === "ru"
@@ -198,18 +183,29 @@ export function ProductDetailClient({
       : subcategoryName.en
     : null;
 
-  const manufacturerName = MANUFACTURER_NAMES[product.manufacturer ?? ""] ?? product.manufacturer ?? "Hyundai Mobis";
+  // Нет производителя в базе — строку не показываем (раньше подставлялся «Hyundai Mobis»
+  // всем подряд, в том числе деталям других производителей).
+  const manufacturerName = manufacturerLabel(product.manufacturer);
   // Manufacturer → brand catalog filter (until dedicated SEO landing pages exist)
   const manufacturerBrandSlug = (() => {
+    if (!manufacturerName) return null;
     const m = (product.manufacturer ?? "").toLowerCase() + manufacturerName.toLowerCase();
     if (m.includes("kia") || m.includes("기아")) return "kia";
     if (m.includes("genesis")) return "genesis";
     if (m.includes("hyundai") || m.includes("현대") || m.includes("mobis") || m.includes("모비스")) return "hyundai";
     return null;
   })();
-  const manufacturerHref = manufacturerBrandSlug
-    ? `/${lang}/parts?brands=${manufacturerBrandSlug}`
-    : `/${lang}/parts?q=${encodeURIComponent(manufacturerName)}`;
+  const manufacturerHref = manufacturerName
+    ? manufacturerBrandSlug
+      ? `/${lang}/parts?brands=${manufacturerBrandSlug}`
+      : `/${lang}/parts?q=${encodeURIComponent(manufacturerName)}`
+    : undefined;
+
+  // Категория ведёт на индексируемую посадочную /parts/category/<slug>, а не на
+  // отфильтрованную выдачу /parts?cat=… (та noindex). Нет слага — прежнее поведение.
+  const categoryHref = categoryName?.slug
+    ? `/${lang}/parts/category/${categoryName.slug}`
+    : undefined;
 
   const fmtUsd = (priceKrw: number) => formatUsd(priceKrw, krwToUsd);
 
@@ -317,7 +313,10 @@ export function ProductDetailClient({
             {catName && (
               <>
                 <span className="text-[var(--pn-text-dim)]">/</span>
-                <Link href={`/${lang}/parts?cat=${categoryName?.slug}`} className="hover:text-[var(--pn-orange)] transition-colors">
+                <Link
+                  href={categoryHref ?? `/${lang}/parts?cat=${categoryName?.slug}`}
+                  className={cn("hover:text-[var(--pn-orange)] transition-colors rounded-sm", FOCUS_RING)}
+                >
                   {catName}
                 </Link>
               </>
@@ -373,10 +372,14 @@ export function ProductDetailClient({
             </div>
             {/* Caption strip — brand / category */}
             <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[var(--pn-surface)]">
-              <span className="flex items-center gap-2 text-sm font-semibold text-[var(--pn-text)] truncate">
-                <BrandDot slug={(product.manufacturer || "").toLowerCase().includes("kia") ? "kia" : "hyundai"} />
-                {MANUFACTURER_NAMES[product.manufacturer ?? ""] ?? product.manufacturer ?? "Hyundai Mobis"}
-              </span>
+              {manufacturerName ? (
+                <span className="flex items-center gap-2 text-sm font-semibold text-[var(--pn-text)] truncate">
+                  {manufacturerBrandSlug && <BrandDot slug={manufacturerBrandSlug} />}
+                  {manufacturerName}
+                </span>
+              ) : (
+                <span />
+              )}
               {catName && <span className="text-xs text-[var(--pn-text-dim)] uppercase tracking-wide shrink-0">{catName}</span>}
             </div>
           </div>
@@ -416,19 +419,21 @@ export function ProductDetailClient({
                   {L(DL.partNoLabel, lang)}
                 </span>
                 <span className="text-lg sm:text-xl font-mono font-bold tracking-[0.08em] text-[var(--pn-orange)] leading-none">
-                  {product.part_number || product.product_no || "—"}
+                  {product.part_number || "—"}
                 </span>
-                {(product.part_number || product.product_no) && (
+                {product.part_number && (
                   <button
+                    type="button"
                     onClick={copyPartNumber}
-                    title={t("parts.detail.copySuccess")}
-                    className="ml-1 p-1.5 rounded-lg text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] hover:bg-[var(--pn-surface-3)] transition-colors"
+                    title={t("parts.detail.copyPartNumber")}
+                    aria-label={t("parts.detail.copyPartNumber")}
+                    className={cn("ml-1 p-1.5 rounded-lg cursor-pointer text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] hover:bg-[var(--pn-surface-3)] transition-colors", FOCUS_RING)}
                   >
                     {copied ? <Check className="w-4 h-4 text-[var(--pn-success)]" /> : <Copy className="w-4 h-4" />}
                   </button>
                 )}
               </div>
-              {copied && <span className="text-xs text-[var(--pn-success)]">{t("parts.detail.copySuccess")}</span>}
+              {copied && <span role="status" className="text-xs text-[var(--pn-success)]">{t("parts.detail.copySuccess")}</span>}
             </div>
 
             {product.official_name_ko && (
@@ -441,48 +446,84 @@ export function ProductDetailClient({
 
             {/* Price + purchase card */}
             <div className="bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-2xl p-5 sm:p-6 mb-5">
-              <span className="text-[11px] text-[var(--pn-text-dim)] uppercase tracking-widest">
-                {t("parts.detail.priceLabel")}
-              </span>
-              <div className="text-4xl font-bold text-[var(--pn-orange)] mt-1 mb-5">
-                {fmtUsd(product.price_krw)}
-              </div>
+              {priced ? (
+                <>
+                  <span className="text-[11px] text-[var(--pn-text-dim)] uppercase tracking-widest">
+                    {t("parts.detail.priceLabel")}
+                  </span>
+                  <div className="text-4xl font-bold text-[var(--pn-orange)] mt-1 mb-5">
+                    {fmtUsd(product.price_krw)}
+                  </div>
 
-              <div className="flex gap-3">
-                <div className="flex items-center border border-[var(--pn-border)] bg-[var(--pn-surface-2)] rounded-xl">
-                  <button onClick={() => setQty(q => Math.max(1, q - 1))} className="w-10 h-12 flex items-center justify-center text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg">−</button>
-                  <span className="w-10 text-center text-sm font-semibold text-[var(--pn-text)]">{qty}</span>
-                  <button onClick={() => setQty(q => q + 1)} className="w-10 h-12 flex items-center justify-center text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg">+</button>
-                </div>
-                <Button
-                  onClick={handleCart}
-                  size="lg"
-                  title={inCartNow ? t("parts.detail.removeFromCart") : t("parts.detail.addToCart")}
-                  className={cn(
-                    "group/cart h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all",
-                    inCartNow ? "bg-[var(--pn-success)] hover:bg-[var(--pn-error)] text-white" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white"
-                  )}
-                >
-                  {inCartNow ? (
-                    <>
-                      <Check className="w-5 h-5 group-hover/cart:hidden" />
-                      <X className="w-5 h-5 hidden group-hover/cart:block" />
-                      <span className="group-hover/cart:hidden">{t("parts.products.inCart")}</span>
-                      <span className="hidden group-hover/cart:block">{t("parts.detail.removeFromCart")}</span>
-                    </>
-                  ) : (
-                    <><ShoppingCart className="w-5 h-5" />{t("parts.detail.addToCart")}</>
-                  )}
-                </Button>
-              </div>
+                  <div className="flex gap-3">
+                    <div className="flex items-center border border-[var(--pn-border)] bg-[var(--pn-surface-2)] rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setQty(q => Math.max(1, q - 1))}
+                        aria-label={t("parts.detail.decreaseQty")}
+                        className={cn("w-10 h-12 flex items-center justify-center rounded-l-xl cursor-pointer text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg", FOCUS_RING)}
+                      >−</button>
+                      <span className="w-10 text-center text-sm font-semibold text-[var(--pn-text)]" aria-live="polite" aria-label={t("parts.detail.quantity")}>{qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => setQty(q => q + 1)}
+                        aria-label={t("parts.detail.increaseQty")}
+                        className={cn("w-10 h-12 flex items-center justify-center rounded-r-xl cursor-pointer text-[var(--pn-text-muted)] hover:text-[var(--pn-orange)] transition text-lg", FOCUS_RING)}
+                      >+</button>
+                    </div>
+                    <Button
+                      onClick={handleCart}
+                      size="lg"
+                      title={inCartNow ? t("parts.detail.removeFromCart") : t("parts.detail.addToCart")}
+                      className={cn(
+                        "group/cart h-12 text-base font-semibold flex-1 flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]",
+                        inCartNow ? "bg-[var(--pn-success)] hover:bg-[var(--pn-error)] text-white" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white"
+                      )}
+                    >
+                      {inCartNow ? (
+                        <>
+                          <Check className="w-5 h-5 group-hover/cart:hidden" />
+                          <X className="w-5 h-5 hidden group-hover/cart:block" />
+                          <span className="group-hover/cart:hidden">{t("parts.products.inCart")}</span>
+                          <span className="hidden group-hover/cart:block">{t("parts.detail.removeFromCart")}</span>
+                        </>
+                      ) : (
+                        <><ShoppingCart className="w-5 h-5" />{t("parts.detail.addToCart")}</>
+                      )}
+                    </Button>
+                  </div>
 
-              <button
-                onClick={handleBuyNow}
-                className="w-full mt-3 h-12 rounded-xl border border-[var(--pn-border)] text-[var(--pn-text)] font-semibold flex items-center justify-center gap-2 hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)] transition-all"
-              >
-                <Zap className="w-5 h-5" />
-                {inCartNow ? L(DL.goToCart, lang) : L(DL.buyNow, lang)}
-              </button>
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    className={cn("w-full mt-3 h-12 rounded-xl border border-[var(--pn-border)] text-[var(--pn-text)] font-semibold flex items-center justify-center gap-2 cursor-pointer hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)] transition-all", FOCUS_RING)}
+                  >
+                    <Zap className="w-5 h-5" />
+                    {inCartNow ? L(DL.goToCart, lang) : L(DL.buyNow, lang)}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Цены в базе нет: ни «$0», ни корзины — только запрос менеджеру. */}
+                  <span className="text-[11px] text-[var(--pn-text-dim)] uppercase tracking-widest">
+                    {t("parts.detail.priceLabel")}
+                  </span>
+                  <div className="text-3xl font-bold text-[var(--pn-orange)] mt-1 mb-2">
+                    {t("parts.detail.priceOnRequest")}
+                  </div>
+                  <p className="text-sm text-[var(--pn-text-muted)] leading-relaxed mb-5">
+                    {t("parts.detail.requestPriceText")}
+                  </p>
+                  <Button
+                    onClick={openOrder}
+                    size="lg"
+                    className="h-12 w-full text-base font-semibold flex items-center justify-center gap-2 transition-all bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 text-white focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
+                  >
+                    <Zap className="w-5 h-5" />
+                    {t("parts.detail.requestPrice")}
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Info tiles */}
@@ -494,10 +535,12 @@ export function ProductDetailClient({
             {/* Wishlist + Share */}
             <div className="flex items-center gap-3 mb-6">
               <button
+                type="button"
                 onClick={handleWishlist}
                 aria-pressed={faved}
                 className={cn(
                   "group inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95",
+                  FOCUS_RING,
                   faved
                     ? "border-[var(--pn-orange)]/50 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)]/10 text-[var(--pn-orange)]"
                     : "border-[var(--pn-border)] bg-[var(--pn-surface)] text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
@@ -507,8 +550,9 @@ export function ProductDetailClient({
                 {faved ? L(DL.inWishlist, lang) : L(DL.wishlist, lang)}
               </button>
               <button
+                type="button"
                 onClick={handleShare}
-                className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--pn-border)] bg-[var(--pn-surface)] text-sm font-medium text-[var(--pn-text-muted)] cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]"
+                className={cn("group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--pn-border)] bg-[var(--pn-surface)] text-sm font-medium text-[var(--pn-text-muted)] cursor-pointer transition-all hover:-translate-y-0.5 active:scale-95 hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)]", FOCUS_RING)}
               >
                 <Share2 className="w-4 h-4 transition-transform group-hover:scale-110" />
                 {linkCopied ? L(DL.linkCopied, lang) : L(DL.share, lang)}
@@ -517,16 +561,18 @@ export function ProductDetailClient({
 
             {/* Specifications — clickable (future SEO landing pages) */}
             <div className="border-t border-[var(--pn-border)] pt-5 space-y-3">
-              <SpecRow
-                label={t("parts.detail.manufacturer")}
-                value={manufacturerName}
-                href={manufacturerHref}
-              />
+              {manufacturerName && (
+                <SpecRow
+                  label={t("parts.detail.manufacturer")}
+                  value={manufacturerName}
+                  href={manufacturerHref}
+                />
+              )}
               {catName && (
                 <SpecRow
                   label={t("parts.detail.category")}
                   value={catName}
-                  href={categoryName?.slug ? `/${lang}/parts?cat=${categoryName.slug}` : undefined}
+                  href={categoryHref}
                 />
               )}
               {subName && (
@@ -555,8 +601,9 @@ export function ProductDetailClient({
             <p className="text-[#5c2800] text-sm mt-1.5 max-w-xl leading-relaxed">{L(DL.fitmentBannerText, lang)}</p>
           </div>
           <button
-            onClick={() => setOrderOpen(true)}
-            className="shrink-0 px-8 py-3 rounded-full bg-[#141414] text-white font-bold hover:bg-black transition-colors"
+            type="button"
+            onClick={openOrder}
+            className="shrink-0 px-8 py-3 rounded-full bg-[#141414] text-white font-bold cursor-pointer hover:bg-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#141414]"
           >
             {L(DL.fitmentBannerCta, lang)}
           </button>
@@ -566,7 +613,7 @@ export function ProductDetailClient({
         {Array.isArray(product.cross_refs) && product.cross_refs.length > 0 && (
           <div className="bg-[var(--pn-surface)] border border-[var(--pn-border)] rounded-2xl p-6 sm:p-8 mb-10">
             <h2 className="text-base font-bold text-[var(--pn-text)] mb-3">
-              {lang === "ru" ? "Кросс-номера (аналоги)" : "Cross-reference numbers"}
+              {t("parts.detail.crossRefsTitle")}
             </h2>
             <div className="flex flex-wrap gap-2">
               {product.cross_refs.map((cr) => (
@@ -632,18 +679,20 @@ export function ProductDetailClient({
         )}
       </div>
 
-      <OrderModal
-        isOpen={orderOpen}
-        onClose={() => setOrderOpen(false)}
-        productName={productName ?? product.part_number}
-        partNumber={product.part_number || product.product_no || "—"}
-        productUrl={productUrl}
-        priceText={fmtUsd(product.price_krw)}
-        categoryName={catName ?? undefined}
-        source="parts_fitment"
-        title={L(DL.fitmentBannerCta, lang)}
-        subtitle={L(DL.fitmentBannerText, lang)}
-      />
+      {orderMounted && (
+        <OrderModal
+          isOpen={orderOpen}
+          onClose={() => setOrderOpen(false)}
+          productName={productName ?? product.part_number}
+          partNumber={product.part_number || "—"}
+          productUrl={productUrl}
+          priceText={priced ? fmtUsd(product.price_krw) : undefined}
+          categoryName={catName ?? undefined}
+          source={priced ? "parts_fitment" : "parts_price_request"}
+          title={priced ? L(DL.fitmentBannerCta, lang) : t("parts.detail.requestPrice")}
+          subtitle={priced ? L(DL.fitmentBannerText, lang) : t("parts.detail.requestPriceText")}
+        />
+      )}
     </div>
   );
 }
@@ -681,7 +730,7 @@ function SpecRow({ label, value, href }: { label: string; value: string; href?: 
       {href ? (
         <Link
           href={href}
-          className="group/spec inline-flex items-center gap-1 font-medium text-[var(--pn-text)] hover:text-[var(--pn-orange)] transition-colors underline decoration-[var(--pn-border)] decoration-dashed underline-offset-4 hover:decoration-[var(--pn-orange)] cursor-pointer"
+          className="group/spec inline-flex items-center gap-1 font-medium text-[var(--pn-text)] hover:text-[var(--pn-orange)] transition-colors underline decoration-[var(--pn-border)] decoration-dashed underline-offset-4 hover:decoration-[var(--pn-orange)] cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]"
         >
           {value}
           <ChevronRight className="w-3.5 h-3.5 text-[var(--pn-text-dim)] group-hover/spec:text-[var(--pn-orange)] group-hover/spec:translate-x-0.5 transition-all" />
