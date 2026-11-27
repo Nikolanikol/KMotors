@@ -147,7 +147,7 @@ describe("словарь car.inspection / car.trust", () => {
   it("во всех четырёх языках одинаковый набор ключей", () => {
     for (const ns of ["inspection", "trust"]) {
       const base = flat(dicts.en.car[ns]).sort();
-      expect(base.length).toBeGreaterThan(5);
+      expect(base.length).toBeGreaterThan(3); // trust — 4 ключа: отзывы убраны с карточки
       for (const lang of ["ru", "ka", "ar"]) {
         expect(flat(dicts[lang].car[ns]).sort(), `${lang}.${ns}`).toEqual(base);
       }
