@@ -24,7 +24,7 @@
 - **AI SEO pipeline** (parts) — Search Console stats collector → LLM-drafted titles/descriptions/cross-refs → Telegram approval gate → publish + IndexNow ping (see below)
 - **AI-generated blog** — Gemini-drafted posts + RSS auto-sync, both on VPS cron (`scripts/*-cron.sh`)
 - **Multilingual** — Russian (default), English, Georgian, Arabic — `react-i18next`, geo/cookie/Accept-Language-based redirect in middleware. Korean is disabled (301 → `/en/*`)
-- **Telegram integration** — order/checkout notifications, SEO digest + approval, webhook-driven admin actions
+- **Telegram integration** — lead and cart-request notifications, SEO digest + approval, webhook-driven admin actions
 - **Admin panel** — password-protected route (`/admin`) for blog/content management
 - **Analytics** — first-party click tracking (`/api/track`, bot/self-referral/admin filtered in middleware), GA4, Yandex Metrika, Search Console
 - **SEO plumbing** — per-section sitemaps (main, catalog, parts, fitment, blog), `robots.ts`, IndexNow, security headers
@@ -42,7 +42,7 @@
 | Auth | Supabase Auth (storefront) + password-gate cookie (admin) |
 | i18n | react-i18next (ru/en/ka/ar) |
 | LLM | Gemini or Groq (Llama 3.3 70B) — provider-agnostic, one env var swap (`src/lib/llm.ts`) |
-| Payments | PayPal |
+| Payments | none on site — parts cart (localStorage) → lead to a manager via Telegram; PayPal and `/checkout` removed 27.11.2026 |
 | Email | Resend |
 | Deployment | Coolify on VPS (push to `main` redeploys); schedules via Coolify Scheduled Tasks → `scripts/cron/run.mjs`, legacy jobs still in crontab |
 | External APIs | Encar.com (cars), Search Console, Telegram Bot API |
@@ -105,10 +105,8 @@ GSC_SITE_URL=
 YANDEX_METRIKA_TOKEN=
 # GA4 vars — see src/lib/analytics/ga4.ts
 
-# PayPal
-NEXT_PUBLIC_PAYPAL_CLIENT_ID=
-PAYPAL_CLIENT_SECRET=
-PAYPAL_API_BASE=
+# PayPal — код больше не читает (удалён 27.11.2026); переменные можно убрать из Coolify
+# NEXT_PUBLIC_PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_API_BASE
 
 # Email (Resend)
 RESEND_API_KEY=
@@ -156,10 +154,10 @@ Other scripts: `npm run build`, `npm run start`, `npm run lint`, `npm run create
 src/
 ├── app/
 │   ├── [lang]/            # ru/en/ka/ar routes: catalog, parts, fitment, blog,
-│   │                      # account, checkout, cart, compare, favorites, auth...
+│   │                      # account, cart, compare, favorites, auth...
 │   ├── admin/             # password-protected admin panel
 │   ├── api/                # REST endpoints — parts, blog, blog-generate, rss-sync,
-│   │                        # seo/{collect,generate,publish}, paypal, telegram(-webhook),
+│   │                        # seo/{collect,generate,publish}, telegram(-webhook),
 │   │                        # exchange-rate, indexnow, track, admin(-auth)
 │   ├── sitemap*.xml, sitemap-*/[page]/, robots.ts
 │   └── parts/sections/     # parts catalog UI building blocks
