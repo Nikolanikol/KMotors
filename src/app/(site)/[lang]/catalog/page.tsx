@@ -50,12 +50,24 @@ interface Props {
   searchParams: CarSearchParams;
 }
 
+/**
+ * Бренд из `?manufacture=`. ⚠️ Раньше стояло `.slice(1)`: фильтр дописывал в начало
+ * лишний «%» (`%Kia`), и срез его снимал, — но ссылки со страниц моделей и из
+ * JSON-LD главной идут БЕЗ «%» (`?manufacture=Kia`), и срез съедал первую букву
+ * («ia»). Теперь «%» снимается только если он есть; «null»/«undefined» — след
+ * прежней сборки адреса без выбранной марки — считаем пустым значением.
+ */
+function parseManufacture(raw: string | undefined): string {
+  const value = (raw ?? "").replace(/^%/, "").trim();
+  return value === "null" || value === "undefined" ? "" : value;
+}
+
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { lang } = await params;
   const sp = await searchParams;
   const meta = CATALOG_META[lang] || CATALOG_META.ru;
 
-  const manufacture = sp.manufacture?.slice(1) || "";
+  const manufacture = parseManufacture(sp.manufacture);
   const yearMin = sp.yearMin || "";
   const yearMax = sp.yearMax || "";
   const priceMax = sp.priceMax || "";
@@ -130,7 +142,7 @@ export default async function CatalogPage({ params, searchParams }: Props) {
   const sp = await searchParams;
 
   const meta = CATALOG_META[lang] || CATALOG_META.ru;
-  const manufacture = sp.manufacture?.slice(1) || "";
+  const manufacture = parseManufacture(sp.manufacture);
   const title = manufacture ? meta.withBrand.replace("{brand}", manufacture) : meta.default;
 
   const faqs = CATALOG_FAQ[lang] || CATALOG_FAQ.ru;

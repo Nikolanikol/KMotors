@@ -13,7 +13,11 @@ import {
 } from "@/components/ui/select";
 import { generateNumbersArray } from "@/utils/generateNumbersArray";
 
-const priceOptions = generateNumbersArray(1980, 2025, 1);
+// ⚠️ Верхняя граница — текущий год + 1 (модельный год Encar заходит вперёд), а не
+// константа: список, закончившийся на 2025, не давал выбрать 2026 и отрезал свежие
+// машины, если год «до» выбрать явно.
+const LAST_YEAR = new Date().getFullYear() + 1;
+const priceOptions = generateNumbersArray(1980, LAST_YEAR, 1);
 const MyFilterYear = ({
   setYear,
   defaultMin,

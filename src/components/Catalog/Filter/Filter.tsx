@@ -51,7 +51,10 @@ const Filter = ({}) => {
 
   // Читаем начальные значения из URL
   const initAction = searchParams.get("action") ?? "";
-  const initManufacture = searchParams.get("manufacture")?.replace(/^%/, "") ?? null;
+  // Ведущий «%» — след прежней сборки адреса; «null» — прежний адрес без марки.
+  const initManufactureRaw = searchParams.get("manufacture")?.replace(/^%/, "") ?? null;
+  const initManufacture =
+    initManufactureRaw === "null" || initManufactureRaw === "undefined" ? null : initManufactureRaw;
   const initPriceMin = searchParams.get("priceMin") ?? "";
   const initPriceMax = searchParams.get("priceMax") ?? "";
   const initMileageMin = searchParams.get("mileageMin") ?? "";
@@ -134,14 +137,19 @@ const Filter = ({}) => {
   };
 
   const handleAction = (value: string | null) => {
-    if (value != null) {
-      const lang = i18n.language || "ru";
-      const href = `/${lang}/catalog?action=${value}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}&manufacture=%${manufacture}`;
-      navStart(href);
-      startTransition(() => {
-        router.push(href);
-      });
-    }
+    // null — марку сбросили на «любую»: идём в общий каталог (action пуст — в
+    // запросе остаётся умолчание), а не молчим: раньше «Показать» после сброса
+    // марки не делал ничего, и вернуться к общей выдаче из фильтра было нельзя.
+    const lang = i18n.language || "ru";
+    // ⚠️ Бренд — только когда он выбран. Раньше всегда уходило `manufacture=%${...}`:
+    // без марки получалось `%null`, и заголовок страницы читался «Купить null из
+    // Кореи» (с noindex). Ведущий «%» убран; page.tsx понимает и старые ссылки с ним.
+    const brand = manufacture ? `&manufacture=${encodeURIComponent(manufacture)}` : "";
+    const href = `/${lang}/catalog?action=${value ?? ""}&page=1&priceMin=${price.minPrice}&priceMax=${price.maxPrice}&mileageMin=${mileage.minMileage}&mileageMax=${mileage.maxMileage}&yearMin=${year.minYear}&yearMax=${year.maxYear}${brand}`;
+    navStart(href);
+    startTransition(() => {
+      router.push(href);
+    });
   };
 
   const [price, setPrice] = useState({
@@ -343,15 +351,31 @@ const ModelsRow: React.FC<ModelsRowProps> = ({
       setModelAction(null);
       // Марка сменилась или сброшена — поколение и всё ниже обязаны обнулиться.
       setModelActionDrill(null);
-      if (action == null) setData([]);
-    }
-    if (action != null) {
-      setLoading(true);
-      fetchModels(action)
-        .then((res) => setData(res))
-        .finally(() => setLoading(false));
+      // Список прежней марки чистим сразу, а не только на сбросе: пока грузится
+      // новая, в выпадашке не должно висеть чужих моделей.
+      setData([]);
     }
     prevActionRef.current = action;
+    if (action == null) {
+      setLoading(false);
+      return;
+    }
+
+    // ⚠️ Флаг cancelled — как в NavRow: ответы приходят не в порядке запросов
+    // (таймаут до 8 с, затем прокси до 20 с), и медленный ответ по прежней марке
+    // перетирал свежий — у выбранной марки B стояли модели марки A.
+    let cancelled = false;
+    setLoading(true);
+    fetchModels(action)
+      .then((res) => {
+        if (!cancelled) setData(res);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 
@@ -412,15 +436,28 @@ const GenerationRow: React.FC<GenerationRowProps> = ({ action, setAction, onSele
       // Сменилась модель — нижние уровни обязаны обнулиться, иначе в запросе
       // останется комплектация от прежней машины.
       onSelect?.(null);
-      if (action == null) setData([]);
-    }
-    if (action != null) {
-      setLoading(true);
-      fetchGeneration(action)
-        .then((res) => setData(res))
-        .finally(() => setLoading(false));
+      setData([]);
     }
     prevActionRef.current = action;
+    if (action == null) {
+      setLoading(false);
+      return;
+    }
+
+    // ⚠️ cancelled — та же причина, что в ModelsRow: поздний ответ по прежней
+    // модели не должен перезаписать список поколений новой.
+    let cancelled = false;
+    setLoading(true);
+    fetchGeneration(action)
+      .then((res) => {
+        if (!cancelled) setData(res);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action]);
 

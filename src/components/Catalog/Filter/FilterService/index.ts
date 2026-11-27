@@ -63,6 +63,14 @@ function drill(payload: Node, depth: number): Node[] {
   return Array.isArray(facets) ? facets : [];
 }
 
+/**
+ * ⚠️ Пункт со счётчиком 0 — это «модель есть, машин нет»: выбрав его, посетитель
+ * получал «Ничего не найдено» (Hyundai Granada/Grace/Lavita, «기타» почти у каждой
+ * импортной марки). Скрываем ТОЛЬКО явный ноль: у «Без комплектации» (NO_TRIM)
+ * счётчик положительный, а пункт без поля Count не трогаем.
+ */
+const hasCars = (facet: Node) => facet?.Count !== 0;
+
 async function fetchNav(query: string, depth: number): Promise<Node[]> {
   const path = `count=true&q=${query}&inav=%7CMetadata%7CSort`;
 
@@ -72,14 +80,14 @@ async function fetchNav(query: string, depth: number): Promise<Node[]> {
       signal: AbortSignal.timeout(PRIMARY_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return drill(await res.json(), depth);
+    return drill(await res.json(), depth).filter(hasCars);
   } catch {
     try {
       const res = await fetch(`https://encar-proxy-main.onrender.com/api/nav?${path}`, {
         signal: AbortSignal.timeout(FALLBACK_TIMEOUT_MS),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return drill(await res.json(), depth);
+      return drill(await res.json(), depth).filter(hasCars);
     } catch {
       // Фильтр без опций лучше, чем unhandled rejection и сломанный каталог.
       return [];
