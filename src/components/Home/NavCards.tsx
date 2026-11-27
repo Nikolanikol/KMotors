@@ -1,40 +1,20 @@
 "use client";
 
 import { langOrDefault } from "@/lib/lang";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useCountry } from "@/hooks/useCountry";
 
 
+// Иконки (бронза на чёрном) сгенерированы в ChatGPT 27.11.2026 одним набором, чтобы стиль
+// совпал, и нарезаны в public/images/nav. Чёрный фон картинок гасится `mix-blend-screen`.
+// Цвета карточек — только бронза бренда: прежние синяя и зелёная выбивались из палитры.
 const CARDS = [
-  {
-    icon: "🚗",
-    titleKey: "nav.catalog",
-    descKey: "navCards.catalogDesc",
-    href: "/catalog",
-    color: "var(--axis-orange)",
-    bg: "rgba(182,119,73,0.08)",
-    border: "rgba(182,119,73,0.2)",
-  },
-  {
-    icon: "🔧",
-    titleKey: "nav.parts",
-    descKey: "navCards.partsDesc",
-    href: "/parts",
-    color: "#229ED9",
-    bg: "rgba(34,158,217,0.08)",
-    border: "rgba(34,158,217,0.2)",
-  },
-  {
-    icon: "🧮",
-    titleKey: "nav.calculator",
-    descKey: "navCards.calcDesc",
-    href: "/calculator",
-    color: "#22c55e",
-    bg: "rgba(34,197,94,0.08)",
-    border: "rgba(34,197,94,0.2)",
-  },
+  { icon: "/images/nav/catalog.webp", titleKey: "nav.catalog", href: "/catalog" },
+  { icon: "/images/nav/parts.webp", titleKey: "nav.parts", href: "/parts" },
+  { icon: "/images/nav/calculator.webp", titleKey: "nav.calculator", href: "/calculator" },
 ];
 
 const FALLBACK: Record<string, { title: string; desc: string }[]> = {
@@ -72,38 +52,42 @@ export default function NavCards() {
   const labels = FALLBACK[lang] ?? FALLBACK.ru;
   const { isCatalogBlocked } = useCountry();
 
-  const visibleCards = isCatalogBlocked
-    ? CARDS.filter((c) => c.href !== "/catalog")
-    : CARDS;
-  const visibleLabels = isCatalogBlocked
-    ? labels.filter((_, i) => CARDS[i].href !== "/catalog")
-    : labels;
+  const items = CARDS.map((card, i) => ({ ...card, label: labels[i] })).filter(
+    (c) => !(isCatalogBlocked && c.href === "/catalog"),
+  );
 
   return (
-    <section className="py-6 px-4 sm:px-6" style={{ backgroundColor: "var(--axis-black)" }}>
-      <div className={`max-w-7xl mx-auto grid gap-3 sm:gap-4 ${visibleCards.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-        {visibleCards.map((card, i) => (
+    <section className="py-8 px-4 sm:px-6" style={{ backgroundColor: "var(--axis-black)" }}>
+      <div className={`max-w-7xl mx-auto grid gap-3 sm:gap-5 ${items.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        {items.map((card) => (
           <Link
             key={card.href}
             href={`/${lang}${card.href}`}
-            className="group flex flex-col gap-2 p-4 rounded-2xl transition-all duration-200 hover:-translate-y-1 active:scale-95"
+            className="group relative flex items-center gap-4 sm:flex-col sm:items-start sm:gap-3 overflow-hidden rounded-2xl p-4 sm:p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(182,119,73,0.6)] hover:shadow-[0_18px_40px_rgba(182,119,73,0.18)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
             style={{
-              backgroundColor: card.bg,
-              border: `1px solid ${card.border}`,
+              background: "linear-gradient(145deg, var(--axis-graphite) 0%, var(--axis-charcoal) 60%, var(--axis-black) 100%)",
+              border: "1px solid rgba(182,119,73,0.22)",
             }}
           >
-            <span className="text-2xl sm:text-3xl">{card.icon}</span>
+            <Image
+              src={card.icon}
+              alt=""
+              width={96}
+              height={96}
+              aria-hidden="true"
+              className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 object-contain mix-blend-screen transition-transform duration-300 group-hover:scale-110"
+            />
             <div className="flex-1">
-              <p className="text-sm sm:text-base font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
-                {visibleLabels[i].title}
+              <p className="text-lg sm:text-xl font-bold leading-tight" style={{ color: "var(--axis-white)" }}>
+                {card.label.title}
               </p>
-              <p className="text-xs mt-0.5 hidden sm:block" style={{ color: "var(--axis-gray)" }}>
-                {visibleLabels[i].desc}
+              <p className="text-sm mt-1" style={{ color: "var(--axis-gray)" }}>
+                {card.label.desc}
               </p>
             </div>
             <ArrowRight
-              className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-              style={{ color: card.color }}
+              className="w-5 h-5 shrink-0 sm:absolute sm:top-5 sm:right-5 rtl:rotate-180 transition-transform duration-200 group-hover:translate-x-1"
+              style={{ color: "var(--axis-orange)" }}
             />
           </Link>
         ))}

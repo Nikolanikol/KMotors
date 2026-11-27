@@ -1,13 +1,15 @@
 "use client";
 
 import { langOrDefault } from "@/lib/lang";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import dynamic from "next/dynamic";
-const PaintSplashCanvas = dynamic(() => import("@/components/ui/PaintSplashCanvas"), { ssr: false, loading: () => null });
 import { useCountry } from "@/hooks/useCountry";
 
+// Фон — сгенерированная картинка (ChatGPT, 27.11.2026), лежит в public/images/hero-cars.jpg.
+// Заголовок слева, машины справа: левая половина кадра тёмная намеренно (под текст).
+// В RTL (арабский) кадр зеркалится, чтобы текст и машины не поменялись местами.
 const Main = () => {
   const { t } = useTranslation();
   const pathname = usePathname();
@@ -16,93 +18,115 @@ const Main = () => {
   const { isCatalogBlocked } = useCountry();
 
   return (
-    <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden -mt-[68px] w-full max-w-full">
-      <PaintSplashCanvas />
+    <section className="relative min-h-[92vh] flex items-start md:items-center overflow-hidden -mt-[68px] w-full max-w-full"
+      style={{ backgroundColor: "var(--axis-black)" }}>
+      {/* Фон с машинами */}
+      <Image
+        src="/images/hero-cars.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-contain object-bottom md:object-cover md:object-center rtl:-scale-x-100"
+      />
+      {/* На телефоне картинка показана целиком внизу (object-contain), текст над ней на чёрном:
+          с object-cover на узком экране видна увеличенная деталь одной машины. Верх картинки
+          плавно уходит в чёрный. */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-[260px] md:hidden"
+        style={{ background: "linear-gradient(to bottom, var(--axis-black) 0%, rgba(10,10,10,0.7) 30%, transparent 70%)" }}
+      />
+      {/* Затемнение: слева под текст (только широкий экран), снизу в цвет следующего блока, сверху под шапку */}
+      <div
+        className="absolute inset-0 hidden md:block"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.72) 38%, rgba(10,10,10,0.15) 75%, rgba(10,10,10,0.05) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 h-16 md:h-40"
+        style={{ background: "linear-gradient(to top, var(--axis-black), transparent)" }}
+      />
+      <div
+        className="absolute inset-x-0 top-0 h-32"
+        style={{ background: "linear-gradient(to bottom, rgba(10,10,10,0.7), transparent)" }}
+      />
 
-      <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto">
-        <h1
-          className="font-display mb-6 leading-tight w-full"
-          style={{
-            color: "var(--axis-white)",
-            textShadow: "0 0 60px rgba(182,119,73,0.3)",
-            fontSize: "clamp(1.5rem, 7vw, 4.5rem)",
-            wordBreak: "break-word",
-            overflowWrap: "break-word",
-          }}
-        >
-          {t("home.hero.title")}
-        </h1>
-
-        <p className="text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: "var(--axis-gray)" }}>
-          {t("home.hero.subtitle")}
-        </p>
-
-        {!isCatalogBlocked && (
-          <Link
-            href={`/${lang}/catalog`}
-            className="paint-splash-btn inline-block px-10 py-4 border-2 font-semibold rounded-full transition-all duration-300 relative z-10"
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-[100px] md:pt-[68px] pb-24">
+        <div className="max-w-2xl text-center md:text-start mx-auto md:mx-0">
+          <h1
+            className="font-display mb-6 leading-[1.05]"
             style={{
-              borderColor: "var(--axis-orange)",
-              color: "var(--axis-orange)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "var(--axis-orange)";
-              (e.currentTarget as HTMLElement).style.color = "var(--axis-white)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-              (e.currentTarget as HTMLElement).style.color = "var(--axis-orange)";
+              color: "var(--axis-white)",
+              textShadow: "0 2px 40px rgba(0,0,0,0.6)",
+              fontSize: "clamp(2rem, 6.5vw, 4.5rem)",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
             }}
           >
-            <span className="relative z-10">{t("home.hero.catalogButton")}</span>
-          </Link>
-        )}
+            {t("home.hero.title")}
+          </h1>
 
-        {/* Phone link — mobile friendly */}
-        <div className="mt-4">
-          <a
-            href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
-            className="inline-flex items-center gap-2 text-sm transition-colors"
-            style={{ color: "var(--axis-gray)" }}
+          <p
+            className="text-base md:text-lg max-w-xl mb-10 leading-relaxed mx-auto md:mx-0"
+            style={{ color: "var(--axis-silver, #D4D0CC)" }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
-            </svg>
-            {process.env.NEXT_PUBLIC_NUMBER_PHONE}
-          </a>
-        </div>
+            {t("home.hero.subtitle")}
+          </p>
 
-        {/* Stats. «1240+ авто» и «850+ клиентов» убраны 27.11.2026 по решению владельца:
-            цифры были зашиты константой и ничем не подтверждались. «12 лет» оставлено до
-            отдельного подтверждения. */}
-        <div className="flex items-center justify-center gap-4 sm:gap-8 md:gap-16 mt-20 w-full">
-          <div className="flex flex-col items-center shrink-0">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight" style={{ color: "var(--axis-orange)" }}>
-              {t("home.hero.statYears")}
-            </span>
-            <span className="text-[10px] sm:text-xs tracking-widest uppercase mt-1" style={{ color: "var(--axis-gray)" }}>
-              {t("home.hero.statYearsLabel")}
-            </span>
+          <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
+            {!isCatalogBlocked && (
+              <Link
+                href={`/${lang}/catalog`}
+                className="inline-flex items-center justify-center px-9 py-4 rounded-full font-semibold text-white transition-all duration-200 hover:brightness-115 hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
+                style={{
+                  backgroundColor: "var(--axis-bronze-deep)",
+                  backgroundImage: "var(--axis-bronze-fill)",
+                  boxShadow: "0 8px 28px rgba(182,119,73,0.35)",
+                }}
+              >
+                {t("home.hero.catalogButton")}
+              </Link>
+            )}
+            <Link
+              href={`/${lang}/calculator`}
+              className="inline-flex items-center justify-center px-9 py-4 rounded-full font-semibold border transition-all duration-200 text-[var(--axis-white)] border-white/25 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.1] hover:border-[var(--axis-orange)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
+            >
+              {t("nav.calculator")}
+            </Link>
+          </div>
+
+          <div className="mt-6">
+            <a
+              href={`tel:${process.env.NEXT_PUBLIC_NUMBER_PHONE}`}
+              className="inline-flex items-center gap-2 text-sm rounded transition-colors text-[var(--axis-gray)] hover:text-[var(--axis-white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+              </svg>
+              {process.env.NEXT_PUBLIC_NUMBER_PHONE}
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Scroll indicator — заметная стрелка */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-10 cursor-pointer group"
+      {/* Scroll indicator */}
+      <button
+        type="button"
+        aria-label={t("home.hero.scrollHint")}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-1.5 z-10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         onClick={() => window.scrollBy({ top: window.innerHeight * 0.85, behavior: "smooth" })}
       >
         <span className="text-xs font-medium tracking-widest uppercase" style={{ color: "var(--axis-gray)", animation: "fadeInOut 2s ease-in-out infinite" }}>
           {t("home.hero.scrollHint")}
         </span>
         <div className="flex flex-col items-center gap-0.5" style={{ animation: "arrowBounce 1.5s ease-in-out infinite" }}>
-          <svg width="24" height="14" viewBox="0 0 24 14" fill="none">
-            <path d="M2 2L12 11L22 2" stroke="var(--axis-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <svg width="24" height="14" viewBox="0 0 24 14" fill="none" style={{ opacity: 0.4 }}>
-            <path d="M2 2L12 11L22 2" stroke="var(--axis-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="24" height="14" viewBox="0 0 24 14" fill="none" aria-hidden="true">
+            <path d="M2 2L12 11L22 2" stroke="var(--axis-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-      </div>
+      </button>
 
       <style>{`
         @keyframes arrowBounce {
@@ -112,6 +136,9 @@ const Main = () => {
         @keyframes fadeInOut {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          section [style*="arrowBounce"], section [style*="fadeInOut"] { animation: none !important; }
         }
       `}</style>
     </section>
