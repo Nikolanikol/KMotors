@@ -121,7 +121,10 @@ export default function CustomsCalculator({
       <div className="h-1 w-full" style={{ backgroundColor: "var(--axis-bronze-deep)" }} />
       <div className="px-6 pt-4 pb-0" style={{ background: "linear-gradient(to right, var(--axis-graphite), #1a1a1a)" }}>
         <div className="mb-3">
-          <h3 className="text-lg font-bold text-[var(--axis-white)]">🧮 {t("widget.title")}</h3>
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="text-lg leading-none">🧮</span>
+            <h3 className="text-lg font-bold text-[var(--axis-white)]">{t("widget.title")}</h3>
+          </div>
           <p className="mt-0.5 text-sm text-[var(--axis-silver)]">{t("widget.subtitle")}</p>
         </div>
         <div className="flex gap-1" role="group" aria-label={t("widget.tabsLabel")}>
