@@ -10,6 +10,8 @@ import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 import { SITE_URL } from "@/lib/site";
+import { getServerT } from "@/lib/serverT";
+import { jsonLd } from "@/lib/partsSeo";
 
 // 24 часа, а не false: страница показывает цены (krwToUsd, кеш курса 24ч) и
 // списки деталей поколения, которые растут вместе с каталогом. При
@@ -54,14 +56,20 @@ interface VehicleRow {
 }
 
 const findVehicle = cache(async (brand: string, slug: string): Promise<VehicleRow | null> => {
-  const { data } = await createServerClient()
+  const { data, error } = await createServerClient()
     .from("vehicles")
     .select("id, brand, name_en, year_from, year_to, open_ended, parts_count, slug, model_ko")
     .eq("brand", brand)
     .eq("slug", slug)
     .maybeSingle();
+  // Сбой БД — не «нет такого поколения»: иначе живая страница отдаст 404.
+  if (error) throw new Error(`[fitment] поколение ${brand}/${slug}: ${error.message}`);
   return (data as VehicleRow) ?? null;
 });
+
+// Mobis делает детали только для Hyundai, Kia и Genesis. Для остальных брендов каталога
+// (SsangYong, Audi) утверждать «Hyundai Mobis» нельзя — текст идёт без названия поставщика.
+const MOBIS_BRANDS = new Set(["hyundai", "kia", "genesis"]);
 
 function years(v: VehicleRow): string {
   const yf = v.year_from ? String(v.year_from).split(".")[0] : "";
@@ -72,45 +80,46 @@ function years(v: VehicleRow): string {
 
 // K-Axis-specific copy — deliberately different wording from caranalizer to
 // avoid cross-domain duplicate content on shared ru/en/ar. ko/ka are exclusive.
-function buildCopy(lang: string, full: string, brandName: string) {
+function buildCopy(lang: string, full: string, brandName: string, mobis: boolean) {
+  const M = mobis ? "Hyundai Mobis" : null;
   const map: Record<string, { h1: string; intro: string; title: string; desc: string; count: (n: number) => string; others: string }> = {
     ru: {
       h1: `Запчасти для ${full}`,
-      intro: `Каталог оригинальных запчастей Hyundai Mobis для ${full}. Двигатель, подвеска, кузов, электрика и салон — с подбором по вашему поколению. K-Axis отгружает напрямую со складов в Южной Корее.`,
+      intro: `Каталог оригинальных запчастей${M ? ` ${M}` : ""} для ${full}. Двигатель, подвеска, кузов, электрика и салон — с подбором по вашему поколению. K-Axis отгружает напрямую со складов в Южной Корее.`,
       title: `Запчасти ${full} — оригинал из Кореи`,
-      desc: `Оригинальные запчасти Hyundai Mobis для ${full}. Прямая отправка из Кореи, подбор по поколению и году выпуска.`,
+      desc: `Оригинальные запчасти${M ? ` ${M}` : ""} для ${full}. Прямая отправка из Кореи, подбор по поколению и году выпуска.`,
       count: (n) => `Позиций в каталоге: ${n}`,
       others: `Другие поколения ${brandName}`,
     },
     en: {
       h1: `${full} Parts`,
-      intro: `Genuine Hyundai Mobis parts catalog for the ${full}. Engine, suspension, body, electrical and interior — matched to your exact generation. K-Axis ships direct from warehouses in South Korea.`,
+      intro: `Genuine ${M ? `${M} ` : ""}parts catalog for the ${full}. Engine, suspension, body, electrical and interior — matched to your exact generation. K-Axis ships direct from warehouses in South Korea.`,
       title: `${full} Parts — Genuine OEM from Korea`,
-      desc: `Genuine Hyundai Mobis parts for the ${full}. Direct shipping from Korea, matched by generation and model year.`,
+      desc: `Genuine ${M ? `${M} ` : ""}parts for the ${full}. Direct shipping from Korea, matched by generation and model year.`,
       count: (n) => `Parts in catalog: ${n}`,
       others: `Other ${brandName} generations`,
     },
     ko: {
       h1: `${full} 부품`,
-      intro: `${full}에 맞는 현대모비스 정품 부품 카탈로그입니다. 엔진, 서스펜션, 바디, 전장, 실내 부품을 세대별로 정확하게 확인하세요. K-Axis는 한국 창고에서 직접 발송합니다.`,
+      intro: `${full}에 맞는 ${M ? "현대모비스 " : ""}정품 부품 카탈로그입니다. 엔진, 서스펜션, 바디, 전장, 실내 부품을 세대별로 정확하게 확인하세요. K-Axis는 한국 창고에서 직접 발송합니다.`,
       title: `${full} 부품 — 한국 정품`,
-      desc: `${full}용 현대모비스 정품 부품. 한국에서 직접 배송, 세대·연식별 맞춤 조회.`,
+      desc: `${full}용 ${M ? "현대모비스 " : ""}정품 부품. 한국에서 직접 배송, 세대·연식별 맞춤 조회.`,
       count: (n) => `카탈로그 품목: ${n}`,
       others: `다른 ${brandName} 세대`,
     },
     ka: {
       h1: `${full} ნაწილები`,
-      intro: `Hyundai Mobis-ის ორიგინალი ნაწილების კატალოგი ${full}-სთვის. ძრავა, სავალი ნაწილი, ძარა, ელექტრო და სალონი — შერჩეული თქვენი თაობის მიხედვით. K-Axis აგზავნის პირდაპირ სამხრეთ კორეის საწყობებიდან.`,
+      intro: `${M ? `${M}-ის ` : ""}ორიგინალი ნაწილების კატალოგი ${full}-სთვის. ძრავა, სავალი ნაწილი, ძარა, ელექტრო და სალონი — შერჩეული თქვენი თაობის მიხედვით. K-Axis აგზავნის პირდაპირ სამხრეთ კორეის საწყობებიდან.`,
       title: `${full} ნაწილები — ორიგინალი კორეიდან`,
-      desc: `Hyundai Mobis-ის ორიგინალი ნაწილები ${full}-სთვის. პირდაპირი მიწოდება კორეიდან, შერჩევა თაობისა და წლის მიხედვით.`,
+      desc: `${M ? `${M}-ის ` : ""}ორიგინალი ნაწილები ${full}-სთვის. პირდაპირი მიწოდება კორეიდან, შერჩევა თაობისა და წლის მიხედვით.`,
       count: (n) => `პოზიციები კატალოგში: ${n}`,
       others: `${brandName}-ის სხვა თაობები`,
     },
     ar: {
       h1: `قطع غيار ${full}`,
-      intro: `كتالوج قطع غيار Hyundai Mobis الأصلية لسيارة ${full}. المحرك، التعليق، الهيكل، الكهرباء والمقصورة — مطابقة لجيل سيارتك بدقة. تشحن K-Axis مباشرة من مستودعات كوريا الجنوبية.`,
+      intro: `كتالوج قطع غيار ${M ? `${M} ` : ""}الأصلية لسيارة ${full}. المحرك، التعليق، الهيكل، الكهرباء والمقصورة — مطابقة لجيل سيارتك بدقة. تشحن K-Axis مباشرة من مستودعات كوريا الجنوبية.`,
       title: `قطع غيار ${full} — أصلية من كوريا`,
-      desc: `قطع غيار Hyundai Mobis الأصلية لسيارة ${full}. شحن مباشر من كوريا، مطابقة حسب الجيل وسنة الصنع.`,
+      desc: `قطع غيار ${M ? `${M} ` : ""}الأصلية لسيارة ${full}. شحن مباشر من كوريا، مطابقة حسب الجيل وسنة الصنع.`,
       count: (n) => `عدد القطع في الكتالوج: ${n}`,
       others: `أجيال ${brandName} الأخرى`,
     },
@@ -137,7 +146,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const v = await findVehicle(brand, slug);
   if (!v) return {};
   const { full, brandName } = displayName(v);
-  const copy = buildCopy(lang, full, brandName);
+  const copy = buildCopy(lang, full, brandName, MOBIS_BRANDS.has(v.brand));
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   // Страницы пагинации каноникалят САМИ НА СЕБЯ. Раньше makeAlternates получал
   // путь без ?page, поэтому все страницы схлопывались на первую — Google их
@@ -166,24 +175,30 @@ export default async function FitmentPage({ params, searchParams }: Props) {
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
 
-  const { data: pv, count: totalLinks } = await supabase
+  const { data: pv, count: totalLinks, error: pvError } = await supabase
     .from("part_vehicles")
     .select("part_id", { count: "exact" })
     .eq("vehicle_id", v.id)
     .order("part_id", { ascending: true })
     .range(from, from + PAGE_SIZE - 1);
+  if (pvError) throw new Error(`[fitment] связи поколения ${v.id}: ${pvError.message}`);
+
+  const totalPages = Math.max(1, Math.ceil((totalLinks ?? 0) / PAGE_SIZE));
+  // ?page=999 при трёх страницах — пустая страница с 200 плодила бы бесконечные URL.
+  if (page > totalPages) notFound();
 
   const partIds = (pv ?? []).map((r) => r.part_id);
   let products: Product[] = [];
   if (partIds.length) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("parts_products")
       .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new")
-      .in("id", partIds);
+      .in("id", partIds)
+      // Без порядка PostgREST отдаёт IN-выборку как придётся: сетка прыгала между запросами.
+      .order("id", { ascending: true });
+    if (error) throw new Error(`[fitment] товары поколения ${v.id}: ${error.message}`);
     products = (data ?? []).map(withCleanImage) as Product[];
   }
-
-  const totalPages = Math.max(1, Math.ceil((totalLinks ?? 0) / PAGE_SIZE));
 
   let siblings: VehicleRow[] = [];
   if (v.model_ko) {
@@ -200,15 +215,17 @@ export default async function FitmentPage({ params, searchParams }: Props) {
   }
 
   const { full, brandName } = displayName(v);
-  const copy = buildCopy(lang, full, brandName);
+  const copy = buildCopy(lang, full, brandName, MOBIS_BRANDS.has(v.brand));
   const path = `/fitment/${brand}/${slug}`;
+  // Название раздела — из словаря (ru/en/ka/ar), а не «Parts» для всех, кроме ru.
+  const partsLabel = getServerT(lang)("parts.detail.breadcrumbParts");
 
   const breadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
-      { "@type": "ListItem", position: 2, name: lang === "ru" ? "Запчасти" : "Parts", item: `${SITE_URL}/${lang}/parts` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}` },
+      { "@type": "ListItem", position: 2, name: partsLabel, item: `${SITE_URL}/${lang}/parts` },
       { "@type": "ListItem", position: 3, name: full, item: `${SITE_URL}/${lang}${path}` },
     ],
   };
@@ -219,12 +236,12 @@ export default async function FitmentPage({ params, searchParams }: Props) {
   return (
     <div className="parts-page min-h-screen">
       <SectionDictionary lang={lang} sections={["parts"]} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumb) }} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <nav className="text-sm text-[var(--pn-text-dim)] mb-4 flex flex-wrap gap-1.5">
           <Link href={`/${lang}`} className="hover:text-[var(--pn-orange)] transition-colors">K-Axis</Link>
           <span>/</span>
-          <Link href={`/${lang}/parts`} className="hover:text-[var(--pn-orange)] transition-colors">{lang === "ru" ? "Запчасти" : "Parts"}</Link>
+          <Link href={`/${lang}/parts`} className="hover:text-[var(--pn-orange)] transition-colors">{partsLabel}</Link>
           <span>/</span>
           <span className="text-[var(--pn-text-muted)]">{full}</span>
         </nav>
@@ -265,7 +282,7 @@ export default async function FitmentPage({ params, searchParams }: Props) {
                   href={`/${lang}/fitment/${s.brand}/${s.slug}`}
                   className="text-sm px-3 py-1.5 rounded-full bg-[var(--pn-surface)] border border-[var(--pn-border)] text-[var(--pn-text-muted)] hover:border-[var(--pn-orange)] hover:text-[var(--pn-orange)] transition-colors"
                 >
-                  {s.name_en.startsWith(brandName) ? s.name_en : s.name_en}{years(s) ? ` (${years(s)})` : ""}
+                  {s.name_en}{years(s) ? ` (${years(s)})` : ""}
                 </Link>
               ))}
             </div>

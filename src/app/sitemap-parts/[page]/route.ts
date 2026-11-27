@@ -15,7 +15,18 @@ const EMPTY_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"></urlset>`;
 
-// Slug канонический (только артикул) — одинаковый для всех языков
+/** Экранирование текста для XML: амперсанд, угловые скобки и кавычки в <loc>/<href> ломают весь файл. */
+function xmlEscape(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// Slug канонический (только артикул) — одинаковый для всех языков.
+// Сегмент уже закодирован (encodeURIComponent) и экранирован под XML снаружи.
 function alternates(slug: string) {
   return [
     ...LANGS.map(
@@ -39,7 +50,7 @@ export async function GET(
     const supabase = createServerClient();
     const { data: products, error } = await supabase
       .from("parts_products")
-      .select("id, part_number, name_ru, name_en, name_ko, scraped_at", { count: "exact" })
+      .select("id, part_number, name_ru, name_en, name_ko, scraped_at")
       // ⚠️ .order("id") — не украшение, а условие корректности пагинации.
       // price_krw НЕ уникальна: почти половина товаров делит цену с кем-то ещё
       // (замер: на 1000 строк 691 различная цена, до 15 товаров на одну цену).
@@ -62,9 +73,12 @@ export async function GET(
     }
 
     if (error) {
+      // 503, а не пустой файл с 200: пустой ответ запомнился бы на сутки (revalidate)
+      // и для Google выглядел бы как «этих URL больше нет».
       console.error('[sitemap-parts] DB Error:', error);
       return new NextResponse(EMPTY_XML, {
-        headers: { "Content-Type": "application/xml" },
+        status: 503,
+        headers: { "Content-Type": "application/xml", "Retry-After": "300" },
       });
     }
 
@@ -98,7 +112,7 @@ export async function GET(
         // ISO-даты YYYY-MM-DD сравниваются как строки
         const lastmod = contentDate && contentDate > scrapedDate ? contentDate : scrapedDate;
 
-        const slug = generatePartSlug(product.part_number, null, "ru", product.id);
+        const slug = xmlEscape(encodeURIComponent(generatePartSlug(product.part_number, null, "ru", product.id)));
 
         // Only add RU as primary (one per product, with alternates)
         urlBlocks.push(`  <url>
@@ -130,7 +144,8 @@ ${urlBlocks.join("\n")}
   } catch (err) {
     console.error('[sitemap-parts] Fatal error:', err instanceof Error ? err.message : String(err));
     return new NextResponse(EMPTY_XML, {
-      headers: { "Content-Type": "application/xml" },
+      status: 503,
+      headers: { "Content-Type": "application/xml", "Retry-After": "300" },
     });
   }
 }
