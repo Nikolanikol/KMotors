@@ -45,9 +45,12 @@ describe("classifyProbe: решение «продана» только по с�
   it("200 с HTML-страницей блокировки — блокировка, а не «жива»", () => {
     expect(classifyProbe({ kind: "response", status: 200, contentType: "text/html", body: "has_been_cr_blocked" })).toBe("blocked");
   });
-  it("403 и 429 — нас режут, это про нас, а не про машину", () => {
+  it("403 — нас режут, это про нас, а не про машину; 429 — «подождите» (limited), не блокировка", () => {
     expect(classifyProbe({ kind: "response", status: 403, contentType: "", body: "" })).toBe("blocked");
-    expect(classifyProbe({ kind: "response", status: 429, contentType: "", body: "" })).toBe("blocked");
+    expect(classifyProbe({ kind: "response", status: 429, contentType: "", body: "" })).toBe("limited");
+    expect(classifyProbe({ kind: "response", status: 429, contentType: "application/json", body: '{"error":"Too Many Requests"}' })).toBe("limited");
+    // но 429 со страницей блокировки Encar — это именно блокировка
+    expect(classifyProbe({ kind: "response", status: 429, contentType: "text/html", body: "has_been_cr_blocked" })).toBe("blocked");
   });
   it("5xx и таймаут — «неизвестно», не продана", () => {
     expect(classifyProbe(SERVER_ERROR)).toBe("unknown");
@@ -198,5 +201,75 @@ describe("runLivenessProbe", () => {
     const r = await runLivenessProbe(deps, { ...opts, candidates: [] });
     expect(r.ok).toBe(true);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("runLivenessProbe: ограничение частоты (429)", () => {
+  const LIMITED: ProbeResult = {
+    kind: "response",
+    status: 429,
+    contentType: "application/json",
+    body: '{"error":"Too Many Requests"}',
+    retryAfter: "3",
+  };
+
+  /** deps с записью пауз: по ним видно, ждали ли и сколько. */
+  function withSleeps(respond: Parameters<typeof makeDeps>[0]) {
+    const base = makeDeps(respond);
+    const sleeps: number[] = [];
+    base.deps.sleep = async (ms) => {
+      sleeps.push(ms);
+    };
+    return { ...base, sleeps };
+  }
+
+  it("один 429 не прекращает запуск: ждём по Retry-After, повторяем ту же машину и идём дальше", async () => {
+    const { deps, sleeps } = withSleeps((_m, id, n) => (id === "40000002" && n === 1 ? LIMITED : ALIVE));
+    const r = await runLivenessProbe(deps, { ...opts, candidates: ["40000001", "40000002", "40000003"] });
+    expect(r.aborted).toBeNull();
+    expect(r.ok).toBe(true);
+    expect(r.rateLimited).toBe(1);
+    expect(r.alive).toEqual(["40000001", "40000002", "40000003"]);
+    expect(sleeps).toContain(3_000); // Retry-After: 3
+  });
+
+  it("429 не отпускает после всех повторов — останавливаемся (rate_limited) и НИЧЕГО не помечаем", async () => {
+    const { deps } = withSleeps((_m, id) => (id === "40000001" ? SOLD_DIRECT : id === "40000003" ? LIMITED : ALIVE));
+    const r = await runLivenessProbe(deps, { ...opts, candidates: ["40000001", "40000002", "40000003", "40000004"] });
+    expect(r.aborted).toBe("rate_limited");
+    expect(r.ok).toBe(false);
+    expect(r.sold).toEqual([]);
+    expect(r.alive).toEqual([]);
+    expect(r.rateLimited).toBe(3); // RATE_LIMIT_RETRIES
+  });
+
+  it("после первого 429 пауза между машинами растёт (адаптивное замедление)", async () => {
+    const { deps, sleeps } = withSleeps((_m, id, n) => (id === "40000001" && n === 1 ? LIMITED : ALIVE));
+    await runLivenessProbe(deps, { ...opts, pauseMs: 100, candidates: ["40000001", "40000002", "40000003"] });
+    const pauses = sleeps.filter((ms) => ms === 100 || ms === 300);
+    expect(pauses).toContain(300); // 100 × SLOWDOWN_FACTOR
+  });
+
+  it("через прокси темп ниже по умолчанию: пауза ~1,2 с вместо 0,2 с", async () => {
+    const { deps, sleeps } = withSleeps((m, id) => (m === "direct" ? TIMEOUT : id === "40000002" ? SOLD_PROXY : ALIVE));
+    const r = await runLivenessProbe(deps, {
+      canaryIds: [CANARY],
+      candidates: ["40000001", "40000002"],
+      budgetMs: 1_000,
+      graceMs: 1_000,
+    });
+    expect(r.mode).toBe("proxy");
+    expect(sleeps).toContain(1_200);
+    // 200 мс остаётся ровно один раз — пауза после неудачной ПРЯМОЙ канарейки при выборе способа
+    // доступа; между самими проверками через прокси пауза уже 1,2 с.
+    expect(sleeps.filter((ms) => ms === 200)).toHaveLength(1);
+  });
+
+  it("429 на канарейке тоже переждём: способ доступа выбирается, запуск начинается", async () => {
+    const { deps } = withSleeps((_m, id, n) => (id === CANARY && n === 1 ? LIMITED : ALIVE));
+    const r = await runLivenessProbe(deps, { ...opts, candidates: ["40000001"] });
+    expect(r.aborted).toBeNull();
+    expect(r.mode).toBe("direct");
+    expect(r.rateLimited).toBe(1);
   });
 });

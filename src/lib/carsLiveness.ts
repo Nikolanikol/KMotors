@@ -29,6 +29,7 @@
 // не бросает (ошибка в зависимости = прекращение запуска).
 
 import { isEncarBlockPage } from "@/lib/vehicle";
+import { RATE_LIMIT_RETRIES, backoffMs } from "@/lib/encarBackoff";
 
 /** Проверок живости за суточный запуск по умолчанию. */
 export const LIVENESS_DEFAULT_LIMIT = 1_000;
@@ -45,6 +46,15 @@ export const LIVENESS_CONFIRM_GRACE_MS = 40_000;
 /** Параллельных запросов к Encar и пауза каждого воркера между запросами. */
 export const LIVENESS_CONCURRENCY = 2;
 export const LIVENESS_PAUSE_MS = 200;
+/**
+ * Через прокси Render темп ниже: он ограничивает частоту (запуск 27.11.2026 получил 429 на
+ * второй же проверке). Один воркер и ~1,2 с между запросами — за бюджет это ~90 проверок
+ * вместо 1 000 напрямую, зато без 429. Напрямую значения прежние.
+ */
+export const LIVENESS_PROXY_CONCURRENCY = 1;
+export const LIVENESS_PROXY_PAUSE_MS = 1_200;
+/** После первого 429 пауза между запросами умножается на это (адаптивное замедление). */
+const SLOWDOWN_FACTOR = 3;
 /** Машину, подтверждённую свежее этого срока, снова не проверяем. */
 export const LIVENESS_MIN_AGE_MS = 2 * 86_400_000;
 
@@ -61,12 +71,18 @@ const PRIMARY_TIMEOUT_MS = 8_000;
 const PROXY_TIMEOUT_MS = 20_000;
 
 export type ProbeMode = "direct" | "proxy";
-export type Verdict = "alive" | "sold" | "blocked" | "unknown";
-export type AbortReason = "no_canary" | "blocked" | "unstable" | "canary_lost" | "error";
+export type Verdict = "alive" | "sold" | "blocked" | "limited" | "unknown";
+export type AbortReason =
+  | "no_canary"
+  | "blocked"
+  | "rate_limited"
+  | "unstable"
+  | "canary_lost"
+  | "error";
 
 /** Сырой ответ Encar: либо HTTP-ответ, либо сетевой сбой. */
 export type ProbeResult =
-  | { kind: "response"; status: number; contentType: string; body: string }
+  | { kind: "response"; status: number; contentType: string; body: string; retryAfter?: string | null }
   | { kind: "network"; error: string };
 
 /**
@@ -77,14 +93,22 @@ export function classifyProbe(p: ProbeResult): Verdict {
   if (p.kind === "network") return "unknown";
   const { status, contentType, body } = p;
 
+  // Явная страница блокировки Encar — блокировка при ЛЮБОМ статусе, в том числе 429.
+  if (body.includes("has_been_cr_blocked")) return "blocked";
+  // ⚠️ 429 без метки блокировки — «слишком часто», а не «вас заблокировали»: прокси на
+  // Render ограничивает частоту. Раньше 429 шёл в «blocked» и запуск прекращался на второй
+  // машине (боевой запуск 27.11.2026). Теперь это отдельный вердикт: оркестратор ждёт и
+  // повторяет, и прекращает запуск, только если ограничение не отпускает. 503 сюда НЕ
+  // входит: это «неизвестно» (серия 503 прекращает запуск как нестабильность).
+  if (status === 429) return "limited";
   // Страница блокировки — HTML с любым статусом (чаще всего 404, и именно поэтому
-  // она опаснее всего) либо ссылка на has_been_cr_blocked в теле.
+  // она опаснее всего).
   const asResponse = new Response(body.length > 0 ? body : null, {
     headers: { "content-type": contentType },
   });
   if (isEncarBlockPage(asResponse, body)) return "blocked";
-  // Нас режут или ограничивают — это не про машину.
-  if (status === 403 || status === 429) return "blocked";
+  // 403 — нас режут: это про нас, а не про машину.
+  if (status === 403) return "blocked";
 
   if (status === 200) {
     try {
@@ -124,6 +148,7 @@ export async function probeVehicle(mode: ProbeMode, id: string): Promise<ProbeRe
       status: res.status,
       contentType: res.headers.get("content-type") ?? "",
       body: await res.text(),
+      retryAfter: res.headers.get("retry-after"),
     };
   } catch (e) {
     return { kind: "network", error: (e as Error)?.message ?? String(e) };
@@ -186,6 +211,8 @@ export interface LivenessOutcome {
   sold: string[];
   /** Сбои и странные ответы — машина не тронута. */
   unknown: number;
+  /** Сколько раз подождали и повторили запрос после 429/503. */
+  rateLimited: number;
   /** Первый 404 был, второй не подтвердил (или не хватило времени). */
   soldUnconfirmed: number;
   stoppedByBudget: boolean;
@@ -200,6 +227,7 @@ function emptyOutcome(over: Partial<LivenessOutcome>): LivenessOutcome {
     alive: [],
     sold: [],
     unknown: 0,
+    rateLimited: 0,
     soldUnconfirmed: 0,
     stoppedByBudget: false,
     ...over,
@@ -236,10 +264,30 @@ export async function runLivenessProbe(
     canaryIds,
     budgetMs = LIVENESS_BUDGET_MS,
     graceMs = LIVENESS_CONFIRM_GRACE_MS,
-    concurrency = LIVENESS_CONCURRENCY,
-    pauseMs = LIVENESS_PAUSE_MS,
   } = input;
   if (candidates.length === 0) return emptyOutcome({});
+
+  // Счётчик повторов после 429/503 и признак «нас просят не частить» — общие на запуск.
+  let rateLimited = 0;
+  let slow = false;
+
+  /**
+   * Один запрос с ожиданием при 429/503: ждём по Retry-After (или 2→4→8 с) и повторяем ту же
+   * машину. Вердикт `limited` возвращается, только если ограничение не отпустило за все повторы.
+   */
+  const probeBacked = async (
+    m: ProbeMode,
+    id: string
+  ): Promise<{ r: ProbeResult; v: Verdict }> => {
+    for (let attempt = 0; ; attempt++) {
+      const r = await deps.probe(m, id);
+      const v = classifyProbe(r);
+      if (v !== "limited" || attempt >= RATE_LIMIT_RETRIES) return { r, v };
+      rateLimited += 1;
+      slow = true;
+      await deps.sleep(backoffMs(attempt, r.kind === "response" ? r.retryAfter : null, deps.now()));
+    }
+  };
 
   try {
     // 1. Канарейка: выбираем способ доступа, которому можно верить.
@@ -249,20 +297,28 @@ export async function runLivenessProbe(
     for (const id of canaryIds.slice(0, MAX_CANARIES)) {
       for (const m of ["direct", "proxy"] as const) {
         if (m === "direct" && directDead) continue;
-        const r = await deps.probe(m, id);
+        const { r, v } = await probeBacked(m, id);
         if (r.kind === "network" && m === "direct") directDead = true;
-        if (classifyProbe(r) === "alive") {
+        if (v === "alive") {
           mode = m;
           canary = id;
           break;
         }
-        await deps.sleep(pauseMs);
+        await deps.sleep(input.pauseMs ?? LIVENESS_PAUSE_MS);
       }
       if (mode) break;
     }
-    if (!mode || !canary) return emptyOutcome({ ok: false, aborted: "no_canary" });
+    if (!mode || !canary) return emptyOutcome({ ok: false, aborted: "no_canary", rateLimited });
     const useMode: ProbeMode = mode;
     const useCanary: string = canary;
+
+    // Темп зависит от способа доступа: прокси ограничивает частоту — один воркер и длиннее
+    // пауза (если вызывающий не задал своё). После первого 429 пауза растёт ещё втрое.
+    const concurrency =
+      input.concurrency ?? (useMode === "proxy" ? LIVENESS_PROXY_CONCURRENCY : LIVENESS_CONCURRENCY);
+    const basePause =
+      input.pauseMs ?? (useMode === "proxy" ? LIVENESS_PROXY_PAUSE_MS : LIVENESS_PAUSE_MS);
+    const pause = () => deps.sleep(Math.min(5_000, basePause * (slow ? SLOWDOWN_FACTOR : 1)));
 
     // 2. Первый проход.
     const started = deps.now();
@@ -274,10 +330,16 @@ export async function runLivenessProbe(
         state.budget = true;
         return false;
       }
-      const v = classifyProbe(await deps.probe(useMode, id));
+      const { v } = await probeBacked(useMode, id);
       state.probed += 1;
       if (v === "blocked") {
         state.abort = "blocked";
+        return false;
+      }
+      // Ограничение не отпустило даже после повторов — это не про машину и не блокировка:
+      // останавливаемся, ничего не помечая, и в следующий запуск начнём заново.
+      if (v === "limited") {
+        state.abort = "rate_limited";
         return false;
       }
       if (v === "unknown") {
@@ -294,11 +356,17 @@ export async function runLivenessProbe(
         state.streak = 0;
         verdicts.set(id, v);
       }
-      await deps.sleep(pauseMs);
+      await pause();
       return true;
     });
 
-    const base = { mode: useMode, probed: state.probed, unknown: state.unknown, stoppedByBudget: state.budget };
+    const base = {
+      mode: useMode,
+      probed: state.probed,
+      unknown: state.unknown,
+      rateLimited,
+      stoppedByBudget: state.budget,
+    };
     if (state.abort) return emptyOutcome({ ...base, ok: false, aborted: state.abort });
 
     // 3. Строгое подтверждение: каждому «404» — второй отдельный запрос.
@@ -308,30 +376,35 @@ export async function runLivenessProbe(
     await pool(firstSold, concurrency, async (id) => {
       if (state.abort) return false;
       if (deps.now() >= confirmDeadline) return false;
-      await deps.sleep(pauseMs);
-      const v = classifyProbe(await deps.probe(useMode, id));
+      await pause();
+      const { v } = await probeBacked(useMode, id);
       if (v === "blocked") {
         state.abort = "blocked";
+        return false;
+      }
+      if (v === "limited") {
+        state.abort = "rate_limited";
         return false;
       }
       if (v === "sold") confirmed.add(id);
       return true;
     });
-    if (state.abort) return emptyOutcome({ ...base, ok: false, aborted: state.abort });
+    if (state.abort) return emptyOutcome({ ...base, rateLimited, ok: false, aborted: state.abort });
 
     // 4. Канарейка в конце: пока шёл запуск, способ доступа не сломался.
-    if (classifyProbe(await deps.probe(useMode, useCanary)) !== "alive") {
-      return emptyOutcome({ ...base, ok: false, aborted: "canary_lost" });
+    if ((await probeBacked(useMode, useCanary)).v !== "alive") {
+      return emptyOutcome({ ...base, rateLimited, ok: false, aborted: "canary_lost" });
     }
 
     return emptyOutcome({
       ...base,
+      rateLimited,
       alive: [...verdicts].filter(([, v]) => v === "alive").map(([id]) => id),
       sold: firstSold.filter((id) => confirmed.has(id)),
       soldUnconfirmed: firstSold.length - confirmed.size,
     });
   } catch (e) {
     console.error("[carsLiveness] упало:", (e as Error)?.message);
-    return emptyOutcome({ ok: false, aborted: "error" });
+    return emptyOutcome({ ok: false, aborted: "error", rateLimited });
   }
 }

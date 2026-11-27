@@ -38,6 +38,8 @@
 //   0  эндпоинт ответил 2xx и в теле нет признаков провала
 //   1  не достучались, не 2xx, или задание не найдено
 //   2  ответ содержит "ok":false — маршрут отработал, но работу не сделал
+//      (для заданий с `topLevelOk` — только `ok` верхнего уровня; вложенное
+//      `liveness.ok:false` у `cars` даёт NOTICE в лог и код 0)
 //   3  ответ содержит ненулевой unknownSource (только витрина аукционов)
 //
 // Код 2 существует потому, что эндпоинты отвечают 200 и когда делать было
@@ -57,6 +59,11 @@ const JOBS = {
     header: "x-poster-secret",
     schedule: "0 6 * * *",
     about: "снимки машин Encar в cars_seen (источник сайтмапа каталога) + проверка живости окна сайтмапа, ~4 минуты",
+    // ⚠️ Успех решает `ok` ВЕРХНЕГО уровня (листинг). Вложенный `liveness.ok:false` — это
+    // честная остановка проверки (Encar ограничил частоту или нас не пускают): она ничего не
+    // пометила и ничего не сломала. Красить из-за неё каждое утро значило бы приучить глаз
+    // к красному и спрятать настоящие провалы листинга — поэтому только NOTICE в лог.
+    topLevelOk: true,
   },
   poster: {
     path: "/api/poster/run",
@@ -278,7 +285,24 @@ const req = http.request(
       const code = res.statusCode ?? 0;
       log(`HTTP ${code}  ${body.trim()}`);
       if (code < 200 || code >= 300) fail(`ERROR: эндпоинт ответил ${code}`, 1);
-      if (/"ok"\s*:\s*false/.test(body)) fail("WARNING: задание вернуло ok:false", 2);
+      let data = null;
+      if (job.topLevelOk) {
+        try {
+          data = JSON.parse(body);
+        } catch {
+          // тело обрезано или не JSON — ниже сработает прежняя регулярка по всему телу
+        }
+      }
+      if (job.topLevelOk && data && typeof data === "object") {
+        if (data.ok === false) fail("WARNING: задание вернуло ok:false", 2);
+        if (data.liveness && data.liveness.ok === false) {
+          console.warn(
+            `[${stamp()}] NOTICE: проверка живости прервалась (${data.liveness.aborted ?? "?"}, режим ${data.liveness.mode ?? "?"}, проверено ${data.liveness.probed ?? 0}); ничего не помечено, запуск считается успешным`
+          );
+        }
+      } else if (/"ok"\s*:\s*false/.test(body)) {
+        fail("WARNING: задание вернуло ok:false", 2);
+      }
       if (/"unknownSource"\s*:\s*[1-9]/.test(body)) {
         fail("WARNING: есть лоты с нераспознанной площадкой", 3);
       }
