@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { type Value } from "react-phone-number-input";
 import { X, Package, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,10 @@ import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { MessengerSelector } from "@/components/ui/MessengerSelector";
 import { SITE_URL } from "@/lib/site";
+import { waHref } from "@/lib/contact";
+
+/** Менеджер в Telegram — запасной путь, если форма не отправилась. */
+const TG_MANAGER = "axiskorea";
 
 interface OrderModalProps {
   isOpen: boolean;
@@ -28,6 +32,13 @@ interface OrderModalProps {
   messageLines?: string[];
   /** Show a required free-form "delivery country" field (cart checkout). */
   requireCountry?: boolean;
+  /**
+   * Режим корзины: вместо «Артикул: N» показываем итог корзины (`summary`, например
+   * «3 поз. · 5 шт.»), а в generate_lead уходит число позиций, а не псевдо-артикул.
+   */
+  cart?: { summary: string; itemsCount: number };
+  /** Вызывается один раз после успешной отправки (после показа экрана успеха). */
+  onSuccess?: () => void;
 }
 
 function projectLabel(): string {
@@ -53,6 +64,8 @@ export function OrderModal({
   subtitle,
   messageLines,
   requireCountry = false,
+  cart,
+  onSuccess,
 }: OrderModalProps) {
   const { t } = useTranslation();
 
@@ -65,8 +78,41 @@ export function OrderModal({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Что показывать вместо артикула: для корзины — итог, а не «3 шт.» под видом номера
+  const partLine = cart ? cart.summary : partNumber;
+
+  const hasInput = !!(name.trim() || phone || tgUsername.trim() || country.trim() || vin.trim());
+
+  const handleClose = useCallback(() => {
+    onClose();
+    // reset after animation
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => {
+      setName("");
+      setPhone(undefined);
+      setMessenger("whatsapp");
+      setTgUsername("");
+      setCountry("");
+      setVin("");
+      setSuccess(false);
+      setAttempted(false);
+      setFailed(false);
+    }, 200);
+  }, [onClose]);
+
+  // Возврат фокуса на элемент, открывший окно
+  useEffect(() => {
+    if (!isOpen) return;
+    const opener = document.activeElement as HTMLElement | null;
+    return () => {
+      opener?.focus?.();
+    };
+  }, [isOpen]);
 
   // Focus first field when modal opens
   useEffect(() => {
@@ -85,13 +131,15 @@ export function OrderModal({
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  // Close on Escape
+  // Close on Escape (через handleClose — со сбросом формы)
   useEffect(() => {
     if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleClose]);
+
+  useEffect(() => () => { if (resetTimer.current) clearTimeout(resetTimer.current); }, []);
 
   if (!isOpen) return null;
 
@@ -114,6 +162,7 @@ export function OrderModal({
     if (!isValid) return;
 
     setLoading(true);
+    setFailed(false);
     try {
       const message = (messageLines && messageLines.length
         ? [`🏷 Проект: ${projectLabel()}`, ...messageLines]
@@ -142,40 +191,46 @@ export function OrderModal({
           source,
         }),
       });
-      if (!res.ok) throw new Error("Send error");
-      trackEvent("generate_lead", { source, part_number: partNumber });
+      if (!res.ok) {
+        trackEvent("form_error", { source, status: res.status });
+        setFailed(true);
+        return;
+      }
+      trackEvent(
+        "generate_lead",
+        cart ? { source, items: cart.itemsCount } : { source, part_number: partNumber }
+      );
+      if (resetTimer.current) clearTimeout(resetTimer.current);
       setSuccess(true);
+      onSuccess?.();
     } catch {
-      // keep modal open so user can retry
+      // keep modal open so user can retry; show the error + fallback links
+      trackEvent("form_error", { source, status: "network" });
+      setFailed(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClose = () => {
-    onClose();
-    // reset after animation
-    setTimeout(() => {
-      setName("");
-      setPhone(undefined);
-      setMessenger("whatsapp");
-      setTgUsername("");
-      setCountry("");
-      setVin("");
-      setSuccess(false);
-      setAttempted(false);
-    }, 200);
-  };
+  const fallbackText = [productName, partLine, productUrl].filter(Boolean).join(" — ");
+  const waUrl = waHref(fallbackText);
+  const tgUrl = `https://t.me/${TG_MANAGER}?text=${encodeURIComponent(fallbackText)}`;
 
   return (
     /* Backdrop */
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+      onClick={(e) => {
+        // Клик по подложке не должен стирать набранную форму
+        if (e.target === e.currentTarget && (success || !hasInput)) handleClose();
+      }}
     >
       {/* Panel */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-modal-title"
         className="relative w-full max-w-md bg-[#1c1b1b] border border-[#333] rounded-2xl shadow-2xl overflow-hidden text-[#e6e2e0]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -185,14 +240,17 @@ export function OrderModal({
             {(title || subtitle) && (
               <p className="text-[#b67749] text-[11px] font-bold uppercase tracking-wider mb-1.5">{title}</p>
             )}
-            <p className="text-[#a5a09c] text-xs mb-0.5 font-mono">{t("parts.order.partNumber")}: {partNumber}</p>
-            <h2 className="text-white font-bold text-lg leading-snug line-clamp-2">{productName}</h2>
+            <p className="text-[#a5a09c] text-xs mb-0.5 font-mono">
+              {cart ? partLine : `${t("parts.order.partNumber")}: ${partNumber}`}
+            </p>
+            <h2 id="order-modal-title" className="text-white font-bold text-lg leading-snug line-clamp-2">{productName}</h2>
             {subtitle && <p className="text-[#a5a09c] text-xs mt-1.5 leading-snug">{subtitle}</p>}
           </div>
           <button
             onClick={handleClose}
-            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[#a5a09c] hover:text-white hover:bg-white/10 transition-colors mt-0.5"
-            aria-label="Close"
+            type="button"
+            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[#a5a09c] hover:text-white hover:bg-white/10 transition-colors mt-0.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b67749]"
+            aria-label={t("parts.order.closeBtn")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -212,7 +270,7 @@ export function OrderModal({
               </div>
               <Button
                 onClick={handleClose}
-                className="bg-[#9d5e34] hover:brightness-110 text-white mt-2 px-8"
+                className="bg-[#9d5e34] hover:brightness-110 text-white mt-2 px-8 cursor-pointer focus-visible:ring-2 focus-visible:ring-[#b67749]"
               >
                 {t("parts.order.closeBtn")}
               </Button>
@@ -224,7 +282,9 @@ export function OrderModal({
               {/* Product chip */}
               <div className="flex items-center gap-2 bg-[#201f1f] border border-[#333] rounded-xl px-3 py-2.5">
                 <Package className="w-4 h-4 text-[#b67749] shrink-0" />
-                <span className="text-xs text-[#e6e2e0] font-medium truncate">{t("parts.order.orderingPart")}: {partNumber}</span>
+                <span className="text-xs text-[#e6e2e0] font-medium truncate">
+                  {cart ? partLine : `${t("parts.order.orderingPart")}: ${partNumber}`}
+                </span>
                 {priceText && <span className="ml-auto text-xs font-bold text-[#b67749]">{priceText}</span>}
               </div>
 
@@ -313,11 +373,38 @@ export function OrderModal({
                 />
               </div>
 
+              {/* Ошибка отправки + запасные каналы */}
+              {failed && (
+                <div role="alert" className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 space-y-2.5">
+                  <p className="text-sm text-red-300 leading-snug">{t("parts.order.errorMsg")}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackEvent("form_error_fallback", { source, channel: "whatsapp" })}
+                      className="flex items-center justify-center h-10 rounded-lg border border-[#333] bg-[#201f1f] text-sm font-medium text-[#e6e2e0] hover:border-[#25D366]/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b67749]"
+                    >
+                      WhatsApp
+                    </a>
+                    <a
+                      href={tgUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackEvent("form_error_fallback", { source, channel: "telegram" })}
+                      className="flex items-center justify-center h-10 rounded-lg border border-[#333] bg-[#201f1f] text-sm font-medium text-[#e6e2e0] hover:border-[#0088cc]/60 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b67749]"
+                    >
+                      Telegram
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {/* Submit */}
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#9d5e34] hover:brightness-110 text-white font-semibold text-base mt-2"
+                className="w-full h-12 bg-[#9d5e34] hover:brightness-110 text-white font-semibold text-base mt-2 cursor-pointer disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-[#b67749]"
               >
                 {loading ? t("parts.order.sending") : t("parts.order.submitBtn")}
               </Button>

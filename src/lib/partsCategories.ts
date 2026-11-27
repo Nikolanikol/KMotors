@@ -28,12 +28,16 @@ export interface CategoryNode extends PartsCategory {
   children: CategoryNode[];
 }
 
+// ⚠️ Все функции под unstable_cache при ошибке БРОСАЮТ исключение, а не отдают `data ?? []`:
+// кеш закрепил бы пустой результат на час (пустое дерево категорий, нулевые счётчики, пустой
+// sitemap). Брошенное исключение не кешируется.
 async function fetchCategories(): Promise<PartsCategory[]> {
-  const { data } = await createServerClient()
+  const { data, error } = await createServerClient()
     .from("parts_categories")
     .select("id, name_ru, name_en, slug, parent_id")
     .order("sort_order", { nullsFirst: false })
     .order("id");
+  if (error) throw new Error(`parts_categories: ${error.message}`);
   return (data ?? []) as PartsCategory[];
 }
 
@@ -87,10 +91,14 @@ const getSubcategoryHistogram = unstable_cache(
     const supabase = createServerClient();
     const PAGE = 1000;
 
+    // Постраничная выборка одной колонки: .order("id") обязателен — без стабильного порядка
+    // строки пропадают и дублируются между страницами, и гистограмма врёт.
     const first = await supabase
       .from("parts_products")
       .select("subcategory_id", { count: "exact" })
+      .order("id", { ascending: true })
       .range(0, PAGE - 1);
+    if (first.error) throw new Error(`parts_products histogram: ${first.error.message}`);
 
     const total = first.count ?? 0;
     const rest = await Promise.all(
@@ -98,8 +106,12 @@ const getSubcategoryHistogram = unstable_cache(
         supabase
           .from("parts_products")
           .select("subcategory_id")
+          .order("id", { ascending: true })
           .range((i + 1) * PAGE, (i + 2) * PAGE - 1)
-          .then((r) => r.data ?? [])
+          .then((r) => {
+            if (r.error) throw new Error(`parts_products histogram: ${r.error.message}`);
+            return r.data ?? [];
+          })
       )
     );
 
