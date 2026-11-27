@@ -115,6 +115,9 @@ export default function CartTab({ lang, userId, profileCountry, krwToUsd }: Prop
     setLoading(false);
   };
 
+  // Корзина перезагружается только при смене пользователя. fetchCart пересоздаётся
+  // на каждый рендер (как и клиент supabase), в зависимости его не кладём: был бы цикл.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchCart(); }, [userId]);
 
   const removeItem = async (cartItemId: string) => {
