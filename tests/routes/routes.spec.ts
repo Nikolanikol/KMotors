@@ -42,7 +42,7 @@ const PATHS = [
   "/ru/calculator", "/en/calculator/kz", "/ru/tracking", "/ru/about", "/ru/contacts",
   "/api/recommended", "/api/recommended/", "/api/recommended/x", "/api/recommendedx", "/api/vehicle/123",
   "/api/vehicles", "/api/carnect/search", "/api/carnect", "/api/cars", "/api/cars/list",
-  "/api/carsx", "/api/kcar/lot", "/api/showcase", "/api/showcase/lotte", "/api/parts/search",
+  "/api/carsx", "/api/kcar/lot", "/api/parts/search",
   "/api/parts", "/api/track", "/api/auth/callback", "/API/cars", "/api",
   "/ru/api/cars", "/admin", "/admin/login", "/admin/auction", "/administrator",
   "/auth/callback", "/_next/static/x.js", "/favicon.ico", "/favicon_io/site.webmanifest", "/opengraph-image",
@@ -142,7 +142,7 @@ describe("Корея (боевой хост)", () => {
     },
   );
 
-  it.each(["/api/recommended", "/api/carnect/search", "/api/vehicle/1", "/api/cars", "/api/kcar/x", "/api/showcase"])(
+  it.each(["/api/recommended", "/api/carnect/search", "/api/vehicle/1", "/api/cars", "/api/kcar/x"])(
     "API %s — 403 JSON из KR",
     (p) => {
       expect(www(p, "KR")).toEqual({ kind: "korea-blocked", api: true });

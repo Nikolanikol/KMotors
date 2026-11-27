@@ -4,7 +4,10 @@
 > ⚠️ **Устарело (пометка 26.11.2026):** dokanmazad/`showcase` — НЕ живая публичная витрина. Синк мёртв
 > с 02.10.2026, публичный `/[lang]/auction` с 04.10.2026 — carnect (`src/lib/carnect/CLAUDE.md`),
 > прежние публичные адреса отдают 308. `auction_lots` читает только эта служебная страница.
-> Текст ниже — как был.
+> Текст ниже — как был, КРОМЕ правки 27.11.2026: код dokanmazad (`src/lib/showcase/`, `/api/showcase/sync`,
+> вкладки Lotte/SK, `AuctionTabs`) удалён; на `/admin/auction` осталась только вкладка K Car
+> (лоты из `auction_lots`, прогноз молотка по `auction_results`). Строки про Lotte/SK, `showcase`
+> и «лоты ВСЕХ площадок» ниже уже не соответствуют коду.
 
 ### Аукционы K Car, Lotte и SK (09.2026)
 

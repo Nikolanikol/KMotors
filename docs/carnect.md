@@ -184,8 +184,8 @@ carnect — экспортёр на Next.js, который сам забира�
   `robots.ts` — обход ботами был бы запросами к carnect.
 - Старые адреса (`/auction/lotte`, `/sk`, `/[id]`, `/lotte/[id]`, `/sk/[id]`) — 308 на
   каталог: id у carnect другие, а ссылки остались в переписке с клиентами.
-- `(site)/[lang]/auction/shell.tsx` остался: служебная витрина dokanmazad
-  (`/admin/auction`) берёт оттуда `readParams` / `hasFilters`. Уйдёт вместе с ней.
+- `(site)/[lang]/auction/shell.tsx` удалён 27.11.2026: `readParams` / `hasFilters` переехали в
+  `(admin)/admin/auction/shell.tsx`, вкладки Lotte/SK служебной страницы убраны вместе с `src/lib/showcase/`.
 - **Цена в $** — справкой «≈ $X» под вонами на плитке, в блоке цены и на мобильной
   плашке. Курс Кукмин-банка (`getCarRates`, тот же, что у Encar), без ₽ даже на `ru`
   (решение владельца 04.10.2026). У лотов без цены справки нет.
@@ -284,7 +284,7 @@ Lotte в каталоге, опции HeyDealer по группам.
 
 - [x] `carnect-glovis`: Timeout 300 → 600 — поднят владельцем 04.10.2026. Проверить, что
   у lotte/sk/kcar не меньше 600.
-- [ ] Удалить задачу `showcase` — владелец удаляет 04.10.2026.
+- [ ] Удалить задачу `showcase` в Coolify — владелец удаляет 04.10.2026 (из репозитория маршрут и запись раннера удалены 27.11.2026).
 - [ ] Задача `cars`: убедиться, что прогон в 06:00 UTC пишет — запрос
   `select first_seen_at, count(*) from cars_seen where first_seen_at > now() - interval '5 days' group by 1 having count(*) > 20 order by 1;`
   должен давать пачки по ~500 строк около 06:00 UTC.

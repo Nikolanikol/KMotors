@@ -11,9 +11,9 @@
 
 | поле | значение |
 |---|---|
-| Name | `showcase` |
-| Command | `node ./scripts/cron/run.mjs showcase` |
-| Frequency | `0 */4 * * *` |
+| Name | `carnect-lotte` |
+| Command | `node ./scripts/cron/run.mjs carnect-lotte` |
+| Frequency | `5 5,20 * * *` |
 
 Таблица заданий с расписаниями лежит в самом раннере: `node scripts/cron/run.mjs --list`.
 Разойдётся с панелью — правда за панелью, расписание задаёт она.
@@ -46,11 +46,9 @@
 | Задание | Аргумент раннера | Эндпоинт | Метод | Расписание | Где стоит |
 |---|---|---|---|---|---|
 | Снимки машин для сайтмапа | `cars` | `/api/cars/sync` | GET | `0 6 * * *` | Coolify |
-| Лоты автоаукционов (dokanmazad, мёртв с 02.10) | `showcase` | `/api/showcase/sync` | GET | `0 */4 * * *` | Coolify, выключить |
 | Лоты carnect по площадкам | `carnect-lotte` / `-sk` / `-glovis` / `-kcar` / `-autohub` | `/api/carnect/sync?feed=…` | GET | `5,12,17,22,26 5,20 * * *` | Coolify, timeout 600 |
 | HeyDealer через carnect | `carnect-hey-instant` / `-self` / `-zero` | `/api/carnect/sync?feed=hey-…` | GET | `35/45 5,20`, `10 6,21` | Coolify, timeout 1800 |
 | Автопостинг авто | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | crontab |
-| Автопостинг запчастей — ОТКЛЮЧЁН 26.11.2026 (маршрут отвечает 200 `disabled`; строку crontab на VPS снять, в Coolify не переносить) | — | `/api/poster/parts/run` | POST | — | crontab, снять |
 | Черновик статьи блога | `blog` | `/api/blog-generate` | POST | `0 10 */3 * *` | crontab |
 | Синхронизация RSS-новостей | `rss` | `/api/rss-sync` | GET | `0 9 * * *` | crontab |
 | Сбор статистики GSC | `seo-collect` | `/api/seo/collect` | POST | `35 4 * * *` | crontab |
@@ -81,7 +79,7 @@
 работает», а не как ошибка конфигурации. Так рассылка подписок простояла с первого дня —
 пока не выяснилось, что путь не существует (31.07.2026).
 
-Не возвращать блок `crons` в `vercel.json` ([постмортем](docs/postmortems.md)).
+Не возвращать блок `crons` в `vercel.json` (файл удалён 27.11.2026; [постмортем](docs/postmortems.md)).
 
 Образец строки (методы разные, сверяться с таблицей — `-X POST` там, где POST):
 
@@ -95,7 +93,7 @@
 и ничего не нашло.
 
 Секретов два, не больше. `POSTER_CRON_SECRET` (заголовок `x-poster-secret`) закрывает
-`/api/poster/run`, `/api/poster/parts/run`, `/api/rss-sync`, `/api/blog-generate`,
-`/api/subscriptions/run`, `/api/showcase/sync`, `/api/carnect/sync` и `/api/cars/sync`. `SEO_CRON_SECRET` (заголовок
+`/api/poster/run`, `/api/rss-sync`, `/api/blog-generate`,
+`/api/subscriptions/run`, `/api/carnect/sync` и `/api/cars/sync`. `SEO_CRON_SECRET` (заголовок
 `x-seo-secret`) закрывает SEO-пайплайн. `CRON_SECRET` больше не используется нигде — он
 был задан только в README и ни разу в окружении.

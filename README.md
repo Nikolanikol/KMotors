@@ -193,7 +193,8 @@ Calculates import duties based on vehicle age, engine displacement (cc), and pri
 
 Deployed on **Coolify on the VPS** — every push to `main` triggers a production redeploy.
 
-`vercel.json` is kept for headers only. It used to declare `crons`, but Vercel cron
+Security headers live in `next.config.ts` (`vercel.json` and `netlify.toml` were removed). Schedules once
+lived in `vercel.json` `crons`, but Vercel cron
 is executed by Vercel and nothing else — on the VPS those entries were inert, and the
 blog quietly stopped publishing (2 posts/month instead of ~10). **Do not put schedules
 there.**
@@ -206,15 +207,14 @@ ssh. One runner serves every job:
 
 | field | value |
 |---|---|
-| Name | `showcase` |
-| Command | `node ./scripts/cron/run.mjs showcase` |
-| Frequency | `0 */4 * * *` |
+| Name | `carnect-lotte` |
+| Command | `node ./scripts/cron/run.mjs carnect-lotte` |
+| Frequency | `5 5,20 * * *` |
 
 | Job | Runner arg | Endpoint | Method | Schedule | Guard | Runs from |
 |---|---|---|---|---|---|---|
-| Auction lots | `showcase` | `/api/showcase/sync` | GET | `0 */4 * * *` | `x-poster-secret` | Coolify |
+| Auction lots (carnect, per house) | `carnect-lotte` and others | `/api/carnect/sync?feed=…` | GET | see `run.mjs --list` | `x-poster-secret` | Coolify |
 | Telegram car poster | `poster` | `/api/poster/run` | POST | `0 */2 * * *` | `x-poster-secret` | crontab |
-| Telegram parts poster — ОТКЛЮЧЁН 26.11.2026 | — | `/api/poster/parts/run` | POST | — | `x-poster-secret` | строку crontab снять |
 | Blog article draft | `blog` | `/api/blog-generate` | POST | `0 10 */3 * *` | `x-poster-secret` | crontab |
 | RSS news sync | `rss` | `/api/rss-sync` | GET | `0 9 * * *` | `x-poster-secret` | crontab |
 | GSC stats collect | `seo-collect` | `/api/seo/collect` | POST | `35 4 * * *` | `x-seo-secret` | crontab |

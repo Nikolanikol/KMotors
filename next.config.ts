@@ -39,9 +39,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Заголовки безопасности перенесены из vercel.json: прод работает на
-  // Coolify, который vercel.json не читает. Cache-Control из vercel.json
-  // сюда НЕ переносим — Next ставит свои, чужие могут сломать кеш.
+  // Заголовки безопасности (раньше жили в удалённом vercel.json, который
+  // Coolify не читает). Cache-Control из vercel.json
+  // сюда НЕ переносили — Next ставит свои, чужие могут сломать кеш.
   async headers() {
     return [
       {

@@ -55,8 +55,8 @@ tsx, не curl к PostgREST с подстановкой ключей из `.env`
 - Supabase развёрнут на том же VPS и является ЖИВОЙ ПРОДАКШЕН-БАЗОЙ. `.env` в репозитории
   смотрит на неё. Любой SQL, любой скрипт с данными, любая команда supabase CLI бьёт прямо
   в прод. Отдельной staging-базы нет.
-- Coolify на VPS — единственный живой прод. `vercel.json` остаётся ТОЛЬКО ради headers,
-  `netlify.toml` — мёртвый зеркальный конфиг, `output: 'standalone'` для Docker-сборки.
+- Coolify на VPS — единственный живой прод. `vercel.json` и `netlify.toml` удалены 27.11.2026
+  (заголовки безопасности — в `next.config.ts`), `output: 'standalone'` для Docker-сборки.
   Строка «Vercel primary» жила в этом файле до 07.2026 и стоила месяца молчащего блога
   ([постмортем](docs/postmortems.md)) — не восстанавливать.
 - ⚠️ **Провал сборки НЕ роняет прод — и потому не виден.** Coolify оставляет жить прежний
@@ -177,7 +177,7 @@ tsx, не curl к PostgREST с подстановкой ключей из `.env`
 - **Слой 3, запрет на origin (05.10.2026)** — `isKoreaBlockedPath` в `src/lib/routes/index.ts` (списки — манифесты `src/lib/routes/*.ts`, вызывает `src/middleware.ts`):
   на каноническом хосте при `cf-ipcountry = KR` отдаётся 403 на каталог Encar, аукцион,
   избранное, сравнение (`KR_BLOCKED_PAGE`) и на ВСЕ API с данными машин
-  (`KR_BLOCKED_API`: recommended, vehicle, carnect, cars, kcar, showcase). Решение
+  (`KR_BLOCKED_API`: recommended, vehicle, carnect, cars, kcar; `showcase` убран 27.11.2026 вместе с маршрутом). Решение
   владельца: «всё с аукционов и Encar и вниз по дереву закрываем полностью» — WAF
   закрывал только часть путей, и страница лота аукциона из Кореи открывалась.
   ⚠️ Новый маршрут или API с данными машин — добавить в эти регулярки. ⚠️ Ответ

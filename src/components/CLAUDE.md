@@ -168,8 +168,6 @@ Instagram, телефон и заявка — внутри меню.
   (`@supabase/ssr`).
 - Админка (`src/app/(admin)/admin/`) — авторизация отдельная от витрины: одна переменная
   `ADMIN_PASSWORD` + cookie `admin_session`, проверяется в `middleware.ts`.
-- `design-reference/` — отдельный проект на Vite, визуальный референс; к рантайму `src/`
-  отношения не имеет.
 - `src/components/ui/dialog.tsx` — потребитель у примитива ОДИН, модалка заявки
   (`Header/ContactFormModal.tsx`), так что правки в нём больше ничего не задевают.
   Заливка карточная (`--axis-charcoal`), а не `--background`: на чёрной странице модалка

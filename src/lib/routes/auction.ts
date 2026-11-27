@@ -7,7 +7,7 @@ import { LANG_GROUP } from "./shared";
 export const AUCTION_KR_BLOCKED_PAGES = ["auction"] as const;
 
 /** API аукциона: `/api/<x>` и ниже. */
-export const AUCTION_KR_BLOCKED_API = ["carnect", "kcar", "showcase"] as const;
+export const AUCTION_KR_BLOCKED_API = ["carnect", "kcar"] as const;
 
 // Витрина аукциона без подпутей: /auction, /ru/auction. Лоты (/auction/lot/…)
 // закрыты в robots.ts, /auction/lotte и /auction/sk только редиректят.
