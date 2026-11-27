@@ -10,6 +10,8 @@ import ShareCar from "@/components/Catalog/CarDetail/ShareCar";
 import EncarHeart from "@/components/Favorites/EncarHeart";
 import { FC, Suspense } from "react";
 import { DetailInfoSkeleton } from "@/components/Catalog/CarDetail/DetailInfoSection";
+import InspectionSection, { InspectionSkeleton } from "@/components/Catalog/CarDetail/InspectionSection";
+import HowWeWork from "@/components/Catalog/CarDetail/HowWeWork";
 import { formatDate, formatYear } from "@/utils/formatDate";
 import { Metadata } from "next";
 import { getFx } from "@/lib/fx";
@@ -766,6 +768,12 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
                 <DetailInfoSection id={data?.vehicleId} vehicleNo={data?.vehicleNo} />
               </Suspense>
             </div>
+            {/* Осмотр Encar — сразу после истории. Тот же приём (сервер + Suspense);
+                data-track-block стоит внутри блока: нет листа — нет и пустой
+                обёртки, которая ложно сработала бы как «блок увиден». */}
+            <Suspense fallback={<InspectionSkeleton />}>
+              <InspectionSection lang={lang} vehicleId={data?.vehicleId} />
+            </Suspense>
             <div data-track-block="options" data-track-click="options_open">
               <OptionsRow data={data.options} />
             </div>
@@ -788,6 +796,10 @@ const Page: FC<{ params: Promise<{ lang: string; id: string }> }> = async ({
           </div>
         </div>
       </div>
+
+      {/* Как мы работаем: шаги, задаток, отзывы — между сеткой карточки и
+          рекомендациями, чтобы доверие стояло рядом с ценой и формой */}
+      <HowWeWork lang={lang} />
 
       {/* Рекомендуемые авто */}
       <div data-track-block="recommended">

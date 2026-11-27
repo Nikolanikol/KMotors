@@ -31,7 +31,7 @@ GA4: `G-ZMRTQCD8SF` (подключён в `src/app/RootShell.tsx`). Все со
 | 1. увидел выдачу | `view_item_list` | `item_list_name=encar_catalog`, `result` ok/empty/unavailable, `count`, `page`, `filtered` |
 | 2. кликнул машину | `select_item` | `car_id`, `car_name`, `car_price` |
 | 3. открыл машину | `view_item` | `item_id`, `item_name`, `item_category=encar`, `value` |
-| 4. смотрел | `view_block` | `block`: `gallery`, `price` (моб.), `sidebar`, `customs_calc`, `history`, `options`, `recommended` |
+| 4. смотрел | `view_block` | `block`: `gallery`, `price` (моб.), `sidebar`, `customs_calc`, `history`, `inspection` (осмотр Encar; нет листа — нет блока), `options`, `trust` («Как мы работаем»), `recommended` |
 | | `gallery_open`, `gallery_depth` (`photo` 5/10/20) | |
 | | `options_open`, `calc_interact` | |
 | | `scroll_depth` | 25/50/75/90 |
