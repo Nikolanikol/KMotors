@@ -12,12 +12,20 @@ import { parsePartSlug, generatePartSlug } from "@/utils/partSlug";
 import type {
   ProductDetail,
   CompatibleBrand,
-  ProductLogistics,
 } from "@/app/parts/sections/ProductDetailClient";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import { makeAlternates } from "@/lib/seo";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 import { SITE_URL } from "@/lib/site";
+import { getServerT } from "@/lib/serverT";
+import {
+  hasPrice,
+  isPlausiblePartKey,
+  jsonLd,
+  manufacturerLabel,
+  normalizePartKey,
+  partKeyLikePattern,
+} from "@/lib/partsSeo";
 
 // Страницы продуктов рендерятся по требованию: generateStaticParams убран,
 // 50k × 4 langs при сборке неприемлемо. dynamicParams = true (дефолт) —
@@ -57,95 +65,142 @@ const BRAND_ORDER: Record<string, number> = {
 
 // ─── Data fetching ─────────────────────────────────────────────────────────────
 
+/**
+ * Строка parts_products в том виде, в каком её читает страница. Серверные поля
+ * (seo_*) наружу, в клиентский компонент, НЕ уходят — туда идёт узкий DTO (toDetail).
+ */
+interface ProductRow {
+  id: number;
+  part_number: string | null;
+  name_ru: string;
+  name_en: string;
+  name_ko: string | null;
+  official_name_ko: string | null;
+  manufacturer: string | null;
+  price_krw: number;
+  is_new: boolean;
+  image_url: string | null;
+  image_storage_url?: string | null;
+  category_id: number | null;
+  subcategory_id: number | null;
+  seo_title_ru: string | null;
+  seo_title_en: string | null;
+  seo_desc_ru: string | null;
+  seo_desc_en: string | null;
+  seo_body_ru: string | null;
+  seo_body_en: string | null;
+  cross_refs: string[] | null;
+}
+
+const PRODUCT_COLUMNS =
+  "id, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, image_storage_url, category_id, subcategory_id, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs";
+
+type CategoryRow = { id: number; name_ru: string; name_en: string; slug: string; parent_id: number | null };
+
+/** Сбой БД — исключение, а не «нет данных»: unstable_cache запоминает только возвращённое. */
+function dbFail(what: string, message: string): never {
+  throw new Error(`[parts/slug] ${what}: ${message}`);
+}
+
+/** Узкий DTO для клиентского компонента: только то, что он реально рисует. */
+function toDetail(p: ProductRow): ProductDetail {
+  return {
+    id: p.id,
+    part_number: p.part_number ?? "",
+    name_ru: p.name_ru,
+    name_en: p.name_en,
+    name_ko: p.name_ko,
+    official_name_ko: p.official_name_ko,
+    manufacturer: p.manufacturer,
+    price_krw: p.price_krw,
+    is_new: p.is_new,
+    image_url: p.image_url,
+    cross_refs: p.cross_refs,
+  };
+}
+
+/**
+ * null — строки НЕТ (страница 404). Ошибка БД — исключение: так её не запомнит
+ * unstable_cache и посетитель не получит 404 на живой товар из-за секундного сбоя.
+ */
 async function fetchProduct(slug: string) {
   const { partNumber, productId } = parsePartSlug(slug);
 
   const supabase = createServerClient();
 
-  let query = supabase
-    .from("parts_products")
-    .select(
-      "id, product_no, part_number, name_ru, name_en, name_ko, official_name_ko, manufacturer, price_krw, is_new, image_url, image_storage_url, detail_url, category_id, subcategory_id, weight_kg, billed_weight_kg, ship_method, seo_title_ru, seo_title_en, seo_desc_ru, seo_desc_en, seo_body_ru, seo_body_en, cross_refs"
-    );
+  // ~130 артикулов занимают несколько строк (по строке на совместимый автомобиль,
+  // см. src/app/parts/CLAUDE.md). Это одна деталь: совместимость собирается по ВСЕМ
+  // её строкам, а цена/название/фото берутся от первой по id — стабильно от запроса
+  // к запросу (.limit(1) без порядка отдавал произвольную строку).
+  let pn = partNumber;
+  let rows: ProductRow[] = [];
 
-  // Ищем по part_number или по ID
   if (productId !== null) {
-    query = query.eq("id", productId);
-  } else if (partNumber) {
-    query = query.eq("part_number", partNumber);
-  } else {
+    const { data, error } = await supabase
+      .from("parts_products")
+      .select(PRODUCT_COLUMNS)
+      .eq("id", productId)
+      .limit(1);
+    if (error) dbFail("товар по id", error.message);
+    const byId = (data as unknown as ProductRow[] | null)?.[0];
+    if (!byId) return null;
+    if (byId.part_number) pn = byId.part_number;
+    else rows = [byId];
+  } else if (!partNumber) {
     return null;
   }
 
-  // Не .single(): при дубле артикула в базе он падает с ошибкой,
-  // а страница должна открыть первый товар, а не отдать 404
-  const { data: rows, error } = await query.limit(1);
-  const rawProduct = rows?.[0];
+  if (!rows.length && pn) {
+    const { data, error } = await supabase
+      .from("parts_products")
+      .select(PRODUCT_COLUMNS)
+      .eq("part_number", pn)
+      .order("id", { ascending: true })
+      .limit(200);
+    if (error) dbFail("товар по артикулу", error.message);
+    rows = (data as unknown as ProductRow[] | null) ?? [];
+  }
 
-  if (error || !rawProduct) return null;
-  const product = withCleanImage(rawProduct);
+  if (!rows.length) return null;
 
-  // Совместимость из vehicles/part_vehicles (213k связей, поколения с годами)
-  const { data: pvRows } = await supabase
-    .from("part_vehicles")
-    .select("vehicles(id, name_en, brand, year_from, year_to, open_ended, slug, parts_count)")
-    .eq("part_id", product.id);
-
-  const compatVehicles = (pvRows ?? [])
-    .map((row) => row.vehicles as unknown as {
-      id: number; name_en: string; brand: string; year_from: string | null;
-      year_to: string | null; open_ended: boolean; slug: string; parts_count: number;
-    } | null)
-    .filter((v): v is NonNullable<typeof v> => !!v);
+  const product = withCleanImage(rows[0]);
+  const partIds = rows.map((r) => r.id);
 
   const catIds = [product.category_id, product.subcategory_id].filter(
     (x): x is number => !!x
   );
 
-  // Fetch logistics: subcategory_id (L2/L3) has priority over category_id (L1)
-  const logisticsCatId = product.subcategory_id ?? product.category_id;
+  // Независимые запросы — параллельно.
+  const [pvRes, catsRes] = await Promise.all([
+    // Совместимость из vehicles/part_vehicles (213k связей, поколения с годами)
+    supabase
+      .from("part_vehicles")
+      .select("vehicles(id, name_en, brand, year_from, year_to, open_ended, slug, parts_count)")
+      .in("part_id", partIds),
+    catIds.length > 0
+      ? supabase
+          .from("parts_categories")
+          .select("id, name_ru, name_en, slug, parent_id")
+          .in("id", catIds)
+      : Promise.resolve({ data: [] as CategoryRow[], error: null }),
+  ]);
+  if (pvRes.error) dbFail("совместимость", pvRes.error.message);
+  if (catsRes.error) dbFail("категории", catsRes.error.message);
 
-  const logisticsResult = logisticsCatId
-    ? await supabase
-        .from("v_category_logistics")
-        .select("weight_avg_kg, packed_weight_kg, vol_weight_kg, billed_weight_kg, ship_method, size_formula_cm, logistics_notes, length_cm, width_cm, height_cm, name_ru")
-        .eq("id", logisticsCatId)
-        .single()
-    : null;
+  const cats = (catsRes.data ?? []) as CategoryRow[];
 
-  const catLogistics = logisticsResult?.data ?? null;
-
-  // Per-product fields override category-level logistics
-  const logistics: ProductLogistics | null = catLogistics
-    ? {
-        ...catLogistics,
-        weight_avg_kg: product.weight_kg ?? catLogistics.weight_avg_kg,
-        billed_weight_kg: product.billed_weight_kg ?? catLogistics.billed_weight_kg,
-        ship_method: product.ship_method ?? catLogistics.ship_method,
-      }
-    : product.billed_weight_kg
-      ? {
-          weight_avg_kg: product.weight_kg,
-          packed_weight_kg: null,
-          vol_weight_kg: null,
-          billed_weight_kg: product.billed_weight_kg,
-          ship_method: product.ship_method as ProductLogistics["ship_method"],
-          size_formula_cm: null,
-          logistics_notes: null,
-          length_cm: null,
-          width_cm: null,
-          height_cm: null,
-          name_ru: null,
-        }
-      : null;
-
-  const catsResult = catIds.length > 0
-    ? await supabase
-        .from("parts_categories")
-        .select("id, name_ru, name_en, slug, parent_id")
-        .in("id", catIds)
-    : { data: [] as { id: number; name_ru: string; name_en: string; slug: string; parent_id: number | null }[] };
-  const cats = catsResult.data ?? [];
+  // Одно и то же поколение может прийти от нескольких строк артикула — дедупликация по id.
+  const seenVehicles = new Set<number>();
+  const compatVehicles = (pvRes.data ?? [])
+    .map((row) => row.vehicles as unknown as {
+      id: number; name_en: string; brand: string; year_from: string | null;
+      year_to: string | null; open_ended: boolean; slug: string; parts_count: number;
+    } | null)
+    .filter((v): v is NonNullable<typeof v> => {
+      if (!v || seenVehicles.has(v.id)) return false;
+      seenVehicles.add(v.id);
+      return true;
+    });
 
   // Build compatibleBrands from vehicle generations, grouped by brand.
   const BRAND_META: Record<string, { id: number; name: string }> = {
@@ -180,14 +235,24 @@ async function fetchProduct(slug: string) {
   let similarProducts: Product[] = [];
   if (compatVehicles.length && product.category_id) {
     const topVehicle = [...compatVehicles].sort((a, b) => b.parts_count - a.parts_count)[0];
-    const { data: sameVehicle } = await supabase
-      .from("part_vehicles").select("part_id").eq("vehicle_id", topVehicle.id).neq("part_id", product.id).limit(400);
+    const { data: sameVehicle, error: sameErr } = await supabase
+      .from("part_vehicles")
+      .select("part_id")
+      .eq("vehicle_id", topVehicle.id)
+      .not("part_id", "in", `(${partIds.join(",")})`)
+      .order("part_id", { ascending: true })
+      .limit(400);
+    if (sameErr) dbFail("похожие (связи)", sameErr.message);
     const ids = (sameVehicle ?? []).map((r) => r.part_id);
     if (ids.length) {
-      const { data: sim } = await supabase
+      const { data: sim, error: simErr } = await supabase
         .from("parts_products")
         .select("id, name_ru, name_en, name_ko, part_number, price_krw, brand_id, category_id, subcategory_id, image_url, image_storage_url, is_new")
-        .in("id", ids).eq("category_id", product.category_id).limit(8);
+        .in("id", ids)
+        .eq("category_id", product.category_id)
+        .order("id", { ascending: true })
+        .limit(8);
+      if (simErr) dbFail("похожие (товары)", simErr.message);
       similarProducts = (sim ?? []).map(withCleanImage) as Product[];
     }
   }
@@ -206,19 +271,51 @@ async function fetchProduct(slug: string) {
     : null;
 
   return {
-    product: product as ProductDetail,
+    product,
     categoryName,
     subcategoryName,
     compatibleBrands,
     similarProducts,
-    logistics,
-    logisticsCatId: logisticsCatId ?? null,
   };
 }
 
+// Версия в ключе: форма возвращаемого объекта изменилась (логистика убрана) — старые
+// записи кеша с прежней формой не должны попасть в новый код.
 const getCachedProduct = unstable_cache(
   (slug: string) => fetchProduct(slug),
-  ["parts-product"],
+  ["parts-product-v2"],
+  { revalidate: 3600, tags: ["parts-product"] }
+);
+
+/**
+ * Слаг не нашёл артикул точно — ищем тот же артикул без учёта регистра и дефисов
+ * («51712b4000» → «51712-B4000»). Нашли — отдаём канонический артикул для 301.
+ *
+ * Запрос по ILIKE без индекса, поэтому он идёт только по правдоподобному ключу
+ * (6–24 знака, есть цифра) и только после промаха точного поиска; результат
+ * кешируется так же, как сама карточка. Сбой БД — исключение (не кешируется).
+ */
+async function fetchCanonicalPartNumber(slug: string): Promise<string | null> {
+  const { partNumber } = parsePartSlug(slug);
+  if (!partNumber) return null;
+  const key = normalizePartKey(partNumber);
+  if (!isPlausiblePartKey(key)) return null;
+
+  const { data, error } = await createServerClient()
+    .from("parts_products")
+    .select("id, part_number")
+    .ilike("part_number", partKeyLikePattern(key))
+    .order("id", { ascending: true })
+    .limit(50);
+  if (error) dbFail("вариант артикула", error.message);
+
+  const hit = (data ?? []).find((r) => r.part_number && normalizePartKey(r.part_number) === key);
+  return hit?.part_number ?? null;
+}
+
+const getCachedCanonicalPartNumber = unstable_cache(
+  (slug: string) => fetchCanonicalPartNumber(slug),
+  ["parts-product-variant-v1"],
   { revalidate: 3600, tags: ["parts-product"] }
 );
 
@@ -274,10 +371,24 @@ function fitmentSample(brands: CompatibleBrand[], max: number) {
   return { list: shown.join(", "), rest: total - shown.length };
 }
 
+/**
+ * Хвост сниппета «оригинал, отправка из Кореи». Название производителя берётся из
+ * базы; нет его — нейтральная формулировка БЕЗ бренда (раньше всем деталям подряд
+ * писали «Hyundai Mobis», в том числе чужим).
+ */
+const GENUINE_TAIL: Record<string, (m: string | null, raw: string | null) => string> = {
+  ru: (m) => (m ? `Оригинал ${m}, отправка из Кореи.` : "Оригинальная запчасть, отправка из Кореи."),
+  en: (m) => (m ? `Genuine ${m}, shipped from Korea.` : "Genuine part, shipped from Korea."),
+  ko: (_m, raw) => (raw ? `${raw} 정품, 한국에서 발송.` : "정품 부품, 한국에서 발송."),
+  ka: (m) => (m ? `ორიგინალი ${m}, იგზავნება კორეიდან.` : "ორიგინალი ნაწილი, იგზავნება კორეიდან."),
+  ar: (m) => (m ? `أصلية من ${m}، تشحن من كوريا.` : "قطعة أصلية، تشحن من كوريا."),
+};
+
 function buildMeta(
   lang: string,
   p: {
     part_number: string | null; name_ru: string; name_en: string; name_ko: string | null;
+    manufacturer: string | null;
     seo_title_ru?: string | null; seo_title_en?: string | null;
     seo_desc_ru?: string | null; seo_desc_en?: string | null;
   },
@@ -288,20 +399,24 @@ function buildMeta(
   const ko = p.name_ko || p.name_en || p.name_ru || "부품";
   const pn = p.part_number || "";
   const { price } = ctx;
+  const mfr = manufacturerLabel(p.manufacturer);
+  const rawMfr = p.manufacturer?.trim() || null;
+  const tail = (GENUINE_TAIL[lang] ?? GENUINE_TAIL.ru)(mfr, rawMfr);
 
   // Описание собирается из сегментов: имя+артикул, цена+наличие, применимость,
   // хвост. Применимость — единственный сегмент переменной длины, поэтому под
   // бюджет ужимается именно она: две модели → одна → совсем без списка. Цена
-  // не выпадает никогда — она и есть то, ради чего кликают.
+  // не выпадает никогда — она и есть то, ради чего кликают. Нет цены (деталь «по
+  // запросу») — сегмент пуст: цену, которой нет, в сниппет не пишем.
   const compose = (
     head: string,
     priceSeg: string,
     fit: (n: number) => string,
-    tail: string
+    tailSeg: string
   ) => {
     let out = "";
     for (const n of [2, 1, 0]) {
-      out = [head, priceSeg, fit(n), tail].filter(Boolean).join(" ");
+      out = [head, priceSeg, fit(n), tailSeg].filter(Boolean).join(" ");
       if (out.length <= DESC_BUDGET) break;
     }
     return out;
@@ -324,7 +439,7 @@ function buildMeta(
         pn ? `${ru}, артикул ${pn}.` : `${ru}.`,
         price ? `Цена ${price}, в наличии.` : "",
         fitSeg("Подходит", (rest) => ` и ещё ${rest}`),
-        "Оригинал Hyundai Mobis, отправка из Кореи."
+        tail
       ),
     },
     en: {
@@ -333,7 +448,7 @@ function buildMeta(
         pn ? `${en}, part number ${pn}.` : `${en}.`,
         price ? `Price ${price}, in stock.` : "",
         fitSeg("Fits", (rest) => ` and ${rest} more`),
-        "Genuine Hyundai Mobis, shipped from Korea."
+        tail
       ),
     },
     ko: {
@@ -342,7 +457,7 @@ function buildMeta(
         pn ? `${ko}, 부품 번호 ${pn}.` : `${ko}.`,
         price ? `가격 ${price}, 재고 보유.` : "",
         fitSeg("적용 차종", (rest) => ` 외 ${rest}종`),
-        "현대모비스 정품, 한국에서 발송."
+        tail
       ),
     },
     ka: {
@@ -351,7 +466,7 @@ function buildMeta(
         pn ? `${en}, ნომერი ${pn}.` : `${en}.`,
         price ? `ფასი ${price}, მარაგშია.` : "",
         fitSeg("შეესაბამება", (rest) => ` და კიდევ ${rest}`),
-        "ორიგინალი Hyundai Mobis, იგზავნება კორეიდან."
+        tail
       ),
     },
     ar: {
@@ -360,7 +475,7 @@ function buildMeta(
         pn ? `${en}، رقم القطعة ${pn}.` : `${en}.`,
         price ? `السعر ${price}، متوفر.` : "",
         fitSeg("يناسب", (rest) => ` و${rest} أخرى`),
-        "أصلية من Hyundai Mobis، تشحن من كوريا."
+        tail
       ),
     },
   };
@@ -382,6 +497,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!data) return {};
 
   const p = data.product;
+  const priced = hasPrice(p.price_krw);
   // Цена в сниппете обязана совпадать с ценой, которую видит посетитель, —
   // тот же formatUsd, что и в CarDetailSidebar/ProductDetailClient, а не своя
   // арифметика. Курс живой (getFx("market"), кеш 24ч), константы в коде нет —
@@ -389,17 +505,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // держать revalidate этого маршрута не выше 24ч обязательно, иначе курс
   // запекается в HTML намертво и превращается в ту самую константу.
   const { title, description } = buildMeta(lang, p, {
-    price: formatUsd(p.price_krw, krwToUsd),
+    price: priced ? formatUsd(p.price_krw, krwToUsd) : "",
     brands: data.compatibleBrands,
   });
   // Canonical всегда указывает на чистый URL по артикулу — независимо от того,
   // по какому slug-варианту открыли страницу
-  const canonicalSlug = generatePartSlug(p.part_number, null, "ru", p.id);
+  const canonicalSlug = encodeURIComponent(generatePartSlug(p.part_number, null, "ru", p.id));
   return {
     // absolute — глушит суффикс "| K-Axis" из шаблона в layout.tsx,
     // освобождая 9 символов пиксельного бюджета под название детали.
     title: { absolute: title },
     description,
+    // Деталь без цены («по запросу») в индекс не идёт: без цены карточка не
+    // отвечает на запрос, а Offer без price невалиден для rich results.
+    ...(!priced && { robots: { index: false, follow: true } }),
     openGraph: {
       title,
       description,
@@ -419,7 +538,12 @@ export default async function ProductDetailPage({ params }: Props) {
     getCachedProduct(slug),
     getFx("market"),
   ]);
-  if (!data) notFound();
+  if (!data) {
+    // Не нашли точно — может, это тот же артикул в другом регистре/без дефисов.
+    const canonicalPn = await getCachedCanonicalPartNumber(slug);
+    if (canonicalPn) permanentRedirect(`/${lang}/parts/${encodeURIComponent(canonicalPn)}`);
+    notFound();
+  }
 
   const { product } = data;
 
@@ -428,19 +552,25 @@ export default async function ProductDetailPage({ params }: Props) {
 
   // 301 со старых URL "PN--name" (и любых slug-вариантов) на канонический "PN".
   // Сравниваем и декодированный slug, чтобы не зациклить редирект на кодированных символах.
-  const canonicalSlug = generatePartSlug(product.part_number, null, "ru", product.id);
+  const canonicalRaw = generatePartSlug(product.part_number, null, "ru", product.id);
   let decodedSlug = slug;
   try {
     decodedSlug = decodeURIComponent(slug);
   } catch {}
-  if (slug !== canonicalSlug && decodedSlug !== canonicalSlug) {
+  // В адресах (редирект, JSON-LD) слаг кодируется: артикул с «&» или пробелом иначе даёт невалидный URL.
+  const canonicalSlug = encodeURIComponent(canonicalRaw);
+  if (slug !== canonicalRaw && slug !== canonicalSlug && decodedSlug !== canonicalRaw) {
     permanentRedirect(`/${lang}/parts/${canonicalSlug}`);
   }
+
+  const priced = hasPrice(product.price_krw);
+  const mfr = manufacturerLabel(product.manufacturer);
 
   // ── Product JSON-LD (Google Rich Results) ──────────────────────────────────
   // Цена ОБЯЗАНА совпадать с ценой в карточке. Раньше здесь стоял свой
   // множитель ×1.23, тогда как витрина считает по тиерам маржи из pricing.ts, —
   // расхождение доходило до 5% и делало Offer невалидным для rich results.
+  // Нет цены — нет и Offer: Google требует price, а «0» был бы ложью.
   const priceUsd = krwToDisplayUsd(product.price_krw, krwToUsd);
   const productName =
     lang === "ko"
@@ -457,79 +587,85 @@ export default async function ProductDetailPage({ params }: Props) {
     mpn: product.part_number,
     ...(product.image_url && { image: [product.image_url] }),
     ...(product.official_name_ko && { alternateName: product.official_name_ko }),
-    brand: {
-      "@type": "Brand",
-      name: product.manufacturer || "Hyundai Mobis",
-    },
-    offers: {
-      "@type": "Offer",
-      url: `${SITE_URL}/${lang}/parts/${canonicalSlug}`,
-      priceCurrency: "USD",
-      price: priceUsd,
-      availability: "https://schema.org/InStock",
-      seller: {
-        "@type": "Organization",
-        name: "K-Axis",
-        url: SITE_URL,
+    ...(mfr && { brand: { "@type": "Brand", name: mfr } }),
+    ...(priced && {
+      offers: {
+        "@type": "Offer",
+        url: `${SITE_URL}/${lang}/parts/${canonicalSlug}`,
+        priceCurrency: "USD",
+        price: priceUsd,
+        // InStock — решение владельца: все карточки каталога считаются доступными под заказ.
+        availability: "https://schema.org/InStock",
+        seller: {
+          "@type": "Organization",
+          name: "K-Axis",
+          url: SITE_URL,
+        },
       },
-    },
+    }),
     ...(data.categoryName && {
       category: lang === "ru" ? data.categoryName.ru : data.categoryName.en,
     }),
   };
 
+  // Название раздела — из словаря (ru/en/ka/ar), а не «Parts» для всех, кроме ru.
+  const partsLabel = getServerT(lang)("parts.detail.breadcrumbParts");
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
-      { "@type": "ListItem", position: 2, name: lang === "ru" ? "Запчасти" : "Parts", item: `${SITE_URL}/${lang}/parts` },
+      // Корень языка без хвостового слэша: trailingSlash = false, «/ru/» отдаёт 308.
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}` },
+      { "@type": "ListItem", position: 2, name: partsLabel, item: `${SITE_URL}/${lang}/parts` },
       ...(data.categoryName
-        ? [{ "@type": "ListItem", position: 3, name: lang === "ru" ? data.categoryName.ru : data.categoryName.en, item: `${SITE_URL}/${lang}/parts?cat=${data.categoryName.slug}` }]
+        ? [{ "@type": "ListItem", position: 3, name: lang === "ru" ? data.categoryName.ru : data.categoryName.en, item: `${SITE_URL}/${lang}/parts/category/${data.categoryName.slug}` }]
         : []),
       { "@type": "ListItem", position: data.categoryName ? 4 : 3, name: productName, item: `${SITE_URL}/${lang}/parts/${canonicalSlug}` },
     ],
   };
 
   // ── Auto-generated description ────────────────────────────────────────────
+  // Производитель — из базы; нет его — формулировка без названия бренда.
   const brandNames = data.compatibleBrands.map((b) => b.name).join(", ");
   const catRu = data.categoryName?.ru ?? "";
   const catEn = data.categoryName?.en ?? "";
+  const rawMfr = product.manufacturer?.trim() || null;
 
   const descriptionMap: Record<string, string> = {
     ru: [
-      `${product.name_ru || product.name_en || product.name_ko}${product.part_number ? ` (артикул ${product.part_number})` : ""} — оригинальная запчасть Hyundai Mobis.`,
+      `${product.name_ru || product.name_en || product.name_ko}${product.part_number ? ` (артикул ${product.part_number})` : ""} — оригинальная запчасть${mfr ? ` ${mfr}` : ""}.`,
       catRu ? `Категория: ${catRu}.` : "",
       brandNames ? `Подходит для автомобилей ${brandNames}.` : "",
-      `Прямые поставки из Южной Кореи. Доставка по всему миру. Гарантия качества Hyundai Mobis.`,
+      `Прямые поставки из Южной Кореи. Доставка по всему миру. Гарантия качества${mfr ? ` ${mfr}` : ""}.`,
     ].filter(Boolean).join(" "),
 
     en: [
-      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (part number ${product.part_number})` : ""} — genuine Hyundai Mobis spare part.`,
+      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (part number ${product.part_number})` : ""} — genuine ${mfr ? `${mfr} ` : ""}spare part.`,
       catEn ? `Category: ${catEn}.` : "",
       brandNames ? `Compatible with ${brandNames} vehicles.` : "",
-      `Direct supply from South Korea. Worldwide delivery. Hyundai Mobis quality guarantee.`,
+      `Direct supply from South Korea. Worldwide delivery. ${mfr ? `${mfr} quality` : "Quality"} guarantee.`,
     ].filter(Boolean).join(" "),
 
     ko: [
-      `${product.name_ko || product.name_en || product.name_ru || ""}${product.part_number ? ` (부품 번호 ${product.part_number})` : ""} — 현대모비스 정품 부품입니다.`,
+      `${product.name_ko || product.name_en || product.name_ru || ""}${product.part_number ? ` (부품 번호 ${product.part_number})` : ""} — ${rawMfr ? `${rawMfr} ` : ""}정품 부품입니다.`,
       catEn ? `카테고리: ${catEn}.` : "",
       brandNames ? `${brandNames} 차량에 적합합니다.` : "",
-      `한국에서 직접 공급. 전 세계 배송. 현대모비스 품질 보증.`,
+      `한국에서 직접 공급. 전 세계 배송. ${rawMfr ? `${rawMfr} ` : ""}품질 보증.`,
     ].filter(Boolean).join(" "),
 
     ka: [
-      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (ნომერი ${product.part_number})` : ""} — Hyundai Mobis-ის ორიგინალი სათადარიგო ნაწილი.`,
+      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (ნომერი ${product.part_number})` : ""} — ${mfr ? `${mfr}-ის ` : ""}ორიგინალი სათადარიგო ნაწილი.`,
       catEn ? `კატეგორია: ${catEn}.` : "",
       brandNames ? `შესაფერისია ${brandNames} მანქანებისთვის.` : "",
-      `პირდაპირი მიწოდება სამხრეთ კორეიდან. მიტანა მსოფლიოს ნებისმიერ ქვეყანაში. Hyundai Mobis-ის ხარისხის გარანტია.`,
+      `პირდაპირი მიწოდება სამხრეთ კორეიდან. მიტანა მსოფლიოს ნებისმიერ ქვეყანაში. ${mfr ? `${mfr}-ის ` : ""}ხარისხის გარანტია.`,
     ].filter(Boolean).join(" "),
 
     ar: [
-      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (رقم القطعة ${product.part_number})` : ""} — قطعة غيار أصلية من Hyundai Mobis.`,
+      `${product.name_en || product.name_ru || product.name_ko}${product.part_number ? ` (رقم القطعة ${product.part_number})` : ""} — قطعة غيار أصلية${mfr ? ` من ${mfr}` : ""}.`,
       catEn ? `الفئة: ${catEn}.` : "",
       brandNames ? `متوافقة مع سيارات ${brandNames}.` : "",
-      `توريد مباشر من كوريا الجنوبية. توصيل إلى جميع أنحاء العالم. ضمان جودة Hyundai Mobis.`,
+      `توريد مباشر من كوريا الجنوبية. توصيل إلى جميع أنحاء العالم. ${mfr ? `ضمان جودة ${mfr}` : "ضمان الجودة"}.`,
     ].filter(Boolean).join(" "),
   };
 
@@ -540,9 +676,18 @@ export default async function ProductDetailPage({ params }: Props) {
   return (
     <>
       <SectionDictionary lang={lang} sections={["parts"]} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <ProductDetailClient {...data} lang={lang} krwToUsd={krwToUsd} description={description} logistics={data.logistics} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(productSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }} />
+      <ProductDetailClient
+        product={toDetail(product)}
+        categoryName={data.categoryName}
+        subcategoryName={data.subcategoryName}
+        compatibleBrands={data.compatibleBrands}
+        similarProducts={data.similarProducts}
+        lang={lang}
+        krwToUsd={krwToUsd}
+        description={description}
+      />
       {expertContent && product.part_number && (
         <PartExpertContent lang={lang} partNumber={product.part_number} content={expertContent} />
       )}

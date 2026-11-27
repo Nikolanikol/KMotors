@@ -23,7 +23,8 @@ interface ProductCardProps {
   href: string;
   onAddToCart: () => Promise<boolean>;
   onRemoveFromCart: () => void;
-  onQuickView: () => void;
+  /** Нет обработчика — нет и кнопки «быстрый просмотр» (на страницах без модалки она была бы пустой). */
+  onQuickView?: () => void;
   onNavigate: () => void;
   lang: string;
   t: (key: string) => string;
@@ -62,28 +63,35 @@ export function ProductCard({ product, productName, isVisible, index, href, onAd
       )}
       style={{ transitionDelay: delay }}
     >
-      <Link href={href} onClick={onNavigate} className="block relative bg-[var(--pn-image-bg,#e8e6e3)] overflow-hidden aspect-square">
-        <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
-          {product.image_url
-            ? <Image src={product.image_url} alt={productName} fill unoptimized className="object-contain p-4 sm:p-6 group-hover:scale-105 transition-transform duration-500" />
-            : <div className="flex flex-col items-center gap-1.5 text-gray-300"><Wrench className="w-8 h-8" /><span className="text-xs">{t("parts.catalog.noPhoto")}</span></div>}
-        </div>
-        {product.is_new && (
-          <div className="absolute top-3 left-3 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
-            {t("parts.catalog.newBadge")}
+      {/* Кнопка быстрого просмотра — СОСЕД ссылки, а не её потомок: <button> внутри <a>
+          невалидный HTML и ломает фокус с клавиатуры. */}
+      <div className="relative bg-[var(--pn-image-bg,#e8e6e3)] overflow-hidden aspect-square">
+        <Link href={href} onClick={onNavigate} className="absolute inset-0 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--pn-orange)]">
+          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+            {product.image_url
+              ? <Image src={product.image_url} alt={productName} fill unoptimized className="object-contain p-4 sm:p-6 group-hover:scale-105 transition-transform duration-500" />
+              : <div className="flex flex-col items-center gap-1.5 text-gray-300"><Wrench className="w-8 h-8" /><span className="text-xs">{t("parts.catalog.noPhoto")}</span></div>}
           </div>
+          {product.is_new && (
+            <div className="absolute top-3 left-3 bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] text-white text-[11px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+              {t("parts.catalog.newBadge")}
+            </div>
+          )}
+        </Link>
+        {onQuickView && (
+          <button
+            type="button"
+            onClick={() => onQuickView()}
+            className="absolute bottom-3 right-3 z-10 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)] transition-opacity hover:bg-[var(--pn-orange-deep)] hover:bg-[image:var(--pn-fill)]"
+            title={t("parts.detail.quickView")}
+            aria-label={t("parts.detail.quickView")}
+          >
+            <Eye className="w-4 h-4" />
+          </button>
         )}
-        <button
-          type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onQuickView(); }}
-          className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-black/50 backdrop-blur-md text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[var(--pn-orange-deep)] hover:bg-[image:var(--pn-fill)]"
-          title="Quick view"
-        >
-          <Eye className="w-4 h-4" />
-        </button>
-      </Link>
+      </div>
       <div className="p-4 flex flex-col gap-2 flex-1">
-        <Link href={href} onClick={onNavigate} className="block">
+        <Link href={href} onClick={onNavigate} className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]">
           <div className="text-xs font-mono font-semibold tracking-wider uppercase text-[var(--pn-orange-soft)] leading-none mb-1.5">{product.part_number}</div>
           <h3 className="text-sm font-semibold text-[var(--pn-text)] line-clamp-2 leading-snug min-h-[2.5rem]">
             {productName}
@@ -95,7 +103,7 @@ export function ProductCard({ product, productName, isVisible, index, href, onAd
             size="sm"
             onClick={handleCart}
             className={cn(
-              "group/cart h-9 w-9 p-0 rounded-xl text-white transition-all active:scale-95",
+              "group/cart h-9 w-9 p-0 rounded-xl text-white transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-[var(--pn-orange)]",
               inCart ? "bg-[var(--pn-success)] hover:bg-[var(--pn-error)]" : "bg-[var(--pn-orange-deep)] bg-[image:var(--pn-fill)] hover:brightness-110 shadow-lg"
             )}
             title={cartLabel}

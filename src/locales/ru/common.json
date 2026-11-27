@@ -698,7 +698,17 @@
       "shippingCalcResult": "Примерно {price} USD",
       "shippingCalcUnavailable": "EMS недоступен для этой страны",
       "shippingCalcNote": "* Указана стоимость доставки. Итоговая цена может отличаться.",
-      "similarTitle": "Запчасти для этой модели"
+      "similarTitle": "Запчасти для этой модели",
+      "quickView": "Быстрый просмотр",
+      "quantity": "Количество",
+      "decreaseQty": "Уменьшить количество",
+      "increaseQty": "Увеличить количество",
+      "close": "Закрыть",
+      "copyPartNumber": "Скопировать артикул",
+      "crossRefsTitle": "Кросс-номера (аналоги)",
+      "priceOnRequest": "Цена по запросу",
+      "requestPrice": "Запросить цену",
+      "requestPriceText": "Оставьте заявку — менеджер уточнит наличие и стоимость этой детали."
     },
     "order": {
       "partNumber": "Артикул",

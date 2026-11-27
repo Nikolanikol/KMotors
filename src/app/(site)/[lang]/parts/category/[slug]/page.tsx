@@ -19,6 +19,9 @@ import { FitmentProductsGrid } from "@/app/parts/sections/FitmentProductsGrid";
 import type { Product } from "@/app/parts/sections/PartsCatalogClient";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 import { SITE_URL } from "@/lib/site";
+import { CAT_MIN_PARTS } from "@/lib/partsCategoryRules";
+import { generatePartSlug } from "@/utils/partSlug";
+import { jsonLd } from "@/lib/partsSeo";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -40,9 +43,8 @@ export const dynamicParams = true;
  * выигрыш не окупает смену URL. `revalidate` выше остаётся декоративным.
  */
 const PAGE_SIZE = 24;
-// Порог тонкого контента: категории меньше — рендерим, но не индексируем.
-// Тот же приём, что GEN_MIN_PARTS на fitment-страницах.
-const CAT_MIN_PARTS = 30;
+// Порог тонкого контента (CAT_MIN_PARTS из partsCategoryRules): категории меньше —
+// рендерим, но не индексируем. Один источник с сайтмапом и деревом категорий.
 
 // ─── Copy ─────────────────────────────────────────────────────────────────────
 
@@ -199,14 +201,21 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       .range(from, from + PAGE_SIZE - 1),
   ]);
 
+  // Сбой запроса — исключение (страница ошибки), а не пустая сетка с 200 и индексом.
+  if (productsRes.error) {
+    throw new Error(`[parts/category] товары категории ${slug}: ${productsRes.error.message}`);
+  }
+
   const products = ((productsRes.data ?? []).map(withCleanImage) as Product[]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // ?page=999 при трёх страницах — пустая страница с 200 плодила бы бесконечные URL.
+  if (page > totalPages) notFound();
   const name = localizedName(node, lang);
   const copy = buildCopy(lang, name);
   const path = `/parts/category/${slug}`;
 
   const trail = [
-    { name: "K-Axis", item: `${SITE_URL}/${lang}/` },
+    { name: "K-Axis", item: `${SITE_URL}/${lang}` },
     { name: copy.parts, item: `${SITE_URL}/${lang}/parts` },
     ...ancestors.map((a) => ({
       name: localizedName(a, lang),
@@ -237,7 +246,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         itemListElement: products.map((p, i) => ({
           "@type": "ListItem",
           position: from + i + 1,
-          url: `${SITE_URL}/${lang}/parts/${p.part_number}`,
+          url: `${SITE_URL}/${lang}/parts/${generatePartSlug(p.part_number, null, "ru", p.id)}`,
           name: lang === "ru" ? p.name_ru || p.name_en : p.name_en || p.name_ru,
         })),
       }
@@ -250,9 +259,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <div className="parts-page min-h-screen">
       <SectionDictionary lang={lang} sections={["parts"]} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }} />
       {itemListSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemListSchema) }} />
       )}
 
       <div className="max-w-7xl mx-auto px-4 py-8">

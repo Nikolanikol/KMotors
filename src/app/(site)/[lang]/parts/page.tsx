@@ -9,6 +9,9 @@ import { PopularModels } from "@/app/parts/sections/PopularModels";
 import SectionDictionary from "@/components/I18nProvider/SectionDictionary";
 import { LANGS } from "@/lib/lang";
 import { SITE_URL } from "@/lib/site";
+import { makeAlternates } from "@/lib/seo";
+import { getServerT } from "@/lib/serverT";
+import { hasFilterParams, jsonLd } from "@/lib/partsSeo";
 
 // Lazy load — грузятся после Hero
 const PartsCatalog = dynamic(() => import("@/app/parts/sections/PartsCatalog").then(m => ({ default: m.PartsCatalog })));
@@ -86,10 +89,12 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const sp = await searchParams;
   const meta = PARTS_META[lang] || PARTS_META.ru;
 
-  const cleanUrl = `${SITE_URL}/${lang}/parts`;
+  const alternates = makeAlternates(lang, "/parts");
 
-  // Если в URL есть любые фильтры — не индексируем, canonical на чистый URL
-  const hasFilters = Object.keys(sp).length > 0;
+  // noindex только у настоящей выдачи с фильтром (белый список параметров). Метки
+  // кампаний (utm_*, gclid, fbclid…) содержимое не меняют: страница остаётся в индексе,
+  // canonical ведёт на чистый URL.
+  const hasFilters = hasFilterParams(sp);
 
   return {
     title: meta.title,
@@ -98,26 +103,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: cleanUrl,
+      url: alternates.canonical,
       // Картинку даёт parts/opengraph-image.tsx — см. комментарий на главной.
       type: "website",
     },
-    alternates: {
-      canonical: cleanUrl,
-      languages: {
-        ru: `${SITE_URL}/ru/parts`,
-        en: `${SITE_URL}/en/parts`,
-        ka: `${SITE_URL}/ka/parts`,
-        ar: `${SITE_URL}/ar/parts`,
-        "x-default": `${SITE_URL}/ru/parts`,
-      },
-    },
+    alternates,
   };
 }
-
-const PARTS_LABEL: Record<string, string> = {
-  ru: "Запчасти", en: "Parts", ko: "부품", ka: "სათადარიგო ნაწილები", ar: "قطع الغيار",
-};
 
 export default async function PartsPage({ params }: Props) {
   const { lang } = await params;
@@ -128,8 +120,8 @@ export default async function PartsPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}/` },
-      { "@type": "ListItem", position: 2, name: PARTS_LABEL[lang] || "Parts", item: `${SITE_URL}/${lang}/parts` },
+      { "@type": "ListItem", position: 1, name: "K-Axis", item: `${SITE_URL}/${lang}` },
+      { "@type": "ListItem", position: 2, name: getServerT(lang)("parts.detail.breadcrumbParts"), item: `${SITE_URL}/${lang}/parts` },
     ],
   };
 
@@ -151,19 +143,15 @@ export default async function PartsPage({ params }: Props) {
       { "@type": "Country", name: "Uzbekistan" },
       { "@type": "Country", name: "Georgia" },
     ],
-    offers: {
-      "@type": "Offer",
-      availability: "https://schema.org/InStock",
-      priceCurrency: "USD",
-      seller: { "@type": "Organization", name: "K-Axis" },
-    },
+    // Offer без цены не валиден для rich results (Google требует price), а у услуги
+    // по подбору и доставке цены нет вовсе — поэтому offers здесь не выводится.
   };
 
   return (
     <>
       <SectionDictionary lang={lang} sections={["parts"]} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(serviceSchema) }} />
       <div className="parts-page min-h-screen" style={{ position: "relative" }}>
         <PartsTopLinks lang={lang} />
         <Hero partsCount={partsCount ?? undefined} />
