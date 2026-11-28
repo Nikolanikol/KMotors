@@ -38,18 +38,20 @@ export default function BlogSearch({ value, onChange }: BlogSearchProps) {
 
   return (
     <div className="relative w-full max-w-md">
-      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--axis-gray)] pointer-events-none" />
       <input
         type="text"
         value={local}
         onChange={(e) => handleChange(e.target.value)}
         placeholder={t("blog.search")}
-        className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#BB162B] focus:ring-1 focus:ring-[#BB162B]/30 transition"
+        className="w-full pl-10 pr-10 py-3 rounded-xl border border-white/[0.08] bg-[var(--axis-graphite)] text-sm text-[var(--axis-white)] placeholder:text-[var(--axis-gray)] [color-scheme:dark] transition hover:border-white/20 focus:outline-none focus:border-[var(--axis-bronze)] focus:ring-2 focus:ring-[rgba(182,119,73,0.35)]"
       />
       {local && (
         <button
           onClick={() => handleChange("")}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          type="button"
+          aria-label="Clear"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-[var(--axis-gray)] transition hover:text-[var(--axis-white)] hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
         >
           <X className="w-4 h-4" />
         </button>

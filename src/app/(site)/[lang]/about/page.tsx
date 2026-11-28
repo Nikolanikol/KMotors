@@ -3,31 +3,33 @@ import AboutClient from "./AboutClient";
 import { makeAlternates } from "@/lib/seo";
 import { SITE_URL } from "@/lib/site";
 
+// Заголовок и описание переписаны 28.11.2026 вместе со страницей: раньше страница говорила
+// только о запчастях, теперь — авто и запчасти, без комиссии (решение владельца).
 const META: Record<string, { title: string; description: string }> = {
   ru: {
-    title: "О компании K-Axis — оригинальные запчасти из Кореи",
+    title: "О компании K-Axis — авто и запчасти из Кореи без комиссии",
     description:
-      "K-Axis — прямые поставки оригинальных автозапчастей Hyundai, Kia, Genesis из Южной Кореи. Работаем с 2025 года, доставляем в 8+ стран.",
+      "K-Axis — команда в Южной Корее: подбор и доставка автомобилей с Encar и аукционов, оригинальные запчасти Hyundai, Kia, Genesis. Без комиссии, скидки — в личных сообщениях.",
   },
   en: {
-    title: "About K-Axis — Genuine Korean Auto Parts",
+    title: "About K-Axis — Cars and Parts from Korea, No Commission",
     description:
-      "K-Axis — direct supply of genuine Hyundai, Kia, Genesis auto parts from South Korea. Operating since 2025, delivering to 8+ countries.",
+      "K-Axis is a team in South Korea: car sourcing and delivery from Encar and auctions, genuine Hyundai, Kia, Genesis parts. No commission, discounts via direct message.",
   },
   ko: {
-    title: "K-Axis 소개 — 정품 한국 자동차 부품",
+    title: "K-Axis 소개 — 한국 자동차와 부품, 수수료 없음",
     description:
-      "K-Axis — 한국에서 직접 공급하는 현대, 기아, 제네시스 정품 자동차 부품. 2025년부터 8개국 이상 배송.",
+      "K-Axis — 한국 팀: Encar와 경매 차량 구매·배송, 현대·기아·제네시스 정품 부품. 수수료 없음, 할인은 메시지로 안내.",
   },
   ka: {
-    title: "K-Axis-ის შესახებ — ორიგინალური კორეული ავტონაწილები",
+    title: "K-Axis-ის შესახებ — ავტომობილები და ნაწილები კორეიდან, საკომისიოს გარეშე",
     description:
-      "K-Axis — სამხრეთ კორეიდან Hyundai, Kia, Genesis ორიგინალური ავტონაწილების პირდაპირი მიწოდება. 2025 წლიდან, 8+ ქვეყანაში მიტანა.",
+      "K-Axis — გუნდი სამხრეთ კორეაში: ავტომობილების შერჩევა და მიტანა Encar-იდან და აუქციონებიდან, Hyundai, Kia, Genesis ორიგინალური ნაწილები. საკომისიოს გარეშე.",
   },
   ar: {
-    title: "عن K-Axis — قطع غيار كورية أصلية",
+    title: "عن K-Axis — سيارات وقطع غيار من كوريا بدون عمولة",
     description:
-      "K-Axis — توريد مباشر لقطع غيار Hyundai وKia وGenesis الأصلية من كوريا الجنوبية. منذ 2025، توصيل إلى 8+ دول.",
+      "K-Axis فريق في كوريا الجنوبية: اختيار السيارات من Encar والمزادات وشحنها، وقطع غيار Hyundai وKia وGenesis الأصلية. بدون عمولة، والخصومات عبر الرسائل الخاصة.",
   },
 };
 

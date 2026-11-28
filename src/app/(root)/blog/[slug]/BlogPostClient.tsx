@@ -85,8 +85,7 @@ export default function BlogPostPage({ initialPost }: Props) {
         <p className="text-xl font-semibold" style={{ color: "var(--axis-white)" }}>404</p>
         <p style={{ color: "var(--axis-gray)" }}>{t("blog.notFound", "Статья не найдена")}</p>
         <Link href={`/${lang}/blog`}
-          className="mt-2 inline-flex items-center gap-2 text-sm font-medium"
-          style={{ color: "var(--axis-orange)" }}>
+          className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--axis-bronze)] transition hover:bg-[var(--axis-bronze)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]">
           <ArrowLeft className="w-4 h-4" />
           {t("blog.backToBlog")}
         </Link>
@@ -101,7 +100,7 @@ export default function BlogPostPage({ initialPost }: Props) {
         <div className="max-w-3xl mx-auto">
           <Breadcrumb items={[
             { label: "K-Axis", href: `/${lang}/` },
-            { label: t("blog.backToBlog"), href: `/${lang}/blog` },
+            { label: t("blog.title"), href: `/${lang}/blog` },
             { label: post.title },
           ]} />
         </div>
@@ -119,8 +118,7 @@ export default function BlogPostPage({ initialPost }: Props) {
 
       <div className="max-w-3xl mx-auto px-4 py-10">
         <Link href={`/${lang}/blog`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium mb-6 transition-colors"
-          style={{ color: "var(--axis-orange)" }}>
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 -ml-3 mb-6 rounded-lg text-sm font-medium text-[var(--axis-bronze)] transition hover:bg-[var(--axis-bronze)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]">
           <ArrowLeft className="w-4 h-4" />
           {t("blog.backToBlog")}
         </Link>
@@ -140,7 +138,7 @@ export default function BlogPostPage({ initialPost }: Props) {
               </span>
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-bold leading-snug" style={{ color: "var(--axis-white)" }}>
+            <h1 className="font-heading text-2xl md:text-4xl leading-tight" style={{ color: "var(--axis-white)" }}>
               {post.title}
             </h1>
 
@@ -154,7 +152,7 @@ export default function BlogPostPage({ initialPost }: Props) {
             <hr style={{ borderColor: "rgba(74,74,74,0.3)" }} />
 
             {post.content ? (
-              <div className="prose prose-invert max-w-none prose-a:text-orange-400 prose-headings:text-white prose-strong:text-white">
+              <div className="prose prose-invert max-w-none prose-p:text-[var(--axis-silver)] prose-li:text-[var(--axis-silver)] prose-a:text-[var(--axis-bronze)] prose-a:no-underline hover:prose-a:underline prose-headings:text-[var(--axis-white)] prose-strong:text-[var(--axis-white)] prose-blockquote:border-l-[var(--axis-bronze)] prose-img:rounded-xl prose-th:text-[var(--axis-white)] prose-hr:border-white/10">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
               </div>
             ) : (
@@ -175,28 +173,27 @@ export default function BlogPostPage({ initialPost }: Props) {
               <div className="flex flex-col sm:flex-row gap-3">
                 {!isCatalogBlocked && (
                   <Link href={`/${lang}/catalog`}
-                    className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white transition-colors"
-                    style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
+                    className="flex-1 text-center px-5 py-3 font-semibold rounded-xl text-white bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] transition hover:brightness-115 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]">
                     Смотреть каталог
                   </Link>
                 )}
                 <Link href={`/${lang}/calculator`}
-                  className="flex-1 text-center px-5 py-3 font-semibold rounded-xl transition-colors"
-                  style={isCatalogBlocked
-                    ? { backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)", color: "white" }
-                    : { border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
-                  🧮 Рассчитать растаможку
+                  className={`flex-1 text-center px-5 py-3 font-semibold rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)] ${isCatalogBlocked
+                    ? "text-white bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] hover:brightness-115"
+                    : "border border-[var(--axis-bronze)] text-[var(--axis-bronze)] hover:bg-[var(--axis-bronze)]/10"}`}>
+                  Рассчитать растаможку
                 </Link>
                 <button
                   onClick={() => setCtaOpen((v) => !v)}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-colors"
-                  style={{ border: "1px solid var(--axis-orange)", color: "var(--axis-orange)" }}>
+                  type="button"
+                  aria-expanded={ctaOpen}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl border border-[var(--axis-bronze)] text-[var(--axis-bronze)] transition hover:bg-[var(--axis-bronze)]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]">
                   Получить консультацию
                   {ctaOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
               </div>
               {ctaOpen && (
-                <div className="mt-4 bg-white rounded-xl p-4 sm:p-5 [&_input]:text-gray-900 [&_input]:border-gray-300 [&_input::placeholder]:text-gray-400">
+                <div className="mt-4 rounded-xl p-4 sm:p-5 bg-[var(--axis-graphite)] border border-white/[0.06]">
                   <CarRequestForm source="blog" />
                 </div>
               )}
@@ -208,11 +205,10 @@ export default function BlogPostPage({ initialPost }: Props) {
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag className="w-4 h-4" style={{ color: "var(--axis-gray)" }} />
                   {post.tags.map((tag) => (
-                    <a key={tag} href={`/${lang}/blog/tag/${encodeURIComponent(tag)}`}
-                      className="text-xs px-2.5 py-1 rounded-full transition-colors"
-                      style={{ backgroundColor: "rgba(182,119,73,0.08)", color: "var(--axis-gray)" }}>
+                    <Link key={tag} href={`/${lang}/blog/tag/${encodeURIComponent(tag)}`}
+                      className="text-xs px-2.5 py-1 rounded-full bg-[var(--axis-bronze)]/[0.08] text-[var(--axis-gray)] transition-colors hover:bg-[var(--axis-bronze)]/20 hover:text-[var(--axis-bronze)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]">
                       #{tag}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -221,9 +217,8 @@ export default function BlogPostPage({ initialPost }: Props) {
         </article>
 
         <div className="mt-8 text-center">
-          <button onClick={() => router.back()}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white transition-colors"
-            style={{ backgroundColor: "var(--axis-bronze-deep)", backgroundImage: "var(--axis-bronze-fill)" }}>
+          <button type="button" onClick={() => router.back()}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white bg-[var(--axis-bronze-deep)] bg-[image:var(--axis-bronze-fill)] transition hover:brightness-115 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]">
             <ArrowLeft className="w-4 h-4" />
             {t("blog.backToBlog")}
           </button>

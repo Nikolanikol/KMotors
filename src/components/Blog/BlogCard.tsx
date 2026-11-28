@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { BlogPost } from "@/types/blog";
 import { clarityEvent } from "@/utils/clarity";
+import { navStart } from "@/lib/navStatus";
+import { langOrDefault } from "@/lib/lang";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -13,7 +15,7 @@ interface BlogCardProps {
 function formatDate(iso: string, lang: string) {
   try {
     return new Date(iso).toLocaleDateString(
-      lang === "ko" ? "ko-KR" : lang === "en" ? "en-US" : "ru-RU",
+      lang === "en" ? "en-US" : lang === "ka" ? "ka-GE" : lang === "ar" ? "ar" : "ru-RU",
       { day: "numeric", month: "long", year: "numeric" }
     );
   } catch {
@@ -21,77 +23,74 @@ function formatDate(iso: string, lang: string) {
   }
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  news: "bg-blue-100 text-blue-700",
-  guide: "bg-green-100 text-green-700",
-  review: "bg-purple-100 text-purple-700",
-  other: "bg-gray-100 text-gray-600",
+// Ключи словаря во множественном числе (blog.guides), а category в базе — в единственном
+// (guide). Раньше карточка звала t(`blog.${category}`) и показывала сырое «guide».
+const CATEGORY_LABELS: Record<string, string> = {
+  news: "blog.news",
+  guide: "blog.guides",
+  review: "blog.reviews",
+  other: "blog.other",
 };
 
 export default function BlogCard({ post }: BlogCardProps) {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language;
+  const lang = langOrDefault(i18n.language);
   const router = useRouter();
 
   return (
-    <Link href={`/blog/${post.slug}`} className="group block h-full" onClick={() => clarityEvent("blog_article_click")}>
-      <article className="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm transition-all duration-200 group-hover:border-[#BB162B] group-hover:shadow-md">
-        {/* Cover image */}
-        {post.cover_url ? (
-          <div className="relative w-full h-48 overflow-hidden flex-shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+    // Ссылка сразу с языком: адрес без него (/blog/<slug>) проходил через редирект 307.
+    <Link
+      href={`/${lang}/blog/${post.slug}`}
+      className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
+      onClick={() => clarityEvent("blog_article_click")}
+    >
+      <article className="flex flex-col h-full rounded-2xl overflow-hidden bg-[var(--axis-charcoal)] border border-white/[0.06] transition-all duration-300 group-hover:-translate-y-1 group-hover:border-[var(--axis-bronze)]/50 group-hover:shadow-[0_20px_40px_rgba(182,119,73,0.12)]">
+        {/* Обложка */}
+        <div className="relative w-full aspect-[1200/630] overflow-hidden flex-shrink-0 bg-[var(--axis-graphite)]">
+          {post.cover_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={post.cover_url}
               alt={post.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-          </div>
-        ) : (
-          <div className="w-full h-48 flex-shrink-0 bg-gradient-to-br from-[#002C5F] to-[#001f45] flex items-center justify-center">
-            <span className="text-5xl opacity-30">📰</span>
-          </div>
-        )}
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(182,119,73,0.25),transparent_60%)]">
+              <span className="font-heading text-3xl tracking-[0.3em] text-[var(--axis-bronze)]/40">AXIS</span>
+            </div>
+          )}
+          <span className="absolute left-3 top-3 text-[11px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full bg-[var(--axis-black)]/75 text-[var(--axis-bronze)] border border-[var(--axis-bronze)]/30 backdrop-blur-sm">
+            {t(CATEGORY_LABELS[post.category] ?? "blog.other")}
+          </span>
+        </div>
 
-        {/* Content */}
+        {/* Текст */}
         <div className="flex flex-col flex-1 p-5 gap-3">
-          {/* Category badge */}
-          <div className="flex items-center justify-between gap-2">
-            <span
-              className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                CATEGORY_COLORS[post.category] || CATEGORY_COLORS.other
-              }`}
-            >
-              {t(`blog.${post.category}`, post.category)}
-            </span>
-            <time className="text-xs text-gray-400">
-              {formatDate(post.published_at, lang)}
-            </time>
-          </div>
+          <time className="text-xs text-[var(--axis-gray)]">{formatDate(post.published_at, lang)}</time>
 
-          {/* Title */}
-          <h2 className="text-base font-semibold text-[#002C5F] leading-snug line-clamp-2 group-hover:text-[#BB162B] transition-colors">
+          <h2 className="text-base sm:text-lg font-semibold leading-snug line-clamp-2 text-[var(--axis-white)] transition-colors group-hover:text-[var(--axis-bronze)]">
             {post.title}
           </h2>
 
-          {/* Excerpt */}
           {post.excerpt && (
-            <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 flex-1">
-              {post.excerpt}
-            </p>
+            <p className="text-sm text-[var(--axis-gray)] leading-relaxed line-clamp-3">{post.excerpt}</p>
           )}
 
-          {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {post.tags.slice(0, 3).map((tag) => (
                 <button
                   key={tag}
+                  type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    router.push(`/${lang}/blog/tag/${encodeURIComponent(tag)}`);
+                    const href = `/${lang}/blog/tag/${encodeURIComponent(tag)}`;
+                    navStart(href);
+                    router.push(href);
                   }}
-                  className="text-xs px-2 py-0.5 rounded-full bg-[#002C5F]/5 text-[#002C5F] hover:bg-[#BB162B]/10 hover:text-[#BB162B] transition-colors"
+                  className="text-xs px-2.5 py-0.5 rounded-full bg-white/[0.04] text-[var(--axis-gray)] border border-white/[0.06] transition-colors hover:bg-[var(--axis-bronze)]/15 hover:text-[var(--axis-bronze)] hover:border-[var(--axis-bronze)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(182,119,73,0.6)]"
                 >
                   #{tag}
                 </button>
@@ -99,10 +98,9 @@ export default function BlogCard({ post }: BlogCardProps) {
             </div>
           )}
 
-          {/* Read more */}
-          <div className="mt-auto pt-3 border-t border-gray-100">
-            <span className="text-sm font-medium text-[#BB162B] group-hover:text-[#9B1220] transition-colors">
-              {t("blog.readMore")} →
+          <div className="mt-auto pt-4 border-t border-white/[0.06]">
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--axis-bronze)] transition-all group-hover:gap-2.5">
+              {t("blog.readMore")} <span aria-hidden="true">→</span>
             </span>
           </div>
         </div>
