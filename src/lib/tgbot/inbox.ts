@@ -253,19 +253,25 @@ function draftBody(d: BotDraft): string {
 }
 
 /** Черновик в тему клиента с кнопками. Без темы черновик не показываем: отправлять его некуда. */
-export async function postDraft(c: BotClient, text: string): Promise<void> {
+/** Черновик в теме клиента с кнопками «Отправить» / «Не надо». Возвращает id или null. */
+export async function postDraft(c: BotClient, text: string): Promise<number | null> {
   const inbox = inboxChatId();
   const topicId = await ensureTopic(c);
-  if (!inbox || !topicId) return;
+  if (!inbox || !topicId) return null;
   const d = await createDraft(c.chat_id, text);
-  if (!d) return;
+  if (!d) return null;
   const r = await send(
     inbox,
     draftBody(d) + "\n\n<i>Или напишите свой ответ в теме — черновик снимется сам.</i>",
     draftKeyboard(d.id),
     { message_thread_id: topicId },
   );
-  if (r.ok) await updateDraft(d.id, { topic_message_id: r.result?.message_id as number });
+  if (!r.ok) {
+    await updateDraft(d.id, { status: "dropped" });
+    return null;
+  }
+  await updateDraft(d.id, { topic_message_id: r.result?.message_id as number });
+  return d.id;
 }
 
 async function closeDraftMessage(d: BotDraft, note: string): Promise<void> {
