@@ -312,6 +312,25 @@ export async function handleDraftCallback(data: string, from: { first_name?: str
   return "Отправлено";
 }
 
+/**
+ * Ответ клиенту без кнопки — только по явной просьбе владельца (`send: true` в
+ * /api/bot/drafts; калибровка 28.11.2026). Копия ответа — в теме клиента.
+ */
+export async function sendDirect(c: BotClient, text: string): Promise<{ ok: boolean; error?: string }> {
+  const r = await tg("sendMessage", { chat_id: c.chat_id, text, disable_web_page_preview: true });
+  if (!r.ok) {
+    if (isBlocked(r)) await updateClient(c.chat_id, { blocked: true });
+    return { ok: false, error: isBlocked(r) ? "клиент заблокировал бота" : "Telegram не доставил" };
+  }
+  const inbox = inboxChatId();
+  const topicId = await ensureTopic(c);
+  if (inbox && topicId) {
+    await send(inbox, `🤖 <b>Claude ответил клиенту без подтверждения:</b>\n\n${esc(text)}`, undefined, { message_thread_id: topicId });
+  }
+  await afterManagerReply(c, text, "Claude");
+  return { ok: true };
+}
+
 /** Кнопки статуса в шапке темы. Возвращает текст всплывашки. */
 export async function handleManagerCallback(
   data: string,

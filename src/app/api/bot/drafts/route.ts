@@ -3,12 +3,14 @@
 //
 // GET  — кто ждёт ответа: клиент, факты (цены из кода сайта), последние 20 сообщений.
 // POST {chat_id, text} — положить черновик в тему клиента с кнопками «Отправить» / «Не надо».
+// POST {chat_id, text, send: true} — ответить клиенту сразу, без кнопки (только по явной
+// просьбе владельца; копия — в теме). По умолчанию — черновик.
 // Гейт fail-closed: без POSTER_CRON_SECRET — 401 на всё.
 
 import { NextRequest, NextResponse } from "next/server";
 import { clientsForReminders, getClient, recentMessages } from "@/lib/tgbot/store";
 import { buildFacts, historyText } from "@/lib/tgbot/draft";
-import { postDraft } from "@/lib/tgbot/inbox";
+import { postDraft, sendDirect } from "@/lib/tgbot/inbox";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -53,7 +55,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (denied(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
 
-  const body = (await req.json().catch(() => null)) as { chat_id?: unknown; text?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { chat_id?: unknown; text?: unknown; send?: unknown } | null;
   const chatId = Number(body?.chat_id);
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   if (!Number.isFinite(chatId) || !text || text.length > 3500) {
@@ -62,6 +64,11 @@ export async function POST(req: NextRequest) {
 
   const c = await getClient(chatId);
   if (!c) return NextResponse.json({ ok: false, error: "клиент не найден" }, { status: 404 });
+
+  if (body?.send === true) {
+    const r = await sendDirect(c, text);
+    return NextResponse.json(r, { status: r.ok ? 200 : 502 });
+  }
 
   const id = await postDraft(c, text);
   if (!id) return NextResponse.json({ ok: false, error: "не удалось положить черновик в тему" }, { status: 502 });
