@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   let reminded = 0;
   let followups = 0;
+  let offhours = 0;
 
   for (const c of clients) {
     const d = decide(c, now);
@@ -34,6 +35,15 @@ export async function GET(req: NextRequest) {
       await notifyManagers(c, `⏰ <b>Клиент ждёт ответа ${mins} мин.</b> Ответьте в этой теме или нажмите «Отказ» в шапке.`);
       await updateClient(c.chat_id, { manager_reminded_at: now.toISOString() });
       reminded++;
+    }
+
+    if (d.offhoursAck) {
+      const r = await send(c.chat_id, t(c.lang).offhoursAck);
+      await updateClient(c.chat_id, { offhours_ack_at: now.toISOString(), ...(isBlocked(r) ? { blocked: true } : {}) });
+      if (r.ok) {
+        await notifyManagers(c, "🌙 Нерабочее время: бот ответил клиенту, что менеджер напишет в рабочий день. Черновик ответа — выше, если он есть.");
+        offhours++;
+      }
     }
 
     if (d.followup) {
@@ -54,5 +64,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, checked: clients.length, reminded, followups });
+  return NextResponse.json({ ok: true, checked: clients.length, reminded, followups, offhours });
 }

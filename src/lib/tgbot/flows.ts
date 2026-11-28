@@ -8,6 +8,7 @@
 // Любое сообщение клиента копируется менеджеру (relayFromClient) — что бы бот
 // ни ответил сам. Потерять сообщение хуже, чем ответить дважды.
 
+import { after } from "next/server";
 import { SITE_URL } from "@/lib/site";
 import { createServerClient } from "@/lib/supabase";
 import { getCarSnapshot, type CarSnapshot } from "@/lib/carsSeen";
@@ -18,8 +19,9 @@ import { formatUsd } from "@/lib/pricing";
 import { saveSubscription } from "@/lib/savedSearches";
 import { send, edit, answerCallback, tg, type Keyboard } from "./api";
 import { normalizePartNumber } from "./partNumber";
-import { getClient, upsertClient, updateClient, type BotClient } from "./store";
-import { notifyManagers, relayFromClient, refreshHeader, ensureTopic } from "./inbox";
+import { getClient, upsertClient, updateClient, logMessage, recentMessages, type BotClient } from "./store";
+import { notifyManagers, relayFromClient, refreshHeader, ensureTopic, postDraft } from "./inbox";
+import { generateDraft, draftsEnabled } from "./draft";
 import {
   t, botLangFrom, esc, faqItems, stepsText, labelOf,
   COUNTRIES, BUDGETS, TIMEFRAMES, type BotLang,
@@ -293,6 +295,7 @@ async function lookupPart(c: BotClient, raw: string): Promise<void> {
 export interface ClientMessage {
   message_id: number;
   text?: string;
+  caption?: string;
   photo?: unknown;
   document?: unknown;
   from?: TgUser;
@@ -309,8 +312,15 @@ export async function handleClientMessage(m: ClientMessage): Promise<void> {
 
   const text = (m.text ?? "").trim();
   const x = t(c.lang);
+  const logged = await logMessage(
+    c.chat_id,
+    "client",
+    text || [m.photo ? "[фото]" : m.document ? "[файл]" : "[вложение]", (m.caption ?? "").trim()].filter(Boolean).join(" "),
+  );
 
   const asPart = text ? normalizePartNumber(text) : null;
+  // Номер детали бот обработал сам (цена из каталога) — черновик там не нужен.
+  if (!asPart && logged) scheduleDraft(c.chat_id, logged);
   if (asPart) {
     await updateClient(c.chat_id, { step: null });
     await lookupPart(c, asPart);
@@ -331,6 +341,24 @@ export async function handleClientMessage(m: ClientMessage): Promise<void> {
     await send(c.chat_id, x.ack);
     await updateClient(c.chat_id, { ack_at: now });
   }
+}
+
+// Клиент часто пишет несколькими сообщениями подряд. Ждём паузу и готовим один
+// черновик на последнее: если за это время пришло новое сообщение, этот вызов
+// уступает следующему. after() — после ответа вебхуку, Telegram не ждёт.
+const DRAFT_PAUSE_MS = 20_000;
+
+function scheduleDraft(chatId: number, messageId: number): void {
+  if (!draftsEnabled()) return;
+  after(async () => {
+    await new Promise((r) => setTimeout(r, DRAFT_PAUSE_MS));
+    const last = (await recentMessages(chatId, 1))[0];
+    if (!last || last.id !== messageId || last.role !== "client") return;
+    const c = await getClient(chatId);
+    if (!c) return;
+    const text = await generateDraft(c);
+    if (text) await postDraft(c, text);
+  });
 }
 
 // ── Кнопки клиента ───────────────────────────────────────────────────────────

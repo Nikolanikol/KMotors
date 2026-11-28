@@ -128,6 +128,8 @@ const RU = {
     "👋 Вы смотрели у нас автомобиль. Остались вопросы? Менеджер посчитает доставку и растаможку под вашу страну — это бесплатно.",
   followupParts:
     "👋 Вы спрашивали у нас запчасти. Остались вопросы? Менеджер посчитает доставку под ваш адрес.",
+  offhoursAck:
+    "Спасибо, ваше сообщение получили. Сейчас у нас нерабочее время (мы в Корее, UTC+9) — менеджер ответит в ближайший рабочий день, здесь же, в этом чате.",
   followupContact: "💬 Связаться с менеджером",
   followupNo: "🙅 Неактуально",
   followupNoAck: "Понял, больше не беспокоим. Если понадобится — просто напишите сюда.",
@@ -190,6 +192,8 @@ const EN: Texts = {
     "👋 You were looking at a car with us. Any questions left? A manager can calculate shipping and customs for your country — free of charge.",
   followupParts:
     "👋 You asked us about parts. Any questions left? A manager can calculate shipping to your address.",
+  offhoursAck:
+    "Thank you, we have received your message. It is outside our business hours now (we are in Korea, UTC+9) — a manager will reply here on the next business day.",
   followupContact: "💬 Contact a manager",
   followupNo: "🙅 Not relevant",
   followupNoAck: "Got it, we won't bother you. If you need anything — just write here.",

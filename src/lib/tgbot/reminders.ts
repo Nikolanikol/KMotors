@@ -26,15 +26,24 @@ export function isGoodTimeForClients(now: Date): boolean {
   return h >= 9 && h < 21;
 }
 
+/** Нерабочее время по Корее: ночь (23:00–08:00 KST) или суббота/воскресенье KST. */
+export function isOffHours(now: Date): boolean {
+  const kst = new Date(now.getTime() + 9 * 3600 * 1000);
+  const day = kst.getUTCDay(); // 0 — воскресенье, 6 — суббота
+  return isQuietForManagers(now) || day === 0 || day === 6;
+}
+
 export interface Decision {
   remindManager: boolean;
   followup: boolean;
+  /** Автоответ клиенту «нерабочее время, ответим утром» — без цифр, решение владельца 28.11.2026. */
+  offhoursAck: boolean;
 }
 
 export function decide(c: BotClient, now: Date): Decision {
   const t = now.getTime();
   const open = (c.status === "new" || c.status === "in_work") && !c.blocked;
-  if (!open) return { remindManager: false, followup: false };
+  if (!open) return { remindManager: false, followup: false, offhoursAck: false };
 
   const lastClient = ms(c.last_client_msg_at);
   const lastManager = ms(c.last_manager_msg_at);
@@ -61,5 +70,13 @@ export function decide(c: BotClient, now: Date): Decision {
     (Number.isNaN(lastManager) || lastManager < offered) &&
     isGoodTimeForClients(now);
 
-  return { remindManager, followup };
+  const offAcked = ms(c.offhours_ack_at);
+  const offhoursAck =
+    unanswered &&
+    t - lastClient >= MANAGER_WAIT_MS &&
+    t - lastClient < MANAGER_STALE_MS &&
+    (Number.isNaN(offAcked) || offAcked < lastClient) &&
+    isOffHours(now);
+
+  return { remindManager, followup, offhoursAck };
 }

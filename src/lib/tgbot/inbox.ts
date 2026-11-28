@@ -15,7 +15,10 @@
 import { SITE_URL } from "@/lib/site";
 import { telegramChatId, telegramChatIds } from "@/lib/telegramChats";
 import { send, edit, tg, isBlocked, type Keyboard, type TgCall } from "./api";
-import { updateClient, getClientByTopic, type BotClient, type BotStatus } from "./store";
+import {
+  updateClient, getClientByTopic, getClient, logMessage, createDraft, updateDraft, claimDraft,
+  supersedePendingDrafts, type BotClient, type BotStatus, type BotDraft,
+} from "./store";
 import { esc, labelOf, COUNTRIES, BUDGETS, TIMEFRAMES } from "./texts";
 
 const STATUS_LABEL: Record<BotStatus, string> = {
@@ -215,14 +218,92 @@ export async function handleInboxMessage(m: GroupMessage): Promise<void> {
     return;
   }
 
+  await afterManagerReply(c, body || "[вложение]", m.from?.first_name ?? null);
+}
+
+/** Общее для ответа из темы и отправки черновика: история, статус, снятие черновиков. */
+async function afterManagerReply(c: BotClient, text: string, by: string | null, exceptDraftId?: number): Promise<void> {
+  await logMessage(c.chat_id, "manager", text);
+  // Менеджер ответил — ждущие черновики больше не актуальны, снимаем с них кнопки,
+  // чтобы ответ не ушёл клиенту второй раз.
+  const stale = (await supersedePendingDrafts(c.chat_id, by)).filter((d) => d.id !== exceptDraftId);
+  await Promise.all(stale.map((d) => closeDraftMessage(d, "↪️ Ответили в теме, черновик не нужен")));
+
   // Первый ответ менеджера сам переводит заявку в работу.
   const patch: Partial<BotClient> = { last_manager_msg_at: new Date().toISOString() };
   if (c.status === "new") {
     patch.status = "in_work";
-    patch.taken_by = c.taken_by ?? m.from?.first_name ?? null;
+    patch.taken_by = c.taken_by ?? by;
   }
   await updateClient(c.chat_id, patch);
   if (patch.status) await refreshHeader({ ...c, ...patch });
+}
+
+// ── Черновики ответа от Claude ───────────────────────────────────────────────
+
+function draftKeyboard(id: number): Keyboard {
+  return [[
+    { text: "✅ Отправить клиенту", callback_data: `d:send:${id}` },
+    { text: "🗑 Не надо", callback_data: `d:drop:${id}` },
+  ]];
+}
+
+function draftBody(d: BotDraft): string {
+  return `🤖 <b>Черновик ответа</b> — проверьте цифры перед отправкой\n\n${esc(d.text)}`;
+}
+
+/** Черновик в тему клиента с кнопками. Без темы черновик не показываем: отправлять его некуда. */
+export async function postDraft(c: BotClient, text: string): Promise<void> {
+  const inbox = inboxChatId();
+  const topicId = await ensureTopic(c);
+  if (!inbox || !topicId) return;
+  const d = await createDraft(c.chat_id, text);
+  if (!d) return;
+  const r = await send(
+    inbox,
+    draftBody(d) + "\n\n<i>Или напишите свой ответ в теме — черновик снимется сам.</i>",
+    draftKeyboard(d.id),
+    { message_thread_id: topicId },
+  );
+  if (r.ok) await updateDraft(d.id, { topic_message_id: r.result?.message_id as number });
+}
+
+async function closeDraftMessage(d: BotDraft, note: string): Promise<void> {
+  const inbox = inboxChatId();
+  if (!inbox || !d.topic_message_id) return;
+  await edit(inbox, d.topic_message_id, `${draftBody(d)}\n\n${note}`);
+}
+
+/** Кнопки под черновиком. Возвращает текст всплывашки. */
+export async function handleDraftCallback(data: string, from: { first_name?: string } | undefined): Promise<string> {
+  const [, action, idRaw] = data.split(":");
+  const by = from?.first_name ?? null;
+  const id = Number(idRaw);
+
+  if (action === "drop") {
+    const d = await claimDraft(id, "dropped", by);
+    if (!d) return "Черновик уже обработан";
+    await closeDraftMessage(d, `🗑 Не отправлен${by ? ` (${esc(by)})` : ""}`);
+    return "Черновик убран";
+  }
+
+  if (action !== "send") return "";
+  // Забираем черновик атомарно ДО отправки: второе нажатие получит null.
+  const d = await claimDraft(id, "sent", by);
+  if (!d) return "Черновик уже обработан";
+  const c = await getClient(d.chat_id);
+  if (!c) return "Клиент не найден";
+
+  // Текст модели уходит как есть, без HTML-разметки: в нём могут быть «<» и «&».
+  const r = await tg("sendMessage", { chat_id: c.chat_id, text: d.text, disable_web_page_preview: true });
+  if (!r.ok) {
+    await updateDraft(d.id, { status: "pending", decided_by: null, decided_at: null });
+    if (isBlocked(r)) await updateClient(c.chat_id, { blocked: true });
+    return isBlocked(r) ? "Клиент заблокировал бота" : "Не доставлено, попробуйте ещё раз";
+  }
+  await closeDraftMessage(d, `✅ Отправлено клиенту${by ? ` (${esc(by)})` : ""}`);
+  await afterManagerReply(c, d.text, by, d.id);
+  return "Отправлено";
 }
 
 /** Кнопки статуса в шапке темы. Возвращает текст всплывашки. */
