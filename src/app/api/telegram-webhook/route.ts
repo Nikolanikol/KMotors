@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 import { sendTelegram, telegramRequest } from "@/lib/telegram";
 import { telegramChatId, telegramChatIds } from "@/lib/telegramChats";
 import { handleStart, handleClientMessage, handleClientCallback } from "@/lib/tgbot/flows";
-import { isInboxChat, handleInboxMessage, handleManagerCallback } from "@/lib/tgbot/inbox";
+import { isInboxChat, handleInboxMessage, handleManagerCallback, handleDraftCallback } from "@/lib/tgbot/inbox";
 import { getClient as getBotClient } from "@/lib/tgbot/store";
 
 // Все администраторы — могут получать уведомления и запускать команды
@@ -202,13 +202,16 @@ export async function POST(req: NextRequest) {
     return ok();
   }
 
-  // Кнопки статуса в шапке темы («m:…») — только из группы менеджеров.
-  if (callbackQuery.data?.startsWith("m:")) {
+  // Кнопки статуса в шапке темы («m:…») и под черновиком Claude («d:…») —
+  // только из группы менеджеров.
+  if (callbackQuery.data?.startsWith("m:") || callbackQuery.data?.startsWith("d:")) {
     if (!isInboxChat(callbackQuery.message?.chat?.id)) {
       await telegramRequest("answerCallbackQuery", { callback_query_id: callbackQuery.id, text: "⛔ Нет доступа" });
       return ok();
     }
-    const note = await handleManagerCallback(callbackQuery.data, callbackQuery.from, getBotClient);
+    const note = callbackQuery.data.startsWith("d:")
+      ? await handleDraftCallback(callbackQuery.data, callbackQuery.from)
+      : await handleManagerCallback(callbackQuery.data, callbackQuery.from, getBotClient);
     await telegramRequest("answerCallbackQuery", { callback_query_id: callbackQuery.id, text: note });
     return ok();
   }

@@ -18,7 +18,7 @@ import { formatUsd } from "@/lib/pricing";
 import { saveSubscription } from "@/lib/savedSearches";
 import { send, edit, answerCallback, tg, type Keyboard } from "./api";
 import { normalizePartNumber } from "./partNumber";
-import { getClient, upsertClient, updateClient, type BotClient } from "./store";
+import { getClient, upsertClient, updateClient, logMessage, type BotClient } from "./store";
 import { notifyManagers, relayFromClient, refreshHeader, ensureTopic } from "./inbox";
 import {
   t, botLangFrom, esc, faqItems, stepsText, labelOf,
@@ -293,6 +293,7 @@ async function lookupPart(c: BotClient, raw: string): Promise<void> {
 export interface ClientMessage {
   message_id: number;
   text?: string;
+  caption?: string;
   photo?: unknown;
   document?: unknown;
   from?: TgUser;
@@ -309,6 +310,11 @@ export async function handleClientMessage(m: ClientMessage): Promise<void> {
 
   const text = (m.text ?? "").trim();
   const x = t(c.lang);
+  await logMessage(
+    c.chat_id,
+    "client",
+    text || [m.photo ? "[фото]" : m.document ? "[файл]" : "[вложение]", (m.caption ?? "").trim()].filter(Boolean).join(" "),
+  );
 
   const asPart = text ? normalizePartNumber(text) : null;
   if (asPart) {

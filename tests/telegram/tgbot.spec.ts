@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decide, isQuietForManagers, isGoodTimeForClients } from "@/lib/tgbot/reminders";
+import { decide, isQuietForManagers, isGoodTimeForClients, isOffHours } from "@/lib/tgbot/reminders";
 import { normalizePartNumber } from "@/lib/tgbot/partNumber";
 import { botLangFrom } from "@/lib/tgbot/texts";
 import type { BotClient } from "@/lib/tgbot/store";
@@ -85,6 +85,37 @@ describe("дожим клиенту", () => {
     const night = new Date("2026-11-27T22:00:00Z"); // 01:00 MSK
     expect(isGoodTimeForClients(night)).toBe(false);
     expect(decide(client({ offered_at: ago(25 * 60, night) }), night).followup).toBe(false);
+  });
+});
+
+describe("автоответ в нерабочее время", () => {
+  const SAT = new Date("2026-11-28T03:00:00Z"); // суббота 12:00 KST
+  const NIGHT = new Date("2026-11-27T16:00:00Z"); // пятница 01:00 KST
+
+  it("рабочий день, день по Корее — не нерабочее время", () => {
+    expect(isOffHours(DAY)).toBe(false);
+    expect(decide(client({ last_client_msg_at: ago(40) }), DAY).offhoursAck).toBe(false);
+  });
+
+  it("выходной и ночь — нерабочее время", () => {
+    expect(isOffHours(SAT)).toBe(true);
+    expect(isOffHours(NIGHT)).toBe(true);
+  });
+
+  it("клиент ждёт 40 минут в субботу — один автоответ", () => {
+    expect(decide(client({ last_client_msg_at: ago(40, SAT) }), SAT).offhoursAck).toBe(true);
+  });
+
+  it("уже ответили после этого сообщения — второй раз нет", () => {
+    expect(decide(client({ last_client_msg_at: ago(60, SAT), offhours_ack_at: ago(20, SAT) }), SAT).offhoursAck).toBe(false);
+  });
+
+  it("менеджер ответил — автоответ не нужен", () => {
+    expect(decide(client({ last_client_msg_at: ago(60, SAT), last_manager_msg_at: ago(50, SAT) }), SAT).offhoursAck).toBe(false);
+  });
+
+  it("ждёт меньше 30 минут — рано", () => {
+    expect(decide(client({ last_client_msg_at: ago(10, SAT) }), SAT).offhoursAck).toBe(false);
   });
 });
 
